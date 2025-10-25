@@ -7,7 +7,7 @@
         <IconFluentErrorCircle20Filled v-if="props.type === 'warning'" class="message-icon"/>
         <IconFluentErrorCircle20Filled v-if="props.type === 'info'" class="message-icon"/>
         <IconFluentDismissCircle20Filled v-if="props.type === 'error'" class="message-icon"/>
-        <span class="message-text">{{ message }}</span>
+        <span class="message-text">{{ t(message) }}</span>
         <Close v-if="showClose" class="message-close" @click="close"/>
       </div>
     </div>
@@ -16,6 +16,9 @@
 
 <script setup lang="ts">
 import {computed, onBeforeUnmount, onMounted, ref} from 'vue'
+import { useLanguage } from '@/hooks/useLanguage'
+
+const { t } = useLanguage()
 
 interface Props {
   message: string

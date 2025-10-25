@@ -13,6 +13,11 @@ import loadingDirective from './directives/loading.tsx'
 const pinia = createPinia()
 const app = createApp(App)
 
+// Initialisation de la langue à partir du localStorage ou par défaut
+const savedLanguage = localStorage.getItem('language') || 'zh'
+localStorage.setItem('language', savedLanguage)
+document.documentElement.lang = savedLanguage
+
 app.use(VueVirtualScroller)
 app.use(pinia)
 app.use(router)

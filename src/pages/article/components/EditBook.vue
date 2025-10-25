@@ -14,7 +14,9 @@ import Form from "@/components/base/form/Form.vue";
 import FormItem from "@/components/base/form/FormItem.vue";
 import { CAN_REQUEST } from "@/config/env.ts";
 import { addDict } from "@/apis";
+import { useLanguage } from '@/hooks/useLanguage'
 
+const { t } = useLanguage()
 const props = defineProps<{
   isAdd: boolean,
   isBook: boolean
@@ -40,8 +42,8 @@ const dictFormRef = $ref()
 let loading = $ref(false)
 const dictRules = reactive({
   name: [
-    {required: true, message: '请输入名称', trigger: 'blur'},
-    {max: 20, message: '名称不能超过20个字符', trigger: 'blur'},
+    {required: true, message: t('EnterName'), trigger: 'blur'},
+    {max: 20, message: t('NameLengthLimit'), trigger: 'blur'},
   ],
 })
 
@@ -55,7 +57,7 @@ async function onSubmit() {
       if (props.isAdd) {
         data.id = 'custom-dict-' + Date.now()
         if (source.bookList.find(v => v.name === data.name)) {
-          Toast.warning('已有相同名称！')
+          Toast.warning(t('DuplicateName'))
           return
         } else {
           if (CAN_REQUEST) {
@@ -71,7 +73,7 @@ async function onSubmit() {
           source.bookList.push(cloneDeep(data))
           runtimeStore.editDict = data
           emit('submit')
-          Toast.success('添加成功')
+          Toast.success(t('AddSuccess'))
         }
       } else {
         let rIndex = source.bookList.findIndex(v => v.id === data.id)
@@ -84,15 +86,15 @@ async function onSubmit() {
         if (rIndex > -1) {
           source.bookList[rIndex] = cloneDeep(data)
           emit('submit')
-          Toast.success('修改成功')
+          Toast.success(t('ModifySuccess'))
         } else {
           source.bookList.push(cloneDeep(data))
-          Toast.success('修改成功并加入我的词典')
+          Toast.success(t('ModifySuccessAddedToMyDict'))
         }
       }
       console.log('submit!', data)
     } else {
-      Toast.warning('请填写完整')
+      Toast.warning(t('PleaseComplete'))
     }
   })
 }
@@ -112,31 +114,31 @@ onMounted(() => {
         :rules="dictRules"
         :model="dictForm"
         label-width="8rem">
-      <FormItem label="名称" prop="name">
+      <FormItem :label="t('Name')" prop="name">
         <BaseInput v-model="dictForm.name"/>
       </FormItem>
-      <FormItem label="描述">
+      <FormItem :label="t('Description')">
         <BaseInput v-model="dictForm.description" textarea/>
       </FormItem>
-      <FormItem label="原文语言" v-if="false">
-        <Select v-model="dictForm.language" placeholder="请选择选项">
-          <Option label="英语" value="en"/>
-          <Option label="德语" value="de"/>
-          <Option label="日语" value="ja"/>
-          <Option label="代码" value="code"/>
+      <FormItem :label="t('OriginalLanguage')" v-if="false">
+        <Select v-model="dictForm.language" :placeholder="t('PleaseSelect')">
+          <Option :label="t('English')" value="en"/>
+          <Option :label="t('German')" value="de"/>
+          <Option :label="t('Japanese')" value="ja"/>
+          <Option :label="t('Code')" value="code"/>
         </Select>
       </FormItem>
-      <FormItem label="译文语言" v-if="false">
-        <Select v-model="dictForm.translateLanguage" placeholder="请选择选项">
-          <Option label="中文" value="zh-CN"/>
-          <Option label="英语" value="en"/>
-          <Option label="德语" value="de"/>
-          <Option label="日语" value="ja"/>
+      <FormItem :label="t('TranslationLanguage')" v-if="false">
+        <Select v-model="dictForm.translateLanguage" :placeholder="t('PleaseSelect')">
+          <Option :label="t('Chinese')" value="zh-CN"/>
+          <Option :label="t('English')" value="en"/>
+          <Option :label="t('German')" value="de"/>
+          <Option :label="t('Japanese')" value="ja"/>
         </Select>
       </FormItem>
       <div class="center">
-        <base-button type="info" @click="emit('close')">关闭</base-button>
-        <base-button type="primary" :loading="loading" @click="onSubmit">确定</base-button>
+        <base-button type="info" @click="emit('close')">{{ t('Close') }}</base-button>
+        <base-button type="primary" :loading="loading" @click="onSubmit">{{ t('Confirm') }}</base-button>
       </div>
     </Form>
   </div>

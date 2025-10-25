@@ -9,7 +9,9 @@ import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 import {defineAsyncComponent, watch} from "vue";
 import isoWeek from 'dayjs/plugin/isoWeek'
+import { useLanguage } from '@/hooks/useLanguage'
 
+const { t } = useLanguage()
 dayjs.extend(isoWeek)
 dayjs.extend(isBetween);
 const Dialog = defineAsyncComponent(() => import('@/components/dialog/Dialog.vue'))
@@ -104,27 +106,25 @@ function options(emitType: string) {
       v-model="model">
     <div class="w-140 bg-white  color-black p-6 relative flex flex-col gap-6">
       <div class="w-full flex flex-col justify-evenly">
-        <div class="center text-2xl mb-2">已完成今日任务</div>
+        <div class="center text-2xl mb-2">{{ t('DailyTaskCompleted') }}</div>
         <div class="flex">
           <div class="flex-1 flex flex-col items-center">
-            <div class="text-sm color-gray">新词数</div>
+            <div class="text-sm color-gray">{{ t('NewWords') }}</div>
             <div class="text-4xl font-bold">{{ statStore.newWordNumber }}</div>
           </div>
           <div class="flex-1 flex flex-col items-center">
-            <div class="text-sm color-gray">复习数</div>
+            <div class="text-sm color-gray">{{ t('ReviewedWords') }}</div>
             <div class="text-4xl font-bold">{{ statStore.reviewWordNumber }}</div>
           </div>
           <div class="flex-1 flex flex-col items-center">
-            <div class="text-sm color-gray">默写数</div>
+            <div class="text-sm color-gray">{{ t('DictationWords') }}</div>
             <div class="text-4xl font-bold">{{ statStore.writeWordNumber }}</div>
           </div>
         </div>
       </div>
 
       <div class="text-xl text-center flex flex-col justify-around">
-        <div>非常棒! 坚持了 <span class="color-emerald-500 font-bold text-2xl">
-          {{ dayjs().diff(statStore.startDate, 'm') }}</span>分钟
-        </div>
+        <div>{{ t('ExcellentProgress') }} {{ t('MinutesSpent', { minutes: dayjs().diff(statStore.startDate, 'm') }) }}</div>
       </div>
       <div class="flex justify-center gap-10">
         <div class="flex justify-center items-center py-3 px-10 rounded-md color-red-500 flex-col"
@@ -132,7 +132,7 @@ function options(emitType: string) {
           <div class="text-3xl">{{ statStore.wrong }}</div>
           <div class="center gap-2">
             <IconFluentDismiss20Regular class="text-xl"/>
-            错词
+            {{ t('IncorrectWords') }}
           </div>
         </div>
         <div class="flex justify-center items-center py-3 px-10 rounded-md color-emerald-500 flex-col"
@@ -140,13 +140,13 @@ function options(emitType: string) {
           <div class="text-3xl">{{ statStore.total - statStore.wrong }}</div>
           <div class="center gap-2">
             <IconFluentCheckmark20Regular class="text-xl"/>
-            正确
+            {{ t('CorrectWords') }}
           </div>
         </div>
       </div>
 
       <div class="center flex-col">
-        <div class="title text-align-center mb-2">本周学习记录</div>
+        <div class="title text-align-center mb-2">{{ t('WeeklyLearningRecord') }}</div>
         <div class="flex gap-4 color-gray">
           <div
               class="w-8 h-8 rounded-md center"
@@ -161,20 +161,20 @@ function options(emitType: string) {
         <BaseButton
             :keyboard="settingStore.shortcutKeyMap[ShortcutKey.RepeatChapter]"
             @click="options(EventKey.repeatStudy)">
-          重学一遍
+          {{ t('RepeatLesson') }}
         </BaseButton>
         <BaseButton
             :keyboard="settingStore.shortcutKeyMap[ShortcutKey.NextChapter]"
             @click="options(EventKey.continueStudy)">
-          {{ dictIsEnd ? '重新练习' : '再来一组' }}
+          {{ dictIsEnd ? t('RestartPractice') : t('NextGroup') }}
         </BaseButton>
         <BaseButton
             :keyboard="settingStore.shortcutKeyMap[ShortcutKey.NextRandomWrite]"
             @click="options(EventKey.randomWrite)">
-            继续默写
+          {{ t('ContinueDictation') }}
         </BaseButton>
         <BaseButton @click="$router.back">
-          返回主页
+          {{ t('ReturnToHome') }}
         </BaseButton>
         <!--        <BaseButton>-->
         <!--          分享-->

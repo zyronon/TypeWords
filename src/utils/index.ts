@@ -219,20 +219,50 @@ export async function sleep(time: number) {
 }
 
 export async function _getDictDataByUrl(val: DictResource, type: DictType = DictType.word): Promise<Dict> {
-  // await sleep(2000);
-  let dictResourceUrl = `/dicts/${val.language}/word/${val.url}`
-  if (type === DictType.article) {
-    dictResourceUrl = `/dicts/${val.language}/article/${val.url}`;
-  }
-  let s = await fetch(resourceWrap(dictResourceUrl, val.version)).then(r => r.json())
-  if (s) {
-    if (type === DictType.word) {
-      return getDefaultDict({...val, words: s})
-    } else {
-      return getDefaultDict({...val, articles: s})
+  const dir = type === DictType.word ? 'word' : 'article'
+  const candidates: string[] = []
+
+  if (val.language) {
+    const lang = String(val.language).trim()
+    if (lang) {
+      candidates.push(`/dicts/${lang}/${dir}/${val.url}`)
+      candidates.push(`/dicts/${lang.toLowerCase()}/${dir}/${val.url}`)
     }
   }
-  return getDefaultDict()
+
+  const fallbackPath = `/dicts/${dir}/${val.url}`
+  if (!candidates.includes(fallbackPath)) {
+    candidates.push(fallbackPath)
+  }
+
+  let payload: any = null
+  let lastError: unknown = null
+
+  for (const candidate of candidates) {
+    try {
+      const response = await fetch(resourceWrap(candidate, val.version))
+      if (!response.ok) {
+        lastError = new Error(`Request failed with status ${response.status}`)
+        continue
+      }
+      payload = await response.json()
+      if (payload !== undefined && payload !== null) {
+        break
+      }
+    } catch (err) {
+      lastError = err
+    }
+  }
+
+  if (!payload) {
+    console.warn('[dict] Failed to load dict resource', {url: val.url, candidates, error: lastError})
+    return getDefaultDict(val)
+  }
+
+  if (type === DictType.word) {
+    return getDefaultDict({...val, words: payload})
+  }
+  return getDefaultDict({...val, articles: payload})
 }
 
 //从字符串里面转换为Word格式

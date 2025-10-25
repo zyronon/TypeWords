@@ -6,7 +6,8 @@ import { useSettingStore } from "@/stores/setting.ts";
 import useTheme from "@/hooks/theme.ts";
 import { shakeCommonDict } from "@/utils";
 import { routes } from "@/router.ts";
-import { get, set } from 'idb-keyval'
+import { get, set } from 'idb-keyval';
+import { useLanguage } from '@/hooks/useLanguage';
 
 import { useRoute } from "vue-router";
 import { DictId } from "@/types/types.ts";
@@ -17,6 +18,7 @@ const store = useBaseStore()
 const runtimeStore = useRuntimeStore()
 const settingStore = useSettingStore()
 const {setTheme} = useTheme()
+const { t } = useLanguage()
 
 let lastAudioFileIdList = []
 watch(store.$state, (n: BaseState) => {

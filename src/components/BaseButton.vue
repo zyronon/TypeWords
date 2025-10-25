@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import Tooltip from "@/components/base/Tooltip.vue";
+import { useLanguage } from '@/hooks/useLanguage'
+
+const { t } = useLanguage()
 
 interface IProps {
   keyboard?: string,
@@ -20,7 +23,7 @@ defineEmits(['click'])
 </script>
 
 <template>
-  <Tooltip :disabled="!keyboard" :title="`${keyboard}`">
+  <Tooltip :disabled="!keyboard" :title="keyboard ? t('ShortcutKey') + ': ' + keyboard : ''">
     <div class="base-button"
          v-bind="$attrs"
          @click="e => (!disabled && !loading) && $emit('click',e)"

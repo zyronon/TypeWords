@@ -14,7 +14,9 @@ import Checkbox from "@/components/base/checkbox/Checkbox.vue";
 import DeleteIcon from "@/components/icon/DeleteIcon.vue";
 import Dialog from "@/components/dialog/Dialog.vue";
 import BaseInput from "@/components/base/BaseInput.vue";
+import { useLanguage } from '@/hooks/useLanguage'
 
+const { t } = useLanguage()
 let list = defineModel('list')
 
 const props = withDefaults(defineProps<{
@@ -105,11 +107,11 @@ const closeImportDialog = () => showImportDialog = false
 
 function sort(type: Sort) {
   if (type === Sort.reverse) {
-    Toast.success('已翻转排序')
+    Toast.success(t('SortReversed'))
     list.value = reverse(cloneDeep(list.value))
   }
   if (type === Sort.random) {
-    Toast.success('已随机排序')
+    Toast.success(t('SortRandomized'))
     list.value = shuffle(cloneDeep(list.value))
   }
   showSortDialog = false
@@ -158,7 +160,7 @@ defineRender(
                               />
                             }}
                           </BaseInput>
-                          <BaseButton onClick={() => (showSearchInput = false, searchKey = '')}>取消</BaseButton>
+                          <BaseButton onClick={() => (showSearchInput = false, searchKey = '')}>{t('Cancel')}</BaseButton>
                         </div>
                     ) : (
                         <div class="flex justify-between">
@@ -174,12 +176,12 @@ defineRender(
                           <div class="flex gap-2 relative">
                             {
                               selectIds.length ?
-                                  <PopConfirm title="确认删除所有选中数据？"
+                                  <PopConfirm title={t('ConfirmDeleteAllSelected')}
                                               onConfirm={handleBatchDel}
                                   >
                                     <BaseIcon
                                         class="del"
-                                        title="删除">
+                                        title={t('Delete')}>
                                       <DeleteIcon/>
                                     </BaseIcon>
                                   </PopConfirm>
@@ -187,22 +189,22 @@ defineRender(
                             }
                             <BaseIcon
                                 onClick={() => showImportDialog = true}
-                                title="导入">
+                                title={t('Import')}>
                               <IconSystemUiconsImport/>
                             </BaseIcon>
                             <BaseIcon
                                 onClick={() => emit('exportData')}
-                                title="导出">
+                                title={t('Export')}>
                               {props.exportLoading ? <IconEosIconsLoading/> : <IconPhExportLight/>}
                             </BaseIcon>
                             <BaseIcon
                                 onClick={props.add}
-                                title="添加单词">
+                                title={t('AddWord')}>
                               <IconFluentAdd20Regular/>
                             </BaseIcon>
                             <BaseIcon
                                 disabled={!currentList.length}
-                                title="改变顺序"
+                                title={t('ChangeOrder')}
                                 onClick={() => showSortDialog = !showSortDialog}
                             >
                               <IconFluentArrowSort20Regular/>
@@ -210,7 +212,7 @@ defineRender(
                             <BaseIcon
                                 disabled={!currentList.length}
                                 onClick={() => showSearchInput = !showSearchInput}
-                                title="搜索">
+                                title={t('Search')}>
                               <IconFluentSearch20Regular/>
                             </BaseIcon>
                             <MiniDialog
@@ -219,12 +221,12 @@ defineRender(
                                 style="width: 8rem;"
                             >
                               <div class="mini-row-title">
-                                列表顺序设置
+                                {t('ListOrderSettings')}
                               </div>
                               <div class="mini-row">
-                                <BaseButton size="small" onClick={() => sort(Sort.reverse)}>翻转
+                                <BaseButton size="small" onClick={() => sort(Sort.reverse)}>{t('Reverse')}
                                 </BaseButton>
-                                <BaseButton size="small" onClick={() => sort(Sort.random)}>随机</BaseButton>
+                                <BaseButton size="small" onClick={() => sort(Sort.random)}>{t('Random')}</BaseButton>
                               </div>
                             </MiniDialog>
                           </div>
@@ -268,17 +270,17 @@ defineRender(
 
             <Dialog modelValue={showImportDialog}
                     onUpdate:modelValue={closeImportDialog}
-                    title="导入教程"
+                    title={t('ImportTutorial')}
             >
               <div className="w-100 p-4 pt-0">
-                <div>请按照模板的格式来填写数据</div>
-                <div class="color-red">单词项为必填，其他项可不填</div>
-                <div>翻译：一行一个翻译，前面词性，后面内容（如n.取消）；多个翻译请换行</div>
-                <div>例句：一行原文，一行译文；多个请换<span class="color-red">两</span>行</div>
-                <div>短语：一行原文，一行译文；多个请换<span class="color-red">两</span>行</div>
-                <div>同义词、同根词、词源：请前往官方字典，然后编辑其中某个单词，参考其格式</div>
+                <div>{t('ImportInstructions1')}</div>
+                <div class="color-red">{t('ImportInstructions2')}</div>
+                <div>{t('ImportInstructions3')}</div>
+                <div>{t('ImportInstructions4')}<span class="color-red">{t('ImportInstructions4Emphasis')}</span>{t('ImportInstructions5')}</div>
+                <div>{t('ImportInstructions5')}<span class="color-red">{t('ImportInstructions4Emphasis')}</span>行</div>
+                <div>{t('ImportInstructions6')}</div>
                 <div class="mt-6">
-                  模板下载地址：<a href="https://2study.top/libs/单词导入模板.xlsx">单词导入模板</a>
+                  {t('TemplateDownload')}<a href="https://2study.top/libs/单词导入模板.xlsx">{t('WordImportTemplate')}</a>
                 </div>
                 <div class="mt-4">
                   <BaseButton
@@ -286,7 +288,7 @@ defineRender(
                         let d: HTMLDivElement = document.querySelector('#upload-trigger')
                         d.click()
                       }}
-                      loading={props.importLoading}>导入</BaseButton>
+                      loading={props.importLoading}>{t('Import')}</BaseButton>
                   <input
                       id="upload-trigger"
                       type="file"

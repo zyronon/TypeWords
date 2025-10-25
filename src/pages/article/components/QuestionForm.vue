@@ -1,16 +1,16 @@
 <template>
   <div class="question-form en-article-family">
     <div class="flex items-center justify-between">
-      <div class="font-bold">Multiple choice questions 选择题</div>
+      <div class="font-bold">{{ t('MultipleChoice') }}</div>
       <div v-if="false">
         <button
             v-if="!started"
             class="bg-blue-600 text-white px-4 py-1 rounded"
             @click="startExam"
-        >开始
+        >{{ t('Start') }}
         </button>
         <span v-if="started" class="text-red-600 font-semibold font-family">
-          倒计时：{{ timeLeft }} 秒
+          {{ t('Countdown', {time: timeLeft}) }}
         </span>
       </div>
     </div>
@@ -35,9 +35,9 @@
       <button
           class="bg-green-600 text-white px-6 py-2 rounded"
           @click="submitAll"
-      >提交试卷
+      >{{ t('SubmitPaper') }}
       </button>
-      <span class="text-xl">浅红：错误 深红：未选 绿：正确</span>
+      <span class="text-xl">{{ t('QuizResultLegend') }}</span>
     </div>
   </div>
 </template>
@@ -46,6 +46,9 @@
 import {ref, useTemplateRef} from 'vue'
 import QuestionItem from './QuestionItem.vue'
 import Toast from '@/components/base/toast/Toast.ts'
+import { useLanguage } from '@/hooks/useLanguage'
+
+const { t } = useLanguage()
 
 interface IProps {
   questions: Array,
@@ -91,7 +94,7 @@ const submitAll = () => {
   const wrongCount = results.length - correctCount
 
   console.log('最终结果：', results)
-  Toast.success(`共 ${results.length} 题，答对 ${correctCount}，答错 ${wrongCount}`)
+  Toast.success(t('QuizResults', {total: results.length, correct: correctCount, wrong: wrongCount}))
 }
 </script>
 

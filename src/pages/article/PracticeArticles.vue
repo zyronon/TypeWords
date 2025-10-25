@@ -37,12 +37,14 @@ import VolumeSetting from "@/pages/article/components/VolumeSetting.vue";
 import { CAN_REQUEST, DICT_LIST, PracticeSaveArticleKey } from "@/config/env.ts";
 import { addStat, setDictProp } from "@/apis";
 import { useRuntimeStore } from "@/stores/runtime.ts";
+import { useLanguage } from '@/hooks/useLanguage'
 
 const store = useBaseStore()
 const runtimeStore = useRuntimeStore()
 const settingStore = useSettingStore()
 const statStore = usePracticeStore()
 const {toggleTheme} = useTheme()
+const { t } = useLanguage()
 
 let articleData = $ref({
   list: [],
@@ -72,7 +74,7 @@ function repeat() {
 function prev() {
   // console.log('next')
   if (store.sbook.lastLearnIndex === 0) {
-    Toast.warning('已经在第一章了~')
+    Toast.warning(t('AlreadyFirstChapter'))
   } else {
     store.sbook.lastLearnIndex--
     getCurrentPractice()
@@ -118,7 +120,7 @@ async function init() {
       if (!dict.custom) dict = await _getDictDataByUrl(dict, DictType.article)
       if (!dict.articles.length) {
         router.push('/articles')
-        return Toast.warning('没有文章可学习！')
+        return Toast.warning(t('NoArticlesToLearn'))
       }
       await store.changeBook(dict)
       articleData.list = cloneDeep(store.sbook.articles)

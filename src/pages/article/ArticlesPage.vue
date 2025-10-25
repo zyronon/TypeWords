@@ -20,6 +20,9 @@ import isoWeek from 'dayjs/plugin/isoWeek'
 import { useFetch } from "@vueuse/core";
 import { CAN_REQUEST, DICT_LIST, PracticeSaveArticleKey } from "@/config/env.ts";
 import { myDictList } from "@/apis";
+import { useLanguage } from '@/hooks/useLanguage'
+
+const { t } = useLanguage()
 
 dayjs.extend(isoWeek)
 dayjs.extend(isBetween);
@@ -73,12 +76,12 @@ function startStudy() {
   // return
   if (base.sbook.id) {
     if (!base.sbook.articles.length) {
-      return Toast.warning('没有文章可学习！')
+      return Toast.warning(t('NoArticlesToLearn'))
     }
     nav('/practice-articles/' + store.sbook.id)
   } else {
     window.umami?.track('no-book')
-    Toast.warning('请先选择一本书籍')
+    Toast.warning(t('SelectBookFirst'))
   }
 }
 
@@ -99,7 +102,7 @@ function handleBatchDel() {
     }
   })
   selectIds = []
-  Toast.success("删除成功！")
+  Toast.success(t('DeleteSuccess'))
 }
 
 function toggleSelect(item) {
@@ -172,7 +175,7 @@ const {data: recommendBookList, isFetching} = useFetch(resourceWrap(DICT_LIST.AR
         <Book
             v-if="base.sbook.id"
             :is-add="false"
-            quantifier="篇"
+            :quantifier="t('ArticleQuantifier')"
             :item="base.sbook"
             :show-progress="false"
             @click="goBookDetail(base.sbook)"/>
@@ -182,7 +185,7 @@ const {data: recommendBookList, isFetching} = useFetch(resourceWrap(DICT_LIST.AR
       </div>
       <div class="flex-1">
         <div class="flex items-center">
-          <div class="title mr-4">本周学习记录</div>
+          <div class="title mr-4">{{ t('WeeklyLearningRecord') }}</div>
           <div class="flex gap-4 color-gray">
             <div
                 class="w-8 h-8 rounded-md center"
@@ -196,32 +199,32 @@ const {data: recommendBookList, isFetching} = useFetch(resourceWrap(DICT_LIST.AR
         <div class="flex gap-4 items-center mt-3 gap-space">
           <div class="stat">
             <div class="num">{{ todayTotalSpend }}</div>
-            <div class="txt">今日学习时长</div>
+            <div class="txt">{{ t('TodayLearningTime') }}</div>
           </div>
           <div class="stat">
             <div class="num">{{ totalDay }}</div>
-            <div class="txt">总学习天数</div>
+            <div class="txt">{{ t('TotalLearningDays') }}</div>
           </div>
           <div class="stat">
             <div class="num">{{ totalSpend }}</div>
-            <div class="txt">总学习时长</div>
+            <div class="txt">{{ t('TotalLearningTime') }}</div>
           </div>
         </div>
 
         <Progress class="mt-3"
                   :percentage="base.currentBookProgress"
-                  :format="()=> `${ base.sbook?.lastLearnIndex || 0 }/${base.sbook?.length || 0}篇`"
+                  :format="()=> `${ base.sbook?.lastLearnIndex || 0 }/${base.sbook?.length || 0}${t('ArticleQuantifier')}`"
                   :show-text="true"></Progress>
       </div>
       <div class="flex flex-col justify-between items-end">
         <div class="flex gap-4 items-center" v-opacity="base.sbook.id">
-          <div class="color-blue cursor-pointer" @click="router.push('/book-list')">更换</div>
+          <div class="color-blue cursor-pointer" @click="router.push('/book-list')">{{ t('Change') }}</div>
         </div>
         <BaseButton size="large"
                     @click="startStudy"
                     :disabled="!base.currentBook.name">
           <div class="flex items-center gap-2">
-            <span class="line-height-[2]">{{ isSaveData ? '继续学习' : '开始学习' }}</span>
+            <span class="line-height-[2]">{{ isSaveData ? t('ContinueLearning') : t('StartLearning') }}</span>
             <IconFluentArrowCircleRight16Regular class="text-xl"/>
           </div>
         </BaseButton>
@@ -230,23 +233,23 @@ const {data: recommendBookList, isFetching} = useFetch(resourceWrap(DICT_LIST.AR
 
     <div class="card  flex flex-col">
       <div class="flex justify-between">
-        <div class="title">我的书籍</div>
+        <div class="title">{{ t('MyBooks') }}</div>
         <div class="flex gap-4 items-center">
-          <PopConfirm title="确认删除所有选中书籍？" @confirm="handleBatchDel" v-if="selectIds.length">
-            <BaseIcon class="del" title="删除">
+          <PopConfirm :title="t('ConfirmDeleteBooks')" @confirm="handleBatchDel" v-if="selectIds.length">
+            <BaseIcon class="del" :title="t('Delete')">
               <DeleteIcon/>
             </BaseIcon>
           </PopConfirm>
 
           <div class="color-blue cursor-pointer" v-if="base.article.bookList.length > 1"
-               @click="isMultiple = !isMultiple; selectIds = []">{{ isMultiple ? '取消' : '管理书籍' }}
+               @click="isMultiple = !isMultiple; selectIds = []">{{ isMultiple ? t('Cancel') : t('ManageBooks') }}
           </div>
-          <div class="color-blue cursor-pointer" @click="nav('book-detail', { isAdd: true })">创建个人书籍</div>
+          <div class="color-blue cursor-pointer" @click="nav('book-detail', { isAdd: true })">{{ t('CreatePersonalBook') }}</div>
         </div>
       </div>
       <div class="flex gap-4 flex-wrap mt-4">
         <Book :is-add="false"
-              quantifier="篇"
+              :quantifier="t('ArticleQuantifier')"
               :item="item"
               :checked="selectIds.includes(item.id)"
               @check="() => toggleSelect(item)"
@@ -260,15 +263,15 @@ const {data: recommendBookList, isFetching} = useFetch(resourceWrap(DICT_LIST.AR
 
     <div class="card flex flex-col min-h-50" v-loading="isFetching">
       <div class="flex justify-between">
-        <div class="title">推荐</div>
+        <div class="title">{{ t('Recommended') }}</div>
         <div class="flex gap-4 items-center">
-          <div class="color-blue cursor-pointer" @click="router.push('/book-list')">更多</div>
+          <div class="color-blue cursor-pointer" @click="router.push('/book-list')">{{ t('More') }}</div>
         </div>
       </div>
 
       <div class="flex gap-4 flex-wrap  mt-4">
         <Book :is-add="false"
-              quantifier="篇"
+              :quantifier="t('ArticleQuantifier')"
               :item="item as any"
               v-for="(item, j) in recommendBookList" @click="goBookDetail(item as any)"/>
       </div>

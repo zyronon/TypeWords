@@ -29,8 +29,12 @@ import InputNumber from "@/components/base/InputNumber.vue";
 import PopConfirm from "@/components/PopConfirm.vue";
 import Textarea from "@/components/base/Textarea.vue";
 import SettingItem from "@/pages/setting/SettingItem.vue";
+import LanguageSelect from "@/components/base/select/LanguageSelect.vue";
 import { get, set } from "idb-keyval";
 import { useRuntimeStore } from "@/stores/runtime.ts";
+import { useLanguage } from '@/hooks/useLanguage'
+
+const { t } = useLanguage()
 
 const emit = defineEmits<{
   toggleDisabledDialogEscKey: [val: boolean]
@@ -317,19 +321,19 @@ async function importData(e) {
       const str = await dataFile.async("string");
       importJson(str, false)
 
-      Toast.success("导入成功！");
+      Toast.success(t('ImportSuccess'));
     } catch (e) {
-      Toast.error("导入失败！");
+      Toast.error(t('ImportFailed'));
     } finally {
       importLoading = false
     }
   } else {
-    Toast.error("不支持的文件类型");
+    Toast.error(t('UnsupportedFileType'));
   }
 }
 
 function importOldData() {
-  exportData('已为您自动保存当前数据！稍后将进行老数据导入操作')
+  exportData(t('AutoSavedData'))
   setTimeout(() => {
     let oldDataStr = localStorage.getItem('type-word-dict-v3')
     if (oldDataStr) {
@@ -341,12 +345,12 @@ function importOldData() {
         }
         let baseState = checkAndUpgradeSaveDict(data)
         store.setState(baseState)
-        Toast.success('导入成功')
+        Toast.success(t('ImportSuccess'))
       } catch (err) {
-        Toast.error('导入失败')
+        Toast.error(t('ImportFailed'))
       }
     } else {
-      Toast.error('导入失败！原因：本地无老数据备份')
+      Toast.error(t('NoOldDataBackup'))
     }
   }, 1000)
 }
@@ -359,23 +363,23 @@ function importOldData() {
         <div class="tabs">
           <div class="tab" :class="tabIndex === 0 && 'active'" @click="tabIndex = 0">
             <IconFluentSettings20Regular width="20"/>
-            <span>通用练习设置</span>
+            <span>{{ t('GeneralSettings') }}</span>
           </div>
           <div class="tab" :class="tabIndex === 1 && 'active'" @click="tabIndex = 1">
             <IconFluentTextUnderlineDouble20Regular width="20"/>
-            <span>单词练习设置</span>
+            <span>{{ t('WordPracticeSettings') }}</span>
           </div>
           <div class="tab" :class="tabIndex === 2 && 'active'" @click="tabIndex = 2">
             <IconFluentBookLetter20Regular width="20"/>
-            <span>文章练习设置</span>
+            <span>{{ t('ArticlePracticeSettings') }}</span>
           </div>
           <div class="tab" :class="tabIndex === 3 && 'active'" @click="tabIndex = 3">
             <IconFluentKeyboardLayoutFloat20Regular width="20"/>
-            <span>快捷键设置</span>
+            <span>{{ t('ShortcutSettings') }}</span>
           </div>
           <div class="tab" :class="tabIndex === 4 && 'active'" @click="tabIndex = 4">
             <IconFluentDatabasePerson20Regular width="20"/>
-            <span>数据管理</span>
+            <span>{{ t('DataManagement') }}</span>
           </div>
           <div class="tab" :class="tabIndex === 5 && 'active'" @click="()=>{
             tabIndex = 5
@@ -383,46 +387,54 @@ function importOldData() {
             set(APP_VERSION.key,APP_VERSION.version)
           }">
             <IconFluentTextBulletListSquare20Regular width="20"/>
-            <span>更新日志</span>
+            <span>{{ t('UpdateLog') }}</span>
             <div class="red-point" v-if="runtimeStore.isNew"></div>
           </div>
           <div class="tab" :class="tabIndex === 6 && 'active'" @click="tabIndex = 6">
             <IconFluentPerson20Regular width="20"/>
-            <span>关于</span>
+            <span>{{ t('About') }}</span>
           </div>
         </div>
       </div>
       <div class="content">
-        <div class="page-title text-align-center">设置</div>
+        <div class="page-title text-align-center">{{ t('Settings') }}</div>
         <!--        通用练习设置-->
         <!--        通用练习设置-->
         <!--        通用练习设置-->
         <div v-if="tabIndex === 0">
-          <SettingItem title="忽略大小写"
-                       desc="开启后，输入时不区分大小写，如输入“hello”和“Hello”都会被认为是正确的"
+          <SettingItem :title="t('Language')"
+                       :desc="t('LanguageDesc')"
+          >
+            <LanguageSelect />
+          </SettingItem>
+
+          <div class="line"></div>
+          
+          <SettingItem :title="t('IgnoreCase')"
+                       :desc="t('IgnoreCaseDesc')"
           >
             <Switch v-model="settingStore.ignoreCase"/>
           </SettingItem>
 
-          <SettingItem title="允许默写模式下显示提示"
-                       :desc="`开启后，可以通过将鼠标移动到单词上或者按快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示正确答案`"
+          <SettingItem :title="t('AllowDictationHints')"
+                       :desc="t('AllowDictationHintsDesc', { key: settingStore.shortcutKeyMap[ShortcutKey.ShowWord] })"
           >
             <Switch v-model="settingStore.allowWordTip"/>
           </SettingItem>
 
           <div class="line"></div>
-          <SettingItem title="简单词过滤"
-                       desc="开启后，练习的单词中不会包含简单词；文章统计的总词数中不会包含简单词"
+          <SettingItem :title="t('SimpleWordFilter')"
+                       :desc="t('SimpleWordFilterDesc')"
           >
             <Switch v-model="settingStore.ignoreSimpleWord"/>
           </SettingItem>
 
-          <SettingItem title="简单词列表"
+          <SettingItem :title="t('SimpleWordList')"
                        class="items-start!"
                        v-if="settingStore.ignoreSimpleWord"
           >
             <Textarea
-                placeholder="多个单词用英文逗号隔号"
+                :placeholder="t('SeparateMultipleWords')"
                 v-model="simpleWords" :autosize="{minRows: 6, maxRows: 10}"/>
           </SettingItem>
 
@@ -430,24 +442,24 @@ function importOldData() {
           <!--          音效-->
           <!--          音效-->
           <div class="line"></div>
-          <SettingItem main-title="音效"/>
-          <SettingItem title="单词/句子发音口音">
+          <SettingItem :main-title="t('SoundEffects')"/>
+          <SettingItem :title="t('WordSentencePronunciation')">
             <Select v-model="settingStore.soundType"
-                    placeholder="请选择"
+                    :placeholder="t('PleaseSelect')"
                     class="w-50!"
             >
-              <Option label="美音" value="us"/>
-              <Option label="英音" value="uk"/>
+              <Option :label="t('AmericanAccent')" value="us"/>
+              <Option :label="t('BritishAccent')" value="uk"/>
             </Select>
           </SettingItem>
 
           <div class="line"></div>
-          <SettingItem title="按键音">
+          <SettingItem :title="t('KeypressSound')">
             <Switch v-model="settingStore.keyboardSound"/>
           </SettingItem>
-          <SettingItem title="按键音效">
+          <SettingItem :title="t('KeypressSoundEffect')">
             <Select v-model="settingStore.keyboardSoundFile"
-                    placeholder="请选择"
+                    :placeholder="t('PleaseSelect')"
                     class="w-50!"
             >
               <Option
@@ -465,16 +477,16 @@ function importOldData() {
               </Option>
             </Select>
           </SettingItem>
-          <SettingItem title="音量">
+          <SettingItem :title="t('Volume')">
             <Slider v-model="settingStore.keyboardSoundVolume"/>
             <span class="w-10 pl-5">{{ settingStore.keyboardSoundVolume }}%</span>
           </SettingItem>
 
           <div class="line"></div>
-          <SettingItem title="效果音（输入错误、完成时的音效）">
+          <SettingItem :title="t('EffectSound')">
             <Switch v-model="settingStore.effectSound"/>
           </SettingItem>
-          <SettingItem title="音量">
+          <SettingItem :title="t('Volume')">
             <Slider v-model="settingStore.effectSoundVolume"/>
             <span class="w-10 pl-5">{{ settingStore.effectSoundVolume }}%</span>
           </SettingItem>
@@ -485,40 +497,40 @@ function importOldData() {
         <!--        单词练习设置-->
         <!--        单词练习设置-->
         <div v-if="tabIndex === 1">
-          <SettingItem title="练习模式">
+          <SettingItem :title="t('PracticeMode')">
             <RadioGroup v-model="settingStore.wordPracticeMode" class="flex-col gap-0!">
-              <Radio :value="0" label="智能模式，系统自动计算复习单词与默写单词"/>
-              <Radio :value="1" label="自由模式，系统不强制复习与默写"/>
+              <Radio :value="0" :label="t('SmartMode')"/>
+              <Radio :value="1" :label="t('FreeMode')"/>
             </RadioGroup>
           </SettingItem>
 
-          <SettingItem title="显示上一个/下一个单词"
-                       desc="开启后，练习中会在上方显示上一个/下一个单词"
+          <SettingItem :title="t('ShowPreviousNext')"
+                       :desc="t('ShowPreviousNextDesc')"
           >
             <Switch v-model="settingStore.showNearWord"/>
           </SettingItem>
 
-          <SettingItem title="不默认显示练习设置弹框"
-                       desc="在词典详情页面，点击学习按钮后，是否显示练习设置弹框"
+          <SettingItem :title="t('DisableSettingsDialog')"
+                       :desc="t('DisableSettingsDialogDesc')"
           >
             <Switch v-model="settingStore.disableShowPracticeSettingDialog"/>
           </SettingItem>
 
-          <SettingItem title="输入错误时，清空已输入内容"
+          <SettingItem :title="t('ClearOnError')"
           >
             <Switch v-model="settingStore.inputWrongClear"/>
           </SettingItem>
 
-          <SettingItem title="单词循环设置" class="gap-0!">
+          <SettingItem :title="t('WordLoopSettings')" class="gap-0!">
             <RadioGroup v-model="settingStore.repeatCount">
               <Radio :value="1" size="default">1</Radio>
               <Radio :value="2" size="default">2</Radio>
               <Radio :value="3" size="default">3</Radio>
               <Radio :value="5" size="default">5</Radio>
-              <Radio :value="100" size="default">自定义</Radio>
+              <Radio :value="100" size="default">{{ t('Custom') }}</Radio>
             </RadioGroup>
             <div class="ml-2 center gap-space" v-if="settingStore.repeatCount === 100">
-              <span>循环次数</span>
+              <span>{{ t('LoopCount') }}</span>
               <InputNumber v-model="settingStore.repeatCustomCount"
                            :min="6"
                            :max="15"
@@ -532,15 +544,15 @@ function importOldData() {
           <!--          发音-->
           <!--          发音-->
           <div class="line"></div>
-          <SettingItem mainTitle="音效"/>
-          <SettingItem title="自动发音">
+          <SettingItem :mainTitle="t('SoundEffects')"/>
+          <SettingItem :title="t('AutoPronunciation')">
             <Switch v-model="settingStore.wordSound"/>
           </SettingItem>
-          <SettingItem title="音量">
+          <SettingItem :title="t('Volume')">
             <Slider v-model="settingStore.wordSoundVolume"/>
             <span class="w-10 pl-5">{{ settingStore.wordSoundVolume }}%</span>
           </SettingItem>
-          <SettingItem title="倍速">
+          <SettingItem :title="t('PlaybackSpeed')">
             <Slider v-model="settingStore.wordSoundSpeed" :step="0.1" :min="0.5" :max="3"/>
             <span class="w-10 pl-5">{{ settingStore.wordSoundSpeed }}</span>
           </SettingItem>
@@ -550,15 +562,15 @@ function importOldData() {
           <!--          自动切换-->
           <!--          自动切换-->
           <div class="line"></div>
-          <SettingItem mainTitle="自动切换"/>
-          <SettingItem title="自动切换下一个单词"
-                       desc="未开启自动切换时，当输入完成后请使用空格键切换下一个"
+          <SettingItem :mainTitle="t('AutoSwitch')"/>
+          <SettingItem :title="t('AutoNextWord')"
+                       :desc="t('AutoNextWordDesc')"
           >
             <Switch v-model="settingStore.autoNextWord"/>
           </SettingItem>
 
-          <SettingItem title="自动切换下一个单词时间"
-                       desc="正确输入单词后，自动跳转下一个单词的时间"
+          <SettingItem :title="t('AutoNextWordTime')"
+                       :desc="t('AutoNextWordTimeDesc')"
           >
             <InputNumber v-model="settingStore.waitTimeForChangeWord"
                          :disabled="!settingStore.autoNextWord"
@@ -567,7 +579,7 @@ function importOldData() {
                          :step="100"
                          type="number"
             />
-            <span class="ml-4">毫秒</span>
+            <span class="ml-4">{{ t('Milliseconds') }}</span>
           </SettingItem>
 
 
@@ -575,15 +587,15 @@ function importOldData() {
           <!--          字体设置-->
           <!--          字体设置-->
           <div class="line"></div>
-          <SettingItem mainTitle="字体设置"/>
-          <SettingItem title="外语字体">
+          <SettingItem :mainTitle="t('FontSettings')"/>
+          <SettingItem :title="t('ForeignFont')">
             <Slider
                 :min="10"
                 :max="100"
                 v-model="settingStore.fontSize.wordForeignFontSize"/>
             <span class="w-10 pl-5">{{ settingStore.fontSize.wordForeignFontSize }}px</span>
           </SettingItem>
-          <SettingItem title="中文字体">
+          <SettingItem :title="t('ChineseFont')">
             <Slider
                 :min="10"
                 :max="100"
@@ -601,18 +613,18 @@ function importOldData() {
           <!--          发音-->
           <!--          发音-->
           <div class="line"></div>
-          <SettingItem mainTitle="音效"/>
-          <SettingItem title="自动播放句子">
+          <SettingItem :mainTitle="t('SoundEffects')"/>
+          <SettingItem :title="t('AutoPlaySentence')">
             <Switch v-model="settingStore.articleSound"/>
           </SettingItem>
-          <SettingItem title="自动播放下一篇">
+          <SettingItem :title="t('AutoPlayNextArticle')">
             <Switch v-model="settingStore.articleAutoPlayNext"/>
           </SettingItem>
-          <SettingItem title="音量">
+          <SettingItem :title="t('Volume')">
             <Slider v-model="settingStore.articleSoundVolume"/>
             <span class="w-10 pl-5">{{ settingStore.articleSoundVolume }}%</span>
           </SettingItem>
-          <SettingItem title="倍速">
+          <SettingItem :title="t('PlaybackSpeed')">
             <Slider v-model="settingStore.articleSoundSpeed" :step="0.1" :min="0.5" :max="3"/>
             <span class="w-10 pl-5">{{ settingStore.articleSoundSpeed }}</span>
           </SettingItem>
@@ -621,22 +633,21 @@ function importOldData() {
 
         <div class="body" v-if="tabIndex === 3">
           <div class="row">
-            <label class="main-title">功能</label>
-            <div class="wrapper">快捷键(点击可修改)</div>
+            <label class="main-title">{{ t('Function') }}</label>
+            <div class="wrapper">{{ t('ShortcutClickToModify') }}</div>
           </div>
           <div class="scroll">
             <div class="row" v-for="item of Object.entries(settingStore.shortcutKeyMap)">
               <label class="item-title">{{ getShortcutKeyName(item[0]) }}</label>
               <div class="wrapper" @click="editShortcutKey = item[0]">
                 <div class="set-key" v-if="editShortcutKey === item[0]">
-                  <input ref="shortcutInput" :value="item[1]?item[1]:'未设置快捷键'" readonly type="text"
+                  <input ref="shortcutInput" :value="item[1]?item[1]:t('NoShortcutSet')" readonly type="text"
                          @blur="handleInputBlur">
-                  <span @click.stop="editShortcutKey = ''">按键盘进行设置，<span
-                      class="text-red!">设置完成点击这里</span></span>
+                  <span @click.stop="editShortcutKey = ''">{{ t('PressKeyToSet') }}</span>
                 </div>
                 <div v-else>
                   <div v-if="item[1]">{{ item[1] }}</div>
-                  <span v-else>未设置快捷键</span>
+                  <span v-else>{{ t('NoShortcutSet') }}</span>
                 </div>
               </div>
             </div>
@@ -644,34 +655,29 @@ function importOldData() {
           <div class="row">
             <label class="item-title"></label>
             <div class="wrapper">
-              <BaseButton @click="resetShortcutKeyMap">恢复默认</BaseButton>
+              <BaseButton @click="resetShortcutKeyMap">{{ t('RestoreDefaults') }}</BaseButton>
             </div>
           </div>
         </div>
 
         <div v-if="tabIndex === 4">
-          <div>
-            目前用户的所有数据
-            <b class="text-red">仅保存在本地</b>。如果您需要在不同的设备、浏览器或者其他非官方部署上使用 {{ APP_NAME }}，
-            您需要手动进行数据同步和保存。
-          </div>
-          <BaseButton :loading="exportLoading" class="mt-3" @click="exportData()">导出数据</BaseButton>
+          <div v-html="t('DataStorageNotice', { appName: APP_NAME })"></div>
+          <BaseButton :loading="exportLoading" class="mt-3" @click="exportData()">{{ t('ExportData') }}</BaseButton>
 
           <div class="line my-3"></div>
 
-          <div>请注意，导入数据后将<b class="text-red"> 完全覆盖 </b>当前所有数据，请谨慎操作。
-          </div>
+          <div v-html="t('ImportWarning')"></div>
           <div class="flex gap-space mt-3">
             <div class="import hvr-grow">
-              <BaseButton :loading="importLoading">导入数据</BaseButton>
+              <BaseButton :loading="importLoading">{{ t('ImportData') }}</BaseButton>
               <input type="file"
                      accept="application/json,.zip,application/zip"
                      @change="importData">
             </div>
             <PopConfirm
-                title="导入老版本数据前，请先备份当前数据，确定要导入老版本数据吗？"
+                :title="t('ImportOldVersionConfirm')"
                 @confirm="importOldData">
-              <BaseButton>老版本数据导入</BaseButton>
+              <BaseButton>{{ t('ImportOldVersionData') }}</BaseButton>
             </PopConfirm>
           </div>
         </div>
@@ -680,13 +686,13 @@ function importOldData() {
           <div class="item p-2">
             <div class="mb-2">
               <div>
-                <span>2025/9/14：</span>
-                <span>完善文章编辑、导入、导出等功能</span>
+                <span>{{ t('UpdateLogDate1') }}</span>
+                <span>{{ t('UpdateLogTitle1') }}</span>
               </div>
               <div class="text-base mt-1">
-                <div>1、文章的音频管理功能，目前已可添加音频、设置句子与音频的对应位置</div>
-                <div>2、文章可导入、导出</div>
-                <div>3、单词可导入、导出</div>
+                <div>{{ t('UpdateLogItem1_1') }}</div>
+                <div>{{ t('UpdateLogItem1_2') }}</div>
+                <div>{{ t('UpdateLogItem1_3') }}</div>
               </div>
             </div>
             <div class="line"></div>
@@ -696,17 +702,17 @@ function importOldData() {
         <div v-if="tabIndex === 6" class="center flex-col">
           <h1>Type Words</h1>
           <p class="w-100 text-xl">
-            感谢使用本项目！本项目是开源项目，如果觉得有帮助，请在 GitHub 点个 Star，您的支持是我持续改进的动力。
+            {{ t('ThankYouMessage') }}
           </p>
           <p>
-            GitHub地址：<a href="https://github.com/zyronon/TypeWords" target="_blank">https://github.com/zyronon/TypeWords</a>
+            {{ t('GitHubAddress') }}<a href="https://github.com/zyronon/TypeWords" target="_blank">https://github.com/zyronon/TypeWords</a>
           </p>
           <p>
-            反馈：<a
+            {{ t('Feedback') }}<a
               href="https://github.com/zyronon/TypeWords/issues" target="_blank">https://github.com/zyronon/TypeWords/issues</a>
           </p>
           <p>
-            作者邮箱：<a href="mailto:zyronon@163.com">zyronon@163.com</a>
+            {{ t('AuthorEmail') }}<a href="mailto:zyronon@163.com">zyronon@163.com</a>
           </p>
           <div class="text-md color-gray mt-10">
             Build {{ gitLastCommitHash }}

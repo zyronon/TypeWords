@@ -16,7 +16,9 @@ import { getDefaultDict } from "@/types/func.ts";
 import { useFetch } from "@vueuse/core";
 import { DICT_LIST } from "@/config/env.ts";
 import BaseInput from "@/components/base/BaseInput.vue";
+import { useLanguage } from '@/hooks/useLanguage'
 
+const { t } = useLanguage()
 const {nav} = useNav()
 const runtimeStore = useRuntimeStore()
 const store = useBaseStore()
@@ -85,13 +87,13 @@ const searchList = computed<any[]>(() => {
       <div class="flex items-center relative gap-2">
         <BackIcon class="z-2" @click='router.back'/>
         <div class="flex flex-1 gap-4" v-if="showSearchInput">
-          <BaseInput clearable placeholder="请输入词典名称/缩写/类别" v-model="searchKey" class="flex-1" autofocus/>
-          <BaseButton @click="showSearchInput = false, searchKey = ''">取消</BaseButton>
+          <BaseInput clearable :placeholder="t('SearchDictPlaceholder')" v-model="searchKey" class="flex-1" autofocus/>
+          <BaseButton @click="showSearchInput = false, searchKey = ''">{{ t('Cancel') }}</BaseButton>
         </div>
         <div class="py-1 flex flex-1 justify-end" v-else>
-          <span class="page-title absolute w-full center">词典列表</span>
+          <span class="page-title absolute w-full center">{{ t('DictList') }}</span>
           <BaseIcon
-              title="搜索"
+              :title="t('Search')"
               @click="showSearchInput = true"
               class="z-1"
               icon="fluent:search-24-regular">
@@ -104,16 +106,16 @@ const searchList = computed<any[]>(() => {
             v-if="searchList.length "
             @selectDict="selectDict"
             :list="searchList"
-            quantifier="个词"
+            :quantifier="t('WordQuantifier')"
             :select-id="'-1'"/>
-        <Empty v-else text="没有相关词典"/>
+        <Empty v-else :text="t('NoRelatedDict')"/>
       </div>
       <div class="w-full" v-else>
         <DictGroup
             v-for="item in groupedByCategoryAndTag"
             :select-id="store.currentStudyWordDict.id"
             @selectDict="selectDict"
-            quantifier="个词"
+            :quantifier="t('WordQuantifier')"
             :groupByTag="item[1]"
             :category="item[0]"
         />

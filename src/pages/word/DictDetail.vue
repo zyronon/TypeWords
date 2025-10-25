@@ -28,7 +28,9 @@ import { useSettingStore } from "@/stores/setting.ts";
 import { MessageBox } from "@/utils/MessageBox.tsx";
 import { CAN_REQUEST, Origin, PracticeSaveWordKey } from "@/config/env.ts";
 import { detail } from "@/apis";
+import { useLanguage } from '@/hooks/useLanguage'
 
+const { t } = useLanguage()
 const runtimeStore = useRuntimeStore()
 const base = useBaseStore()
 const router = useRouter()
@@ -64,8 +66,8 @@ let wordForm = $ref(getDefaultFormWord())
 let wordFormRef = $ref()
 const wordRules = reactive({
   word: [
-    {required: true, message: '请输入单词', trigger: 'blur'},
-    {max: 100, message: '名称不能超过100个字符', trigger: 'blur'},
+    {required: true, message: t('EnterWord'), trigger: 'blur'},
+    {max: 100, message: t('WordLengthLimit'), trigger: 'blur'},
   ],
 })
 let studyLoading = $ref(false)
@@ -99,9 +101,9 @@ async function onSubmitWord() {
         let r = list.find(v => v.id === data.id)
         if (r) {
           Object.assign(r, data)
-          Toast.success('修改成功')
+          Toast.success(t('ModifySuccess'))
         } else {
-          Toast.success('修改失败，未找到单词')
+          Toast.success(t('ModifyFailed'))
           return
         }
       } else {
@@ -109,15 +111,15 @@ async function onSubmitWord() {
         data.checked = false
         let r = list.find(v => v.word === wordForm.word)
         if (r) {
-          Toast.warning('已有相同名称单词！')
+          Toast.warning(t('DuplicateWordExists'))
           return
         } else list.push(data)
-        Toast.success('添加成功')
+        Toast.success(t('AddSuccess'))
         wordForm = getDefaultFormWord()
       }
       syncDictInMyStudyList()
     } else {
-      Toast.warning('请填写完整')
+      Toast.warning(t('PleaseComplete'))
     }
   })
 }
@@ -242,7 +244,7 @@ async function startPractice() {
 
 async function addMyStudyList() {
   if (!runtimeStore.editDict.words.length) {
-    return Toast.warning('没有单词可学习！')
+    return Toast.warning(t('NoWordsToLearn'))
   }
   if (!settingStore.disableShowPracticeSettingDialog) {
     showPracticeSettingDialog = true
@@ -306,8 +308,8 @@ function importData(e) {
 
         if (repeat.length) {
           MessageBox.confirm(
-              '单词"' + repeat.map(v => v.word).join(', ') + '" 已存在，是否覆盖原单词？',
-              '检测到重复单词',
+              t('WordExistsOverwrite', { words: repeat.map(v => v.word).join(', ') }),
+              t('DuplicateWordsFound'),
               () => {
                 repeat.map(v => {
                   runtimeStore.editDict.words[v.index] = v
@@ -320,19 +322,19 @@ function importData(e) {
                 e.target.value = ''
                 importLoading = false
                 syncDictInMyStudyList()
-                Toast.success('导入成功！')
+                Toast.success(t('ImportSuccess'))
               }
           )
         } else {
           tableRef.value.closeImportDialog()
           syncDictInMyStudyList()
-          Toast.success('导入成功！')
+          Toast.success(t('ImportSuccess'))
         }
       } else {
-        Toast.warning('导入失败！原因：没有数据/未认别到数据');
+        Toast.warning(t('ImportFailedNoData'));
       }
     } else {
-      Toast.warning('导入失败！原因：没有数据');
+      Toast.warning(t('ImportFailedNoDataShort'));
     }
     e.target.value = ''
     importLoading = false
@@ -363,7 +365,7 @@ async function exportData() {
   wb.Sheets['Sheet1'] = XLSX.utils.json_to_sheet(sheetData)
   wb.SheetNames = ['Sheet1']
   XLSX.writeFile(wb, `${filename}.xlsx`);
-  Toast.success(filename + ' 导出成功！')
+  Toast.success(t('ExportSuccess'))
   exportLoading = false
 }
 
@@ -381,11 +383,11 @@ defineRender(() => {
                   <div class="absolute page-title text-align-center w-full">{runtimeStore.editDict.name}</div>
                   <div class="flex">
                     <BaseButton loading={studyLoading || loading} type="info"
-                                onClick={() => isEdit = true}>编辑</BaseButton>
-                    <BaseButton loading={studyLoading || loading} onClick={addMyStudyList}>学习</BaseButton>
+                                onClick={() => isEdit = true}>{t('Edit')}</BaseButton>
+                    <BaseButton loading={studyLoading || loading} onClick={addMyStudyList}>{t('Learn')}</BaseButton>
                   </div>
                 </div>
-                <div class="text-lg  ">介绍：{runtimeStore.editDict.description}</div>
+                <div class="text-lg  ">{t('Introduction')}{runtimeStore.editDict.description}</div>
                 <div class="line my-3"></div>
 
                 <div class="flex flex-1 overflow-hidden">
@@ -416,15 +418,15 @@ defineRender(() => {
                                       <BaseIcon
                                           class="option-icon"
                                           onClick={() => editWord(val.item)}
-                                          title="编辑">
+                                          title={t('Edit')}>
                                         <IconFluentTextEditStyle20Regular/>
                                       </BaseIcon>
-                                      <PopConfirm title="确认删除？"
+                                      <PopConfirm title={t('ConfirmDelete')}
                                                   onConfirm={() => delWord(val.item.id)}
                                       >
                                         <BaseIcon
                                             class="option-icon"
-                                            title="删除">
+                                            title={t('Delete')}>
                                           <DeleteIcon/>
                                         </BaseIcon>
                                       </PopConfirm>
@@ -440,7 +442,7 @@ defineRender(() => {
                     isOperate ? (
                         <div class="flex-1 flex flex-col ml-4">
                           <div class="common-title">
-                            {wordForm.id ? '修改' : '添加'}单词
+                            {wordForm.id ? t('ModifyWord') : t('AddWord')}{t('Word')}
                           </div>
                           <Form
                               class="flex-1 overflow-auto pr-2"
@@ -448,7 +450,7 @@ defineRender(() => {
                               rules={wordRules}
                               model={wordForm}
                               label-width="7rem">
-                            <FormItem label="单词" prop="word">
+                            <FormItem label={t('Word')} prop="word">
                               <BaseInput
                                   modelValue={wordForm.word}
                                   onUpdate:modelValue={e => wordForm.word = e}
@@ -456,67 +458,67 @@ defineRender(() => {
 
                               </BaseInput>
                             </FormItem>
-                            <FormItem label="英音音标">
+                            <FormItem label={t('BritishPhonetic')}>
                               <BaseInput
                                   modelValue={wordForm.phonetic0}
                                   onUpdate:modelValue={e => wordForm.phonetic0 = e}
                               />
                             </FormItem>
-                            <FormItem label="美音音标">
+                            <FormItem label={t('AmericanPhonetic')}>
                               <BaseInput
                                   modelValue={wordForm.phonetic1}
                                   onUpdate:modelValue={e => wordForm.phonetic1 = e}/>
                             </FormItem>
-                            <FormItem label="翻译">
+                            <FormItem label={t('Translation')}>
                               <Textarea
                                   modelValue={wordForm.trans}
                                   onUpdate:modelValue={e => wordForm.trans = e}
-                                  placeholder="一行一个翻译，前面词性，后面内容（如n.取消）；多个翻译请换行"
+                                  placeholder={t('TranslationPlaceholder')}
                                   autosize={{minRows: 6, maxRows: 10}}/>
                             </FormItem>
-                            <FormItem label="例句">
+                            <FormItem label={t('Sentence')}>
                               <Textarea
                                   modelValue={wordForm.sentences}
                                   onUpdate:modelValue={e => wordForm.sentences = e}
-                                  placeholder="一行原文，一行译文；多个请换两行"
+                                  placeholder={t('SentencePlaceholder')}
                                   autosize={{minRows: 6, maxRows: 10}}/>
                             </FormItem>
-                            <FormItem label="短语">
+                            <FormItem label={t('Phrase')}>
                               <Textarea
                                   modelValue={wordForm.phrases}
                                   onUpdate:modelValue={e => wordForm.phrases = e}
-                                  placeholder="一行原文，一行译文；多个请换两行"
+                                  placeholder={t('PhrasePlaceholder')}
                                   autosize={{minRows: 6, maxRows: 10}}/>
                             </FormItem>
-                            <FormItem label="同义词">
+                            <FormItem label={t('Synonym')}>
                               <Textarea
                                   modelValue={wordForm.synos}
                                   onUpdate:modelValue={e => wordForm.synos = e}
-                                  placeholder="请参考已有单词格式"
+                                  placeholder={t('SynonymPlaceholder')}
                                   autosize={{minRows: 6, maxRows: 20}}/>
                             </FormItem>
-                            <FormItem label="同根词">
+                            <FormItem label={t('RelatedWord')}>
                               <Textarea
                                   modelValue={wordForm.relWords}
                                   onUpdate:modelValue={e => wordForm.relWords = e}
-                                  placeholder="请参考已有单词格式"
+                                  placeholder={t('RelatedWordPlaceholder')}
                                   autosize={{minRows: 6, maxRows: 20}}/>
                             </FormItem>
-                            <FormItem label="词源">
+                            <FormItem label={t('Etymology')}>
                               <Textarea
                                   modelValue={wordForm.etymology}
                                   onUpdate:modelValue={e => wordForm.etymology = e}
-                                  placeholder="请参考已有单词格式"
+                                  placeholder={t('EtymologyPlaceholder')}
                                   autosize={{minRows: 6, maxRows: 10}}/>
                             </FormItem>
                           </Form>
                           <div class="center">
                             <BaseButton
                                 type="info"
-                                onClick={closeWordForm}>关闭
+                                onClick={closeWordForm}>{t('Close')}
                             </BaseButton>
                             <BaseButton type="primary"
-                                        onClick={onSubmitWord}>保存
+                                        onClick={onSubmitWord}>{t('Save')}
                             </BaseButton>
                           </div>
                         </div>
@@ -534,7 +536,7 @@ defineRender(() => {
                     }
                   }}/>
                   <div class="absolute page-title text-align-center w-full">
-                    {runtimeStore.editDict.id ? '修改' : '创建'}词典
+                    {runtimeStore.editDict.id ? t('ModifyDict') : t('CreateDict')}{t('Dictionary')}
                   </div>
                 </div>
                 <div class="center">

@@ -1770,6 +1770,19 @@
       "translateLanguage": "zh-CN"
     },
     {
+      "id": "TOEIC-FR",
+      "name": "TOEIC FR",
+      "description": "",
+      "category": "国际考试",
+      "tags": [
+        "TOEIC"
+      ],
+      "url": "TOEIC-FR.json",
+      "length": 1694,
+      "language": "en",
+      "translateLanguage": "fr"
+    },
+    {
       "id": "Duolingo_Vocabulary_B1",
       "name": "多邻国分级词汇B1",
       "description": "多邻国分级词汇B1",

@@ -22,7 +22,9 @@ import { useSettingStore } from "@/stores/setting.ts";
 import { useFetch } from "@vueuse/core";
 import { CAN_REQUEST, DICT_LIST } from "@/config/env.ts";
 import { detail } from "@/apis";
+import { useLanguage } from '@/hooks/useLanguage'
 
+const { t } = useLanguage()
 const runtimeStore = useRuntimeStore()
 const settingStore = useSettingStore()
 const base = useBaseStore()
@@ -54,7 +56,7 @@ function handleCheckedChange(val) {
 async function addMyStudyList() {
   let sbook = runtimeStore.editDict
   if (!sbook.articles.length) {
-    return Toast.warning('没有文章可学习！')
+    return Toast.warning(t('NoArticlesToLearn'))
   }
 
   studyLoading = true
@@ -127,8 +129,8 @@ const {data: book_list} = useFetch(resourceWrap(DICT_LIST.ARTICLE.ALL)).json()
 
 function reset() {
   MessageBox.confirm(
-      '继续此操作会重置所有文章，并从官方书籍获取最新文章列表，学习记录不会被重置。确认恢复默认吗？',
-      '恢复默认',
+      t('RestoreDefaultConfirm'),
+      t('RestoreDefault'),
       async () => {
         let dict = book_list.value.find(v => v.url === runtimeStore.editDict.url) as Dict
         if (dict && dict.id) {
@@ -143,11 +145,11 @@ function reset() {
               item.lastLearnIndex = item.articles.length - 1
             }
             runtimeStore.editDict = item
-            Toast.success('恢复成功')
+            Toast.success(t('RestoreSuccess'))
             return
           }
         }
-        Toast.error('恢复失败')
+        Toast.error(t('RestoreFailed'))
       }
   )
 }
@@ -185,15 +187,15 @@ function next() {
         <div class="absolute text-2xl text-align-center w-full">{{ runtimeStore.editDict.name }}</div>
         <div class="flex">
           <BaseButton v-if="runtimeStore.editDict.custom && runtimeStore.editDict.url" type="info" @click="reset">
-            恢复默认
+            {{ t('RestoreDefault') }}
           </BaseButton>
-          <BaseButton :loading="studyLoading||loading" type="info" @click="isEdit = true">编辑</BaseButton>
-          <BaseButton type="info" @click="router.push('batch-edit-article')">文章管理</BaseButton>
-          <BaseButton :loading="studyLoading||loading" @click="addMyStudyList">学习</BaseButton>
+          <BaseButton :loading="studyLoading||loading" type="info" @click="isEdit = true">{{ t('Edit') }}</BaseButton>
+          <BaseButton type="info" @click="router.push('batch-edit-article')">{{ t('ArticleManagement') }}</BaseButton>
+          <BaseButton :loading="studyLoading||loading" @click="addMyStudyList">{{ t('Learn') }}</BaseButton>
         </div>
       </div>
-      <div class="text-lg  ">介绍：{{ runtimeStore.editDict.description }}</div>
-      <div class="text-base  " v-if="totalSpend">总学习时长：{{ totalSpend }}</div>
+      <div class="text-lg  ">{{ t('Introduction') }}{{ runtimeStore.editDict.description }}</div>
+      <div class="text-base  " v-if="totalSpend">{{ t('TotalLearningTime') }}：{{ totalSpend }}</div>
 
       <div class="line my-3"></div>
 
@@ -209,7 +211,7 @@ function next() {
               <BaseIcon
                   :class="!isArticleCollect(item)?'collect':'fill'"
                   @click.stop="toggleArticleCollect(item)"
-                  :title="!isArticleCollect(item) ? '收藏' : '取消收藏'">
+                  :title="!isArticleCollect(item) ? t('Collect') : t('Uncollect')">
                 <IconFluentStar16Regular v-if="!isArticleCollect(item)"/>
                 <IconFluentStar16Filled v-else/>
               </BaseIcon>
@@ -220,8 +222,8 @@ function next() {
         <div class="right flex-[4] shrink-0 pl-4 overflow-auto">
           <div v-if="selectArticle.id">
             <div class="font-family text-base mb-4 pr-2" v-if="currentPractice.length">
-              <div class="text-2xl font-bold">学习记录</div>
-              <div class="mt-1 mb-3">总学习时长：{{ msToHourMinute(total(currentPractice, 'spend')) }}</div>
+              <div class="text-2xl font-bold">{{ t('LearningRecord') }}</div>
+              <div class="mt-1 mb-3">{{ t('TotalLearningTime') }}：{{ msToHourMinute(total(currentPractice, 'spend')) }}</div>
               <div
                   class="item border border-item border-solid mt-2 p-2 bg-[var(--bg-history)] rounded-md flex justify-between"
                   v-for="i in currentPractice">
@@ -257,7 +259,7 @@ function next() {
     <div class="card mb-0 h-[95vh]" v-else>
       <div class="flex justify-between items-center relative">
         <BackIcon class="z-2" @click="isAdd ? $router.back():(isEdit = false)"/>
-        <div class="absolute text-2xl text-align-center w-full">{{ runtimeStore.editDict.id ? '修改' : '创建' }}书籍
+        <div class="absolute text-2xl text-align-center w-full">{{ runtimeStore.editDict.id ? t('ModifyBook') : t('CreateBook') }}{{ t('Book') }}
         </div>
       </div>
       <div class="center">

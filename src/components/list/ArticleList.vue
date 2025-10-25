@@ -3,6 +3,9 @@
 import { Article } from "@/types/types.ts";
 import BaseList from "@/components/list/BaseList.vue";
 import BaseInput from "@/components/base/BaseInput.vue";
+import { useLanguage } from '@/hooks/useLanguage'
+
+const { t } = useLanguage();
 
 const props = withDefaults(defineProps<{
   list: Article[],
@@ -72,6 +75,7 @@ defineExpose({scrollToBottom, scrollToItem})
       <BaseInput
           clearable
           v-model="searchKey"
+          :placeholder="t('SearchArticles')"
       >
         <template #subfix>
           <IconFluentSearch24Regular class="text-lg text-gray"/>
@@ -91,7 +95,7 @@ defineExpose({scrollToBottom, scrollToItem})
           <div class="name"> {{ `${searchKey ? '' : (index + 1) + '. '}${item.title}` }}</div>
         </div>
         <div class="item-sub-title" v-if="item.titleTranslate && showTranslate">
-          <div class="item-translate"> {{ `   ${item.titleTranslate}` }}</div>
+          <div class="item-translate"> {{ `   ${t('DisplayLanguage') === 'fr' ? item.titleTranslateFr || item.titleTranslate : item.titleTranslate}` }}</div>
         </div>
       </template>
       <template v-slot:suffix="{ item, index }">

@@ -17,9 +17,11 @@ import MiniDialog from "@/components/dialog/MiniDialog.vue";
 import {onMounted} from "vue";
 import {Origin} from "@/config/env.ts";
 import {syncBookInMyStudyList} from "@/hooks/article.ts";
+import { useLanguage } from '@/hooks/useLanguage'
 
 const base = useBaseStore()
 const runtimeStore = useRuntimeStore()
+const { t } = useLanguage()
 
 let article = $ref<Article>(getDefaultArticle())
 let editArticleRef: any = $ref()
@@ -49,8 +51,8 @@ function checkDataChange() {
           editArticle.textTranslate !== article.textTranslate
       ) {
         return MessageBox.confirm(
-            '检测到数据有变动，是否保存？',
-            '提示',
+            t('DataChangedSave'),
+            t('Hint'),
             async () => {
               let r = await editArticleRef.save('save')
               if (r) resolve(true)
@@ -61,8 +63,8 @@ function checkDataChange() {
     } else {
       if (editArticle.title.trim() && editArticle.text.trim()) {
         return MessageBox.confirm(
-            '检测到数据有变动，是否保存？',
-            '提示',
+            t('DataChangedSave'),
+            t('Hint'),
             async () => {
               let r = await editArticleRef.save('save')
               if (r) resolve(true)
@@ -91,7 +93,7 @@ function saveArticle(val: Article): boolean {
   } else {
     let has = runtimeStore.editDict.articles.find((item: Article) => item.title === val.title)
     if (has) {
-      Toast.error('已存在同名文章！')
+      Toast.error(t('ArticleAlreadyExists'))
       return false
     }
     val.id = nanoid(6)
@@ -102,7 +104,7 @@ function saveArticle(val: Article): boolean {
   }
   article = cloneDeep(val)
   //TODO 保存完成后滚动到对应位置
-  Toast.success('保存成功！')
+  Toast.success(t('SaveSuccessful'))
   syncBookInMyStudyList()
   return true
 }
@@ -166,8 +168,8 @@ function importData(e: any) {
 
       if (repeat.length) {
         MessageBox.confirm(
-            '文章"' + repeat.map(v => v.title).join(', ') + '" 已存在，是否覆盖原有文章？',
-            '检测到重复文章',
+            t('ArticlesExistOverwrite', {titles: repeat.map(v => v.title).join(', ')}),
+            t('DuplicateArticlesDetected'),
             () => {
               repeat.map(v => {
                 runtimeStore.editDict.articles[v.index] = v
@@ -180,15 +182,15 @@ function importData(e: any) {
               e.target.value = ''
               importLoading = false
               syncBookInMyStudyList()
-              Toast.success('导入成功！')
+              Toast.success(t('ImportSuccess'))
             }
         )
       } else {
         syncBookInMyStudyList()
-        Toast.success('导入成功！')
+        Toast.success(t('ImportSuccess'))
       }
     } else {
-      Toast.success('导入失败！原因：没有数据')
+      Toast.success(t('ImportFailedNoData'))
     }
     e.target.value = ''
     importLoading = false

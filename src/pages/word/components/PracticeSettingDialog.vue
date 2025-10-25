@@ -13,7 +13,9 @@ import Toast from "@/components/base/toast/Toast.ts";
 import ChangeLastPracticeIndexDialog from "@/pages/word/components/ChangeLastPracticeIndexDialog.vue";
 import Tooltip from "@/components/base/Tooltip.vue";
 import { useRuntimeStore } from "@/stores/runtime.ts";
+import { useLanguage } from '@/hooks/useLanguage'
 
+const { t } = useLanguage()
 const Dialog = defineAsyncComponent(() => import('@/components/dialog/Dialog.vue'))
 
 const store = useBaseStore()
@@ -53,26 +55,26 @@ watch(() => model.value, (n) => {
       temPracticeMode = settings.wordPracticeMode
       tempDisableShowPracticeSettingDialog = settings.disableShowPracticeSettingDialog
     } else {
-      Toast.warning('请先选择一本词典')
+      Toast.warning(t('PleaseSelectDict'))
     }
   }
 })
 </script>
 
 <template>
-  <Dialog v-model="model" title="学习设置" :footer="true"
+  <Dialog v-model="model" :title="t('LearningSettings')" :footer="true"
           @ok="changePerDayStudyNumber">
     <div class="target-modal color-main">
       <div class="text-center mt-2 mb-8">
-        <span>从<span class="text-3xl mx-2 lh">{{ tempLastLearnIndex }}</span>个开始，</span>
-        <span>每日<span class="text-3xl mx-2 lh">{{ tempPerDayStudyNumber }}</span>个，</span>
-        <span>预计<span
+        <span>{{ t('StartFrom') }}<span class="text-3xl mx-2 lh">{{ tempLastLearnIndex }}</span>{{ t('WordsStart') }}</span>
+        <span>{{ t('Daily') }}<span class="text-3xl mx-2 lh">{{ tempPerDayStudyNumber }}</span>{{ t('WordsPerDay') }}</span>
+        <span>{{ t('EstimatedDays') }}<span
             class="text-3xl mx-2 lh">{{
             _getAccomplishDays(runtimeStore.editDict.length - tempLastLearnIndex, tempPerDayStudyNumber)
-          }}</span>天完成</span>
+          }}</span>{{ t('DaysToComplete') }}</span>
       </div>
       <div class="flex mb-4 gap-space">
-        <span class="shrink-0">每日学习</span>
+        <span class="shrink-0">{{ t('DailyLearning') }}</span>
         <Slider :min="10"
                 :step="10"
                 show-text
@@ -80,29 +82,29 @@ watch(() => model.value, (n) => {
                 :max="200" v-model="tempPerDayStudyNumber"/>
       </div>
       <div class="mb-6 flex gap-space">
-        <span class="shrink-0">学习进度</span>
+        <span class="shrink-0">{{ t('LearningProgress') }}</span>
         <div class="flex-1">
           <Slider :min="0"
                   :step="10"
                   show-text
                   class="my-1"
                   :max="runtimeStore.editDict.words.length" v-model="tempLastLearnIndex"/>
-          <BaseButton @click="show = true">从词典选起始位置</BaseButton>
+          <BaseButton @click="show = true">{{ t('SelectStartPositionFromDict') }}</BaseButton>
         </div>
       </div>
 
       <div class="gap-space">
         <RadioGroup v-model="temPracticeMode" class="flex-col gap-0!">
-          <Radio :value="0" label="智能模式，系统自动计算复习单词与默写单词"/>
-          <Radio :value="1" label="自由模式，系统不强制复习与默写"/>
+          <Radio :value="0" :label="t('SmartMode')"/>
+          <Radio :value="1" :label="t('FreeMode')"/>
         </RadioGroup>
       </div>
     </div>
     <template v-slot:footer-left v-if="showLeftOption">
       <div class="flex items-center">
         <Checkbox v-model="tempDisableShowPracticeSettingDialog"/>
-        <Tooltip title="可在设置页面更改">
-          <span class="text-sm">保持默认，不再显示</span>
+        <Tooltip :title="t('CanChangeInSettings')">
+          <span class="text-sm">{{ t('KeepDefaultNoShow') }}</span>
         </Tooltip>
       </div>
     </template>

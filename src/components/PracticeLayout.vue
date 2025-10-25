@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import {useSettingStore} from "@/stores/setting.ts";
+import { useLanguage } from '@/hooks/useLanguage'
 
+const { t } = useLanguage()
 const settingStore = useSettingStore()
 defineProps<{
   panelLeft: string
@@ -9,14 +11,15 @@ defineProps<{
 
 <template>
   <div class="flex justify-center relative h-screen"
-       :class="!settingStore.showToolbar && 'footer-hide'">
-    <div class="wrap">
+       :class="!settingStore.showToolbar && 'footer-hide'"
+       :aria-label="t('PracticeArea')">
+    <div class="wrap" :aria-label="t('PracticeContent')">
       <slot name="practice"></slot>
     </div>
-    <div class="panel-wrap" :style="{left:panelLeft}">
+    <div class="panel-wrap" :style="{left:panelLeft}" :aria-label="t('PracticePanel')">
       <slot name="panel"></slot>
     </div>
-    <div class="footer-wrap">
+    <div class="footer-wrap" :aria-label="t('PracticeControls')">
       <slot name="footer"></slot>
     </div>
   </div>

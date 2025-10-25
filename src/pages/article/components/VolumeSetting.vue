@@ -5,8 +5,10 @@ import { useWindowClick } from "@/hooks/event.ts";
 import { useSettingStore } from "@/stores/setting.ts";
 import BaseIcon from "@/components/BaseIcon.vue";
 import Switch from "@/components/base/Switch.vue";
+import { useLanguage } from '@/hooks/useLanguage'
 
 const settingStore = useSettingStore()
+const { t } = useLanguage()
 let show = $ref(false)
 useWindowClick(() => show = false)
 
@@ -17,7 +19,7 @@ useWindowClick(() => show = false)
        @click.stop="null"
   >
     <BaseIcon
-        title="播放设置"
+        :title="t('PlaybackSettings')"
         @click="show = !show">
       <IconFluentSpeakerSettings20Regular/>
     </BaseIcon>
@@ -25,14 +27,14 @@ useWindowClick(() => show = false)
         width="12rem"
         v-model="show">
       <div class="mini-row-title">
-        播放设置
+        {{ t('PlaybackSettings') }}
       </div>
       <div class="flex justify-between mb-3">
-        <label class="">自动播放句子</label>
+        <label class="">{{ t('AutoPlaySentence') }}</label>
         <Switch v-model="settingStore.articleSound"/>
       </div>
       <div class="flex justify-between">
-        <label class="">自动播放下一篇</label>
+        <label class="">{{ t('AutoPlayNextArticle') }}</label>
         <Switch v-model="settingStore.articleAutoPlayNext"/>
       </div>
     </MiniDialog>

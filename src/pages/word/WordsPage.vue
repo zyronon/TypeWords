@@ -18,6 +18,9 @@ import DeleteIcon from "@/components/icon/DeleteIcon.vue";
 import PracticeSettingDialog from "@/pages/word/components/PracticeSettingDialog.vue";
 import ChangeLastPracticeIndexDialog from "@/pages/word/components/ChangeLastPracticeIndexDialog.vue";
 import { useSettingStore } from "@/stores/setting.ts";
+import { useLanguage } from '@/hooks/useLanguage'
+
+const { t } = useLanguage();
 import CollectNotice from "@/components/CollectNotice.vue";
 import { useFetch } from "@vueuse/core";
 import { CAN_REQUEST, DICT_LIST, PracticeSaveWordKey } from "@/config/env.ts";
@@ -74,7 +77,7 @@ async function init() {
 function startPractice() {
   if (store.sdict.id) {
     if (!store.sdict.words.length) {
-      return Toast.warning('没有单词可学习！')
+      return Toast.warning(t('NoWordsToLearn'))
     }
     window.umami?.track('startStudyWord', {
       name: store.sdict.name,
@@ -87,7 +90,7 @@ function startPractice() {
     nav('practice-words/' + store.sdict.id, {}, currentStudy)
   } else {
     window.umami?.track('no-dict')
-    Toast.warning('请先选择一本词典')
+    Toast.warning(t('SelectDictionary'))
   }
 }
 
@@ -116,7 +119,7 @@ function handleBatchDel() {
     }
   })
   selectIds = []
-  Toast.success("删除成功！")
+  Toast.success(t('DeleteSuccess'))
 }
 
 function toggleSelect(item) {
@@ -129,8 +132,8 @@ function toggleSelect(item) {
 }
 
 const progressTextLeft = $computed(() => {
-  if (store.sdict.complete) return '已学完，进入总复习阶段'
-  return '已学习' + store.currentStudyProgress + '%'
+  if (store.sdict.complete) return t('CompletedTotalReviewPhase')
+  return t('LearnedProgress', { progress: store.currentStudyProgress })
 })
 const progressTextRight = $computed(() => {
   // if (store.sdict.complete) return store.sdict?.length
@@ -139,7 +142,7 @@ const progressTextRight = $computed(() => {
 
 function check(cb: Function) {
   if (!store.sdict.id) {
-    Toast.warning('请先选择一本词典')
+    Toast.warning(t('SelectDictionary'))
   } else {
     runtimeStore.editDict = getDefaultDict(store.sdict)
     cb()
@@ -147,7 +150,7 @@ function check(cb: Function) {
 }
 
 async function savePracticeSetting() {
-  Toast.success('修改成功')
+  Toast.success(t('ModificationSuccessful'))
   isSaveData = false
   localStorage.removeItem(PracticeSaveWordKey.key)
   await store.changeDict(runtimeStore.editDict)
@@ -155,7 +158,7 @@ async function savePracticeSetting() {
 }
 
 async function saveLastPracticeIndex(e) {
-  Toast.success('修改成功')
+  Toast.success(t('ModificationSuccessful'))
   runtimeStore.editDict.lastLearnIndex = e
   showChangeLastPracticeIndexDialog = false
   isSaveData = false
@@ -178,8 +181,8 @@ const {
         <div class="flex">
           <div class="bg-third px-3 h-14 rounded-md flex items-center ">
             <span @click="goDictDetail(store.sdict)"
-                  class="text-lg font-bold cursor-pointer">{{ store.sdict.name || '请选择词典开始学习' }}</span>
-            <BaseIcon title="切换词典"
+                  class="text-lg font-bold cursor-pointer">{{ store.sdict.name || t('SelectDictionaryToStart') }}</span>
+            <BaseIcon :title="t('SwitchDictionary')"
                       class="ml-4"
                       @click="router.push('/dict-list')"
 
@@ -199,33 +202,33 @@ const {
           </div>
           <PopConfirm
               :disabled="!isSaveData"
-              title="当前存在未完成的学习任务，修改会重新生成学习任务，是否继续？"
+              :title="t('UnfinishedLearningTask')"
               @confirm="check(()=>showChangeLastPracticeIndexDialog = true)">
-            <div class="color-blue cursor-pointer">更改</div>
+            <div class="color-blue cursor-pointer">{{ t('Change') }}</div>
           </PopConfirm>
 
         </div>
         <div class="text-sm text-align-end">
-          预计完成日期：{{ _getAccomplishDate(store.sdict.words.length, store.sdict.perDayStudyNumber) }}
+          {{ t('EstimatedCompletionDate') }} {{ _getAccomplishDate(store.sdict.words.length, store.sdict.perDayStudyNumber) }}
         </div>
       </div>
 
       <div class="w-3/10 flex flex-col justify-evenly">
-        <div class="center text-xl">{{ isSaveData ? '上次学习任务' : '今日任务' }}</div>
+        <div class="center text-xl">{{ isSaveData ? t('LastLearningTask') : t('TodayTask') }}</div>
         <div class="flex">
           <div class="flex-1 flex flex-col items-center">
             <div class="text-4xl font-bold">{{ currentStudy.new.length }}</div>
-            <div class="text">新词</div>
+            <div class="text">{{ t('NewWordCount') }}</div>
           </div>
           <template v-if="settingStore.wordPracticeMode === 0">
             <div class="flex-1 flex flex-col items-center">
               <div class="text-4xl font-bold">{{ currentStudy.review.length }}</div>
-              <div class="text">复习</div>
+              <div class="text">{{ t('Review') }}</div>
             </div>
             <div class="flex-1 flex flex-col items-center">
               <div class="text-4xl font-bold">{{ currentStudy.write.length }}
               </div>
-              <div class="text">默写</div>
+              <div class="text">{{ t('Dictation') }}</div>
             </div>
           </template>
         </div>
@@ -233,24 +236,24 @@ const {
 
       <div class="flex flex-col items-end justify-around ">
         <div class="flex gap-1 items-center">
-          每日目标
+          {{ t('DailyGoal') }}
           <div style="color:#ac6ed1;" @click="check(()=>showPracticeSettingDialog = true)"
                class="bg-third px-2 h-10 flex center text-2xl rounded cursor-pointer">
             {{ store.sdict.id ? store.sdict.perDayStudyNumber : 0 }}
           </div>
-          个单词
+          {{ t('Words') }}
           <PopConfirm
               :disabled="!isSaveData"
-              title="当前存在未完成的学习任务，修改会重新生成学习任务，是否继续？"
+              :title="t('UnfinishedLearningTask')"
               @confirm="check(()=>showPracticeSettingDialog = true)">
-            <span class="color-blue cursor-pointer">更改</span>
+            <span class="color-blue cursor-pointer">{{ t('Change') }}</span>
           </PopConfirm>
         </div>
         <BaseButton size="large" :disabled="!store.sdict.name"
                     :loading="loading"
                     @click="startPractice">
           <div class="flex items-center gap-2">
-            <span class="line-height-[2]">{{ isSaveData ? '继续学习' : '开始学习' }}</span>
+            <span class="line-height-[2]">{{ isSaveData ? t('ContinueLearning') : t('StartLearning') }}</span>
             <IconFluentArrowCircleRight16Regular class="text-xl"/>
           </div>
         </BaseButton>
@@ -259,22 +262,22 @@ const {
 
     <div class="card  flex flex-col">
       <div class="flex justify-between">
-        <div class="title">我的词典</div>
+        <div class="title">{{ t('MyDictionaries') }}</div>
         <div class="flex gap-4 items-center">
-          <PopConfirm title="确认删除所有选中词典？" @confirm="handleBatchDel" v-if="selectIds.length">
-            <BaseIcon class="del" title="删除">
+          <PopConfirm :title="t('DeleteSelectedDictionaries')" @confirm="handleBatchDel" v-if="selectIds.length">
+            <BaseIcon class="del" :title="t('Delete')">
               <DeleteIcon/>
             </BaseIcon>
           </PopConfirm>
 
           <div class="color-blue cursor-pointer" v-if="store.word.bookList.length > 3"
-               @click="isMultiple = !isMultiple; selectIds = []">{{ isMultiple ? '取消' : '管理词典' }}
+               @click="isMultiple = !isMultiple; selectIds = []">{{ isMultiple ? t('Cancel') : t('ManageDictionaries') }}
           </div>
-          <div class="color-blue cursor-pointer" @click="nav('dict-detail', { isAdd: true })">创建个人词典</div>
+          <div class="color-blue cursor-pointer" @click="nav('dict-detail', { isAdd: true })">{{ t('CreatePersonalDictionary') }}</div>
         </div>
       </div>
       <div class="flex gap-4 flex-wrap  mt-4">
-        <Book :is-add="false" quantifier="个词" :item="item" :checked="selectIds.includes(item.id)"
+        <Book :is-add="false" :quantifier="t('WordQuantifier')" :item="item" :checked="selectIds.includes(item.id)"
               @check="() => toggleSelect(item)" :show-checkbox="isMultiple && j >= 3"
               v-for="(item, j) in store.word.bookList" @click="goDictDetail(item)"/>
         <Book :is-add="true" @click="router.push('/dict-list')"/>
@@ -283,15 +286,15 @@ const {
 
     <div class="card  flex flex-col overflow-hidden" v-loading="isFetching">
       <div class="flex justify-between">
-        <div class="title">推荐</div>
+        <div class="title">{{ t('Recommended') }}</div>
         <div class="flex gap-4 items-center">
-          <div class="color-blue cursor-pointer" @click="router.push('/dict-list')">更多</div>
+          <div class="color-blue cursor-pointer" @click="router.push('/dict-list')">{{ t('More') }}</div>
         </div>
       </div>
 
       <div class="flex gap-4 flex-wrap  mt-4 min-h-50">
         <Book :is-add="false"
-              quantifier="个词"
+              :quantifier="t('WordQuantifier')"
               :item="item as any"
               v-for="(item, j) in recommendDictList" @click="goDictDetail(item as any)"/>
       </div>

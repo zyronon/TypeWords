@@ -27,7 +27,9 @@ import ConflictNotice from "@/components/ConflictNotice.vue";
 import PracticeLayout from "@/components/PracticeLayout.vue";
 
 import { DICT_LIST, PracticeSaveWordKey } from "@/config/env.ts";
+import { useLanguage } from '@/hooks/useLanguage'
 
+const { t } = useLanguage()
 const {
   isWordCollect,
   toggleWordCollect,
@@ -72,7 +74,7 @@ async function loadDict() {
       if (!dict.custom) dict = await _getDictDataByUrl(dict)
       if (!dict.words.length) {
         router.push('/word')
-        return Toast.warning('没有单词可学习！')
+        return Toast.warning(t('NoWordsToLearn'))
       }
       store.changeDict(dict)
       initData(getCurrentStudyWord(), true)
@@ -129,7 +131,7 @@ function initData(initVal: TaskWords, init: boolean = false) {
           data.words = taskWords.write
           statStore.step = 4
         } else {
-          Toast.warning('没有可学习的单词！')
+          Toast.warning(t('NoWordsToLearn'))
           router.push('/word')
         }
       }
@@ -371,12 +373,11 @@ function togglePanel() {
 
 function continueStudy() {
   if (settingStore.wordPracticeMode === 0) settingStore.dictation = false
-  //这里判断是否显示结算弹框，如果显示了结算弹框的话，就不用加进度了
   if (!showStatDialog) {
-    console.log('没学完，强行跳过')
+    console.log(t('SkippingIncomplete'))
     store.sdict.lastLearnIndex = store.sdict.lastLearnIndex + statStore.newWordNumber
   } else {
-    console.log('学完了，正常下一组')
+    console.log(t('CompletedMovingNext'))
     showStatDialog = false
   }
   initData(getCurrentStudyWord())
