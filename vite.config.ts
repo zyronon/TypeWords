@@ -63,9 +63,14 @@ export default defineConfig(() => {
               enforce: 'pre',
               transformIndexHtml(html) {
                 const scripts = `
-<script src="https://2study.top/libs/vue.global.prod.min.js" crossorigin="anonymous"></script>
-<script src="https://2study.top/libs/vue-router.global.prod.min.js" crossorigin="anonymous"></script>
-<script src="https://2study.top/libs/axios.min.js" crossorigin="anonymous"></script>
+<!-- Vue 3 (生产版) -->
+<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.min.js" crossorigin="anonymous"></script>
+
+<!-- Vue Router 4 (生产版) -->
+<script src="https://cdn.jsdelivr.net/npm/vue-router@4/dist/vue-router.global.prod.min.js" crossorigin="anonymous"></script>
+
+<!-- Axios (最新稳定版) -->
+<script src="https://cdn.jsdelivr.net/npm/axios@1/dist/axios.min.js" crossorigin="anonymous"></script>
 `
                 return html.replace('<head>', `<head>${scripts}`)
               },
