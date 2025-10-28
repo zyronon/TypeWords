@@ -140,14 +140,14 @@ function importData(e: any) {
     let res: any[] = XLSX.utils.sheet_to_json(workbook.Sheets['Sheet1']);
     if (res.length) {
       let articles = res.map(v => {
-        if (v['原文标题'] && v['原文正文']) {
+        if (v[t('OriginalTitle')] && v[t('OriginalContent')]) {
           return getDefaultArticle({
             id: nanoid(6),
-            title: String(v['原文标题']),
-            titleTranslate: String(v['译文标题']),
-            text: String(v['原文正文']),
-            textTranslate: String(v['译文正文']),
-            audioSrc: String(v['音频地址']),
+            title: String(v[t('OriginalTitle')]),
+            titleTranslate: String(v[t('TranslatedTitle')]),
+            text: String(v[t('OriginalContent')]),
+            textTranslate: String(v[t('TranslatedContent')]),
+            audioSrc: String(v[t('AudioAddress')]),
           })
         }
       }).filter(v => v)
@@ -206,7 +206,7 @@ async function exportData(val: { type: string, data?: Article }) {
   let filename = ''
   if (type === 'item') {
     if (!data.id) {
-      return Toast.error('请选择文章')
+      return Toast.error(t('PleaseSelectArticle'))
     }
     list = [data]
     filename = runtimeStore.editDict.name + `-${data.title}`
@@ -217,17 +217,17 @@ async function exportData(val: { type: string, data?: Article }) {
   let wb = XLSX.utils.book_new()
   let sheetData = list.map(v => {
     return {
-      原文标题: v.title,
-      原文正文: v.text,
-      译文标题: v.titleTranslate,
-      译文正文: v.textTranslate,
-      音频地址: v.audioSrc,
+      [t('OriginalTitle')]: v.title,
+      [t('OriginalContent')]: v.text,
+      [t('TranslatedTitle')]: v.titleTranslate,
+      [t('TranslatedContent')]: v.textTranslate,
+      [t('AudioAddress')]: v.audioSrc,
     }
   })
   wb.Sheets['Sheet1'] = XLSX.utils.json_to_sheet(sheetData)
   wb.SheetNames = ['Sheet1']
   XLSX.writeFile(wb, `${filename}.xlsx`);
-  Toast.success(filename + ' 导出成功！')
+  Toast.success(filename + ' ' + t('ExportSuccessful'))
   showExport = false
   exportLoading = false
 }
@@ -259,11 +259,11 @@ function updateList(e) {
         </template>
       </List>
       <div class="add" v-if="!article.title">
-        正在添加新文章...
+        {{ t('AddingNewArticle') }}
       </div>
       <div class="footer">
         <div class="import">
-          <BaseButton :loading="importLoading">导入</BaseButton>
+          <BaseButton :loading="importLoading">{{ t('Import') }}</BaseButton>
           <input type="file"
                  accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
                  @change="importData">
@@ -271,23 +271,23 @@ function updateList(e) {
         <div class="export"
              style="position: relative"
              @click.stop="null">
-          <BaseButton @click="showExport = true">导出</BaseButton>
+          <BaseButton @click="showExport = true">{{ t('Export') }}</BaseButton>
           <MiniDialog
               v-model="showExport"
               style="width: 8rem;bottom: calc(100% + 1rem);top:unset;"
           >
             <div class="mini-row-title">
-              导出选项
+              {{ t('ExportOptions') }}
             </div>
             <div class="flex">
-              <BaseButton :loading="exportLoading" @click="exportData({type:'all'})">全部</BaseButton>
+              <BaseButton :loading="exportLoading" @click="exportData({type:'all'})">{{ t('All') }}</BaseButton>
               <BaseButton :loading="exportLoading" :disabled="!article.id"
-                          @click="exportData({type:'item',data:article})">当前
+                          @click="exportData({type:'item',data:article})">{{ t('Current') }}
               </BaseButton>
             </div>
           </MiniDialog>
         </div>
-        <BaseButton @click="add">新增</BaseButton>
+        <BaseButton @click="add">{{ t('AddNew') }}</BaseButton>
       </div>
     </div>
     <EditArticle

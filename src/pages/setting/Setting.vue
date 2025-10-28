@@ -106,7 +106,7 @@ useEventListener('keydown', (e: KeyboardEvent) => {
       for (const [k, v] of Object.entries(settingStore.shortcutKeyMap)) {
         if (v === shortcutKey && k !== editShortcutKey) {
           settingStore.shortcutKeyMap[editShortcutKey] = DefaultShortcutKeyMap[editShortcutKey]
-          return Toast.warning('快捷键重复！')
+          return Toast.warning(t('ShortcutDuplicate'))
         }
       }
       settingStore.shortcutKeyMap[editShortcutKey] = shortcutKey
@@ -138,24 +138,24 @@ function focusShortcutInput() {
 // 快捷键中文名称映射
 function getShortcutKeyName(key: string): string {
   const shortcutKeyNameMap = {
-    'ShowWord': '显示单词',
-    'EditArticle': '编辑文章',
-    'Next': '下一个',
-    'Previous': '上一个',
-    'ToggleSimple': '切换已掌握状态',
-    'ToggleCollect': '切换收藏状态',
-    'NextChapter': '下一组',
-    'PreviousChapter': '上一组',
-    'RepeatChapter': '重复本组',
-    'DictationChapter': '默写本组',
-    'PlayWordPronunciation': '播放发音',
-    'ToggleShowTranslate': '切换显示翻译',
-    'ToggleDictation': '切换默写模式',
-    'ToggleTheme': '切换主题',
-    'ToggleConciseMode': '切换简洁模式',
-    'TogglePanel': '切换面板',
-    'RandomWrite': '随机默写',
-    'NextRandomWrite': '继续随机默写'
+    'ShowWord': t('ShowWord'),
+    'EditArticle': t('EditArticleShortcut'),
+    'Next': t('NextItem'),
+    'Previous': t('PreviousItem'),
+    'ToggleSimple': t('ToggleMasteredStatus'),
+    'ToggleCollect': t('ToggleFavoriteStatus'),
+    'NextChapter': t('NextGroup'),
+    'PreviousChapter': t('PreviousGroup'),
+    'RepeatChapter': t('RepeatGroup'),
+    'DictationChapter': t('DictateGroup'),
+    'PlayWordPronunciation': t('PlayPronunciation'),
+    'ToggleShowTranslate': t('ToggleShowTranslation'),
+    'ToggleDictation': t('ToggleDictationMode'),
+    'ToggleTheme': t('ToggleThemeShortcut'),
+    'ToggleConciseMode': t('ToggleConciseMode'),
+    'TogglePanel': t('TogglePanelShortcut'),
+    'RandomWrite': t('RandomDictation'),
+    'NextRandomWrite': t('ContinueRandomDictation')
   }
 
   return shortcutKeyNameMap[key] || key
@@ -164,13 +164,13 @@ function getShortcutKeyName(key: string): string {
 function resetShortcutKeyMap() {
   editShortcutKey = ''
   settingStore.shortcutKeyMap = cloneDeep(DefaultShortcutKeyMap)
-  Toast.success('恢复成功')
+  Toast.success(t('ResetSuccess'))
 }
 
 let exportLoading = $ref(false)
 let importLoading = $ref(false)
 
-async function exportData(notice = '导出成功！') {
+async function exportData(notice = t('ExportSuccessful')) {
   exportLoading = true
   const JSZip = await loadJsLib('JSZip', `${Origin}/libs/jszip.min.js`);
   let data = {
@@ -274,9 +274,9 @@ function importJson(str: string, notice: boolean = true) {
         //todo 上报
       }
     }
-    notice && Toast.success('导入成功！')
+    notice && Toast.success(t('ImportSuccess'))
   } catch (err) {
-    return Toast.error('导入失败！')
+    return Toast.error(t('ImportFailed'))
   }
 }
 
@@ -300,7 +300,7 @@ async function importData(e) {
 
       const dataFile = zip.file("data.json");
       if (!dataFile) {
-        return Toast.error("缺少 data.json，导入失败");
+        return Toast.error(t('MissingDataJson'));
       }
 
       const mp3Folder = zip.folder("mp3");

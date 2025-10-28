@@ -14,7 +14,7 @@ import duration from "dayjs/plugin/duration";
 dayjs.extend(duration);
 
 export function no() {
-  Toast.warning('未现实')
+  Toast.warning('Not implemented')
 }
 
 //检测多余字段，防止人为删除数据，导致数据不完整报错

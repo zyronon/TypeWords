@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import {ref, computed, watch} from 'vue';
+import { useLanguage } from '@/hooks/useLanguage'
+
+const { t } = useLanguage()
 
 interface IProps {
   modelValue: boolean;
@@ -10,8 +13,8 @@ interface IProps {
 }
 
 const props = withDefaults(defineProps<IProps>(), {
-  activeText: '开',
-  inactiveText: '关',
+  activeText: '',
+  inactiveText: '',
 })
 
 const emit = defineEmits(['update:modelValue', 'change']);
@@ -39,6 +42,8 @@ const onKeydown = (e: KeyboardEvent) => {
 const switchWidth = computed(() => props.width ?? 40);
 const switchHeight = computed(() => (switchWidth.value / 2) | 0);
 const ballSize = computed(() => switchHeight.value - 4);
+const displayActiveText = computed(() => props.activeText || t('On'));
+const displayInactiveText = computed(() => props.inactiveText || t('Off'));
 </script>
 
 <template>
@@ -53,7 +58,7 @@ const ballSize = computed(() => switchHeight.value - 4);
       :style="{ width: switchWidth + 'px', height: switchHeight + 'px' ,borderRadius: switchHeight + 'px'}"
   >
     <transition name="fade">
-      <span class="text left" v-if="isChecked && activeText">{{ activeText }}</span>
+      <span class="text left" v-if="isChecked && displayActiveText">{{ displayActiveText }}</span>
     </transition>
     <div
         class="ball"
@@ -64,7 +69,7 @@ const ballSize = computed(() => switchHeight.value - 4);
         }"
     ></div>
     <transition name="fade">
-      <span class="text right" v-if="!isChecked && inactiveText">{{ inactiveText }}</span>
+      <span class="text right" v-if="!isChecked && displayInactiveText">{{ displayInactiveText }}</span>
     </transition>
   </div>
 </template>

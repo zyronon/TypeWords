@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import {computed, nextTick, onBeforeUnmount, onMounted, provide, ref, useAttrs, useSlots, VNode, watch} from 'vue';
 import {useWindowClick} from "@/hooks/event.ts";
+import { useLanguage } from '@/hooks/useLanguage'
+
+const { t } = useLanguage()
 
 interface Option {
   label: string;
@@ -29,7 +32,7 @@ const slots = useSlots();
 const displayValue = computed(() => {
   return selectedOption.value
       ? selectedOption.value.label
-      : props.placeholder || '请选择';
+      : props.placeholder || t('PleaseSelect');
 });
 
 const updateDropdownPosition = async () => {

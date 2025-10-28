@@ -42,6 +42,7 @@ declare module 'vue' {
     IconFluentArrowBounce20Regular: typeof import('~icons/fluent/arrow-bounce20-regular')['default']
     IconFluentArrowCircleRight16Regular: typeof import('~icons/fluent/arrow-circle-right16-regular')['default']
     IconFluentArrowLeft16Regular: typeof import('~icons/fluent/arrow-left16-regular')['default']
+    IconFluentArrowMove20Regular: typeof import('~icons/fluent/arrow-move20-regular')['default']
     IconFluentArrowRight16Regular: typeof import('~icons/fluent/arrow-right16-regular')['default']
     IconFluentArrowShuffle16Regular: typeof import('~icons/fluent/arrow-shuffle16-regular')['default']
     IconFluentArrowSort20Regular: typeof import('~icons/fluent/arrow-sort20-regular')['default']

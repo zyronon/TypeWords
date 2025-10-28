@@ -5,6 +5,9 @@ import BaseButton from "@/components/BaseButton.vue";
 import {watchEffect} from "vue";
 import Textarea from "@/components/base/Textarea.vue";
 import Toast from "@/components/base/toast/Toast.ts";
+import { useLanguage } from '@/hooks/useLanguage'
+
+const { t } = useLanguage()
 
 interface IProps {
   value: string,
@@ -33,7 +36,7 @@ function save() {
 }
 
 function toggle() {
-  if (props.disabled) return Toast.info('请等候翻译完成')
+  if (props.disabled) return Toast.info(t('WaitForTranslation'))
   edit = !edit
   editVal = props.value
 }
@@ -53,8 +56,8 @@ function toggle() {
         :input-style="`color: var(--color-font-1);font-size: 1rem;`"
     />
     <div class="flex justify-end mt-2">
-      <BaseButton @click="toggle">取消</BaseButton>
-      <BaseButton @click="save">应用</BaseButton>
+      <BaseButton @click="toggle">{{ t('Cancel') }}</BaseButton>
+      <BaseButton @click="save">{{ t('Apply') }}</BaseButton>
     </div>
   </div>
   <div

@@ -2,7 +2,9 @@
 
 import {defineAsyncComponent, onMounted, watch} from "vue";
 import {useSettingStore} from "@/stores/setting.ts";
+import { useLanguage } from '@/hooks/useLanguage'
 
+const { t } = useLanguage()
 const Dialog = defineAsyncComponent(() => import('@/components/dialog/Dialog.vue'))
 
 let settingStore = useSettingStore()
@@ -20,28 +22,27 @@ watch(() => settingStore.load, (n) => {
 
 <template>
   <Dialog v-model="show"
-          title="提示"
+          :title="t('Hint')"
           footer
-          cancel-button-text="不再提醒"
-          confirm-button-text="关闭"
+          :cancel-button-text="t('DontRemindAgain')"
+          :confirm-button-text="t('Close')"
           @cancel="settingStore.conflictNotice = false"
   >
     <div class="card w-120 center flex-col color-main py-0 mb-0">
       <div>
         <div class="text">
-          1、 如果您安装了 <span class="font-bold text-red">“调速” “Vim”</span> 等会接管键盘点击的插件/脚本，将导致本网站无法正常使用
+          1、 {{ t('SpeedControlWarning') }}
         </div>
         <div class="pl-4">
-          <div>①：在对应插件/脚本的设置里面排除本网站</div>
-          <div>②：临时禁用对应插件/脚本</div>
+          <div>{{ t('ExcludeInSettings') }}</div>
+          <div>{{ t('DisableTemporarily') }}</div>
         </div>
         <div class="text mt-2">
-          2、如果您未安装以上插件/脚本，还是无法使用
+          2、{{ t('NoExtensionIssue') }}
         </div>
         <div class="pl-4">
-          <div>①：请打开浏览器无痕模式尝试</div>
-          <div>②：无痕模式下无法正常使用，请给<a href="https://github.com/zyronon/TypeWords/issues">作者提 BUG</a>
-          </div>
+          <div>{{ t('TryIncognitoMode') }}</div>
+          <div>{{ t('ReportBugIncognito') }}</div>
         </div>
       </div>
     </div>

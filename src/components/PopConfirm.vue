@@ -1,5 +1,6 @@
 <script lang="jsx">
 import {Teleport, Transition} from 'vue'
+import { useLanguage } from '@/hooks/useLanguage'
 
 export default {
   name: "PopConfirm",
@@ -20,6 +21,10 @@ export default {
         return false
       }
     }
+  },
+  setup() {
+    const { t } = useLanguage()
+    return { t }
   },
   data() {
     return {
@@ -70,8 +75,8 @@ export default {
                           {this.title}
                         </div>
                         <div class="options">
-                          <div onClick={() => this.show = false}>取消</div>
-                          <div class="main" onClick={() => this.confirm()}>确认</div>
+                          <div onClick={() => this.show = false}>{this.t('Cancel')}</div>
+                          <div class="main" onClick={() => this.confirm()}>{this.t('Confirm')}</div>
                         </div>
                       </div>
                   )

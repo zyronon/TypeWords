@@ -151,7 +151,7 @@ function word2Str(word) {
   res.sentences = word.sentences.map(v => (v.c + "\n" + v.cn).replaceAll('"', '')).join('\n\n')
   res.phrases = word.phrases.map(v => (v.c + "\n" + v.cn).replaceAll('"', '')).join('\n\n')
   res.synos = word.synos.map(v => (v.pos + v.cn + "\n" + v.ws.join('/')).replaceAll('"', '')).join('\n\n')
-  res.relWords = word.relWords.root ? ('词根:' + word.relWords.root + '\n\n' +
+  res.relWords = word.relWords.root ? (t('WordRoot') + ':' + word.relWords.root + '\n\n' +
       word.relWords.rels.map(v => (v.pos + "\n" + v.words.map(v => (v.c + ':' + v.cn)).join('\n')).replaceAll('"', '')).join('\n\n')) : ''
   res.etymology = word.etymology.map(v => (v.t + '\n' + v.d).replaceAll('"', '')).join('\n\n')
   return res

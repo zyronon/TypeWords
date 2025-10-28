@@ -277,10 +277,10 @@ defineRender(
                 <div class="color-red">{t('ImportInstructions2')}</div>
                 <div>{t('ImportInstructions3')}</div>
                 <div>{t('ImportInstructions4')}<span class="color-red">{t('ImportInstructions4Emphasis')}</span>{t('ImportInstructions5')}</div>
-                <div>{t('ImportInstructions5')}<span class="color-red">{t('ImportInstructions4Emphasis')}</span>行</div>
+                <div>{t('ImportInstructions5')}<span class="color-red">{t('ImportInstructions4Emphasis')}</span>{t('Row')}</div>
                 <div>{t('ImportInstructions6')}</div>
                 <div class="mt-6">
-                  {t('TemplateDownload')}<a href="https://2study.top/libs/单词导入模板.xlsx">{t('WordImportTemplate')}</a>
+                  {t('TemplateDownload')}<a href={`https://2study.top/libs/${t('WordImportTemplateName')}`}>{t('WordImportTemplate')}</a>
                 </div>
                 <div class="mt-4">
                   <BaseButton

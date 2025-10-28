@@ -48,7 +48,7 @@ let failCount = $ref(0)
 let textareaRef = $ref<HTMLTextAreaElement>()
 const TranslateEngineOptions = [
   // {value: 'youdao', label: '有道'},
-  {value: 'baidu', label: '百度'},
+  {value: 'baidu', label: t('Baidu')},
 ]
 
 let editArticle = $ref<Article>(getDefaultArticle())
@@ -89,10 +89,10 @@ function splitTranslateText() {
 //TODO
 async function startNetworkTranslate() {
   if (!editArticle.title.trim()) {
-    return Toast.error('请填写标题！')
+    return Toast.error(t('PleaseFillInTitle'))
   }
   if (!editArticle.text.trim()) {
-    return Toast.error('请填写正文！')
+    return Toast.error(t('PleaseFillInContent'))
   }
   editArticle.titleTranslate = ''
   editArticle.textTranslate = ''

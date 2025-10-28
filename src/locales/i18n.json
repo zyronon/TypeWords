@@ -1908,5 +1908,220 @@
 		"en": "",
 		"zh": "修改成功",
 		"fr": "Modification réussie"
+	},
+	"SpeedControlWarning": {
+		"en": "If you have installed extensions/scripts like \"Speed Control\" or \"Vim\" that intercept keyboard input, this website will not function properly",
+		"zh": "如果您安装了 \"调速\" \"Vim\" 等会接管键盘点击的插件/脚本，将导致本网站无法正常使用",
+		"fr": "Si vous avez installé des extensions/scripts comme \"Contrôle de vitesse\" ou \"Vim\" qui interceptent le clavier, ce site ne fonctionnera pas correctement"
+	},
+	"ExcludeInSettings": {
+		"en": "① Exclude this website in the extension/script settings",
+		"zh": "①：在对应插件/脚本的设置里面排除本网站",
+		"fr": "① Exclure ce site dans les paramètres de l'extension/script"
+	},
+	"DisableTemporarily": {
+		"en": "② Temporarily disable the extension/script",
+		"zh": "②：临时禁用对应插件/脚本",
+		"fr": "② Désactiver temporairement l'extension/script"
+	},
+	"NoExtensionIssue": {
+		"en": "If you haven't installed such extensions/scripts and still can't use it",
+		"zh": "如果您未安装以上插件/脚本，还是无法使用",
+		"fr": "Si vous n'avez pas installé de telles extensions/scripts et ne pouvez toujours pas l'utiliser"
+	},
+	"TryIncognitoMode": {
+		"en": "① Try opening in incognito mode",
+		"zh": "①：请打开浏览器无痕模式尝试",
+		"fr": "① Essayez d'ouvrir en mode navigation privée"
+	},
+	"ReportBugIncognito": {
+		"en": "② If it doesn't work in incognito mode, please report a bug to the author",
+		"zh": "②：无痕模式下无法正常使用，请给作者提 BUG",
+		"fr": "② Si ça ne fonctionne pas en mode privé, veuillez signaler un bug à l'auteur"
+	},
+	"DontRemindAgain": {
+		"en": "Don't remind again",
+		"zh": "不再提醒",
+		"fr": "Ne plus rappeler"
+	},
+	"WaitForTranslation": {
+		"en": "Please wait for translation to complete",
+		"zh": "请等候翻译完成",
+		"fr": "Veuillez attendre la fin de la traduction"
+	},
+	"Row": {
+		"en": "row",
+		"zh": "行",
+		"fr": "ligne"
+	},
+	"WordImportTemplateName": {
+		"en": "单词导入模板.xlsx",
+		"zh": "单词导入模板.xlsx",
+		"fr": "modèle_import_mots.xlsx"
+	},
+	"OriginalTitle": {
+		"en": "Original Title",
+		"zh": "原文标题",
+		"fr": "Titre original"
+	},
+	"TranslatedTitle": {
+		"en": "Translated Title",
+		"zh": "译文标题",
+		"fr": "Titre traduit"
+	},
+	"OriginalContent": {
+		"en": "Original Content",
+		"zh": "原文正文",
+		"fr": "Contenu original"
+	},
+	"TranslatedContent": {
+		"en": "Translated Content",
+		"zh": "译文正文",
+		"fr": "Contenu traduit"
+	},
+	"AudioAddress": {
+		"en": "Audio Address",
+		"zh": "音频地址",
+		"fr": "Adresse audio"
+	},
+	"WordRoot": {
+		"en": "Root",
+		"zh": "词根",
+		"fr": "Racine"
+	},
+	"EditArticleShortcut": {
+		"en": "Edit article",
+		"zh": "编辑文章",
+		"fr": "Modifier l'article"
+	},
+	"NextItem": {
+		"en": "Next",
+		"zh": "下一个",
+		"fr": "Suivant"
+	},
+	"PreviousItem": {
+		"en": "Previous",
+		"zh": "上一个",
+		"fr": "Précédent"
+	},
+	"ToggleMasteredStatus": {
+		"en": "Toggle mastered status",
+		"zh": "切换已掌握状态",
+		"fr": "Basculer le statut maîtrisé"
+	},
+	"ToggleFavoriteStatus": {
+		"en": "Toggle favorite status",
+		"zh": "切换收藏状态",
+		"fr": "Basculer le favori"
+	},
+	"PreviousGroup": {
+		"en": "Previous group",
+		"zh": "上一组",
+		"fr": "Groupe précédent"
+	},
+	"RepeatGroup": {
+		"en": "Repeat group",
+		"zh": "重复本组",
+		"fr": "Répéter le groupe"
+	},
+	"DictateGroup": {
+		"en": "Dictate group",
+		"zh": "默写本组",
+		"fr": "Dictée du groupe"
+	},
+	"ToggleShowTranslation": {
+		"en": "Toggle show translation",
+		"zh": "切换显示翻译",
+		"fr": "Basculer l'affichage de la traduction"
+	},
+	"ToggleThemeShortcut": {
+		"en": "Toggle theme",
+		"zh": "切换主题",
+		"fr": "Basculer le thème"
+	},
+	"TogglePanelShortcut": {
+		"en": "Toggle panel",
+		"zh": "切换面板",
+		"fr": "Basculer le panneau"
+	},
+	"RandomDictation": {
+		"en": "Random dictation",
+		"zh": "随机默写",
+		"fr": "Dictée aléatoire"
+	},
+	"ContinueRandomDictation": {
+		"en": "Continue random dictation",
+		"zh": "继续随机默写",
+		"fr": "Continuer la dictée aléatoire"
+	},
+	"Baidu": {
+		"en": "Baidu",
+		"zh": "百度",
+		"fr": "Baidu"
+	},
+	"On": {
+		"en": "On",
+		"zh": "开",
+		"fr": "Activé"
+	},
+	"Off": {
+		"en": "Off",
+		"zh": "关",
+		"fr": "Désactivé"
+	},
+	"NotImplemented": {
+		"en": "Not implemented",
+		"zh": "未现实",
+		"fr": "Non implémenté"
+	},
+	"Minutes": {
+		"en": "minutes",
+		"zh": "分钟",
+		"fr": "minutes"
+	},
+	"Hours": {
+		"en": "hours",
+		"zh": "小时",
+		"fr": "heures"
+	},
+	"PleaseSelectArticle": {
+		"en": "Please select an article",
+		"zh": "请选择文章",
+		"fr": "Veuillez sélectionner un article"
+	},
+	"ExportSuccessful": {
+		"en": "Export successful!",
+		"zh": "导出成功！",
+		"fr": "Export réussi !"
+	},
+	"AddingNewArticle": {
+		"en": "Adding new article...",
+		"zh": "正在添加新文章...",
+		"fr": "Ajout d'un nouvel article..."
+	},
+	"ExportOptions": {
+		"en": "Export Options",
+		"zh": "导出选项",
+		"fr": "Options d'export"
+	},
+	"All": {
+		"en": "All",
+		"zh": "全部",
+		"fr": "Tout"
+	},
+	"Current": {
+		"en": "Current",
+		"zh": "当前",
+		"fr": "Actuel"
+	},
+	"AddNew": {
+		"en": "Add",
+		"zh": "新增",
+		"fr": "Ajouter"
+	},
+	"ShortcutDuplicate": {
+		"en": "Shortcut key duplicate!",
+		"zh": "快捷键重复！",
+		"fr": "Raccourci en double !"
 	}
 }
