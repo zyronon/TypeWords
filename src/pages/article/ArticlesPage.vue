@@ -121,13 +121,13 @@ async function goBookDetail(val: DictResource) {
 
 const totalSpend = $computed(() => {
   if (base.sbook.statistics?.length) {
-    return msToHourMinute(total(base.sbook.statistics, 'spend'))
+    return msToHourMinute(total(base.sbook.statistics, 'spend'), t)
   }
   return 0
 })
 const todayTotalSpend = $computed(() => {
   if (base.sbook.statistics?.length) {
-    return msToHourMinute(total(base.sbook.statistics.filter(v => dayjs(v.startDate).isSame(dayjs(), 'day')), 'spend'))
+    return msToHourMinute(total(base.sbook.statistics.filter(v => dayjs(v.startDate).isSame(dayjs(), 'day')), 'spend'), t)
   }
   return 0
 })

@@ -42,8 +42,8 @@ export function usePlayKeyboardAudio() {
   const {play, setAudio} = useSound()
 
   watchEffect(() => {
-    if (!SoundFileOptions.find(v => v.label === settingStore.keyboardSoundFile)) {
-      settingStore.keyboardSoundFile = '机械键盘2'
+    if (!SoundFileOptions.find(v => v.value === settingStore.keyboardSoundFile)) {
+      settingStore.keyboardSoundFile = 'mechanical2'
     }
     let urlList = getAudioFileUrl(settingStore.keyboardSoundFile)
     setAudio(urlList, urlList.length === 1 ? 3 : 1)
@@ -130,7 +130,19 @@ export function usePlayAudio(url: string) {
 }
 
 export function getAudioFileUrl(name: string) {
-  if (name === '机械键盘') {
+  // Mapping pour les anciens noms chinois vers les nouveaux noms
+  const nameMap = {
+    '机械键盘': 'mechanical',
+    '机械键盘1': 'mechanical1',
+    '机械键盘2': 'mechanical2',
+    '老式机械键盘': 'vintage',
+    '笔记本键盘': 'laptop'
+  }
+  
+  // Convertir l'ancien nom si nécessaire
+  const mappedName = nameMap[name] || name
+  
+  if (mappedName === 'mechanical') {
     return [
       `/sound/key-sounds/jixie/机械0.mp3`,
       `/sound/key-sounds/jixie/机械1.mp3`,
@@ -138,6 +150,14 @@ export function getAudioFileUrl(name: string) {
       `/sound/key-sounds/jixie/机械3.mp3`,
     ]
   } else {
-    return [`/sound/key-sounds/${name}.mp3`]
+    // Mapper les nouveaux noms vers les fichiers existants
+    const fileMap = {
+      'mechanical1': '机械键盘1',
+      'mechanical2': '机械键盘2',
+      'vintage': '老式机械键盘',
+      'laptop': '笔记本键盘'
+    }
+    const fileName = fileMap[mappedName] || mappedName
+    return [`/sound/key-sounds/${fileName}.mp3`]
   }
 }

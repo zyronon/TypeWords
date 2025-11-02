@@ -6,7 +6,8 @@ import { CAN_REQUEST, SAVE_SETTING_KEY } from "@/config/env.ts";
 import { getSetting } from "@/apis";
 
 export interface SettingState {
-  language: string, // langue de l'interface
+  language: string, // langue de l'interface (langue source)
+  targetLanguage: string, // langue cible (langue à apprendre)
   soundType: string,
 
   wordSound: boolean,
@@ -56,7 +57,8 @@ export interface SettingState {
 }
 
 export const getDefaultSettingState = (): SettingState => ({
-  language: 'zh', // langue par défaut
+  language: 'zh', // langue par défaut (langue de l'interface)
+  targetLanguage: 'en', // langue cible par défaut (langue à apprendre)
   soundType: 'us',
 
   wordSound: true,

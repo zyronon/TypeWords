@@ -14,7 +14,7 @@ defineProps<{
       <slot></slot>
     </div>
   </div>
-  <div class="text-sm mb-3" v-if="desc">{{ desc }}</div>
+  <div class="text-sm mb-3 text-gray-500" v-if="desc">{{ desc }}</div>
 </template>
 
 <style scoped lang="scss">

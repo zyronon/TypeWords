@@ -18,7 +18,7 @@ import {
 import { useDisableEventListener, useOnKeyboardEventListener, useStartKeyboardEventListener } from "@/hooks/event.ts";
 import useTheme from "@/hooks/theme.ts";
 import Toast from '@/components/base/toast/Toast.ts'
-import { _getDictDataByUrl, _nextTick, cloneDeep, msToMinute, resourceWrap, total } from "@/utils";
+import { _getDictDataByUrl, _nextTick, cloneDeep, msToMinute, msToMinuteNumber, resourceWrap, total } from "@/utils";
 import { usePracticeStore } from "@/stores/practice.ts";
 import { useArticleOptions } from "@/hooks/dict.ts";
 import { genArticleSectionData, usePlaySentenceAudio } from "@/hooks/article.ts";
@@ -469,7 +469,7 @@ provide('currentPractice', currentPractice)
               <BaseIcon
                   :class="!isArticleCollect(item) ? 'collect' : 'fill'"
                   @click.stop="toggleArticleCollect(item)"
-                  :title="!isArticleCollect(item) ? '收藏' : '取消收藏'">
+                  :title="!isArticleCollect(item) ? t('Collect') : t('Uncollect')">
                 <IconFluentStar16Regular v-if="!isArticleCollect(item)"/>
                 <IconFluentStar16Filled v-else/>
               </BaseIcon>
@@ -480,7 +480,7 @@ provide('currentPractice', currentPractice)
     </template>
     <template v-slot:footer>
       <div class="footer">
-        <Tooltip :title="settingStore.showToolbar?'收起':'展开'">
+        <Tooltip :title="t('CollapseExpand')">
           <IconFluentChevronLeft20Filled
               @click="settingStore.showToolbar = !settingStore.showToolbar"
               class="arrow"
@@ -491,14 +491,14 @@ provide('currentPractice', currentPractice)
           <div class="flex justify-between items-center gap-2">
             <div class="stat">
               <div class="row">
-                <div class="num">{{ currentPractice.length }}次/{{ msToMinute(total(currentPractice, 'spend')) }}</div>
+                <div class="num">{{ currentPractice.length }}{{ t('Times') }}/{{ msToMinuteNumber(total(currentPractice, 'spend')) }}{{ t('Minutes') }}</div>
                 <div class="line"></div>
-                <div class="name">记录</div>
+                <div class="name">{{ t('Record') }}</div>
               </div>
               <div class="row">
-                <div class="num">{{ Math.floor(statStore.spend / 1000 / 60) }}分钟</div>
+                <div class="num">{{ Math.floor(statStore.spend / 1000 / 60) }}{{ t('Minutes') }}</div>
                 <div class="line"></div>
-                <div class="name">时间</div>
+                <div class="name">{{ t('Time') }}</div>
               </div>
               <div class="row">
                 <div class="num center gap-1">
@@ -507,14 +507,14 @@ provide('currentPractice', currentPractice)
                     <IconFluentQuestionCircle20Regular width="18"/>
                     <template #reference>
                       <div>
-                        统计词数{{ settingStore.ignoreSimpleWord ? '不包含' : '包含' }}简单词，不包含已掌握
-                        <div>简单词可在设置 -> 练习设置 -> 简单词过滤中修改</div>
+                        {{ settingStore.ignoreSimpleWord ? t('WordCountExcludesSimple') : t('WordCountIncludesSimple') }}
+                        <div>{{ t('SimpleWordFilterSettings') }}</div>
                       </div>
                     </template>
                   </Tooltip>
                 </div>
                 <div class="line"></div>
-                <div class="name">单词总数</div>
+                <div class="name">{{ t('TotalWords') }}</div>
               </div>
             </div>
             <ArticleAudio
@@ -526,25 +526,25 @@ provide('currentPractice', currentPractice)
               <div class="flex gap-2 center">
                 <VolumeSetting/>
                 <BaseIcon
-                    :title="`下一句(${settingStore.shortcutKeyMap[ShortcutKey.Next]})`"
+                    :title="`${t('NextSentence')}(${settingStore.shortcutKeyMap[ShortcutKey.Next]})`"
                     @click="skip">
                   <IconFluentArrowBounce20Regular class="transform-rotate-180"/>
                 </BaseIcon>
                 <BaseIcon
-                    :title="`重听(${settingStore.shortcutKeyMap[ShortcutKey.PlayWordPronunciation]})`"
+                    :title="`${t('Replay')}(${settingStore.shortcutKeyMap[ShortcutKey.PlayWordPronunciation]})`"
                     @click="play">
                   <IconFluentReplay20Regular/>
                 </BaseIcon>
                 <BaseIcon
                     @click="settingStore.dictation = !settingStore.dictation"
-                    :title="`开关默写模式(${settingStore.shortcutKeyMap[ShortcutKey.ToggleDictation]})`"
+                    :title="`${t('ToggleDictationMode')}(${settingStore.shortcutKeyMap[ShortcutKey.ToggleDictation]})`"
                 >
                   <IconFluentEyeOff16Regular v-if="settingStore.dictation"/>
                   <IconFluentEye16Regular v-else/>
                 </BaseIcon>
 
                 <BaseIcon
-                    :title="`开关释义显示(${settingStore.shortcutKeyMap[ShortcutKey.ToggleShowTranslate]})`"
+                    :title="`${t('ToggleTranslationDisplay')}(${settingStore.shortcutKeyMap[ShortcutKey.ToggleShowTranslate]})`"
                     @click="settingStore.translate = !settingStore.translate">
                   <IconFluentTranslate16Regular v-if="settingStore.translate"/>
                   <IconFluentTranslateOff16Regular v-else/>
@@ -557,7 +557,7 @@ provide('currentPractice', currentPractice)
                 <!--              />-->
                 <BaseIcon
                     @click="settingStore.showPanel = !settingStore.showPanel"
-                    :title="`面板(${settingStore.shortcutKeyMap[ShortcutKey.TogglePanel]})`">
+                    :title="`${t('Panel')}(${settingStore.shortcutKeyMap[ShortcutKey.TogglePanel]})`">
                   <IconFluentTextListAbcUppercaseLtr20Regular/>
                 </BaseIcon>
               </div>

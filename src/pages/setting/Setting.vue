@@ -15,7 +15,7 @@ import {
   LOCAL_FILE_KEY,
   Origin,
   PracticeSaveArticleKey,
-  PracticeSaveWordKey, SAVE_DICT_KEY, SAVE_SETTING_KEY, SoundFileOptions
+  PracticeSaveWordKey, SAVE_DICT_KEY, SAVE_SETTING_KEY, getSoundFileOptions
 } from "@/config/env.ts";
 import dayjs from "dayjs";
 import BasePage from "@/components/BasePage.vue";
@@ -30,6 +30,8 @@ import PopConfirm from "@/components/PopConfirm.vue";
 import Textarea from "@/components/base/Textarea.vue";
 import SettingItem from "@/pages/setting/SettingItem.vue";
 import LanguageSelect from "@/components/base/select/LanguageSelect.vue";
+import LearningLanguageSelect from "@/components/base/select/LearningLanguageSelect.vue";
+import DualLanguageSelect from "@/components/base/select/DualLanguageSelect.vue";
 import { get, set } from "idb-keyval";
 import { useRuntimeStore } from "@/stores/runtime.ts";
 import { useLanguage } from '@/hooks/useLanguage'
@@ -402,10 +404,18 @@ function importOldData() {
         <!--        通用练习设置-->
         <!--        通用练习设置-->
         <div v-if="tabIndex === 0">
-          <SettingItem :title="t('Language')"
-                       :desc="t('LanguageDesc')"
+          <SettingItem :mainTitle="t('LanguageSettings')"/>
+          
+          <SettingItem :title="t('InterfaceLanguage')"
+                       :desc="t('InterfaceLanguageDesc')"
           >
             <LanguageSelect />
+          </SettingItem>
+
+          <SettingItem :title="t('LearningLanguage')"
+                       :desc="t('LearningLanguageDesc')"
+          >
+            <LearningLanguageSelect />
           </SettingItem>
 
           <div class="line"></div>
@@ -463,13 +473,13 @@ function importOldData() {
                     class="w-50!"
             >
               <Option
-                  v-for="item in SoundFileOptions"
+                  v-for="item in getSoundFileOptions(t)"
                   :key="item.value"
-                  :label="item.label"
+                  :label="t(item.label)"
                   :value="item.value"
               >
                 <div class="flex justify-between items-center w-full">
-                  <span>{{ item.label }}</span>
+                  <span>{{ t(item.label) }}</span>
                   <VolumeIcon
                       :time="100"
                       @click="usePlayAudio(getAudioFileUrl(item.value)[0])"/>
@@ -841,6 +851,16 @@ function importOldData() {
 
     .line {
       border-bottom: 1px solid #c4c3c3;
+    }
+
+    .lang-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .flag {
+        font-size: 1.2em;
+      }
     }
   }
 }

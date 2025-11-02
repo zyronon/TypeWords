@@ -2123,5 +2123,210 @@
 		"en": "Shortcut key duplicate!",
 		"zh": "快捷键重复！",
 		"fr": "Raccourci en double !"
+	},
+	"SourceLanguage": {
+		"en": "Source Language",
+		"zh": "源语言",
+		"fr": "Langue source"
+	},
+	"TargetLanguage": {
+		"en": "Target Language",
+		"zh": "目标语言",
+		"fr": "Langue cible"
+	},
+	"SourceLanguageDesc": {
+		"en": "The language of the application interface",
+		"zh": "应用程序界面的语言",
+		"fr": "La langue de l'interface de l'application"
+	},
+	"TargetLanguageDesc": {
+		"en": "The language you want to learn",
+		"zh": "您想要学习的语言",
+		"fr": "La langue que vous souhaitez apprendre"
+	},
+	"Time": {
+		"en": "Time",
+		"zh": "时间",
+		"fr": "Temps"
+	},
+	"NextSentence": {
+		"en": "Next sentence",
+		"zh": "下一句",
+		"fr": "Phrase suivante"
+	},
+	"Replay": {
+		"en": "Replay",
+		"zh": "重听",
+		"fr": "Réécouter"
+	},
+	"Panel": {
+		"en": "Panel",
+		"zh": "面板",
+		"fr": "Panneau"
+	},
+	"CollapseExpand": {
+		"en": "Collapse/Expand",
+		"zh": "收起/展开",
+		"fr": "Réduire/Étendre"
+	},
+	"WordCountExcludesSimple": {
+		"en": "Word count excludes simple words, does not include mastered words",
+		"zh": "统计词数不包含简单词，不包含已掌握",
+		"fr": "Le comptage des mots exclut les mots simples et n'inclut pas les mots maîtrisés"
+	},
+	"WordCountIncludesSimple": {
+		"en": "Word count includes simple words, does not include mastered words",
+		"zh": "统计词数包含简单词，不包含已掌握",
+		"fr": "Le comptage des mots inclut les mots simples et n'inclut pas les mots maîtrisés"
+	},
+	"SimpleWordFilterSettings": {
+		"en": "Simple words can be modified in Settings -> Practice Settings -> Simple Word Filter",
+		"zh": "简单词可在设置 -> 练习设置 -> 简单词过滤中修改",
+		"fr": "Les mots simples peuvent être modifiés dans Paramètres -> Paramètres d'entraînement -> Filtre des mots simples"
+	},
+	"Times": {
+		"en": " times",
+		"zh": "次",
+		"fr": " fois"
+	},
+	"CollectWord": {
+		"en": "Collect word",
+		"zh": "收藏单词",
+		"fr": "Ajouter le mot aux favoris"
+	},
+	"Copy": {
+		"en": "Copy",
+		"zh": "复制",
+		"fr": "Copier"
+	},
+	"CopySentence": {
+		"en": "Copy sentence",
+		"zh": "复制句子",
+		"fr": "Copier la phrase"
+	},
+	"CopyWord": {
+		"en": "Copy word",
+		"zh": "复制单词",
+		"fr": "Copier le mot"
+	},
+	"Copied": {
+		"en": "Copied",
+		"zh": "已复制",
+		"fr": "Copié"
+	},
+	"StartFromHere": {
+		"en": "Start from here",
+		"zh": "从这开始",
+		"fr": "Commencer à partir d'ici"
+	},
+	"PlaySentence": {
+		"en": "Play sentence",
+		"zh": "播放句子",
+		"fr": "Lire la phrase"
+	},
+	"GrammarAnalysis": {
+		"en": "Grammar analysis",
+		"zh": "语法分析",
+		"fr": "Analyse grammaticale"
+	},
+	"CopiedOpeningGrammarSite": {
+		"en": "Copied! Opening grammar analysis website...",
+		"zh": "已复制！随后将打开语法分析网站！",
+		"fr": "Copié ! Ouverture du site d'analyse grammaticale..."
+	},
+	"YoudaoDictionaryTranslation": {
+		"en": "Youdao Dictionary translation",
+		"zh": "有道词典翻译",
+		"fr": "Traduction Youdao Dictionary"
+	},
+	"TranslateWord": {
+		"en": "Translate word",
+		"zh": "翻译单词",
+		"fr": "Traduire le mot"
+	},
+	"TranslateSentence": {
+		"en": "Translate sentence",
+		"zh": "翻译句子",
+		"fr": "Traduire la phrase"
+	},
+	"AddedSuccessfully": {
+		"en": "{word} added successfully",
+		"zh": "{word} 添加成功",
+		"fr": "{word} ajouté avec succès"
+	},
+	"NextArticle": {
+		"en": "Next article",
+		"zh": "下一篇",
+		"fr": "Article suivant"
+	},
+	"TotalLearningDuration": {
+		"en": "Total learning duration",
+		"zh": "总学习时长",
+		"fr": "Durée totale d'apprentissage"
+	},
+	"ShowQuestions": {
+		"en": "Show questions",
+		"zh": "显示题目",
+		"fr": "Afficher les questions"
+	},
+	"LanguageSettings": {
+		"en": "Language Settings",
+		"zh": "语言设置",
+		"fr": "Paramètres de langue"
+	},
+	"InterfaceLanguage": {
+		"en": "Interface Language",
+		"zh": "界面语言",
+		"fr": "Langue de l'interface"
+	},
+	"InterfaceLanguageDesc": {
+		"en": "The language used for the application interface (menus, buttons, messages)",
+		"zh": "应用程序界面使用的语言（菜单、按钮、消息）",
+		"fr": "La langue utilisée pour l'interface de l'application (menus, boutons, messages)"
+	},
+	"LearningLanguage": {
+		"en": "Learning Language",
+		"zh": "学习语言",
+		"fr": "Langue d'apprentissage"
+	},
+	"LearningLanguageDesc": {
+		"en": "The language you want to learn and practice",
+		"zh": "您想要学习和练习的语言",
+		"fr": "La langue que vous souhaitez apprendre et pratiquer"
+	},
+	"MechanicalKeyboard": {
+		"en": "Mechanical Keyboard",
+		"zh": "机械键盘",
+		"fr": "Clavier mécanique"
+	},
+	"MechanicalKeyboard1": {
+		"en": "Mechanical Keyboard 1",
+		"zh": "机械键盘1",
+		"fr": "Clavier mécanique 1"
+	},
+	"MechanicalKeyboard2": {
+		"en": "Mechanical Keyboard 2",
+		"zh": "机械键盘2",
+		"fr": "Clavier mécanique 2"
+	},
+	"VintageMechanicalKeyboard": {
+		"en": "Vintage Mechanical Keyboard",
+		"zh": "老式机械键盘",
+		"fr": "Clavier mécanique vintage"
+	},
+	"LaptopKeyboard": {
+		"en": "Laptop Keyboard",
+		"zh": "笔记本键盘",
+		"fr": "Clavier d'ordinateur portable"
+	},
+	"HoursMinutes": {
+		"en": "{hours} hours {minutes} minutes",
+		"zh": "{hours}小时{minutes}分钟",
+		"fr": "{hours} heures {minutes} minutes"
+	},
+	"MinutesOnly": {
+		"en": "{minutes} minutes",
+		"zh": "{minutes}分钟",
+		"fr": "{minutes} minutes"
 	}
 }

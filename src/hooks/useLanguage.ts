@@ -11,7 +11,7 @@ const messages: Record<string, any> = {
 export function useLanguage() {
   const settingStore = useSettingStore()
   
-  // Fonction pour changer la langue de l'application
+  // Fonction pour changer la langue de l'application (langue source)
   const changeLanguage = (lang: string) => {
     // Met à jour la langue dans le localStorage pour la persistance
     localStorage.setItem('language', lang)
@@ -21,9 +21,22 @@ export function useLanguage() {
     document.documentElement.lang = lang
   }
 
+  // Fonction pour changer la langue cible (langue à apprendre)
+  const changeTargetLanguage = (lang: string) => {
+    // Met à jour la langue cible dans le localStorage pour la persistance
+    localStorage.setItem('targetLanguage', lang)
+    // Met à jour la langue cible dans le store
+    settingStore.targetLanguage = lang
+  }
+
   // Surveille les changements de langue dans le store
   watch(() => settingStore.language, (newLang) => {
     changeLanguage(newLang)
+  })
+
+  // Surveille les changements de langue cible dans le store
+  watch(() => settingStore.targetLanguage, (newLang) => {
+    localStorage.setItem('targetLanguage', newLang)
   })
 
   const t = (key: string) => {
@@ -33,6 +46,9 @@ export function useLanguage() {
 
   return {
     t,
-    changeLanguage
+    changeLanguage,
+    changeTargetLanguage,
+    sourceLanguage: settingStore.language,
+    targetLanguage: settingStore.targetLanguage
   }
 }

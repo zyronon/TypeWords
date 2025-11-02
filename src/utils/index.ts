@@ -150,16 +150,37 @@ export function _dateFormat(val: any, format?: string): string {
   return dayjs(d).format(format)
 }
 
-export function msToHourMinute(ms) {
+export function msToHourMinute(ms, t?: (key: string, params?: any) => string) {
   const d = dayjs.duration(ms);
   const hours = d.hours();
   const minutes = d.minutes();
+  
+  // Si fonction de traduction fournie, l'utiliser
+  if (t) {
+    if (hours) return t('HoursMinutes', {hours, minutes});
+    return t('MinutesOnly', {minutes});
+  }
+  
+  // Sinon, utiliser le format par défaut (chinois pour compatibilité)
   if (hours) return `${hours}小时${minutes}分钟`;
   return `${minutes}分钟`;
 }
 
-export function msToMinute(ms) {
-  return `${Math.floor(dayjs.duration(ms).asMinutes())}分钟`;
+export function msToMinute(ms, t?: (key: string, params?: any) => string) {
+  const minutes = Math.floor(dayjs.duration(ms).asMinutes());
+  
+  // Si fonction de traduction fournie, l'utiliser
+  if (t) {
+    return t('MinutesOnly', {minutes});
+  }
+  
+  // Sinon, utiliser le format par défaut (chinois pour compatibilité)
+  return `${minutes}分钟`;
+}
+
+// Fonction qui retourne uniquement le nombre de minutes (sans unité)
+export function msToMinuteNumber(ms) {
+  return Math.floor(dayjs.duration(ms).asMinutes());
 }
 
 //获取完成天数

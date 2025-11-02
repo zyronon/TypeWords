@@ -163,7 +163,7 @@ const currentPractice = $computed(() => {
 
 const totalSpend = $computed(() => {
   if (runtimeStore.editDict.statistics?.length) {
-    return msToHourMinute(total(runtimeStore.editDict.statistics, 'spend'))
+    return msToHourMinute(total(runtimeStore.editDict.statistics, 'spend'), t)
   }
   return 0
 })
@@ -223,12 +223,12 @@ function next() {
           <div v-if="selectArticle.id">
             <div class="font-family text-base mb-4 pr-2" v-if="currentPractice.length">
               <div class="text-2xl font-bold">{{ t('LearningRecord') }}</div>
-              <div class="mt-1 mb-3">{{ t('TotalLearningTime') }}：{{ msToHourMinute(total(currentPractice, 'spend')) }}</div>
+              <div class="mt-1 mb-3">{{ t('TotalLearningTime') }}：{{ msToHourMinute(total(currentPractice, 'spend'), t) }}</div>
               <div
                   class="item border border-item border-solid mt-2 p-2 bg-[var(--bg-history)] rounded-md flex justify-between"
                   v-for="i in currentPractice">
                 <span class="color-gray">{{ _dateFormat(i.startDate, 'YYYY/MM/DD HH:mm') }}</span>
-                <span>{{ msToHourMinute(i.spend) }}</span>
+                <span>{{ msToHourMinute(i.spend, t) }}</span>
               </div>
             </div>
             <div class="en-article-family title text-xl">

@@ -20,6 +20,9 @@ import nlp from "compromise/three";
 import { nanoid } from "nanoid";
 import { usePracticeStore } from "@/stores/practice.ts";
 import { PracticeSaveArticleKey } from "@/config/env.ts";
+import { useLanguage } from '@/hooks/useLanguage'
+
+const { t } = useLanguage()
 
 interface IProps {
   article: Article,
@@ -424,7 +427,7 @@ function onContextMenu(e: MouseEvent, sentence: Sentence, i, j, w) {
     y: e.y,
     items: [
       {
-        label: "收藏单词",
+        label: t('CollectWord'),
         onClick: () => {
           let word = props.article.sections[i][j].words[w]
           let doc = nlp(word.word)
@@ -440,48 +443,48 @@ function onContextMenu(e: MouseEvent, sentence: Sentence, i, j, w) {
           if (!text.length) text = word.word
           console.log('text', text)
           toggleWordCollect(getDefaultWord({word: text, id: nanoid()}))
-          Toast.success(text + ' 添加成功')
+          Toast.success(t('AddedSuccessfully', {word: text}))
         }
       },
       {
-        label: "复制",
+        label: t('Copy'),
         children: [
           {
-            label: "复制句子",
+            label: t('CopySentence'),
             onClick: () => {
               navigator.clipboard.writeText(sentence.text).then(r => {
-                Toast.success('已复制')
+                Toast.success(t('Copied'))
               })
             }
           },
           {
-            label: "复制单词",
+            label: t('CopyWord'),
             onClick: () => {
               let word = props.article.sections[i][j].words[w]
               navigator.clipboard.writeText(word.word).then(r => {
-                Toast.success('已复制')
+                Toast.success(t('Copied'))
               })
             }
           }
         ]
       },
       {
-        label: "从这开始",
+        label: t('StartFromHere'),
         onClick: () => {
           jump(i, j, w + 1, sentence)
         }
       },
       {
-        label: "播放句子",
+        label: t('PlaySentence'),
         onClick: () => {
           emit('play', {sentence: sentence, handle: true})
         }
       },
       {
-        label: "语法分析",
+        label: t('GrammarAnalysis'),
         onClick: () => {
           navigator.clipboard.writeText(sentence.text).then(r => {
-            Toast.success('已复制！随后将打开语法分析网站！')
+            Toast.success(t('CopiedOpeningGrammarSite'))
             setTimeout(() => {
               window.open('https://enpuz.com/')
             }, 1000)
@@ -489,17 +492,17 @@ function onContextMenu(e: MouseEvent, sentence: Sentence, i, j, w) {
         }
       },
       {
-        label: "有道词典翻译",
+        label: t('YoudaoDictionaryTranslation'),
         children: [
           {
-            label: "翻译单词",
+            label: t('TranslateWord'),
             onClick: () => {
               let word = props.article.sections[i][j].words[w]
               window.open(`https://www.youdao.com/result?word=${word.word}&lang=en`, '_blank')
             }
           },
           {
-            label: "翻译句子",
+            label: t('TranslateSentence'),
             onClick: () => {
               window.open(`https://www.youdao.com/result?word=${sentence.text}&lang=en`, '_blank')
             }
@@ -614,31 +617,31 @@ const currentPractice = inject('currentPractice', [])
 
     <div class="options flex justify-center" v-if="isEnd">
       <BaseButton
-          @click="emit('replay')">重新练习
+          @click="emit('replay')">{{ t('RestartPractice') }}
       </BaseButton>
       <BaseButton
           v-if="store.currentBook.lastLearnIndex < store.currentBook.articles.length - 1"
-          @click="emit('next')">下一篇
+          @click="emit('next')">{{ t('NextArticle') }}
       </BaseButton>
     </div>
 
     <div class="font-family text-base pr-2 mb-50 mt-10" v-if="currentPractice.length && isEnd">
-      <div class="text-2xl font-bold">学习记录</div>
-      <div class="mt-1 mb-3">总学习时长：{{ msToHourMinute(total(currentPractice, 'spend')) }}</div>
+      <div class="text-2xl font-bold">{{ t('LearningRecord') }}</div>
+      <div class="mt-1 mb-3">{{ t('TotalLearningDuration') }}：{{ msToHourMinute(total(currentPractice, 'spend'), t) }}</div>
       <div class="item border border-item border-solid mt-2 p-2 bg-[var(--bg-history)] rounded-md flex justify-between"
            :class="i === currentPractice.length-1 && 'color-red!'"
            v-for="(item,i) in currentPractice">
         <span :class="i === currentPractice.length-1 ? 'color-red':'color-gray'"
         >{{
-            i === currentPractice.length - 1 ? '当前' : i + 1
+            i === currentPractice.length - 1 ? t('Current') : i + 1
           }}.&nbsp;&nbsp;{{ _dateFormat(item.startDate, 'YYYY/MM/DD HH:mm') }}</span>
-        <span>{{ msToHourMinute(item.spend) }}</span>
+        <span>{{ msToHourMinute(item.spend, t) }}</span>
       </div>
     </div>
 
     <template v-if="false">
       <div class="center">
-        <BaseButton @click="showQuestions =! showQuestions">显示题目</BaseButton>
+        <BaseButton @click="showQuestions =! showQuestions">{{ t('ShowQuestions') }}</BaseButton>
       </div>
       <div class="toggle" v-if="showQuestions">
         <QuestionForm :questions="article.questions"

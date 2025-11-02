@@ -1,5 +1,5 @@
 <template>
-  <div class="language-select">
+  <div class="learning-language-select">
     <Select v-model="selectedLang" class="lang-select">
       <template #selected>
         <div class="lang-option" v-if="currentLanguage">
@@ -24,27 +24,28 @@ import { Select, Option } from '@/components/base/select'
 import { useLanguage } from '@/hooks/useLanguage'
 
 const settingStore = useSettingStore()
-const { changeLanguage } = useLanguage()
+const { changeTargetLanguage } = useLanguage()
 
 const languages = [
+  { code: 'en', name: 'English', flag: '🇬🇧' },
   { code: 'zh', name: '中文', flag: '🇨🇳' },
   { code: 'fr', name: 'Français', flag: '🇫🇷' },
 ]
 
 const selectedLang = computed({
-  get: () => settingStore.language,
+  get: () => settingStore.targetLanguage,
   set: (value) => {
-    changeLanguage(value)
+    changeTargetLanguage(value)
   }
 })
 
 const currentLanguage = computed(() => {
-  return languages.find(lang => lang.code === settingStore.language)
+  return languages.find(lang => lang.code === settingStore.targetLanguage)
 })
 </script>
 
 <style scoped lang="scss">
-.language-select {
+.learning-language-select {
   display: inline-block;
 }
 

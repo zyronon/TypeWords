@@ -35,6 +35,10 @@ const displayValue = computed(() => {
       : props.placeholder || t('PleaseSelect');
 });
 
+const hasSelectedSlot = computed(() => {
+  return !!slots.selected;
+});
+
 const updateDropdownPosition = async () => {
   if (!selectRef.value || !dropdownRef.value) return;
 
@@ -160,7 +164,8 @@ onBeforeUnmount(() => {
   >
     <div class="select__wrapper" @click="toggleDropdown">
       <div class="select__label" :class="{ 'is-placeholder': !selectedOption }">
-        {{ displayValue }}
+        <slot name="selected" v-if="hasSelectedSlot"></slot>
+        <template v-else>{{ displayValue }}</template>
       </div>
       <div class="select__suffix">
         <IconFluentChevronLeft20Filled

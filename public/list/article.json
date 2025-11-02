@@ -50,5 +50,18 @@
     "length": 48,
     "translateLanguage": "common",
     "language": "en"
+  }, 
+  {
+    "id": "TOEIC_Test_FR",
+    "name": "TOEIC Test - French",
+    "description":"toeic fr ",
+    "category": "FR",
+    "tags": [
+      "FR"
+    ],
+    "url": "TOEIC_Test_FR.json",
+    "length": 48,
+    "translateLanguage": "common",
+    "language": "fr"
   }
 ]

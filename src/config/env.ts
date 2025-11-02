@@ -34,12 +34,32 @@ export const DICT_LIST = {
   }
 }
 
+export const SoundFileKeys = {
+  MECHANICAL: 'MechanicalKeyboard',
+  MECHANICAL1: 'MechanicalKeyboard1',
+  MECHANICAL2: 'MechanicalKeyboard2',
+  VINTAGE: 'VintageMechanicalKeyboard',
+  LAPTOP: 'LaptopKeyboard'
+}
+
+// Fonction pour obtenir les options de son avec traductions
+export function getSoundFileOptions(t: (key: string) => string) {
+  return [
+    {value: 'mechanical', label: t('MechanicalKeyboard')},
+    {value: 'mechanical1', label: t('MechanicalKeyboard1')},
+    {value: 'mechanical2', label: t('MechanicalKeyboard2')},
+    {value: 'vintage', label: t('VintageMechanicalKeyboard')},
+    {value: 'laptop', label: t('LaptopKeyboard')},
+  ]
+}
+
+// Pour la compatibilité avec l'ancien code
 export const SoundFileOptions = [
-  {value: '机械键盘', label: '机械键盘'},
-  {value: '机械键盘1', label: '机械键盘1'},
-  {value: '机械键盘2', label: '机械键盘2'},
-  {value: '老式机械键盘', label: '老式机械键盘'},
-  {value: '笔记本键盘', label: '笔记本键盘'},
+  {value: 'mechanical', label: 'MechanicalKeyboard'},
+  {value: 'mechanical1', label: 'MechanicalKeyboard1'},
+  {value: 'mechanical2', label: 'MechanicalKeyboard2'},
+  {value: 'vintage', label: 'VintageMechanicalKeyboard'},
+  {value: 'laptop', label: 'LaptopKeyboard'},
 ]
 export const APP_VERSION = {
   key: 'type-words-app-version',

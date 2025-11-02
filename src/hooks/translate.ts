@@ -1,6 +1,7 @@
 import {Article, Sentence, TranslateEngine} from "@/types/types.ts";
 import Baidu from "@/libs/translate/baidu";
-import {Translator} from "@/libs/translate/translator/index.ts";
+import {Translator, Language} from "@/libs/translate/translator/index.ts";
+import {useSettingStore} from "@/stores/setting.ts";
 
 export function getSentenceAllTranslateText(article: Article) {
   return article.sections.map(v => v.map(s => s.translate.trim()).filter(v => v).join(' \n')).filter(v => v).join(' \n\n');
@@ -11,11 +12,11 @@ export function getSentenceAllText(article: Article) {
 }
 
 /***
- * @desc
- * @param article 文章实体
- * @param translateEngine 翻译引擎
- * @param allShow 是否翻译完所有之后才显示
- * @param progressCb 进度回调
+ * @desc Traduit un article en utilisant un moteur de traduction
+ * @param article 文章实体 - L'article à traduire
+ * @param translateEngine 翻译引擎 - Le moteur de traduction (Baidu, etc.)
+ * @param allShow 是否翻译完所有之后才显示 - Si true, affiche tout après traduction complète
+ * @param progressCb 进度回调 - Callback de progression (0-100%)
  * */
 export async function getNetworkTranslate(
   article: Article,
@@ -23,6 +24,24 @@ export async function getNetworkTranslate(
   allShow: boolean = false,
   progressCb?: (val: number) => void
 ) {
+  const settingStore = useSettingStore()
+  
+  // Déterminer les langues source et cible
+  // Par défaut, on suppose que l'article est dans la langue cible (ex: anglais)
+  // et on traduit vers la langue de l'interface (ex: français)
+  const fromLang = settingStore.targetLanguage || 'en'
+  const toLang = settingStore.language || 'zh'
+  
+  // Mapper les codes de langue au format attendu par Baidu Translate API
+  const langMap: Record<string, Language> = {
+    'en': 'en',
+    'zh': 'zh-CN',
+    'fr': 'fr'
+  }
+  
+  const baiduFromLang: Language = langMap[fromLang] || 'en'
+  const baiduToLang: Language = langMap[toLang] || 'zh-CN'
+  
   let translator: Translator
   if (translateEngine === TranslateEngine.Baidu) {
     translator = new Baidu({
@@ -35,8 +54,9 @@ export async function getNetworkTranslate(
 
 
   if (translator) {
+    // Traduire le titre de l'article
     if (!article.titleTranslate) {
-      translator.translate(article.title, 'en', 'zh-CN').then(r => {
+      translator.translate(article.title, baiduFromLang, baiduToLang).then(r => {
         article.titleTranslate = r.trans.paragraphs[0]
       })
     }
@@ -45,9 +65,11 @@ export async function getNetworkTranslate(
     let retryCount = 0
     let retryCountMap = new Map()
 
+    // Fonction de traduction d'une phrase
     const translate = async (sentence: Sentence) => {
       try {
-        let r = await translator.translate(sentence.text, 'en', 'fr')
+        // Utilise les langues configurées dynamiquement
+        let r = await translator.translate(sentence.text, baiduFromLang, baiduToLang)
         console.log(r)
 
         if (r) {
