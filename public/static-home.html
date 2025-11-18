@@ -35,7 +35,6 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png"/>
     <!--    设置浏览器地址栏颜色（在 Android Chrome 特别明显）。-->
     <meta name="theme-color" content="#818CF8"/>
-    <link rel="manifest" href="/manifest.json">
 
     <!--    阻止 iOS 自动把数字识别为电话号码。-->
     <!--    HandheldFriendly 和 MobileOptimized 是旧手机浏览器的优化提示（现在作用不大）。-->
@@ -268,17 +267,6 @@
         }
     </style>
 
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js').then(registration => {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-          }).catch(error => {
-            console.log('ServiceWorker registration failed: ', error);
-          });
-        });
-      }
-    </script>
     <script>
       function nav(url) {
         window.location.href = url;
