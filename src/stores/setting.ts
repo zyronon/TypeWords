@@ -135,12 +135,18 @@ export const useSettingStore = defineStore("setting", {
         },
         init() {
             return new Promise(async (resolve) => {
-                let configStr = localStorage.getItem(SAVE_SETTING_KEY.key);
-                let configStr2 = await get(SAVE_SETTING_KEY.key);
-                if (configStr2) {
-                    configStr = configStr2;
+                let localStorageConfig = localStorage.getItem(
+                    SAVE_SETTING_KEY.key,
+                );
+
+                let indexedDbConfig = await get(SAVE_SETTING_KEY.key);
+
+                let persistedConfig = localStorageConfig;
+                if (indexedDbConfig) {
+                    persistedConfig = indexedDbConfig;
                 }
-                let data = checkAndUpgradeSaveSetting(configStr);
+                let data = checkAndUpgradeSaveSetting(persistedConfig);
+
                 if (CAN_REQUEST) {
                     let res = await getSetting();
                     if (res.success) {
