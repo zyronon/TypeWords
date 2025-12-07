@@ -31,7 +31,7 @@ import Textarea from "@/components/base/Textarea.vue";
 import SettingItem from "@/pages/setting/SettingItem.vue";
 import LanguageSelect from "@/components/base/select/LanguageSelect.vue";
 import LearningLanguageSelect from "@/components/base/select/LearningLanguageSelect.vue";
-import DualLanguageSelect from "@/components/base/select/DualLanguageSelect.vue";
+
 import { get, set } from "idb-keyval";
 import { useRuntimeStore } from "@/stores/runtime.ts";
 import { useLanguage } from '@/hooks/useLanguage'
@@ -405,7 +405,7 @@ function importOldData() {
         <!--        通用练习设置-->
         <div v-if="tabIndex === 0">
           <SettingItem :mainTitle="t('LanguageSettings')"/>
-          
+
           <SettingItem :title="t('InterfaceLanguage')"
                        :desc="t('InterfaceLanguageDesc')"
           >
@@ -419,7 +419,7 @@ function importOldData() {
           </SettingItem>
 
           <div class="line"></div>
-          
+
           <SettingItem :title="t('IgnoreCase')"
                        :desc="t('IgnoreCaseDesc')"
           >

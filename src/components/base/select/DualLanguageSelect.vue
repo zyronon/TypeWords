@@ -3,7 +3,7 @@
     <div class="language-row">
       <span class="language-label">{{ t('SourceLanguage') }}</span>
       <Select v-model="selectedSourceLang" class="lang-select">
-        <Option v-for="lang in languages" :key="lang.code" :value="lang.code">
+        <Option v-for="lang in sourceLanguages" :key="lang.code" :value="lang.code">
           <div class="lang-option">
             <span class="flag">{{ lang.flag }}</span>
             <span class="lang-name">{{ lang.name }}</span>
@@ -11,17 +11,17 @@
         </Option>
       </Select>
     </div>
-    
+
     <div class="arrow-container">
       <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 4L12 20M12 20L18 14M12 20L6 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
-    
+
     <div class="language-row">
       <span class="language-label">{{ t('TargetLanguage') }}</span>
       <Select v-model="selectedTargetLang" class="lang-select">
-        <Option v-for="lang in languages" :key="lang.code" :value="lang.code">
+        <Option v-for="lang in targetLanguages" :key="lang.code" :value="lang.code">
           <div class="lang-option">
             <span class="flag">{{ lang.flag }}</span>
             <span class="lang-name">{{ lang.name }}</span>
@@ -37,27 +37,25 @@ import { computed } from 'vue'
 import { useSettingStore } from '@/stores/setting'
 import { Select, Option } from '@/components/base/select'
 import { useLanguage } from '@/hooks/useLanguage'
+import { getSourceLanguageOptions, getTargetLanguageOptions, sanitizeSourceLanguage, sanitizeTargetLanguage } from '@/libs/i18n/languages'
 
 const settingStore = useSettingStore()
 const { t, changeLanguage, changeTargetLanguage } = useLanguage()
 
-const languages = [
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'zh', name: '中文', flag: '🇨🇳' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-]
+const sourceLanguages = getSourceLanguageOptions()
+const targetLanguages = getTargetLanguageOptions()
 
 const selectedSourceLang = computed({
-  get: () => settingStore.language,
-  set: (value) => {
-    changeLanguage(value)
+  get: () => sanitizeSourceLanguage(settingStore.language),
+  set: (value: string) => {
+    changeLanguage(sanitizeSourceLanguage(value))
   }
 })
 
 const selectedTargetLang = computed({
-  get: () => settingStore.targetLanguage,
-  set: (value) => {
-    changeTargetLanguage(value)
+  get: () => sanitizeTargetLanguage(settingStore.targetLanguage),
+  set: (value: string) => {
+    changeTargetLanguage(sanitizeTargetLanguage(value))
   }
 })
 </script>

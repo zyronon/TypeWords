@@ -22,25 +22,23 @@ import { computed } from 'vue'
 import { useSettingStore } from '@/stores/setting'
 import { Select, Option } from '@/components/base/select'
 import { useLanguage } from '@/hooks/useLanguage'
+import { getLanguageOption, getTargetLanguageOptions, sanitizeTargetLanguage } from '@/libs/i18n/languages'
 
 const settingStore = useSettingStore()
 const { changeTargetLanguage } = useLanguage()
 
-const languages = [
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'zh', name: '中文', flag: '🇨🇳' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-]
+const languages = getTargetLanguageOptions()
 
 const selectedLang = computed({
-  get: () => settingStore.targetLanguage,
+  get: () => sanitizeTargetLanguage(settingStore.targetLanguage),
   set: (value) => {
-    changeTargetLanguage(value)
+    changeTargetLanguage(sanitizeTargetLanguage(value))
   }
 })
 
 const currentLanguage = computed(() => {
-  return languages.find(lang => lang.code === settingStore.targetLanguage)
+  const languageCode = sanitizeTargetLanguage(settingStore.targetLanguage)
+  return getLanguageOption(languageCode)
 })
 </script>
 

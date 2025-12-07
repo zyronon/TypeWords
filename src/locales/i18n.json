@@ -1,2332 +1,2372 @@
 {
-	"SkippingIncomplete": {
-		"en": "",
-		"zh": "没学完，强行跳过",
-		"fr": "Session incomplète, passage à la suite"
-	},
-	"CompletedMovingNext": {
-		"en": "",
-		"zh": "学完了，正常下一组",
-		"fr": "Session terminée, passage au groupe suivant"
-	},
-	"StartDictation": {
-		"en": "",
-		"zh": "开始默写",
-		"fr": "Commencer la dictée"
-	},
-	"StartReview": {
-		"en": "",
-		"zh": "开始复习",
-		"fr": "Commencer la révision"
-	},
-	"NoWordsToReview": {
-		"en": "",
-		"zh": "无单词需要复习",
-		"fr": "Aucun mot à réviser"
-	},
-	"FreeModeDone": {
-		"en": "",
-		"zh": "自由模式，全完学完了",
-		"fr": "Mode libre, session terminée"
-	},
-	"WordExistsOverwrite": {
-		"en": "",
-		"zh": "单词\"{words}\"已存在，是否覆盖原单词？",
-		"fr": "Le mot \"{words}\" existe déjà. Voulez-vous le remplacer ?"
-	},
-	"DuplicateWordsFound": {
-		"en": "",
-		"zh": "检测到重复单词",
-		"fr": "Mots en double détectés"
-	},
-	"ImportSuccess": {
-		"en": "",
-		"zh": "导入成功！",
-		"fr": "Importation réussie !"
-	},
-	"ImportFailedNoData": {
-		"en": "",
-		"zh": "导入失败！原因：没有数据/未认别到数据",
-		"fr": "Échec de l'importation : aucune donnée valide trouvée"
-	},
-	"PracticeArea": {
-		"en": "",
-		"zh": "练习区域",
-		"fr": "Zone d'exercice"
-	},
-	"PracticeContent": {
-		"en": "",
-		"zh": "练习内容",
-		"fr": "Contenu de l'exercice"
-	},
-	"PracticePanel": {
-		"en": "",
-		"zh": "练习面板",
-		"fr": "Panneau d'exercice"
-	},
-	"PracticeControls": {
-		"en": "",
-		"zh": "练习控制",
-		"fr": "Contrôles d'exercice"
-	},
-	"EmptyState": {
-		"en": "",
-		"zh": "空荡荡的~",
-		"fr": "Rien à afficher"
-	},
-	"Add": {
-		"en": "",
-		"zh": "添加",
-		"fr": "Ajouter"
-	},
-	"ShortcutKey": {
-		"en": "",
-		"zh": "快捷键",
-		"fr": "Raccourci clavier"
-	},
-	"Success": {
-		"en": "",
-		"zh": "成功",
-		"fr": "Succès"
-	},
-	"Warning": {
-		"en": "",
-		"zh": "警告",
-		"fr": "Avertissement"
-	},
-	"Error": {
-		"en": "",
-		"zh": "错误",
-		"fr": "Erreur"
-	},
-	"DailyTaskCompleted": {
-		"en": "",
-		"zh": "已完成今日任务",
-		"fr": "Tâches quotidiennes accomplies"
-	},
-	"NewWordsCount": {
-		"en": "",
-		"zh": "新词数",
-		"fr": "Nouveaux mots"
-	},
-	"ReviewedWords": {
-		"en": "",
-		"zh": "复习数",
-		"fr": "Mots révisés"
-	},
-	"DictationWords": {
-		"en": "",
-		"zh": "默写数",
-		"fr": "Mots dictés"
-	},
-	"ExcellentProgress": {
-		"en": "",
-		"zh": "非常棒!",
-		"fr": "Excellent !"
-	},
-	"MinutesSpent": {
-		"en": "",
-		"zh": "坚持了 {minutes} 分钟",
-		"fr": "Vous avez persévéré pendant {minutes} minutes"
-	},
-	"IncorrectWords": {
-		"en": "",
-		"zh": "错词",
-		"fr": "Mots incorrects"
-	},
-	"CorrectWords": {
-		"en": "",
-		"zh": "正确",
-		"fr": "Mots corrects"
-	},
-	"WeeklyLearningRecord": {
-		"en": "",
-		"zh": "本周学习记录",
-		"fr": "Suivi hebdomadaire"
-	},
-	"RepeatLesson": {
-		"en": "",
-		"zh": "重学一遍",
-		"fr": "Réviser la leçon"
-	},
-	"NextGroup": {
-		"en": "",
-		"zh": "再来一组",
-		"fr": "Groupe suivant"
-	},
-	"RestartPractice": {
-		"en": "",
-		"zh": "重新练习",
-		"fr": "Recommencer"
-	},
-	"ContinueDictation": {
-		"en": "",
-		"zh": "继续默写",
-		"fr": "Continuer la dictée"
-	},
-	"ReturnToHome": {
-		"en": "",
-		"zh": "返回主页",
-		"fr": "Retour à l'accueil"
-	},
-	"UnfinishedLearningTask": {
-		"en": "",
-		"zh": "当前存在未完成的学习任务，修改会重新生成学习任务，是否继续？",
-		"fr": "Il existe une tâche d'apprentissage inachevée. La modification regénérera la tâche. Continuer ?"
-	},
-	"Change": {
-		"en": "",
-		"zh": "更改",
-		"fr": "Modifier"
-	},
-	"EstimatedCompletionDate": {
-		"en": "",
-		"zh": "预计完成日期：",
-		"fr": "Date d'achèvement prévue :"
-	},
-	"LastLearningTask": {
-		"en": "",
-		"zh": "上次学习任务",
-		"fr": "Dernière tâche d'apprentissage"
-	},
-	"TodayTask": {
-		"en": "",
-		"zh": "今日任务",
-		"fr": "Tâche du jour"
-	},
-	"Review": {
-		"en": "",
-		"zh": "复习",
-		"fr": "Révision"
-	},
-	"Dictation": {
-		"en": "",
-		"zh": "默写",
-		"fr": "Dictée"
-	},
-	"DailyGoal": {
-		"en": "",
-		"zh": "每日目标",
-		"fr": "Objectif quotidien"
-	},
-	"Words": {
-		"en": "",
-		"zh": "个单词",
-		"fr": "mots"
-	},
-	"ContinueLearning": {
-		"en": "",
-		"zh": "继续学习",
-		"fr": "Continuer l'apprentissage"
-	},
-	"StartLearning": {
-		"en": "",
-		"zh": "开始学习",
-		"fr": "Commencer l'apprentissage"
-	},
-	"MyDictionaries": {
-		"en": "",
-		"zh": "我的词典",
-		"fr": "Mes dictionnaires"
-	},
-	"DeleteSelectedDictionaries": {
-		"en": "",
-		"zh": "确认删除所有选中词典？",
-		"fr": "Confirmer la suppression des dictionnaires sélectionnés ?"
-	},
-	"ManageDictionaries": {
-		"en": "",
-		"zh": "管理词典",
-		"fr": "Gérer les dictionnaires"
-	},
-	"Cancel": {
-		"en": "",
-		"zh": "取消",
-		"fr": "Annuler"
-	},
-	"CreatePersonalDictionary": {
-		"en": "",
-		"zh": "创建个人词典",
-		"fr": "Créer un dictionnaire personnel"
-	},
-	"Recommended": {
-		"en": "",
-		"zh": "推荐",
-		"fr": "Recommandés"
-	},
-	"More": {
-		"en": "",
-		"zh": "更多",
-		"fr": "Plus"
-	},
-	"CompletedTotalReviewPhase": {
-		"en": "",
-		"zh": "已学完，进入总复习阶段",
-		"fr": "Terminé, phase de révision générale"
-	},
-	"LearnedProgress": {
-		"en": "",
-		"zh": "已学习{progress}%",
-		"fr": "Appris à {progress}%"
-	},
-	"SelectDictionary": {
-		"en": "",
-		"zh": "请先选择一本词典",
-		"fr": "Veuillez d'abord sélectionner un dictionnaire"
-	},
-	"DuplicateShortcut": {
-		"en": "",
-		"zh": "快捷键重复！",
-		"fr": "Raccourci clavier déjà utilisé !"
-	},
-	"ShowWord": {
-		"en": "",
-		"zh": "显示单词",
-		"fr": "Afficher le mot"
-	},
-	"EditArticle": {
-		"en": "",
-		"zh": "编辑文章",
-		"fr": "Modifier l'article"
-	},
-	"Next": {
-		"en": "",
-		"zh": "下一个",
-		"fr": "Suivant"
-	},
-	"Previous": {
-		"en": "",
-		"zh": "上一个",
-		"fr": "Précédent"
-	},
-	"ToggleSimple": {
-		"en": "",
-		"zh": "切换已掌握状态",
-		"fr": "Basculer l'état maîtrisé"
-	},
-	"ToggleCollect": {
-		"en": "",
-		"zh": "切换收藏状态",
-		"fr": "Basculer l'état favori"
-	},
-	"NextChapter": {
-		"en": "",
-		"zh": "下一组",
-		"fr": "Groupe suivant"
-	},
-	"PreviousChapter": {
-		"en": "",
-		"zh": "上一组",
-		"fr": "Groupe précédent"
-	},
-	"RepeatChapter": {
-		"en": "",
-		"zh": "重复本组",
-		"fr": "Répéter ce groupe"
-	},
-	"DictationChapter": {
-		"en": "",
-		"zh": "默写本组",
-		"fr": "Dictée de ce groupe"
-	},
-	"ResetSuccess": {
-		"en": "",
-		"zh": "恢复成功",
-		"fr": "Réinitialisation réussie"
-	},
-	"ExportSuccess": {
-		"en": "",
-		"zh": "导出成功！",
-		"fr": "Exportation réussie !"
-	},
-	"ImportFailed": {
-		"en": "",
-		"zh": "导入失败！",
-		"fr": "Échec de l'importation !"
-	},
-	"MissingDataJson": {
-		"en": "",
-		"zh": "缺少 data.json，导入失败",
-		"fr": "Fichier data.json manquant, échec de l'importation"
-	},
-	"Info": {
-		"en": "",
-		"zh": "信息",
-		"fr": "Information"
-	},
-	"SearchArticles": {
-		"en": "",
-		"zh": "搜索文章",
-		"fr": "Rechercher des articles"
-	},
-	"PlayPronunciation": {
-		"en": "",
-		"zh": "播放发音",
-		"fr": "Écouter la prononciation"
-	},
-	"DisplayLanguage": {
-		"en": "en",
-		"zh": "zh",
-		"fr": "fr"
-	},
-	"ArticleQuantifier": {
-		"en": "",
-		"zh": "篇",
-		"fr": "articles"
-	},
-	"DeleteSuccess": {
-		"en": "",
-		"zh": "删除成功！",
-		"fr": "Suppression réussie !"
-	},
-	"HomeHeaderTitle": {
-		"en": "",
-		"zh": "学习英语，一次敲击，一点进步",
-		"fr": "Apprendre l'anglais, une frappe à la fois, un progrès chaque jour"
-	},
-	"GeneralSettings": {
-		"en": "",
-		"zh": "通用练习设置",
-		"fr": "Paramètres généraux"
-	},
-	"WordPracticeSettings": {
-		"en": "",
-		"zh": "单词练习设置",
-		"fr": "Paramètres de pratique des mots"
-	},
-	"ArticlePracticeSettings": {
-		"en": "",
-		"zh": "文章练习设置",
-		"fr": "Paramètres de pratique des articles"
-	},
-	"ShortcutSettings": {
-		"en": "",
-		"zh": "快捷键设置",
-		"fr": "Paramètres des raccourcis"
-	},
-	"DataManagement": {
-		"en": "",
-		"zh": "数据管理",
-		"fr": "Gestion des données"
-	},
-	"UpdateLog": {
-		"en": "",
-		"zh": "更新日志",
-		"fr": "Journal des mises à jour"
-	},
-	"About": {
-		"en": "",
-		"zh": "关于",
-		"fr": "À propos"
-	},
-	"Settings": {
-		"en": "",
-		"zh": "设置",
-		"fr": "Paramètres"
-	},
-	"Language": {
-		"en": "",
-		"zh": "语言",
-		"fr": "Langue"
-	},
-	"LanguageDesc": {
-		"en": "",
-		"zh": "选择应用程序的显示语言",
-		"fr": "Choisir la langue d'affichage de l'application"
-	},
-	"IgnoreCase": {
-		"en": "",
-		"zh": "忽略大小写",
-		"fr": "Ignorer la casse"
-	},
-	"IgnoreCaseDesc": {
-		"en": "",
-		"zh": "开启后，输入时不区分大小写，如输入\"hello\"和\"Hello\"都会被认为是正确的",
-		"fr": "Une fois activé, la saisie ne sera pas sensible à la casse, par exemple \"hello\" et \"Hello\" seront tous deux considérés comme corrects"
-	},
-	"AllowDictationHints": {
-		"en": "",
-		"zh": "允许默写模式下显示提示",
-		"fr": "Autoriser les indices en mode dictée"
-	},
-	"AllowDictationHintsDesc": {
-		"en": "",
-		"zh": "开启后，可以通过将鼠标移动到单词上或者按快捷键 {key} 显示正确答案",
-		"fr": "Une fois activé, vous pouvez afficher la bonne réponse en survolant le mot avec la souris ou en appuyant sur le raccourci {key}"
-	},
-	"SimpleWordFilter": {
-		"en": "",
-		"zh": "简单词过滤",
-		"fr": "Filtre des mots simples"
-	},
-	"SimpleWordFilterDesc": {
-		"en": "",
-		"zh": "开启后，练习的单词中不会包含简单词；文章统计的总词数中不会包含简单词",
-		"fr": "Une fois activé, les mots de pratique n'incluront pas les mots simples ; les statistiques d'articles n'incluront pas non plus les mots simples"
-	},
-	"SimpleWordList": {
-		"en": "",
-		"zh": "简单词列表",
-		"fr": "Liste des mots simples"
-	},
-	"SeparateMultipleWords": {
-		"en": "",
-		"zh": "多个单词用英文逗号隔号",
-		"fr": "Séparer plusieurs mots par des virgules"
-	},
-	"SoundEffects": {
-		"en": "",
-		"zh": "音效",
-		"fr": "Effets sonores"
-	},
-	"WordSentencePronunciation": {
-		"en": "",
-		"zh": "单词/句子发音口音",
-		"fr": "Accent de prononciation des mots/phrases"
-	},
-	"PleaseSelect": {
-		"en": "",
-		"zh": "请选择",
-		"fr": "Veuillez sélectionner"
-	},
-	"AmericanAccent": {
-		"en": "",
-		"zh": "美音",
-		"fr": "Accent américain"
-	},
-	"BritishAccent": {
-		"en": "",
-		"zh": "英音",
-		"fr": "Accent britannique"
-	},
-	"KeypressSound": {
-		"en": "",
-		"zh": "按键音",
-		"fr": "Son des touches"
-	},
-	"KeypressSoundEffect": {
-		"en": "",
-		"zh": "按键音效",
-		"fr": "Effet sonore des touches"
-	},
-	"Volume": {
-		"en": "",
-		"zh": "音量",
-		"fr": "Volume"
-	},
-	"EffectSound": {
-		"en": "",
-		"zh": "效果音（输入错误、完成时的音效）",
-		"fr": "Sons d'effets (sons d'erreur et de complétion)"
-	},
-	"PracticeMode": {
-		"en": "",
-		"zh": "练习模式",
-		"fr": "Mode de pratique"
-	},
-	"SmartMode": {
-		"en": "",
-		"zh": "智能模式，系统自动计算复习单词与默写单词",
-		"fr": "Mode intelligent, le système calcule automatiquement les mots de révision et de dictée"
-	},
-	"FreeMode": {
-		"en": "",
-		"zh": "自由模式，系统不强制复习与默写",
-		"fr": "Mode libre, le système n'impose pas de révision ni de dictée"
-	},
-	"PlayWordPronunciation": {
-		"en": "",
-		"zh": "播放发音",
-		"fr": "Lire la prononciation"
-	},
-	"ToggleShowTranslate": {
-		"en": "",
-		"zh": "切换显示翻译",
-		"fr": "Basculer l'affichage de la traduction"
-	},
-	"ToggleDictation": {
-		"en": "",
-		"zh": "切换默写模式",
-		"fr": "Basculer le mode dictée"
-	},
-	"ToggleTheme": {
-		"en": "",
-		"zh": "切换主题",
-		"fr": "Basculer le thème"
-	},
-	"ToggleConciseMode": {
-		"en": "",
-		"zh": "切换简洁模式",
-		"fr": "Basculer le mode concis"
-	},
-	"TogglePanel": {
-		"en": "",
-		"zh": "切换面板",
-		"fr": "Basculer le panneau"
-	},
-	"RandomWrite": {
-		"en": "",
-		"zh": "随机默写",
-		"fr": "Dictée aléatoire"
-	},
-	"NextRandomWrite": {
-		"en": "",
-		"zh": "继续随机默写",
-		"fr": "Continuer la dictée aléatoire"
-	},
-	"UnsupportedFileType": {
-		"en": "",
-		"zh": "不支持的文件类型",
-		"fr": "Type de fichier non pris en charge"
-	},
-	"AutoSavedData": {
-		"en": "",
-		"zh": "已为您自动保存当前数据！稍后将进行老数据导入操作",
-		"fr": "Vos données actuelles ont été sauvegardées automatiquement ! L'importation des anciennes données sera effectuée ultérieurement"
-	},
-	"NoOldDataBackup": {
-		"en": "",
-		"zh": "导入失败！原因：本地无老数据备份",
-		"fr": "Échec de l'importation : aucune sauvegarde de données anciennes locales"
-	},
-	"ShowPreviousNext": {
-		"en": "",
-		"zh": "显示上一个/下一个单词",
-		"fr": "Afficher le mot précédent/suivant"
-	},
-	"ShowPreviousNextDesc": {
-		"en": "",
-		"zh": "开启后，练习中会在上方显示上一个/下一个单词",
-		"fr": "Une fois activé, les mots précédent/suivant s'afficheront en haut pendant la pratique"
-	},
-	"DisableSettingsDialog": {
-		"en": "",
-		"zh": "不默认显示练习设置弹框",
-		"fr": "Ne pas afficher la boîte de dialogue des paramètres par défaut"
-	},
-	"DisableSettingsDialogDesc": {
-		"en": "",
-		"zh": "在词典详情页面，点击学习按钮后，是否显示练习设置弹框",
-		"fr": "Sur la page de détails du dictionnaire, afficher ou non la boîte de dialogue des paramètres après avoir cliqué sur le bouton d'apprentissage"
-	},
-	"ClearOnError": {
-		"en": "",
-		"zh": "输入错误时，清空已输入内容",
-		"fr": "Effacer le contenu saisi en cas d'erreur"
-	},
-	"WordLoopSettings": {
-		"en": "",
-		"zh": "单词循环设置",
-		"fr": "Paramètres de boucle de mots"
-	},
-	"Custom": {
-		"en": "",
-		"zh": "自定义",
-		"fr": "Personnalisé"
-	},
-	"LoopCount": {
-		"en": "",
-		"zh": "循环次数",
-		"fr": "Nombre de boucles"
-	},
-	"AutoPronunciation": {
-		"en": "",
-		"zh": "自动发音",
-		"fr": "Prononciation automatique"
-	},
-	"PlaybackSpeed": {
-		"en": "",
-		"zh": "倍速",
-		"fr": "Vitesse de lecture"
-	},
-	"AutoSwitch": {
-		"en": "",
-		"zh": "自动切换",
-		"fr": "Changement automatique"
-	},
-	"AutoNextWord": {
-		"en": "",
-		"zh": "自动切换下一个单词",
-		"fr": "Passer automatiquement au mot suivant"
-	},
-	"AutoNextWordDesc": {
-		"en": "",
-		"zh": "未开启自动切换时，当输入完成后请使用空格键切换下一个",
-		"fr": "Si le changement automatique n'est pas activé, utilisez la barre d'espace pour passer au suivant après la saisie"
-	},
-	"AutoNextWordTime": {
-		"en": "",
-		"zh": "自动切换下一个单词时间",
-		"fr": "Temps de passage automatique au mot suivant"
-	},
-	"AutoNextWordTimeDesc": {
-		"en": "",
-		"zh": "正确输入单词后，自动跳转下一个单词的时间",
-		"fr": "Temps avant de passer automatiquement au mot suivant après une saisie correcte"
-	},
-	"Milliseconds": {
-		"en": "",
-		"zh": "毫秒",
-		"fr": "millisecondes"
-	},
-	"FontSettings": {
-		"en": "",
-		"zh": "字体设置",
-		"fr": "Paramètres de police"
-	},
-	"ForeignFont": {
-		"en": "",
-		"zh": "外语字体",
-		"fr": "Police de langue étrangère"
-	},
-	"ChineseFont": {
-		"en": "",
-		"zh": "中文字体",
-		"fr": "Police chinoise"
-	},
-	"AutoPlaySentence": {
-		"en": "",
-		"zh": "自动播放句子",
-		"fr": "Lecture automatique des phrases"
-	},
-	"AutoPlayNextArticle": {
-		"en": "",
-		"zh": "自动播放下一篇",
-		"fr": "Lecture automatique de l'article suivant"
-	},
-	"Function": {
-		"en": "",
-		"zh": "功能",
-		"fr": "Fonction"
-	},
-	"ShortcutClickToModify": {
-		"en": "",
-		"zh": "快捷键(点击可修改)",
-		"fr": "Raccourci (cliquer pour modifier)"
-	},
-	"NoShortcutSet": {
-		"en": "",
-		"zh": "未设置快捷键",
-		"fr": "Aucun raccourci défini"
-	},
-	"PressKeyToSet": {
-		"en": "",
-		"zh": "按键盘进行设置，<span class=\"text-red!\">设置完成点击这里</span>",
-		"fr": "Appuyez sur une touche pour définir, <span class=\"text-red!\">cliquez ici après la configuration</span>"
-	},
-	"RestoreDefaults": {
-		"en": "",
-		"zh": "恢复默认",
-		"fr": "Restaurer les valeurs par défaut"
-	},
-	"DataStorageNotice": {
-		"en": "",
-		"zh": "目前用户的所有数据<b class=\"text-red\">仅保存在本地</b>。如果您需要在不同的设备、浏览器或者其他非官方部署上使用 {appName}，您需要手动进行数据同步和保存。",
-		"fr": "Actuellement, toutes les données de l'utilisateur <b class=\"text-red\">ne sont sauvegardées que localement</b>. Si vous devez utiliser {appName} sur différents appareils, navigateurs ou déploiements non officiels, vous devrez synchroniser et sauvegarder manuellement les données."
-	},
-	"ExportData": {
-		"en": "",
-		"zh": "导出数据",
-		"fr": "Exporter les données"
-	},
-	"ImportWarning": {
-		"en": "",
-		"zh": "请注意，导入数据后将<b class=\"text-red\"> 完全覆盖 </b>当前所有数据，请谨慎操作。",
-		"fr": "Veuillez noter que l'importation de données <b class=\"text-red\">écrasera complètement</b> toutes les données actuelles. Procédez avec prudence."
-	},
-	"ImportData": {
-		"en": "",
-		"zh": "导入数据",
-		"fr": "Importer les données"
-	},
-	"ImportOldVersionConfirm": {
-		"en": "",
-		"zh": "导入老版本数据前，请先备份当前数据，确定要导入老版本数据吗？",
-		"fr": "Avant d'importer les données de l'ancienne version, veuillez d'abord sauvegarder vos données actuelles. Êtes-vous sûr de vouloir importer les données de l'ancienne version ?"
-	},
-	"ImportOldVersionData": {
-		"en": "",
-		"zh": "老版本数据导入",
-		"fr": "Importer les données de l'ancienne version"
-	},
-	"UpdateLogDate1": {
-		"en": "",
-		"zh": "2025/9/14：",
-		"fr": "14/09/2025 :"
-	},
-	"UpdateLogTitle1": {
-		"en": "",
-		"zh": "完善文章编辑、导入、导出等功能",
-		"fr": "Amélioration des fonctions d'édition, d'importation et d'exportation d'articles"
-	},
-	"UpdateLogItem1_1": {
-		"en": "",
-		"zh": "1、文章的音频管理功能，目前已可添加音频、设置句子与音频的对应位置",
-		"fr": "1. Fonction de gestion audio des articles, il est désormais possible d'ajouter de l'audio et de définir la position correspondante des phrases et de l'audio"
-	},
-	"UpdateLogItem1_2": {
-		"en": "",
-		"zh": "2、文章可导入、导出",
-		"fr": "2. Les articles peuvent être importés et exportés"
-	},
-	"UpdateLogItem1_3": {
-		"en": "",
-		"zh": "3、单词可导入、导出",
-		"fr": "3. Les mots peuvent être importés et exportés"
-	},
-	"ThankYouMessage": {
-		"en": "",
-		"zh": "感谢使用本项目！本项目是开源项目，如果觉得有帮助，请在 GitHub 点个 Star，您的支持是我持续改进的动力。",
-		"fr": "Merci d'utiliser ce projet ! Ce projet est open source. Si vous le trouvez utile, merci de mettre une étoile sur GitHub. Votre soutien est ma motivation pour continuer à améliorer."
-	},
-	"GitHubAddress": {
-		"en": "",
-		"zh": "GitHub地址：",
-		"fr": "Adresse GitHub :"
-	},
-	"Feedback": {
-		"en": "",
-		"zh": "反馈：",
-		"fr": "Retour d'information :"
-	},
-	"AuthorEmail": {
-		"en": "",
-		"zh": "作者邮箱：",
-		"fr": "Email de l'auteur :"
-	},
-	"NoArticlesToLearn": {
-		"en": "",
-		"zh": "没有文章可学习！",
-		"fr": "Aucun article disponible !"
-	},
-	"SelectBookFirst": {
-		"en": "",
-		"zh": "请先选择一本书籍",
-		"fr": "Veuillez d'abord sélectionner un livre"
-	},
-	"TodayLearningTime": {
-		"en": "",
-		"zh": "今日学习时长",
-		"fr": "Temps d'étude aujourd'hui"
-	},
-	"TotalLearningDays": {
-		"en": "",
-		"zh": "总学习天数",
-		"fr": "Jours d'étude totaux"
-	},
-	"TotalLearningTime": {
-		"en": "",
-		"zh": "总学习时长",
-		"fr": "Temps d'étude total"
-	},
-	"MyBooks": {
-		"en": "",
-		"zh": "我的书籍",
-		"fr": "Mes livres"
-	},
-	"ConfirmDeleteBooks": {
-		"en": "",
-		"zh": "确认删除所有选中书籍？",
-		"fr": "Confirmer la suppression de tous les livres sélectionnés ?"
-	},
-	"ManageBooks": {
-		"en": "",
-		"zh": "管理书籍",
-		"fr": "Gérer les livres"
-	},
-	"CreatePersonalBook": {
-		"en": "",
-		"zh": "创建个人书籍",
-		"fr": "Créer un livre personnel"
-	},
-	"BookList": {
-		"en": "",
-		"zh": "书籍列表",
-		"fr": "Liste des livres"
-	},
-	"SearchBookPlaceholder": {
-		"en": "",
-		"zh": "请输入书籍名称/缩写/类别",
-		"fr": "Entrez le nom/abréviation/catégorie du livre"
-	},
-	"NoRelatedBooks": {
-		"en": "",
-		"zh": "没有相关书籍",
-		"fr": "Aucun livre correspondant"
-	},
-	"Introduction": {
-		"en": "",
-		"zh": "介绍：",
-		"fr": "Introduction :"
-	},
-	"RestoreDefault": {
-		"en": "",
-		"zh": "恢复默认",
-		"fr": "Restaurer par défaut"
-	},
-	"Edit": {
-		"en": "",
-		"zh": "编辑",
-		"fr": "Éditer"
-	},
-	"ArticleManagement": {
-		"en": "",
-		"zh": "文章管理",
-		"fr": "Gestion des articles"
-	},
-	"Learn": {
-		"en": "",
-		"zh": "学习",
-		"fr": "Étudier"
-	},
-	"LearningRecord": {
-		"en": "",
-		"zh": "学习记录",
-		"fr": "Historique d'apprentissage"
-	},
-	"RestoreDefaultConfirm": {
-		"en": "",
-		"zh": "继续此操作会重置所有文章，并从官方书籍获取最新文章列表，学习记录不会被重置。确认恢复默认吗？",
-		"fr": "Cette opération réinitialisera tous les articles et récupérera la dernière liste d'articles du livre officiel. L'historique d'apprentissage ne sera pas réinitialisé. Confirmer la restauration ?"
-	},
-	"RestoreSuccess": {
-		"en": "",
-		"zh": "恢复成功",
-		"fr": "Restauration réussie"
-	},
-	"RestoreFailed": {
-		"en": "",
-		"zh": "恢复失败",
-		"fr": "Échec de la restauration"
-	},
-	"CreateBook": {
-		"en": "",
-		"zh": "创建",
-		"fr": "Créer"
-	},
-	"ModifyBook": {
-		"en": "",
-		"zh": "修改",
-		"fr": "Modifier"
-	},
-	"Book": {
-		"en": "",
-		"zh": "书籍",
-		"fr": "livre"
-	},
-	"Collect": {
-		"en": "",
-		"zh": "收藏",
-		"fr": "Ajouter aux favoris"
-	},
-	"Uncollect": {
-		"en": "",
-		"zh": "取消收藏",
-		"fr": "Retirer des favoris"
-	},
-	"DictList": {
-		"en": "",
-		"zh": "词典列表",
-		"fr": "Liste des dictionnaires"
-	},
-	"SearchDictPlaceholder": {
-		"en": "",
-		"zh": "请输入词典名称/缩写/类别",
-		"fr": "Entrez le nom/abréviation/catégorie du dictionnaire"
-	},
-	"NoRelatedDict": {
-		"en": "",
-		"zh": "没有相关词典",
-		"fr": "Aucun dictionnaire correspondant"
-	},
-	"Search": {
-		"en": "",
-		"zh": "搜索",
-		"fr": "Rechercher"
-	},
-	"NoWordsToLearn": {
-		"en": "",
-		"zh": "没有单词可学习！",
-		"fr": "Aucun mot disponible !"
-	},
-	"ModifySuccess": {
-		"en": "",
-		"zh": "修改成功",
-		"fr": "Modification réussie"
-	},
-	"ModifyFailed": {
-		"en": "",
-		"zh": "修改失败，未找到单词",
-		"fr": "Échec de la modification, mot introuvable"
-	},
-	"AddSuccess": {
-		"en": "",
-		"zh": "添加成功",
-		"fr": "Ajout réussi"
-	},
-	"DuplicateWordExists": {
-		"en": "",
-		"zh": "已有相同名称单词！",
-		"fr": "Un mot avec le même nom existe déjà !"
-	},
-	"PleaseComplete": {
-		"en": "",
-		"zh": "请填写完整",
-		"fr": "Veuillez remplir tous les champs"
-	},
-	"ConfirmDelete": {
-		"en": "",
-		"zh": "确认删除？",
-		"fr": "Confirmer la suppression ?"
-	},
-	"ModifyWord": {
-		"en": "",
-		"zh": "修改",
-		"fr": "Modifier"
-	},
-	"AddWord": {
-		"en": "",
-		"zh": "添加",
-		"fr": "Ajouter"
-	},
-	"Word": {
-		"en": "",
-		"zh": "单词",
-		"fr": "Mot"
-	},
-	"BritishPhonetic": {
-		"en": "",
-		"zh": "英音音标",
-		"fr": "Phonétique britannique"
-	},
-	"AmericanPhonetic": {
-		"en": "",
-		"zh": "美音音标",
-		"fr": "Phonétique américaine"
-	},
-	"Translation": {
-		"en": "",
-		"zh": "翻译",
-		"fr": "Traduction"
-	},
-	"TranslationPlaceholder": {
-		"en": "",
-		"zh": "一行一个翻译，前面词性，后面内容（如n.取消）；多个翻译请换行",
-		"fr": "Une traduction par ligne, type de mot devant, contenu derrière (ex: n.annulation) ; pour plusieurs traductions, sautez une ligne"
-	},
-	"Sentence": {
-		"en": "",
-		"zh": "例句",
-		"fr": "Exemple"
-	},
-	"SentencePlaceholder": {
-		"en": "",
-		"zh": "一行原文，一行译文；多个请换两行",
-		"fr": "Une ligne pour l'original, une ligne pour la traduction ; pour plusieurs exemples, sautez deux lignes"
-	},
-	"Phrase": {
-		"en": "",
-		"zh": "短语",
-		"fr": "Expression"
-	},
-	"PhrasePlaceholder": {
-		"en": "",
-		"zh": "一行原文，一行译文；多个请换两行",
-		"fr": "Une ligne pour l'original, une ligne pour la traduction ; pour plusieurs expressions, sautez deux lignes"
-	},
-	"Synonym": {
-		"en": "",
-		"zh": "同义词",
-		"fr": "Synonyme"
-	},
-	"SynonymPlaceholder": {
-		"en": "",
-		"zh": "请参考已有单词格式",
-		"fr": "Veuillez suivre le format des mots existants"
-	},
-	"RelatedWord": {
-		"en": "",
-		"zh": "同根词",
-		"fr": "Mots de la même racine"
-	},
-	"RelatedWordPlaceholder": {
-		"en": "",
-		"zh": "请参考已有单词格式",
-		"fr": "Veuillez suivre le format des mots existants"
-	},
-	"Etymology": {
-		"en": "",
-		"zh": "词源",
-		"fr": "Étymologie"
-	},
-	"EtymologyPlaceholder": {
-		"en": "",
-		"zh": "请参考已有单词格式",
-		"fr": "Veuillez suivre le format des mots existants"
-	},
-	"Close": {
-		"en": "",
-		"zh": "关闭",
-		"fr": "Fermer"
-	},
-	"Save": {
-		"en": "",
-		"zh": "保存",
-		"fr": "Enregistrer"
-	},
-	"CreateDict": {
-		"en": "",
-		"zh": "创建",
-		"fr": "Créer"
-	},
-	"ModifyDict": {
-		"en": "",
-		"zh": "修改",
-		"fr": "Modifier"
-	},
-	"Dictionary": {
-		"en": "",
-		"zh": "词典",
-		"fr": "dictionnaire"
-	},
-	"WordQuantifier": {
-		"en": "",
-		"zh": "个词",
-		"fr": "mot(s)"
-	},
-	"ImportFailedNoDataShort": {
-		"en": "",
-		"zh": "导入失败！原因：没有数据",
-		"fr": "Échec de l'importation : aucune donnée"
-	},
-	"EnterWord": {
-		"en": "",
-		"zh": "请输入单词",
-		"fr": "Veuillez entrer un mot"
-	},
-	"WordLengthLimit": {
-		"en": "",
-		"zh": "名称不能超过100个字符",
-		"fr": "Le nom ne peut pas dépasser 100 caractères"
-	},
-	"HomeHeaderSubtitle": {
-		"en": "",
-		"zh": "让每一次击键都成为学习的一部分",
-		"fr": "Faire de chaque frappe une partie de l'apprentissage"
-	},
-	"WordPracticeModes": {
-		"en": "",
-		"zh": "单词拼写、默写、复习",
-		"fr": "Orthographe, dictée, révision de mots"
-	},
-	"ArticleFeature1": {
-		"en": "",
-		"zh": "整篇文章练习，句子或段落为单位",
-		"fr": "Pratique d'articles complets, par phrase ou paragraphe"
-	},
-	"ArticleFeature2": {
-		"en": "",
-		"zh": "丰富的音频同步，按需切换",
-		"fr": "Synchronisation audio riche, bascule à la demande"
-	},
-	"ArticleFeature3": {
-		"en": "",
-		"zh": "支持自定义文章导入",
-		"fr": "Prise en charge de l'importation d'articles personnalisés"
-	},
-	"CollectionWrongMastered": {
-		"en": "",
-		"zh": "收藏、错词本、已掌握",
-		"fr": "Favoris, mots incorrects, mots maîtrisés"
-	},
-	"CollectionFeature1": {
-		"en": "",
-		"zh": "输入错误自动添加到错词本",
-		"fr": "Les erreurs de saisie sont automatiquement ajoutées aux mots incorrects"
-	},
-	"CollectionFeature2": {
-		"en": "",
-		"zh": "主动添加到已掌握，后续自动跳过",
-		"fr": "Ajouter activement aux mots maîtrisés, ignorés automatiquement par la suite"
-	},
-	"CollectionFeature3": {
-		"en": "",
-		"zh": "主动添加到收藏中，以便巩固复习",
-		"fr": "Ajouter activement aux favoris pour une révision consolidée"
-	},
-	"MassiveVocabulary": {
-		"en": "",
-		"zh": "海量词库",
-		"fr": "Vaste bibliothèque de vocabulaire"
-	},
-	"MassiveVocabularyDesc": {
-		"en": "",
-		"zh": "内置小学、初中、高中、四六级、考研、雅思、托福、GRE、GMAT、SAT、BEC、专四、专八等词库",
-		"fr": "Dictionnaires intégrés : primaire, collège, lycée, CET-4/6, examen d'entrée aux cycles supérieurs, IELTS, TOEFL, GRE, GMAT, SAT, BEC, TEM-4, TEM-8, etc."
-	},
-	"FreeOpenSource": {
-		"en": "",
-		"zh": "免费开源",
-		"fr": "Gratuit et open source"
-	},
-	"FreeOpenSourceFeature1": {
-		"en": "",
-		"zh": "完全开源，可审查、可修改",
-		"fr": "Entièrement open source, auditable et modifiable"
-	},
-	"FreeOpenSourceFeature2": {
-		"en": "",
-		"zh": "免费使用",
-		"fr": "Utilisation gratuite"
-	},
-	"FreeOpenSourceFeature3": {
-		"en": "",
-		"zh": "私有部署",
-		"fr": "Déploiement privé"
-	},
-	"HighlyCustomizable": {
-		"en": "",
-		"zh": "高度自由",
-		"fr": "Hautement personnalisable"
-	},
-	"HighlyCustomizableFeature1": {
-		"en": "",
-		"zh": "丰富的键盘音效",
-		"fr": "Effets sonores de clavier riches"
-	},
-	"HighlyCustomizableFeature2": {
-		"en": "",
-		"zh": "可自定义快捷键",
-		"fr": "Raccourcis clavier personnalisables"
-	},
-	"HighlyCustomizableFeature3": {
-		"en": "",
-		"zh": "高度定制化的设置选项",
-		"fr": "Options de paramètres hautement personnalisables"
-	},
-	"SimpleEfficient": {
-		"en": "",
-		"zh": "简洁高效",
-		"fr": "Simple et efficace"
-	},
-	"SimpleEfficientFeature1": {
-		"en": "",
-		"zh": "简洁设计，现代化UI，无广告",
-		"fr": "Design épuré, interface moderne, sans publicité"
-	},
-	"SimpleEfficientFeature2": {
-		"en": "",
-		"zh": "界面清爽，操作简单",
-		"fr": "Interface claire, opérations simples"
-	},
-	"SimpleEfficientFeature3": {
-		"en": "",
-		"zh": "不强制关注任何平台",
-		"fr": "Aucune obligation de suivre une plateforme"
-	},
-	"PersonalizedLearning": {
-		"en": "",
-		"zh": "个性学习",
-		"fr": "Apprentissage personnalisé"
-	},
-	"PersonalizedLearningFeature1": {
-		"en": "",
-		"zh": "自由添加词典与文章",
-		"fr": "Ajout libre de dictionnaires et d'articles"
-	},
-	"PersonalizedLearningFeature2": {
-		"en": "",
-		"zh": "定制个性学习计划",
-		"fr": "Personnalisation du plan d'apprentissage"
-	},
-	"PersonalizedLearningFeature3": {
-		"en": "",
-		"zh": "多种学习复习策略",
-		"fr": "Multiples stratégies d'apprentissage et de révision"
-	},
-	"CommunityGroup": {
-		"en": "",
-		"zh": "Type Words 交流群",
-		"fr": "Groupe de discussion Type Words"
-	},
-	"CommunityGroupDesc": {
-		"en": "",
-		"zh": "加入我们的用户社群后，您可以与我们的开发团队进行沟通，分享您的使用体验和建议，帮助我们改进产品，同时也能够及时了解我们的最新动态和更新内容。",
-		"fr": "En rejoignant notre communauté d'utilisateurs, vous pouvez communiquer avec notre équipe de développement, partager votre expérience et vos suggestions, nous aider à améliorer le produit, et rester informé de nos dernières actualités et mises à jour."
-	},
-	"RedBookTitle": {
-		"en": "",
-		"zh": "小红书",
-		"fr": "Xiaohongshu"
-	},
-	"RedBookDesc": {
-		"en": "",
-		"zh": "关注小红书后，您可以获得开发团队的最新动态和更新内容，反馈您的使用体验和建议，帮助我们改进产品，同时也能够及时了解我们的最新动态和更新内容。",
-		"fr": "En suivant Xiaohongshu, vous pouvez obtenir les dernières actualités et mises à jour de l'équipe de développement, donner votre avis et vos suggestions, nous aider à améliorer le produit, et rester informé de nos dernières actualités."
-	},
-	"ConfirmDeleteAllSelected": {
-		"en": "",
-		"zh": "确认删除所有选中数据？",
-		"fr": "Confirmer la suppression de toutes les données sélectionnées ?"
-	},
-	"Import": {
-		"en": "",
-		"zh": "导入",
-		"fr": "Importer"
-	},
-	"Export": {
-		"en": "",
-		"zh": "导出",
-		"fr": "Exporter"
-	},
-	"ChangeOrder": {
-		"en": "",
-		"zh": "改变顺序",
-		"fr": "Changer l'ordre"
-	},
-	"ListOrderSettings": {
-		"en": "",
-		"zh": "列表顺序设置",
-		"fr": "Paramètres d'ordre de liste"
-	},
-	"Reverse": {
-		"en": "",
-		"zh": "翻转",
-		"fr": "Inverser"
-	},
-	"Random": {
-		"en": "",
-		"zh": "随机",
-		"fr": "Aléatoire"
-	},
-	"SortReversed": {
-		"en": "",
-		"zh": "已翻转排序",
-		"fr": "Ordre inversé"
-	},
-	"SortRandomized": {
-		"en": "",
-		"zh": "已随机排序",
-		"fr": "Ordre aléatoire"
-	},
-	"ImportTutorial": {
-		"en": "",
-		"zh": "导入教程",
-		"fr": "Tutoriel d'importation"
-	},
-	"ImportInstructions1": {
-		"en": "",
-		"zh": "请按照模板的格式来填写数据",
-		"fr": "Veuillez remplir les données selon le format du modèle"
-	},
-	"ImportInstructions2": {
-		"en": "",
-		"zh": "单词项为必填，其他项可不填",
-		"fr": "Le champ mot est obligatoire, les autres champs sont facultatifs"
-	},
-	"ImportInstructions3": {
-		"en": "",
-		"zh": "翻译：一行一个翻译，前面词性，后面内容（如n.取消）；多个翻译请换行",
-		"fr": "Traduction : une traduction par ligne, type de mot devant, contenu derrière (ex: n.annulation) ; pour plusieurs traductions, sautez une ligne"
-	},
-	"ImportInstructions4": {
-		"en": "",
-		"zh": "例句：一行原文，一行译文；多个请换",
-		"fr": "Exemple : une ligne pour l'original, une ligne pour la traduction ; pour plusieurs exemples, sautez"
-	},
-	"ImportInstructions4Emphasis": {
-		"en": "",
-		"zh": "两",
-		"fr": "deux"
-	},
-	"ImportInstructions5": {
-		"en": "",
-		"zh": "短语：一行原文，一行译文；多个请换",
-		"fr": "Expression : une ligne pour l'original, une ligne pour la traduction ; pour plusieurs expressions, sautez"
-	},
-	"ImportInstructions6": {
-		"en": "",
-		"zh": "同义词、同根词、词源：请前往官方字典，然后编辑其中某个单词，参考其格式",
-		"fr": "Synonymes, mots de même racine, étymologie : veuillez consulter le dictionnaire officiel, puis modifier un mot et suivre son format"
-	},
-	"TemplateDownload": {
-		"en": "",
-		"zh": "模板下载地址：",
-		"fr": "Télécharger le modèle :"
-	},
-	"WordImportTemplate": {
-		"en": "",
-		"zh": "单词导入模板",
-		"fr": "Modèle d'importation de mots"
-	},
-	"PleaseSelectDict": {
-		"en": "",
-		"zh": "请先选择一本词典",
-		"fr": "Veuillez d'abord sélectionner un dictionnaire"
-	},
-	"LearningSettings": {
-		"en": "",
-		"zh": "学习设置",
-		"fr": "Paramètres d'apprentissage"
-	},
-	"StartFrom": {
-		"en": "",
-		"zh": "从",
-		"fr": "Depuis"
-	},
-	"WordsStart": {
-		"en": "",
-		"zh": "个开始，",
-		"fr": "mots pour commencer,"
-	},
-	"Daily": {
-		"en": "",
-		"zh": "每日",
-		"fr": "quotidien"
-	},
-	"WordsPerDay": {
-		"en": "",
-		"zh": "个，",
-		"fr": "mots,"
-	},
-	"EstimatedDays": {
-		"en": "",
-		"zh": "预计",
-		"fr": "estimé"
-	},
-	"DaysToComplete": {
-		"en": "",
-		"zh": "天完成",
-		"fr": "jours pour terminer"
-	},
-	"DailyLearning": {
-		"en": "",
-		"zh": "每日学习",
-		"fr": "Apprentissage quotidien"
-	},
-	"LearningProgress": {
-		"en": "",
-		"zh": "学习进度",
-		"fr": "Progression d'apprentissage"
-	},
-	"SelectStartPositionFromDict": {
-		"en": "",
-		"zh": "从词典选起始位置",
-		"fr": "Sélectionner la position de départ depuis le dictionnaire"
-	},
-	"KeepDefaultNoShow": {
-		"en": "",
-		"zh": "保持默认，不再显示",
-		"fr": "Garder par défaut, ne plus afficher"
-	},
-	"CanChangeInSettings": {
-		"en": "",
-		"zh": "可在设置页面更改",
-		"fr": "Peut être modifié dans les paramètres"
-	},
-	"ModifyLearningProgress": {
-		"en": "",
-		"zh": "修改学习进度",
-		"fr": "Modifier la progression d'apprentissage"
-	},
-	"Collapse": {
-		"en": "",
-		"zh": "收起",
-		"fr": "Réduire"
-	},
-	"Expand": {
-		"en": "",
-		"zh": "展开",
-		"fr": "Développer"
-	},
-	"LearningNewWords": {
-		"en": "",
-		"zh": "正在学习新词",
-		"fr": "Apprentissage de nouveaux mots"
-	},
-	"DictatingNewWords": {
-		"en": "",
-		"zh": "正在默写新词",
-		"fr": "Dictée de nouveaux mots"
-	},
-	"ReviewingLast": {
-		"en": "",
-		"zh": "正在复习上次",
-		"fr": "Révision de la dernière session"
-	},
-	"DictatingLast": {
-		"en": "",
-		"zh": "正在默写上次",
-		"fr": "Dictée de la dernière session"
-	},
-	"DictatingPrevious": {
-		"en": "",
-		"zh": "正在默写之前",
-		"fr": "Dictée des sessions précédentes"
-	},
-	"TotalWords": {
-		"en": "",
-		"zh": "单词总数",
-		"fr": "Total de mots"
-	},
-	"TotalInputs": {
-		"en": "",
-		"zh": "总输入数",
-		"fr": "Total de saisies"
-	},
-	"TotalErrors": {
-		"en": "",
-		"zh": "总错误数",
-		"fr": "Total d'erreurs"
-	},
-	"MarkAsMastered": {
-		"en": "",
-		"zh": "标记为已掌握",
-		"fr": "Marquer comme maîtrisé"
-	},
-	"UnmarkAsMastered": {
-		"en": "",
-		"zh": "取消标记已掌握",
-		"fr": "Annuler la marque de maîtrise"
-	},
-	"Skip": {
-		"en": "",
-		"zh": "跳过",
-		"fr": "Passer"
-	},
-	"ToggleDictationMode": {
-		"en": "",
-		"zh": "开关默写模式",
-		"fr": "Basculer le mode dictée"
-	},
-	"ToggleTranslationDisplay": {
-		"en": "",
-		"zh": "开关释义显示",
-		"fr": "Basculer l'affichage de la traduction"
-	},
-	"WordList": {
-		"en": "",
-		"zh": "单词本",
-		"fr": "Liste de mots"
-	},
-	"Name": {
-		"en": "",
-		"zh": "名称",
-		"fr": "Nom"
-	},
-	"Description": {
-		"en": "",
-		"zh": "描述",
-		"fr": "Description"
-	},
-	"OriginalLanguage": {
-		"en": "",
-		"zh": "原文语言",
-		"fr": "Langue d'origine"
-	},
-	"TranslationLanguage": {
-		"en": "",
-		"zh": "译文语言",
-		"fr": "Langue de traduction"
-	},
-	"English": {
-		"en": "",
-		"zh": "英语",
-		"fr": "Anglais"
-	},
-	"German": {
-		"en": "",
-		"zh": "德语",
-		"fr": "Allemand"
-	},
-	"Japanese": {
-		"en": "",
-		"zh": "日语",
-		"fr": "Japonais"
-	},
-	"Chinese": {
-		"en": "",
-		"zh": "中文",
-		"fr": "Chinois"
-	},
-	"Code": {
-		"en": "",
-		"zh": "代码",
-		"fr": "Code"
-	},
-	"EnterName": {
-		"en": "",
-		"zh": "请输入名称",
-		"fr": "Veuillez entrer un nom"
-	},
-	"NameLengthLimit": {
-		"en": "",
-		"zh": "名称不能超过20个字符",
-		"fr": "Le nom ne peut pas dépasser 20 caractères"
-	},
-	"DuplicateName": {
-		"en": "",
-		"zh": "已有相同名称！",
-		"fr": "Un nom identique existe déjà !"
-	},
-	"ModifySuccessAddedToMyDict": {
-		"en": "",
-		"zh": "修改成功并加入我的词典",
-		"fr": "Modification réussie et ajouté à mon dictionnaire"
-	},
-	"Confirm": {
-		"en": "",
-		"zh": "确定",
-		"fr": "Confirmer"
-	},
-	"OriginalText": {
-		"en": "",
-		"zh": "原文",
-		"fr": "Texte original"
-	},
-	"Content": {
-		"en": "",
-		"zh": "内容",
-		"fr": "Contenu"
-	},
-	"OneSentencePerLine": {
-		"en": "",
-		"zh": "一行一句，段落间空一行",
-		"fr": "Une phrase par ligne, ligne vide entre les paragraphes"
-	},
-	"PleaseEnterOriginalTitle": {
-		"en": "",
-		"zh": "请填写原文标题",
-		"fr": "Veuillez entrer le titre original"
-	},
-	"PleaseEnterTranslationTitle": {
-		"en": "",
-		"zh": "请填写翻译标题",
-		"fr": "Veuillez entrer le titre de la traduction"
-	},
-	"PleaseEnterOriginalText": {
-		"en": "",
-		"zh": "请复制原文",
-		"fr": "Veuillez copier le texte original"
-	},
-	"PleaseEnterTranslation": {
-		"en": "",
-		"zh": "请填写翻译",
-		"fr": "Veuillez entrer la traduction"
-	},
-	"PleaseFillInOriginal": {
-		"en": "",
-		"zh": "请填写原文！",
-		"fr": "Veuillez remplir le texte original !"
-	},
-	"PleaseFillInTitle": {
-		"en": "",
-		"zh": "请填写标题！",
-		"fr": "Veuillez remplir le titre !"
-	},
-	"PleaseFillInContent": {
-		"en": "",
-		"zh": "请填写正文！",
-		"fr": "Veuillez remplir le contenu !"
-	},
-	"SplitSentence": {
-		"en": "",
-		"zh": "分句",
-		"fr": "Segmenter"
-	},
-	"Apply": {
-		"en": "",
-		"zh": "应用",
-		"fr": "Appliquer"
-	},
-	"Translate": {
-		"en": "",
-		"zh": "翻译",
-		"fr": "Traduire"
-	},
-	"HowToUse": {
-		"en": "",
-		"zh": "使用方法",
-		"fr": "Mode d'emploi"
-	},
-	"CopyOriginalThenSegment": {
-		"en": "",
-		"zh": "复制原文，然后分句",
-		"fr": "Copiez le texte original, puis segmentez"
-	},
-	"ClickSegmentButton": {
-		"en": "",
-		"zh": "点击 分句 按钮进行自动分句 或 手动编辑分句",
-		"fr": "Cliquez sur Segmenter pour une segmentation automatique ou éditez manuellement"
-	},
-	"SegmentRule": {
-		"en": "",
-		"zh": "分句规则：一行一句，段落间空一行",
-		"fr": "Règle de segmentation : une phrase par ligne, ligne vide entre les paragraphes"
-	},
-	"ClickApplyToSync": {
-		"en": "",
-		"zh": "修改完成后点击 应用 按钮同步到左侧结果栏",
-		"fr": "Après modification, cliquez sur Appliquer pour synchroniser avec les résultats à gauche"
-	},
-	"CopyTranslationOrTranslate": {
-		"en": "",
-		"zh": "复制译文，如果没有请点击 翻译 按钮",
-		"fr": "Copiez la traduction, sinon cliquez sur Traduire"
-	},
-	"Result": {
-		"en": "",
-		"zh": "结果",
-		"fr": "Résultat"
-	},
-	"EditableAutoSync": {
-		"en": "",
-		"zh": "均可编辑，编辑后点击应用按钮会自动同步",
-		"fr": "Modifiable, synchronisation automatique après application"
-	},
-	"Audio": {
-		"en": "",
-		"zh": "音频",
-		"fr": "Audio"
-	},
-	"AudioManagement": {
-		"en": "",
-		"zh": "音频管理",
-		"fr": "Gestion audio"
-	},
-	"SegmentNo": {
-		"en": "",
-		"zh": "第{no}段",
-		"fr": "Paragraphe {no}"
-	},
-	"SetStartTime": {
-		"en": "",
-		"zh": "设置开始时间",
-		"fr": "Définir l'heure de début"
-	},
-	"SetEndTime": {
-		"en": "",
-		"zh": "设置结束时间",
-		"fr": "Définir l'heure de fin"
-	},
-	"UsePreviousSentenceEndTime": {
-		"en": "",
-		"zh": "使用前一句的结束时间",
-		"fr": "Utiliser l'heure de fin de la phrase précédente"
-	},
-	"Play": {
-		"en": "",
-		"zh": "播放",
-		"fr": "Lire"
-	},
-	"Status": {
-		"en": "",
-		"zh": "状态",
-		"fr": "Statut"
-	},
-	"SentencesNotTranslated": {
-		"en": "",
-		"zh": "共有{count}句没有翻译！",
-		"fr": "{count} phrase(s) non traduite(s) !"
-	},
-	"TranslationComplete": {
-		"en": "",
-		"zh": "翻译完成！",
-		"fr": "Traduction terminée !"
-	},
-	"SaveAndAddNext": {
-		"en": "",
-		"zh": "保存并添加下一篇",
-		"fr": "Enregistrer et ajouter le suivant"
-	},
-	"NoTranslationAvailable": {
-		"en": "",
-		"zh": "没有译文对照~",
-		"fr": "Aucune traduction disponible"
-	},
-	"SetAudioPosition": {
-		"en": "",
-		"zh": "设置音频与句子的对应位置(LRC)",
-		"fr": "Définir la correspondance audio-phrase (LRC)"
-	},
-	"Tutorial": {
-		"en": "",
-		"zh": "教程",
-		"fr": "Tutoriel"
-	},
-	"AudioTutorialText": {
-		"en": "",
-		"zh": "点击音频播放按钮，当播放到句子开始时，点击开始时间的 记录 按钮；当播放到句子结束时，点击结束时间的 记录 按钮，最后再试听是否正确",
-		"fr": "Cliquez sur lecture audio, lorsque la phrase commence, cliquez sur Enregistrer pour l'heure de début ; lorsque la phrase se termine, cliquez sur Enregistrer pour l'heure de fin, puis vérifiez"
-	},
-	"Record": {
-		"en": "",
-		"zh": "记录",
-		"fr": "Enregistrer"
-	},
-	"StartTime": {
-		"en": "",
-		"zh": "开始时间",
-		"fr": "Heure de début"
-	},
-	"EndTime": {
-		"en": "",
-		"zh": "结束时间",
-		"fr": "Heure de fin"
-	},
-	"Or": {
-		"en": "",
-		"zh": "或",
-		"fr": "ou"
-	},
-	"End": {
-		"en": "",
-		"zh": "结束",
-		"fr": "Fin"
-	},
-	"JumpTo": {
-		"en": "",
-		"zh": "跳转至{time}秒",
-		"fr": "Aller à {time} secondes"
-	},
-	"UsePreviousEndTime": {
-		"en": "",
-		"zh": "使用前一句的结束时间：{time}秒",
-		"fr": "Utiliser l'heure de fin précédente : {time} secondes"
-	},
-	"UploadAudio": {
-		"en": "",
-		"zh": "上传音频",
-		"fr": "Télécharger l'audio"
-	},
-	"UploadLRCFile": {
-		"en": "",
-		"zh": "上传 LRC 文件",
-		"fr": "Télécharger le fichier LRC"
-	},
-	"AudioManagementNote1": {
-		"en": "",
-		"zh": "上传的文件保存在本地电脑上，更换电脑数据将丢失，请及时备份数据",
-		"fr": "Les fichiers téléchargés sont enregistrés localement, les données seront perdues si vous changez d'ordinateur, veuillez sauvegarder"
-	},
-	"AudioManagementNote2": {
-		"en": "",
-		"zh": "LRC 文件用于解析句子对应音频的位置，不一定准确，后续可自行修改",
-		"fr": "Le fichier LRC est utilisé pour analyser la position audio des phrases, peut ne pas être précis, modifiable ultérieurement"
-	},
-	"AudioAddedSuccessfully": {
-		"en": "",
-		"zh": "音频添加成功",
-		"fr": "Audio ajouté avec succès"
-	},
-	"DataChangedSave": {
-		"en": "",
-		"zh": "检测到数据有变动，是否保存？",
-		"fr": "Modifications détectées, enregistrer ?"
-	},
-	"Hint": {
-		"en": "",
-		"zh": "提示",
-		"fr": "Conseil"
-	},
-	"ArticleAlreadyExists": {
-		"en": "",
-		"zh": "已存在同名文章！",
-		"fr": "Un article avec ce nom existe déjà !"
-	},
-	"SaveSuccessful": {
-		"en": "",
-		"zh": "保存成功！",
-		"fr": "Enregistrement réussi !"
-	},
-	"ArticlesExistOverwrite": {
-		"en": "",
-		"zh": "文章\"{titles}\" 已存在，是否覆盖原有文章？",
-		"fr": "L'article \"{titles}\" existe déjà. Voulez-vous remplacer ?"
-	},
-	"DuplicateArticlesDetected": {
-		"en": "",
-		"zh": "检测到重复文章",
-		"fr": "Articles en double détectés"
-	},
-	"AlreadyFirstChapter": {
-		"en": "",
-		"zh": "已经在第一章了~",
-		"fr": "Vous êtes déjà au premier chapitre"
-	},
-	"PlaybackSettings": {
-		"en": "",
-		"zh": "播放设置",
-		"fr": "Paramètres de lecture"
-	},
-	"Start": {
-		"en": "",
-		"zh": "开始",
-		"fr": "Commencer"
-	},
-	"Countdown": {
-		"en": "",
-		"zh": "倒计时：{time} 秒",
-		"fr": "Compte à rebours : {time} s"
-	},
-	"SubmitPaper": {
-		"en": "",
-		"zh": "提交试卷",
-		"fr": "Soumettre le formulaire"
-	},
-	"QuizResultLegend": {
-		"en": "",
-		"zh": "浅红：错误 深红：未选 绿：正确",
-		"fr": "Rouge clair : incorrect | Rouge foncé : non sélectionné | Vert : correct"
-	},
-	"QuizResults": {
-		"en": "",
-		"zh": "共 {total} 题，答对 {correct}，答错 {wrong}",
-		"fr": "{total} questions, {correct} correctes, {wrong} incorrectes"
-	},
-	"Explanation": {
-		"en": "",
-		"zh": "解析",
-		"fr": "Explication"
-	},
-	"MultipleChoice": {
-		"en": "",
-		"zh": "Multiple choice questions 选择题",
-		"fr": "Questions à choix multiples"
-	},
-	"SelectDictionaryToStart": {
-		"en": "",
-		"zh": "请选择词典开始学习",
-		"fr": "Veuillez sélectionner un dictionnaire pour commencer"
-	},
-	"SwitchDictionary": {
-		"en": "",
-		"zh": "切换词典",
-		"fr": "Changer de dictionnaire"
-	},
-	"ModificationSuccessful": {
-		"en": "",
-		"zh": "修改成功",
-		"fr": "Modification réussie"
-	},
-	"SpeedControlWarning": {
-		"en": "If you have installed extensions/scripts like \"Speed Control\" or \"Vim\" that intercept keyboard input, this website will not function properly",
-		"zh": "如果您安装了 \"调速\" \"Vim\" 等会接管键盘点击的插件/脚本，将导致本网站无法正常使用",
-		"fr": "Si vous avez installé des extensions/scripts comme \"Contrôle de vitesse\" ou \"Vim\" qui interceptent le clavier, ce site ne fonctionnera pas correctement"
-	},
-	"ExcludeInSettings": {
-		"en": "① Exclude this website in the extension/script settings",
-		"zh": "①：在对应插件/脚本的设置里面排除本网站",
-		"fr": "① Exclure ce site dans les paramètres de l'extension/script"
-	},
-	"DisableTemporarily": {
-		"en": "② Temporarily disable the extension/script",
-		"zh": "②：临时禁用对应插件/脚本",
-		"fr": "② Désactiver temporairement l'extension/script"
-	},
-	"NoExtensionIssue": {
-		"en": "If you haven't installed such extensions/scripts and still can't use it",
-		"zh": "如果您未安装以上插件/脚本，还是无法使用",
-		"fr": "Si vous n'avez pas installé de telles extensions/scripts et ne pouvez toujours pas l'utiliser"
-	},
-	"TryIncognitoMode": {
-		"en": "① Try opening in incognito mode",
-		"zh": "①：请打开浏览器无痕模式尝试",
-		"fr": "① Essayez d'ouvrir en mode navigation privée"
-	},
-	"ReportBugIncognito": {
-		"en": "② If it doesn't work in incognito mode, please report a bug to the author",
-		"zh": "②：无痕模式下无法正常使用，请给作者提 BUG",
-		"fr": "② Si ça ne fonctionne pas en mode privé, veuillez signaler un bug à l'auteur"
-	},
-	"DontRemindAgain": {
-		"en": "Don't remind again",
-		"zh": "不再提醒",
-		"fr": "Ne plus rappeler"
-	},
-	"WaitForTranslation": {
-		"en": "Please wait for translation to complete",
-		"zh": "请等候翻译完成",
-		"fr": "Veuillez attendre la fin de la traduction"
-	},
-	"Row": {
-		"en": "row",
-		"zh": "行",
-		"fr": "ligne"
-	},
-	"WordImportTemplateName": {
-		"en": "单词导入模板.xlsx",
-		"zh": "单词导入模板.xlsx",
-		"fr": "modèle_import_mots.xlsx"
-	},
-	"OriginalTitle": {
-		"en": "Original Title",
-		"zh": "原文标题",
-		"fr": "Titre original"
-	},
-	"TranslatedTitle": {
-		"en": "Translated Title",
-		"zh": "译文标题",
-		"fr": "Titre traduit"
-	},
-	"OriginalContent": {
-		"en": "Original Content",
-		"zh": "原文正文",
-		"fr": "Contenu original"
-	},
-	"TranslatedContent": {
-		"en": "Translated Content",
-		"zh": "译文正文",
-		"fr": "Contenu traduit"
-	},
-	"AudioAddress": {
-		"en": "Audio Address",
-		"zh": "音频地址",
-		"fr": "Adresse audio"
-	},
-	"WordRoot": {
-		"en": "Root",
-		"zh": "词根",
-		"fr": "Racine"
-	},
-	"EditArticleShortcut": {
-		"en": "Edit article",
-		"zh": "编辑文章",
-		"fr": "Modifier l'article"
-	},
-	"NextItem": {
-		"en": "Next",
-		"zh": "下一个",
-		"fr": "Suivant"
-	},
-	"PreviousItem": {
-		"en": "Previous",
-		"zh": "上一个",
-		"fr": "Précédent"
-	},
-	"ToggleMasteredStatus": {
-		"en": "Toggle mastered status",
-		"zh": "切换已掌握状态",
-		"fr": "Basculer le statut maîtrisé"
-	},
-	"ToggleFavoriteStatus": {
-		"en": "Toggle favorite status",
-		"zh": "切换收藏状态",
-		"fr": "Basculer le favori"
-	},
-	"PreviousGroup": {
-		"en": "Previous group",
-		"zh": "上一组",
-		"fr": "Groupe précédent"
-	},
-	"RepeatGroup": {
-		"en": "Repeat group",
-		"zh": "重复本组",
-		"fr": "Répéter le groupe"
-	},
-	"DictateGroup": {
-		"en": "Dictate group",
-		"zh": "默写本组",
-		"fr": "Dictée du groupe"
-	},
-	"ToggleShowTranslation": {
-		"en": "Toggle show translation",
-		"zh": "切换显示翻译",
-		"fr": "Basculer l'affichage de la traduction"
-	},
-	"ToggleThemeShortcut": {
-		"en": "Toggle theme",
-		"zh": "切换主题",
-		"fr": "Basculer le thème"
-	},
-	"TogglePanelShortcut": {
-		"en": "Toggle panel",
-		"zh": "切换面板",
-		"fr": "Basculer le panneau"
-	},
-	"RandomDictation": {
-		"en": "Random dictation",
-		"zh": "随机默写",
-		"fr": "Dictée aléatoire"
-	},
-	"ContinueRandomDictation": {
-		"en": "Continue random dictation",
-		"zh": "继续随机默写",
-		"fr": "Continuer la dictée aléatoire"
-	},
-	"Baidu": {
-		"en": "Baidu",
-		"zh": "百度",
-		"fr": "Baidu"
-	},
-	"On": {
-		"en": "On",
-		"zh": "开",
-		"fr": "Activé"
-	},
-	"Off": {
-		"en": "Off",
-		"zh": "关",
-		"fr": "Désactivé"
-	},
-	"NotImplemented": {
-		"en": "Not implemented",
-		"zh": "未现实",
-		"fr": "Non implémenté"
-	},
-	"Minutes": {
-		"en": "minutes",
-		"zh": "分钟",
-		"fr": "minutes"
-	},
-	"Hours": {
-		"en": "hours",
-		"zh": "小时",
-		"fr": "heures"
-	},
-	"PleaseSelectArticle": {
-		"en": "Please select an article",
-		"zh": "请选择文章",
-		"fr": "Veuillez sélectionner un article"
-	},
-	"ExportSuccessful": {
-		"en": "Export successful!",
-		"zh": "导出成功！",
-		"fr": "Export réussi !"
-	},
-	"AddingNewArticle": {
-		"en": "Adding new article...",
-		"zh": "正在添加新文章...",
-		"fr": "Ajout d'un nouvel article..."
-	},
-	"ExportOptions": {
-		"en": "Export Options",
-		"zh": "导出选项",
-		"fr": "Options d'export"
-	},
-	"All": {
-		"en": "All",
-		"zh": "全部",
-		"fr": "Tout"
-	},
-	"Current": {
-		"en": "Current",
-		"zh": "当前",
-		"fr": "Actuel"
-	},
-	"AddNew": {
-		"en": "Add",
-		"zh": "新增",
-		"fr": "Ajouter"
-	},
-	"ShortcutDuplicate": {
-		"en": "Shortcut key duplicate!",
-		"zh": "快捷键重复！",
-		"fr": "Raccourci en double !"
-	},
-	"SourceLanguage": {
-		"en": "Source Language",
-		"zh": "源语言",
-		"fr": "Langue source"
-	},
-	"TargetLanguage": {
-		"en": "Target Language",
-		"zh": "目标语言",
-		"fr": "Langue cible"
-	},
-	"SourceLanguageDesc": {
-		"en": "The language of the application interface",
-		"zh": "应用程序界面的语言",
-		"fr": "La langue de l'interface de l'application"
-	},
-	"TargetLanguageDesc": {
-		"en": "The language you want to learn",
-		"zh": "您想要学习的语言",
-		"fr": "La langue que vous souhaitez apprendre"
-	},
-	"Time": {
-		"en": "Time",
-		"zh": "时间",
-		"fr": "Temps"
-	},
-	"NextSentence": {
-		"en": "Next sentence",
-		"zh": "下一句",
-		"fr": "Phrase suivante"
-	},
-	"Replay": {
-		"en": "Replay",
-		"zh": "重听",
-		"fr": "Réécouter"
-	},
-	"Panel": {
-		"en": "Panel",
-		"zh": "面板",
-		"fr": "Panneau"
-	},
-	"CollapseExpand": {
-		"en": "Collapse/Expand",
-		"zh": "收起/展开",
-		"fr": "Réduire/Étendre"
-	},
-	"WordCountExcludesSimple": {
-		"en": "Word count excludes simple words, does not include mastered words",
-		"zh": "统计词数不包含简单词，不包含已掌握",
-		"fr": "Le comptage des mots exclut les mots simples et n'inclut pas les mots maîtrisés"
-	},
-	"WordCountIncludesSimple": {
-		"en": "Word count includes simple words, does not include mastered words",
-		"zh": "统计词数包含简单词，不包含已掌握",
-		"fr": "Le comptage des mots inclut les mots simples et n'inclut pas les mots maîtrisés"
-	},
-	"SimpleWordFilterSettings": {
-		"en": "Simple words can be modified in Settings -> Practice Settings -> Simple Word Filter",
-		"zh": "简单词可在设置 -> 练习设置 -> 简单词过滤中修改",
-		"fr": "Les mots simples peuvent être modifiés dans Paramètres -> Paramètres d'entraînement -> Filtre des mots simples"
-	},
-	"Times": {
-		"en": " times",
-		"zh": "次",
-		"fr": " fois"
-	},
-	"CollectWord": {
-		"en": "Collect word",
-		"zh": "收藏单词",
-		"fr": "Ajouter le mot aux favoris"
-	},
-	"Copy": {
-		"en": "Copy",
-		"zh": "复制",
-		"fr": "Copier"
-	},
-	"CopySentence": {
-		"en": "Copy sentence",
-		"zh": "复制句子",
-		"fr": "Copier la phrase"
-	},
-	"CopyWord": {
-		"en": "Copy word",
-		"zh": "复制单词",
-		"fr": "Copier le mot"
-	},
-	"Copied": {
-		"en": "Copied",
-		"zh": "已复制",
-		"fr": "Copié"
-	},
-	"StartFromHere": {
-		"en": "Start from here",
-		"zh": "从这开始",
-		"fr": "Commencer à partir d'ici"
-	},
-	"PlaySentence": {
-		"en": "Play sentence",
-		"zh": "播放句子",
-		"fr": "Lire la phrase"
-	},
-	"GrammarAnalysis": {
-		"en": "Grammar analysis",
-		"zh": "语法分析",
-		"fr": "Analyse grammaticale"
-	},
-	"CopiedOpeningGrammarSite": {
-		"en": "Copied! Opening grammar analysis website...",
-		"zh": "已复制！随后将打开语法分析网站！",
-		"fr": "Copié ! Ouverture du site d'analyse grammaticale..."
-	},
-	"YoudaoDictionaryTranslation": {
-		"en": "Youdao Dictionary translation",
-		"zh": "有道词典翻译",
-		"fr": "Traduction Youdao Dictionary"
-	},
-	"TranslateWord": {
-		"en": "Translate word",
-		"zh": "翻译单词",
-		"fr": "Traduire le mot"
-	},
-	"TranslateSentence": {
-		"en": "Translate sentence",
-		"zh": "翻译句子",
-		"fr": "Traduire la phrase"
-	},
-	"AddedSuccessfully": {
-		"en": "{word} added successfully",
-		"zh": "{word} 添加成功",
-		"fr": "{word} ajouté avec succès"
-	},
-	"NextArticle": {
-		"en": "Next article",
-		"zh": "下一篇",
-		"fr": "Article suivant"
-	},
-	"TotalLearningDuration": {
-		"en": "Total learning duration",
-		"zh": "总学习时长",
-		"fr": "Durée totale d'apprentissage"
-	},
-	"ShowQuestions": {
-		"en": "Show questions",
-		"zh": "显示题目",
-		"fr": "Afficher les questions"
-	},
-	"LanguageSettings": {
-		"en": "Language Settings",
-		"zh": "语言设置",
-		"fr": "Paramètres de langue"
-	},
-	"InterfaceLanguage": {
-		"en": "Interface Language",
-		"zh": "界面语言",
-		"fr": "Langue de l'interface"
-	},
-	"InterfaceLanguageDesc": {
-		"en": "The language used for the application interface (menus, buttons, messages)",
-		"zh": "应用程序界面使用的语言（菜单、按钮、消息）",
-		"fr": "La langue utilisée pour l'interface de l'application (menus, boutons, messages)"
-	},
-	"LearningLanguage": {
-		"en": "Learning Language",
-		"zh": "学习语言",
-		"fr": "Langue d'apprentissage"
-	},
-	"LearningLanguageDesc": {
-		"en": "The language you want to learn and practice",
-		"zh": "您想要学习和练习的语言",
-		"fr": "La langue que vous souhaitez apprendre et pratiquer"
-	},
-	"MechanicalKeyboard": {
-		"en": "Mechanical Keyboard",
-		"zh": "机械键盘",
-		"fr": "Clavier mécanique"
-	},
-	"MechanicalKeyboard1": {
-		"en": "Mechanical Keyboard 1",
-		"zh": "机械键盘1",
-		"fr": "Clavier mécanique 1"
-	},
-	"MechanicalKeyboard2": {
-		"en": "Mechanical Keyboard 2",
-		"zh": "机械键盘2",
-		"fr": "Clavier mécanique 2"
-	},
-	"VintageMechanicalKeyboard": {
-		"en": "Vintage Mechanical Keyboard",
-		"zh": "老式机械键盘",
-		"fr": "Clavier mécanique vintage"
-	},
-	"LaptopKeyboard": {
-		"en": "Laptop Keyboard",
-		"zh": "笔记本键盘",
-		"fr": "Clavier d'ordinateur portable"
-	},
-	"HoursMinutes": {
-		"en": "{hours} hours {minutes} minutes",
-		"zh": "{hours}小时{minutes}分钟",
-		"fr": "{hours} heures {minutes} minutes"
-	},
-	"MinutesOnly": {
-		"en": "{minutes} minutes",
-		"zh": "{minutes}分钟",
-		"fr": "{minutes} minutes"
-	}
+    "SkippingIncomplete": {
+        "en": "",
+        "zh": "没学完，强行跳过",
+        "fr": "Session incomplète, passage à la suite"
+    },
+    "CompletedMovingNext": {
+        "en": "",
+        "zh": "学完了，正常下一组",
+        "fr": "Session terminée, passage au groupe suivant"
+    },
+    "StartDictation": {
+        "en": "",
+        "zh": "开始默写",
+        "fr": "Commencer la dictée"
+    },
+    "StartReview": {
+        "en": "",
+        "zh": "开始复习",
+        "fr": "Commencer la révision"
+    },
+    "NoWordsToReview": {
+        "en": "",
+        "zh": "无单词需要复习",
+        "fr": "Aucun mot à réviser"
+    },
+    "FreeModeDone": {
+        "en": "",
+        "zh": "自由模式，全完学完了",
+        "fr": "Mode libre, session terminée"
+    },
+    "WordExistsOverwrite": {
+        "en": "",
+        "zh": "单词\"{words}\"已存在，是否覆盖原单词？",
+        "fr": "Le mot \"{words}\" existe déjà. Voulez-vous le remplacer ?"
+    },
+    "DuplicateWordsFound": {
+        "en": "",
+        "zh": "检测到重复单词",
+        "fr": "Mots en double détectés"
+    },
+    "ImportSuccess": {
+        "en": "",
+        "zh": "导入成功！",
+        "fr": "Importation réussie !"
+    },
+    "ImportFailedNoData": {
+        "en": "",
+        "zh": "导入失败！原因：没有数据/未认别到数据",
+        "fr": "Échec de l'importation : aucune donnée valide trouvée"
+    },
+    "PracticeArea": {
+        "en": "",
+        "zh": "练习区域",
+        "fr": "Zone d'exercice"
+    },
+    "PracticeContent": {
+        "en": "",
+        "zh": "练习内容",
+        "fr": "Contenu de l'exercice"
+    },
+    "PracticePanel": {
+        "en": "",
+        "zh": "练习面板",
+        "fr": "Panneau d'exercice"
+    },
+    "PracticeControls": {
+        "en": "",
+        "zh": "练习控制",
+        "fr": "Contrôles d'exercice"
+    },
+    "EmptyState": {
+        "en": "",
+        "zh": "空荡荡的~",
+        "fr": "Rien à afficher"
+    },
+    "Add": {
+        "en": "",
+        "zh": "添加",
+        "fr": "Ajouter"
+    },
+    "ShortcutKey": {
+        "en": "",
+        "zh": "快捷键",
+        "fr": "Raccourci clavier"
+    },
+    "Success": {
+        "en": "",
+        "zh": "成功",
+        "fr": "Succès"
+    },
+    "Warning": {
+        "en": "",
+        "zh": "警告",
+        "fr": "Avertissement"
+    },
+    "Error": {
+        "en": "",
+        "zh": "错误",
+        "fr": "Erreur"
+    },
+    "DailyTaskCompleted": {
+        "en": "",
+        "zh": "已完成今日任务",
+        "fr": "Tâches quotidiennes accomplies"
+    },
+    "NewWordsCount": {
+        "en": "",
+        "zh": "新词数",
+        "fr": "Nouveaux mots"
+    },
+    "ReviewedWords": {
+        "en": "",
+        "zh": "复习数",
+        "fr": "Mots révisés"
+    },
+    "DictationWords": {
+        "en": "",
+        "zh": "默写数",
+        "fr": "Mots dictés"
+    },
+    "ExcellentProgress": {
+        "en": "",
+        "zh": "非常棒!",
+        "fr": "Excellent !"
+    },
+    "MinutesSpent": {
+        "en": "",
+        "zh": "坚持了 {minutes} 分钟",
+        "fr": "Vous avez persévéré pendant {minutes} minutes"
+    },
+    "IncorrectWords": {
+        "en": "",
+        "zh": "错词",
+        "fr": "Mots incorrects"
+    },
+    "CorrectWords": {
+        "en": "",
+        "zh": "正确",
+        "fr": "Mots corrects"
+    },
+    "WeeklyLearningRecord": {
+        "en": "",
+        "zh": "本周学习记录",
+        "fr": "Suivi hebdomadaire"
+    },
+    "RepeatLesson": {
+        "en": "",
+        "zh": "重学一遍",
+        "fr": "Réviser la leçon"
+    },
+    "NextGroup": {
+        "en": "",
+        "zh": "再来一组",
+        "fr": "Groupe suivant"
+    },
+    "RestartPractice": {
+        "en": "",
+        "zh": "重新练习",
+        "fr": "Recommencer"
+    },
+    "ContinueDictation": {
+        "en": "",
+        "zh": "继续默写",
+        "fr": "Continuer la dictée"
+    },
+    "ReturnToHome": {
+        "en": "",
+        "zh": "返回主页",
+        "fr": "Retour à l'accueil"
+    },
+    "UnfinishedLearningTask": {
+        "en": "",
+        "zh": "当前存在未完成的学习任务，修改会重新生成学习任务，是否继续？",
+        "fr": "Il existe une tâche d'apprentissage inachevée. La modification regénérera la tâche. Continuer ?"
+    },
+    "Change": {
+        "en": "",
+        "zh": "更改",
+        "fr": "Modifier"
+    },
+    "EstimatedCompletionDate": {
+        "en": "",
+        "zh": "预计完成日期：",
+        "fr": "Date d'achèvement prévue :"
+    },
+    "LastLearningTask": {
+        "en": "",
+        "zh": "上次学习任务",
+        "fr": "Dernière tâche d'apprentissage"
+    },
+    "TodayTask": {
+        "en": "",
+        "zh": "今日任务",
+        "fr": "Tâche du jour"
+    },
+    "Review": {
+        "en": "",
+        "zh": "复习",
+        "fr": "Révision"
+    },
+    "Dictation": {
+        "en": "",
+        "zh": "默写",
+        "fr": "Dictée"
+    },
+    "DailyGoal": {
+        "en": "",
+        "zh": "每日目标",
+        "fr": "Objectif quotidien"
+    },
+    "Words": {
+        "en": "",
+        "zh": "个单词",
+        "fr": "mots"
+    },
+    "ContinueLearning": {
+        "en": "",
+        "zh": "继续学习",
+        "fr": "Continuer l'apprentissage"
+    },
+    "StartLearning": {
+        "en": "",
+        "zh": "开始学习",
+        "fr": "Commencer l'apprentissage"
+    },
+    "MyDictionaries": {
+        "en": "",
+        "zh": "我的词典",
+        "fr": "Mes dictionnaires"
+    },
+    "DeleteSelectedDictionaries": {
+        "en": "",
+        "zh": "确认删除所有选中词典？",
+        "fr": "Confirmer la suppression des dictionnaires sélectionnés ?"
+    },
+    "ManageDictionaries": {
+        "en": "",
+        "zh": "管理词典",
+        "fr": "Gérer les dictionnaires"
+    },
+    "Cancel": {
+        "en": "",
+        "zh": "取消",
+        "fr": "Annuler"
+    },
+    "CreatePersonalDictionary": {
+        "en": "",
+        "zh": "创建个人词典",
+        "fr": "Créer un dictionnaire personnel"
+    },
+    "Recommended": {
+        "en": "",
+        "zh": "推荐",
+        "fr": "Recommandés"
+    },
+    "More": {
+        "en": "",
+        "zh": "更多",
+        "fr": "Plus"
+    },
+    "CompletedTotalReviewPhase": {
+        "en": "",
+        "zh": "已学完，进入总复习阶段",
+        "fr": "Terminé, phase de révision générale"
+    },
+    "LearnedProgress": {
+        "en": "",
+        "zh": "已学习{progress}%",
+        "fr": "Appris à {progress}%"
+    },
+    "SelectDictionary": {
+        "en": "",
+        "zh": "请先选择一本词典",
+        "fr": "Veuillez d'abord sélectionner un dictionnaire"
+    },
+    "DuplicateShortcut": {
+        "en": "",
+        "zh": "快捷键重复！",
+        "fr": "Raccourci clavier déjà utilisé !"
+    },
+    "ShowWord": {
+        "en": "",
+        "zh": "显示单词",
+        "fr": "Afficher le mot"
+    },
+    "EditArticle": {
+        "en": "",
+        "zh": "编辑文章",
+        "fr": "Modifier l'article"
+    },
+    "Next": {
+        "en": "",
+        "zh": "下一个",
+        "fr": "Suivant"
+    },
+    "Previous": {
+        "en": "",
+        "zh": "上一个",
+        "fr": "Précédent"
+    },
+    "ToggleSimple": {
+        "en": "",
+        "zh": "切换已掌握状态",
+        "fr": "Basculer l'état maîtrisé"
+    },
+    "ToggleCollect": {
+        "en": "",
+        "zh": "切换收藏状态",
+        "fr": "Basculer l'état favori"
+    },
+    "NextChapter": {
+        "en": "",
+        "zh": "下一组",
+        "fr": "Groupe suivant"
+    },
+    "PreviousChapter": {
+        "en": "",
+        "zh": "上一组",
+        "fr": "Groupe précédent"
+    },
+    "RepeatChapter": {
+        "en": "",
+        "zh": "重复本组",
+        "fr": "Répéter ce groupe"
+    },
+    "DictationChapter": {
+        "en": "",
+        "zh": "默写本组",
+        "fr": "Dictée de ce groupe"
+    },
+    "ResetSuccess": {
+        "en": "",
+        "zh": "恢复成功",
+        "fr": "Réinitialisation réussie"
+    },
+    "ExportSuccess": {
+        "en": "",
+        "zh": "导出成功！",
+        "fr": "Exportation réussie !"
+    },
+    "ImportFailed": {
+        "en": "",
+        "zh": "导入失败！",
+        "fr": "Échec de l'importation !"
+    },
+    "MissingDataJson": {
+        "en": "",
+        "zh": "缺少 data.json，导入失败",
+        "fr": "Fichier data.json manquant, échec de l'importation"
+    },
+    "Info": {
+        "en": "",
+        "zh": "信息",
+        "fr": "Information"
+    },
+    "SearchArticles": {
+        "en": "",
+        "zh": "搜索文章",
+        "fr": "Rechercher des articles"
+    },
+    "PlayPronunciation": {
+        "en": "",
+        "zh": "播放发音",
+        "fr": "Écouter la prononciation"
+    },
+    "DisplayLanguage": {
+        "en": "en",
+        "zh": "zh",
+        "fr": "fr"
+    },
+    "ArticleQuantifier": {
+        "en": "",
+        "zh": "篇",
+        "fr": "articles"
+    },
+    "DeleteSuccess": {
+        "en": "",
+        "zh": "删除成功！",
+        "fr": "Suppression réussie !"
+    },
+    "HomeHeaderTitle": {
+        "en": "",
+        "zh": "学习英语，一次敲击，一点进步",
+        "fr": "Apprendre l'anglais, une frappe à la fois, un progrès chaque jour"
+    },
+    "GeneralSettings": {
+        "en": "",
+        "zh": "通用练习设置",
+        "fr": "Paramètres généraux"
+    },
+    "WordPracticeSettings": {
+        "en": "",
+        "zh": "单词练习设置",
+        "fr": "Paramètres de pratique des mots"
+    },
+    "ArticlePracticeSettings": {
+        "en": "",
+        "zh": "文章练习设置",
+        "fr": "Paramètres de pratique des articles"
+    },
+    "ShortcutSettings": {
+        "en": "",
+        "zh": "快捷键设置",
+        "fr": "Paramètres des raccourcis"
+    },
+    "DataManagement": {
+        "en": "",
+        "zh": "数据管理",
+        "fr": "Gestion des données"
+    },
+    "UpdateLog": {
+        "en": "",
+        "zh": "更新日志",
+        "fr": "Journal des mises à jour"
+    },
+    "About": {
+        "en": "",
+        "zh": "关于",
+        "fr": "À propos"
+    },
+    "Settings": {
+        "en": "",
+        "zh": "设置",
+        "fr": "Paramètres"
+    },
+    "Language": {
+        "en": "",
+        "zh": "语言",
+        "fr": "Langue"
+    },
+    "LanguageDesc": {
+        "en": "",
+        "zh": "选择应用程序的显示语言",
+        "fr": "Choisir la langue d'affichage de l'application"
+    },
+    "IgnoreCase": {
+        "en": "",
+        "zh": "忽略大小写",
+        "fr": "Ignorer la casse"
+    },
+    "IgnoreCaseDesc": {
+        "en": "",
+        "zh": "开启后，输入时不区分大小写，如输入\"hello\"和\"Hello\"都会被认为是正确的",
+        "fr": "Une fois activé, la saisie ne sera pas sensible à la casse, par exemple \"hello\" et \"Hello\" seront tous deux considérés comme corrects"
+    },
+    "AllowDictationHints": {
+        "en": "",
+        "zh": "允许默写模式下显示提示",
+        "fr": "Autoriser les indices en mode dictée"
+    },
+    "AllowDictationHintsDesc": {
+        "en": "",
+        "zh": "开启后，可以通过将鼠标移动到单词上或者按快捷键 {key} 显示正确答案",
+        "fr": "Une fois activé, vous pouvez afficher la bonne réponse en survolant le mot avec la souris ou en appuyant sur le raccourci {key}"
+    },
+    "SimpleWordFilter": {
+        "en": "",
+        "zh": "简单词过滤",
+        "fr": "Filtre des mots simples"
+    },
+    "SimpleWordFilterDesc": {
+        "en": "",
+        "zh": "开启后，练习的单词中不会包含简单词；文章统计的总词数中不会包含简单词",
+        "fr": "Une fois activé, les mots de pratique n'incluront pas les mots simples ; les statistiques d'articles n'incluront pas non plus les mots simples"
+    },
+    "SimpleWordList": {
+        "en": "",
+        "zh": "简单词列表",
+        "fr": "Liste des mots simples"
+    },
+    "SeparateMultipleWords": {
+        "en": "",
+        "zh": "多个单词用英文逗号隔号",
+        "fr": "Séparer plusieurs mots par des virgules"
+    },
+    "SoundEffects": {
+        "en": "",
+        "zh": "音效",
+        "fr": "Effets sonores"
+    },
+    "WordSentencePronunciation": {
+        "en": "",
+        "zh": "单词/句子发音口音",
+        "fr": "Accent de prononciation des mots/phrases"
+    },
+    "PleaseSelect": {
+        "en": "",
+        "zh": "请选择",
+        "fr": "Veuillez sélectionner"
+    },
+    "AmericanAccent": {
+        "en": "",
+        "zh": "美音",
+        "fr": "Accent américain"
+    },
+    "BritishAccent": {
+        "en": "",
+        "zh": "英音",
+        "fr": "Accent britannique"
+    },
+    "KeypressSound": {
+        "en": "",
+        "zh": "按键音",
+        "fr": "Son des touches"
+    },
+    "KeypressSoundEffect": {
+        "en": "",
+        "zh": "按键音效",
+        "fr": "Effet sonore des touches"
+    },
+    "Volume": {
+        "en": "",
+        "zh": "音量",
+        "fr": "Volume"
+    },
+    "EffectSound": {
+        "en": "",
+        "zh": "效果音（输入错误、完成时的音效）",
+        "fr": "Sons d'effets (sons d'erreur et de complétion)"
+    },
+    "PracticeMode": {
+        "en": "",
+        "zh": "练习模式",
+        "fr": "Mode de pratique"
+    },
+    "SmartMode": {
+        "en": "",
+        "zh": "智能模式，系统自动计算复习单词与默写单词",
+        "fr": "Mode intelligent, le système calcule automatiquement les mots de révision et de dictée"
+    },
+    "FreeMode": {
+        "en": "",
+        "zh": "自由模式，系统不强制复习与默写",
+        "fr": "Mode libre, le système n'impose pas de révision ni de dictée"
+    },
+    "PlayWordPronunciation": {
+        "en": "",
+        "zh": "播放发音",
+        "fr": "Lire la prononciation"
+    },
+    "ToggleShowTranslate": {
+        "en": "",
+        "zh": "切换显示翻译",
+        "fr": "Basculer l'affichage de la traduction"
+    },
+    "ToggleDictation": {
+        "en": "",
+        "zh": "切换默写模式",
+        "fr": "Basculer le mode dictée"
+    },
+    "ToggleTheme": {
+        "en": "",
+        "zh": "切换主题",
+        "fr": "Basculer le thème"
+    },
+    "ToggleConciseMode": {
+        "en": "",
+        "zh": "切换简洁模式",
+        "fr": "Basculer le mode concis"
+    },
+    "TogglePanel": {
+        "en": "",
+        "zh": "切换面板",
+        "fr": "Basculer le panneau"
+    },
+    "RandomWrite": {
+        "en": "",
+        "zh": "随机默写",
+        "fr": "Dictée aléatoire"
+    },
+    "NextRandomWrite": {
+        "en": "",
+        "zh": "继续随机默写",
+        "fr": "Continuer la dictée aléatoire"
+    },
+    "UnsupportedFileType": {
+        "en": "",
+        "zh": "不支持的文件类型",
+        "fr": "Type de fichier non pris en charge"
+    },
+    "AutoSavedData": {
+        "en": "",
+        "zh": "已为您自动保存当前数据！稍后将进行老数据导入操作",
+        "fr": "Vos données actuelles ont été sauvegardées automatiquement ! L'importation des anciennes données sera effectuée ultérieurement"
+    },
+    "NoOldDataBackup": {
+        "en": "",
+        "zh": "导入失败！原因：本地无老数据备份",
+        "fr": "Échec de l'importation : aucune sauvegarde de données anciennes locales"
+    },
+    "ShowPreviousNext": {
+        "en": "",
+        "zh": "显示上一个/下一个单词",
+        "fr": "Afficher le mot précédent/suivant"
+    },
+    "ShowPreviousNextDesc": {
+        "en": "",
+        "zh": "开启后，练习中会在上方显示上一个/下一个单词",
+        "fr": "Une fois activé, les mots précédent/suivant s'afficheront en haut pendant la pratique"
+    },
+    "DisableSettingsDialog": {
+        "en": "",
+        "zh": "不默认显示练习设置弹框",
+        "fr": "Ne pas afficher la boîte de dialogue des paramètres par défaut"
+    },
+    "DisableSettingsDialogDesc": {
+        "en": "",
+        "zh": "在词典详情页面，点击学习按钮后，是否显示练习设置弹框",
+        "fr": "Sur la page de détails du dictionnaire, afficher ou non la boîte de dialogue des paramètres après avoir cliqué sur le bouton d'apprentissage"
+    },
+    "ClearOnError": {
+        "en": "",
+        "zh": "输入错误时，清空已输入内容",
+        "fr": "Effacer le contenu saisi en cas d'erreur"
+    },
+    "WordLoopSettings": {
+        "en": "",
+        "zh": "单词循环设置",
+        "fr": "Paramètres de boucle de mots"
+    },
+    "Custom": {
+        "en": "",
+        "zh": "自定义",
+        "fr": "Personnalisé"
+    },
+    "LoopCount": {
+        "en": "",
+        "zh": "循环次数",
+        "fr": "Nombre de boucles"
+    },
+    "AutoPronunciation": {
+        "en": "",
+        "zh": "自动发音",
+        "fr": "Prononciation automatique"
+    },
+    "PlaybackSpeed": {
+        "en": "",
+        "zh": "倍速",
+        "fr": "Vitesse de lecture"
+    },
+    "AutoSwitch": {
+        "en": "",
+        "zh": "自动切换",
+        "fr": "Changement automatique"
+    },
+    "AutoNextWord": {
+        "en": "",
+        "zh": "自动切换下一个单词",
+        "fr": "Passer automatiquement au mot suivant"
+    },
+    "AutoNextWordDesc": {
+        "en": "",
+        "zh": "未开启自动切换时，当输入完成后请使用空格键切换下一个",
+        "fr": "Si le changement automatique n'est pas activé, utilisez la barre d'espace pour passer au suivant après la saisie"
+    },
+    "AutoNextWordTime": {
+        "en": "",
+        "zh": "自动切换下一个单词时间",
+        "fr": "Temps de passage automatique au mot suivant"
+    },
+    "AutoNextWordTimeDesc": {
+        "en": "",
+        "zh": "正确输入单词后，自动跳转下一个单词的时间",
+        "fr": "Temps avant de passer automatiquement au mot suivant après une saisie correcte"
+    },
+    "Milliseconds": {
+        "en": "",
+        "zh": "毫秒",
+        "fr": "millisecondes"
+    },
+    "FontSettings": {
+        "en": "",
+        "zh": "字体设置",
+        "fr": "Paramètres de police"
+    },
+    "ForeignFont": {
+        "en": "",
+        "zh": "外语字体",
+        "fr": "Police de langue étrangère"
+    },
+    "ChineseFont": {
+        "en": "",
+        "zh": "中文字体",
+        "fr": "Police chinoise"
+    },
+    "AutoPlaySentence": {
+        "en": "",
+        "zh": "自动播放句子",
+        "fr": "Lecture automatique des phrases"
+    },
+    "AutoPlayNextArticle": {
+        "en": "",
+        "zh": "自动播放下一篇",
+        "fr": "Lecture automatique de l'article suivant"
+    },
+    "Function": {
+        "en": "",
+        "zh": "功能",
+        "fr": "Fonction"
+    },
+    "ShortcutClickToModify": {
+        "en": "",
+        "zh": "快捷键(点击可修改)",
+        "fr": "Raccourci (cliquer pour modifier)"
+    },
+    "NoShortcutSet": {
+        "en": "",
+        "zh": "未设置快捷键",
+        "fr": "Aucun raccourci défini"
+    },
+    "PressKeyToSet": {
+        "en": "",
+        "zh": "按键盘进行设置，<span class=\"text-red!\">设置完成点击这里</span>",
+        "fr": "Appuyez sur une touche pour définir, <span class=\"text-red!\">cliquez ici après la configuration</span>"
+    },
+    "RestoreDefaults": {
+        "en": "",
+        "zh": "恢复默认",
+        "fr": "Restaurer les valeurs par défaut"
+    },
+    "DataStorageNotice": {
+        "en": "",
+        "zh": "目前用户的所有数据<b class=\"text-red\">仅保存在本地</b>。如果您需要在不同的设备、浏览器或者其他非官方部署上使用 {appName}，您需要手动进行数据同步和保存。",
+        "fr": "Actuellement, toutes les données de l'utilisateur <b class=\"text-red\">ne sont sauvegardées que localement</b>. Si vous devez utiliser {appName} sur différents appareils, navigateurs ou déploiements non officiels, vous devrez synchroniser et sauvegarder manuellement les données."
+    },
+    "ExportData": {
+        "en": "",
+        "zh": "导出数据",
+        "fr": "Exporter les données"
+    },
+    "ImportWarning": {
+        "en": "",
+        "zh": "请注意，导入数据后将<b class=\"text-red\"> 完全覆盖 </b>当前所有数据，请谨慎操作。",
+        "fr": "Veuillez noter que l'importation de données <b class=\"text-red\">écrasera complètement</b> toutes les données actuelles. Procédez avec prudence."
+    },
+    "ImportData": {
+        "en": "",
+        "zh": "导入数据",
+        "fr": "Importer les données"
+    },
+    "ImportOldVersionConfirm": {
+        "en": "",
+        "zh": "导入老版本数据前，请先备份当前数据，确定要导入老版本数据吗？",
+        "fr": "Avant d'importer les données de l'ancienne version, veuillez d'abord sauvegarder vos données actuelles. Êtes-vous sûr de vouloir importer les données de l'ancienne version ?"
+    },
+    "ImportOldVersionData": {
+        "en": "",
+        "zh": "老版本数据导入",
+        "fr": "Importer les données de l'ancienne version"
+    },
+    "UpdateLogDate1": {
+        "en": "",
+        "zh": "2025/9/14：",
+        "fr": "14/09/2025 :"
+    },
+    "UpdateLogTitle1": {
+        "en": "",
+        "zh": "完善文章编辑、导入、导出等功能",
+        "fr": "Amélioration des fonctions d'édition, d'importation et d'exportation d'articles"
+    },
+    "UpdateLogItem1_1": {
+        "en": "",
+        "zh": "1、文章的音频管理功能，目前已可添加音频、设置句子与音频的对应位置",
+        "fr": "1. Fonction de gestion audio des articles, il est désormais possible d'ajouter de l'audio et de définir la position correspondante des phrases et de l'audio"
+    },
+    "UpdateLogItem1_2": {
+        "en": "",
+        "zh": "2、文章可导入、导出",
+        "fr": "2. Les articles peuvent être importés et exportés"
+    },
+    "UpdateLogItem1_3": {
+        "en": "",
+        "zh": "3、单词可导入、导出",
+        "fr": "3. Les mots peuvent être importés et exportés"
+    },
+    "ThankYouMessage": {
+        "en": "",
+        "zh": "感谢使用本项目！本项目是开源项目，如果觉得有帮助，请在 GitHub 点个 Star，您的支持是我持续改进的动力。",
+        "fr": "Merci d'utiliser ce projet ! Ce projet est open source. Si vous le trouvez utile, merci de mettre une étoile sur GitHub. Votre soutien est ma motivation pour continuer à améliorer."
+    },
+    "GitHubAddress": {
+        "en": "",
+        "zh": "GitHub地址：",
+        "fr": "Adresse GitHub :"
+    },
+    "Feedback": {
+        "en": "",
+        "zh": "反馈：",
+        "fr": "Retour d'information :"
+    },
+    "AuthorEmail": {
+        "en": "",
+        "zh": "作者邮箱：",
+        "fr": "Email de l'auteur :"
+    },
+    "NoArticlesToLearn": {
+        "en": "",
+        "zh": "没有文章可学习！",
+        "fr": "Aucun article disponible !"
+    },
+    "SelectBookFirst": {
+        "en": "",
+        "zh": "请先选择一本书籍",
+        "fr": "Veuillez d'abord sélectionner un livre"
+    },
+    "TodayLearningTime": {
+        "en": "",
+        "zh": "今日学习时长",
+        "fr": "Temps d'étude aujourd'hui"
+    },
+    "TotalLearningDays": {
+        "en": "",
+        "zh": "总学习天数",
+        "fr": "Jours d'étude totaux"
+    },
+    "TotalLearningTime": {
+        "en": "",
+        "zh": "总学习时长",
+        "fr": "Temps d'étude total"
+    },
+    "MyBooks": {
+        "en": "",
+        "zh": "我的书籍",
+        "fr": "Mes livres"
+    },
+    "ConfirmDeleteBooks": {
+        "en": "",
+        "zh": "确认删除所有选中书籍？",
+        "fr": "Confirmer la suppression de tous les livres sélectionnés ?"
+    },
+    "ManageBooks": {
+        "en": "",
+        "zh": "管理书籍",
+        "fr": "Gérer les livres"
+    },
+    "CreatePersonalBook": {
+        "en": "",
+        "zh": "创建个人书籍",
+        "fr": "Créer un livre personnel"
+    },
+    "BookList": {
+        "en": "",
+        "zh": "书籍列表",
+        "fr": "Liste des livres"
+    },
+    "SearchBookPlaceholder": {
+        "en": "",
+        "zh": "请输入书籍名称/缩写/类别",
+        "fr": "Entrez le nom/abréviation/catégorie du livre"
+    },
+    "NoRelatedBooks": {
+        "en": "",
+        "zh": "没有相关书籍",
+        "fr": "Aucun livre correspondant"
+    },
+    "Introduction": {
+        "en": "",
+        "zh": "介绍：",
+        "fr": "Introduction :"
+    },
+    "RestoreDefault": {
+        "en": "",
+        "zh": "恢复默认",
+        "fr": "Restaurer par défaut"
+    },
+    "Edit": {
+        "en": "",
+        "zh": "编辑",
+        "fr": "Éditer"
+    },
+    "ArticleManagement": {
+        "en": "",
+        "zh": "文章管理",
+        "fr": "Gestion des articles"
+    },
+    "Learn": {
+        "en": "",
+        "zh": "学习",
+        "fr": "Étudier"
+    },
+    "LearningRecord": {
+        "en": "",
+        "zh": "学习记录",
+        "fr": "Historique d'apprentissage"
+    },
+    "RestoreDefaultConfirm": {
+        "en": "",
+        "zh": "继续此操作会重置所有文章，并从官方书籍获取最新文章列表，学习记录不会被重置。确认恢复默认吗？",
+        "fr": "Cette opération réinitialisera tous les articles et récupérera la dernière liste d'articles du livre officiel. L'historique d'apprentissage ne sera pas réinitialisé. Confirmer la restauration ?"
+    },
+    "RestoreSuccess": {
+        "en": "",
+        "zh": "恢复成功",
+        "fr": "Restauration réussie"
+    },
+    "RestoreFailed": {
+        "en": "",
+        "zh": "恢复失败",
+        "fr": "Échec de la restauration"
+    },
+    "CreateBook": {
+        "en": "",
+        "zh": "创建",
+        "fr": "Créer"
+    },
+    "ModifyBook": {
+        "en": "",
+        "zh": "修改",
+        "fr": "Modifier"
+    },
+    "Book": {
+        "en": "",
+        "zh": "书籍",
+        "fr": "livre"
+    },
+    "Collect": {
+        "en": "",
+        "zh": "收藏",
+        "fr": "Ajouter aux favoris"
+    },
+    "CollectNoticeHeadline": {
+        "en": "",
+        "zh": "坚持练习，提高外语能力。",
+        "fr": "Continuez à pratiquer pour progresser en langues."
+    },
+    "CollectNoticeBookmarkInstruction": {
+        "en": "",
+        "zh": "将 {appName} 保存为书签，永不迷失！",
+        "fr": "Ajoutez {appName} aux favoris pour ne jamais le perdre !"
+    },
+    "CollectNoticeHighlight": {
+        "en": "",
+        "zh": "点亮它!",
+        "fr": "Mettez-le en évidence !"
+    },
+    "CollectNoticeKeyboardHint": {
+        "en": "",
+        "zh": "或使用收藏快捷键 {shortcut}",
+        "fr": "Ou utilisez le raccourci {shortcut}"
+    },
+    "CollectNoticeAction": {
+        "en": "",
+        "zh": "我想收藏",
+        "fr": "Je veux l'ajouter aux favoris"
+    },
+    "CollectNoticeAutoClose": {
+        "en": "",
+        "zh": "{seconds}s 后自动关闭",
+        "fr": "Fermeture automatique dans {seconds}s"
+    },
+    "Uncollect": {
+        "en": "",
+        "zh": "取消收藏",
+        "fr": "Retirer des favoris"
+    },
+    "DictList": {
+        "en": "",
+        "zh": "词典列表",
+        "fr": "Liste des dictionnaires"
+    },
+    "SearchDictPlaceholder": {
+        "en": "",
+        "zh": "请输入词典名称/缩写/类别",
+        "fr": "Entrez le nom/abréviation/catégorie du dictionnaire"
+    },
+    "NoRelatedDict": {
+        "en": "",
+        "zh": "没有相关词典",
+        "fr": "Aucun dictionnaire correspondant"
+    },
+    "Search": {
+        "en": "",
+        "zh": "搜索",
+        "fr": "Rechercher"
+    },
+    "NoWordsToLearn": {
+        "en": "",
+        "zh": "没有单词可学习！",
+        "fr": "Aucun mot disponible !"
+    },
+    "ModifySuccess": {
+        "en": "",
+        "zh": "修改成功",
+        "fr": "Modification réussie"
+    },
+    "ModifyFailed": {
+        "en": "",
+        "zh": "修改失败，未找到单词",
+        "fr": "Échec de la modification, mot introuvable"
+    },
+    "AddSuccess": {
+        "en": "",
+        "zh": "添加成功",
+        "fr": "Ajout réussi"
+    },
+    "DuplicateWordExists": {
+        "en": "",
+        "zh": "已有相同名称单词！",
+        "fr": "Un mot avec le même nom existe déjà !"
+    },
+    "PleaseComplete": {
+        "en": "",
+        "zh": "请填写完整",
+        "fr": "Veuillez remplir tous les champs"
+    },
+    "ConfirmDelete": {
+        "en": "",
+        "zh": "确认删除？",
+        "fr": "Confirmer la suppression ?"
+    },
+    "ModifyWord": {
+        "en": "",
+        "zh": "修改",
+        "fr": "Modifier"
+    },
+    "AddWord": {
+        "en": "",
+        "zh": "添加",
+        "fr": "Ajouter"
+    },
+    "Word": {
+        "en": "",
+        "zh": "单词",
+        "fr": "Mot"
+    },
+    "BritishPhonetic": {
+        "en": "",
+        "zh": "英音音标",
+        "fr": "Phonétique britannique"
+    },
+    "AmericanPhonetic": {
+        "en": "",
+        "zh": "美音音标",
+        "fr": "Phonétique américaine"
+    },
+    "Translation": {
+        "en": "",
+        "zh": "翻译",
+        "fr": "Traduction"
+    },
+    "TranslationPlaceholder": {
+        "en": "",
+        "zh": "一行一个翻译，前面词性，后面内容（如n.取消）；多个翻译请换行",
+        "fr": "Une traduction par ligne, type de mot devant, contenu derrière (ex: n.annulation) ; pour plusieurs traductions, sautez une ligne"
+    },
+    "Sentence": {
+        "en": "",
+        "zh": "例句",
+        "fr": "Exemple"
+    },
+    "SentencePlaceholder": {
+        "en": "",
+        "zh": "一行原文，一行译文；多个请换两行",
+        "fr": "Une ligne pour l'original, une ligne pour la traduction ; pour plusieurs exemples, sautez deux lignes"
+    },
+    "Phrase": {
+        "en": "",
+        "zh": "短语",
+        "fr": "Expression"
+    },
+    "PhrasePlaceholder": {
+        "en": "",
+        "zh": "一行原文，一行译文；多个请换两行",
+        "fr": "Une ligne pour l'original, une ligne pour la traduction ; pour plusieurs expressions, sautez deux lignes"
+    },
+    "Synonym": {
+        "en": "",
+        "zh": "同义词",
+        "fr": "Synonyme"
+    },
+    "SynonymPlaceholder": {
+        "en": "",
+        "zh": "请参考已有单词格式",
+        "fr": "Veuillez suivre le format des mots existants"
+    },
+    "RelatedWord": {
+        "en": "",
+        "zh": "同根词",
+        "fr": "Mots de la même racine"
+    },
+    "RelatedWordPlaceholder": {
+        "en": "",
+        "zh": "请参考已有单词格式",
+        "fr": "Veuillez suivre le format des mots existants"
+    },
+    "Etymology": {
+        "en": "",
+        "zh": "词源",
+        "fr": "Étymologie"
+    },
+    "EtymologyPlaceholder": {
+        "en": "",
+        "zh": "请参考已有单词格式",
+        "fr": "Veuillez suivre le format des mots existants"
+    },
+    "Close": {
+        "en": "Close",
+        "zh": "关闭",
+        "fr": "Fermer"
+    },
+    "Back": {
+        "en": "Back",
+        "zh": "返回",
+        "fr": "Retour"
+    },
+    "Delete": {
+        "en": "Delete",
+        "zh": "删除",
+        "fr": "Supprimer"
+    },
+    "Save": {
+        "en": "",
+        "zh": "保存",
+        "fr": "Enregistrer"
+    },
+    "CreateDict": {
+        "en": "",
+        "zh": "创建",
+        "fr": "Créer"
+    },
+    "ModifyDict": {
+        "en": "",
+        "zh": "修改",
+        "fr": "Modifier"
+    },
+    "Dictionary": {
+        "en": "",
+        "zh": "词典",
+        "fr": "dictionnaire"
+    },
+    "WordQuantifier": {
+        "en": "",
+        "zh": "个词",
+        "fr": "mot(s)"
+    },
+    "ImportFailedNoDataShort": {
+        "en": "",
+        "zh": "导入失败！原因：没有数据",
+        "fr": "Échec de l'importation : aucune donnée"
+    },
+    "EnterWord": {
+        "en": "",
+        "zh": "请输入单词",
+        "fr": "Veuillez entrer un mot"
+    },
+    "WordLengthLimit": {
+        "en": "",
+        "zh": "名称不能超过100个字符",
+        "fr": "Le nom ne peut pas dépasser 100 caractères"
+    },
+    "HomeHeaderSubtitle": {
+        "en": "",
+        "zh": "让每一次击键都成为学习的一部分",
+        "fr": "Faire de chaque frappe une partie de l'apprentissage"
+    },
+    "WordPracticeModes": {
+        "en": "",
+        "zh": "单词拼写、默写、复习",
+        "fr": "Orthographe, dictée, révision de mots"
+    },
+    "ArticleFeature1": {
+        "en": "",
+        "zh": "整篇文章练习，句子或段落为单位",
+        "fr": "Pratique d'articles complets, par phrase ou paragraphe"
+    },
+    "ArticleFeature2": {
+        "en": "",
+        "zh": "丰富的音频同步，按需切换",
+        "fr": "Synchronisation audio riche, bascule à la demande"
+    },
+    "ArticleFeature3": {
+        "en": "",
+        "zh": "支持自定义文章导入",
+        "fr": "Prise en charge de l'importation d'articles personnalisés"
+    },
+    "CollectionWrongMastered": {
+        "en": "",
+        "zh": "收藏、错词本、已掌握",
+        "fr": "Favoris, mots incorrects, mots maîtrisés"
+    },
+    "CollectionFeature1": {
+        "en": "",
+        "zh": "输入错误自动添加到错词本",
+        "fr": "Les erreurs de saisie sont automatiquement ajoutées aux mots incorrects"
+    },
+    "CollectionFeature2": {
+        "en": "",
+        "zh": "主动添加到已掌握，后续自动跳过",
+        "fr": "Ajouter activement aux mots maîtrisés, ignorés automatiquement par la suite"
+    },
+    "CollectionFeature3": {
+        "en": "",
+        "zh": "主动添加到收藏中，以便巩固复习",
+        "fr": "Ajouter activement aux favoris pour une révision consolidée"
+    },
+    "MassiveVocabulary": {
+        "en": "",
+        "zh": "海量词库",
+        "fr": "Vaste bibliothèque de vocabulaire"
+    },
+    "MassiveVocabularyDesc": {
+        "en": "",
+        "zh": "内置小学、初中、高中、四六级、考研、雅思、托福、GRE、GMAT、SAT、BEC、专四、专八等词库",
+        "fr": "Dictionnaires intégrés : primaire, collège, lycée, CET-4/6, examen d'entrée aux cycles supérieurs, IELTS, TOEFL, GRE, GMAT, SAT, BEC, TEM-4, TEM-8, etc."
+    },
+    "FreeOpenSource": {
+        "en": "",
+        "zh": "免费开源",
+        "fr": "Gratuit et open source"
+    },
+    "FreeOpenSourceFeature1": {
+        "en": "",
+        "zh": "完全开源，可审查、可修改",
+        "fr": "Entièrement open source, auditable et modifiable"
+    },
+    "FreeOpenSourceFeature2": {
+        "en": "",
+        "zh": "免费使用",
+        "fr": "Utilisation gratuite"
+    },
+    "FreeOpenSourceFeature3": {
+        "en": "",
+        "zh": "私有部署",
+        "fr": "Déploiement privé"
+    },
+    "HighlyCustomizable": {
+        "en": "",
+        "zh": "高度自由",
+        "fr": "Hautement personnalisable"
+    },
+    "HighlyCustomizableFeature1": {
+        "en": "",
+        "zh": "丰富的键盘音效",
+        "fr": "Effets sonores de clavier riches"
+    },
+    "HighlyCustomizableFeature2": {
+        "en": "",
+        "zh": "可自定义快捷键",
+        "fr": "Raccourcis clavier personnalisables"
+    },
+    "HighlyCustomizableFeature3": {
+        "en": "",
+        "zh": "高度定制化的设置选项",
+        "fr": "Options de paramètres hautement personnalisables"
+    },
+    "SimpleEfficient": {
+        "en": "",
+        "zh": "简洁高效",
+        "fr": "Simple et efficace"
+    },
+    "SimpleEfficientFeature1": {
+        "en": "",
+        "zh": "简洁设计，现代化UI，无广告",
+        "fr": "Design épuré, interface moderne, sans publicité"
+    },
+    "SimpleEfficientFeature2": {
+        "en": "",
+        "zh": "界面清爽，操作简单",
+        "fr": "Interface claire, opérations simples"
+    },
+    "SimpleEfficientFeature3": {
+        "en": "",
+        "zh": "不强制关注任何平台",
+        "fr": "Aucune obligation de suivre une plateforme"
+    },
+    "PersonalizedLearning": {
+        "en": "",
+        "zh": "个性学习",
+        "fr": "Apprentissage personnalisé"
+    },
+    "PersonalizedLearningFeature1": {
+        "en": "",
+        "zh": "自由添加词典与文章",
+        "fr": "Ajout libre de dictionnaires et d'articles"
+    },
+    "PersonalizedLearningFeature2": {
+        "en": "",
+        "zh": "定制个性学习计划",
+        "fr": "Personnalisation du plan d'apprentissage"
+    },
+    "PersonalizedLearningFeature3": {
+        "en": "",
+        "zh": "多种学习复习策略",
+        "fr": "Multiples stratégies d'apprentissage et de révision"
+    },
+    "CommunityGroup": {
+        "en": "",
+        "zh": "Type Words 交流群",
+        "fr": "Groupe de discussion Type Words"
+    },
+    "CommunityGroupDesc": {
+        "en": "",
+        "zh": "加入我们的用户社群后，您可以与我们的开发团队进行沟通，分享您的使用体验和建议，帮助我们改进产品，同时也能够及时了解我们的最新动态和更新内容。",
+        "fr": "En rejoignant notre communauté d'utilisateurs, vous pouvez communiquer avec notre équipe de développement, partager votre expérience et vos suggestions, nous aider à améliorer le produit, et rester informé de nos dernières actualités et mises à jour."
+    },
+    "RedBookTitle": {
+        "en": "",
+        "zh": "小红书",
+        "fr": "Xiaohongshu"
+    },
+    "RedBookDesc": {
+        "en": "",
+        "zh": "关注小红书后，您可以获得开发团队的最新动态和更新内容，反馈您的使用体验和建议，帮助我们改进产品，同时也能够及时了解我们的最新动态和更新内容。",
+        "fr": "En suivant Xiaohongshu, vous pouvez obtenir les dernières actualités et mises à jour de l'équipe de développement, donner votre avis et vos suggestions, nous aider à améliorer le produit, et rester informé de nos dernières actualités."
+    },
+    "ConfirmDeleteAllSelected": {
+        "en": "",
+        "zh": "确认删除所有选中数据？",
+        "fr": "Confirmer la suppression de toutes les données sélectionnées ?"
+    },
+    "Import": {
+        "en": "",
+        "zh": "导入",
+        "fr": "Importer"
+    },
+    "Export": {
+        "en": "",
+        "zh": "导出",
+        "fr": "Exporter"
+    },
+    "ChangeOrder": {
+        "en": "",
+        "zh": "改变顺序",
+        "fr": "Changer l'ordre"
+    },
+    "ListOrderSettings": {
+        "en": "",
+        "zh": "列表顺序设置",
+        "fr": "Paramètres d'ordre de liste"
+    },
+    "Reverse": {
+        "en": "",
+        "zh": "翻转",
+        "fr": "Inverser"
+    },
+    "Random": {
+        "en": "",
+        "zh": "随机",
+        "fr": "Aléatoire"
+    },
+    "SortReversed": {
+        "en": "",
+        "zh": "已翻转排序",
+        "fr": "Ordre inversé"
+    },
+    "SortRandomized": {
+        "en": "",
+        "zh": "已随机排序",
+        "fr": "Ordre aléatoire"
+    },
+    "ImportTutorial": {
+        "en": "",
+        "zh": "导入教程",
+        "fr": "Tutoriel d'importation"
+    },
+    "ImportInstructions1": {
+        "en": "",
+        "zh": "请按照模板的格式来填写数据",
+        "fr": "Veuillez remplir les données selon le format du modèle"
+    },
+    "ImportInstructions2": {
+        "en": "",
+        "zh": "单词项为必填，其他项可不填",
+        "fr": "Le champ mot est obligatoire, les autres champs sont facultatifs"
+    },
+    "ImportInstructions3": {
+        "en": "",
+        "zh": "翻译：一行一个翻译，前面词性，后面内容（如n.取消）；多个翻译请换行",
+        "fr": "Traduction : une traduction par ligne, type de mot devant, contenu derrière (ex: n.annulation) ; pour plusieurs traductions, sautez une ligne"
+    },
+    "ImportInstructions4": {
+        "en": "",
+        "zh": "例句：一行原文，一行译文；多个请换",
+        "fr": "Exemple : une ligne pour l'original, une ligne pour la traduction ; pour plusieurs exemples, sautez"
+    },
+    "ImportInstructions4Emphasis": {
+        "en": "",
+        "zh": "两",
+        "fr": "deux"
+    },
+    "ImportInstructions5": {
+        "en": "",
+        "zh": "短语：一行原文，一行译文；多个请换",
+        "fr": "Expression : une ligne pour l'original, une ligne pour la traduction ; pour plusieurs expressions, sautez"
+    },
+    "ImportInstructions6": {
+        "en": "",
+        "zh": "同义词、同根词、词源：请前往官方字典，然后编辑其中某个单词，参考其格式",
+        "fr": "Synonymes, mots de même racine, étymologie : veuillez consulter le dictionnaire officiel, puis modifier un mot et suivre son format"
+    },
+    "TemplateDownload": {
+        "en": "",
+        "zh": "模板下载地址：",
+        "fr": "Télécharger le modèle :"
+    },
+    "WordImportTemplate": {
+        "en": "",
+        "zh": "单词导入模板",
+        "fr": "Modèle d'importation de mots"
+    },
+    "PleaseSelectDict": {
+        "en": "",
+        "zh": "请先选择一本词典",
+        "fr": "Veuillez d'abord sélectionner un dictionnaire"
+    },
+    "LearningSettings": {
+        "en": "",
+        "zh": "学习设置",
+        "fr": "Paramètres d'apprentissage"
+    },
+    "StartFrom": {
+        "en": "",
+        "zh": "从",
+        "fr": "Depuis"
+    },
+    "WordsStart": {
+        "en": "",
+        "zh": "个开始，",
+        "fr": "mots pour commencer,"
+    },
+    "Daily": {
+        "en": "",
+        "zh": "每日",
+        "fr": "quotidien"
+    },
+    "WordsPerDay": {
+        "en": "",
+        "zh": "个，",
+        "fr": "mots,"
+    },
+    "EstimatedDays": {
+        "en": "",
+        "zh": "预计",
+        "fr": "estimé"
+    },
+    "DaysToComplete": {
+        "en": "",
+        "zh": "天完成",
+        "fr": "jours pour terminer"
+    },
+    "DailyLearning": {
+        "en": "",
+        "zh": "每日学习",
+        "fr": "Apprentissage quotidien"
+    },
+    "LearningProgress": {
+        "en": "",
+        "zh": "学习进度",
+        "fr": "Progression d'apprentissage"
+    },
+    "SelectStartPositionFromDict": {
+        "en": "",
+        "zh": "从词典选起始位置",
+        "fr": "Sélectionner la position de départ depuis le dictionnaire"
+    },
+    "KeepDefaultNoShow": {
+        "en": "",
+        "zh": "保持默认，不再显示",
+        "fr": "Garder par défaut, ne plus afficher"
+    },
+    "CanChangeInSettings": {
+        "en": "",
+        "zh": "可在设置页面更改",
+        "fr": "Peut être modifié dans les paramètres"
+    },
+    "ModifyLearningProgress": {
+        "en": "",
+        "zh": "修改学习进度",
+        "fr": "Modifier la progression d'apprentissage"
+    },
+    "Collapse": {
+        "en": "",
+        "zh": "收起",
+        "fr": "Réduire"
+    },
+    "Expand": {
+        "en": "",
+        "zh": "展开",
+        "fr": "Développer"
+    },
+    "LearningNewWords": {
+        "en": "",
+        "zh": "正在学习新词",
+        "fr": "Apprentissage de nouveaux mots"
+    },
+    "DictatingNewWords": {
+        "en": "",
+        "zh": "正在默写新词",
+        "fr": "Dictée de nouveaux mots"
+    },
+    "ReviewingLast": {
+        "en": "",
+        "zh": "正在复习上次",
+        "fr": "Révision de la dernière session"
+    },
+    "DictatingLast": {
+        "en": "",
+        "zh": "正在默写上次",
+        "fr": "Dictée de la dernière session"
+    },
+    "DictatingPrevious": {
+        "en": "",
+        "zh": "正在默写之前",
+        "fr": "Dictée des sessions précédentes"
+    },
+    "TotalWords": {
+        "en": "",
+        "zh": "单词总数",
+        "fr": "Total de mots"
+    },
+    "TotalInputs": {
+        "en": "",
+        "zh": "总输入数",
+        "fr": "Total de saisies"
+    },
+    "TotalErrors": {
+        "en": "",
+        "zh": "总错误数",
+        "fr": "Total d'erreurs"
+    },
+    "MarkAsMastered": {
+        "en": "",
+        "zh": "标记为已掌握",
+        "fr": "Marquer comme maîtrisé"
+    },
+    "UnmarkAsMastered": {
+        "en": "",
+        "zh": "取消标记已掌握",
+        "fr": "Annuler la marque de maîtrise"
+    },
+    "Skip": {
+        "en": "",
+        "zh": "跳过",
+        "fr": "Passer"
+    },
+    "ToggleDictationMode": {
+        "en": "",
+        "zh": "开关默写模式",
+        "fr": "Basculer le mode dictée"
+    },
+    "ToggleTranslationDisplay": {
+        "en": "",
+        "zh": "开关释义显示",
+        "fr": "Basculer l'affichage de la traduction"
+    },
+    "WordList": {
+        "en": "",
+        "zh": "单词本",
+        "fr": "Liste de mots"
+    },
+    "Name": {
+        "en": "",
+        "zh": "名称",
+        "fr": "Nom"
+    },
+    "Description": {
+        "en": "",
+        "zh": "描述",
+        "fr": "Description"
+    },
+    "OriginalLanguage": {
+        "en": "",
+        "zh": "原文语言",
+        "fr": "Langue d'origine"
+    },
+    "TranslationLanguage": {
+        "en": "",
+        "zh": "译文语言",
+        "fr": "Langue de traduction"
+    },
+    "English": {
+        "en": "",
+        "zh": "英语",
+        "fr": "Anglais"
+    },
+    "German": {
+        "en": "",
+        "zh": "德语",
+        "fr": "Allemand"
+    },
+    "Japanese": {
+        "en": "",
+        "zh": "日语",
+        "fr": "Japonais"
+    },
+    "Chinese": {
+        "en": "",
+        "zh": "中文",
+        "fr": "Chinois"
+    },
+    "Code": {
+        "en": "",
+        "zh": "代码",
+        "fr": "Code"
+    },
+    "EnterName": {
+        "en": "",
+        "zh": "请输入名称",
+        "fr": "Veuillez entrer un nom"
+    },
+    "NameLengthLimit": {
+        "en": "",
+        "zh": "名称不能超过20个字符",
+        "fr": "Le nom ne peut pas dépasser 20 caractères"
+    },
+    "DuplicateName": {
+        "en": "",
+        "zh": "已有相同名称！",
+        "fr": "Un nom identique existe déjà !"
+    },
+    "ModifySuccessAddedToMyDict": {
+        "en": "",
+        "zh": "修改成功并加入我的词典",
+        "fr": "Modification réussie et ajouté à mon dictionnaire"
+    },
+    "Confirm": {
+        "en": "",
+        "zh": "确定",
+        "fr": "Confirmer"
+    },
+    "OriginalText": {
+        "en": "",
+        "zh": "原文",
+        "fr": "Texte original"
+    },
+    "Content": {
+        "en": "",
+        "zh": "内容",
+        "fr": "Contenu"
+    },
+    "OneSentencePerLine": {
+        "en": "",
+        "zh": "一行一句，段落间空一行",
+        "fr": "Une phrase par ligne, ligne vide entre les paragraphes"
+    },
+    "PleaseEnterOriginalTitle": {
+        "en": "",
+        "zh": "请填写原文标题",
+        "fr": "Veuillez entrer le titre original"
+    },
+    "PleaseEnterTranslationTitle": {
+        "en": "",
+        "zh": "请填写翻译标题",
+        "fr": "Veuillez entrer le titre de la traduction"
+    },
+    "PleaseEnterOriginalText": {
+        "en": "",
+        "zh": "请复制原文",
+        "fr": "Veuillez copier le texte original"
+    },
+    "PleaseEnterTranslation": {
+        "en": "",
+        "zh": "请填写翻译",
+        "fr": "Veuillez entrer la traduction"
+    },
+    "PleaseFillInOriginal": {
+        "en": "",
+        "zh": "请填写原文！",
+        "fr": "Veuillez remplir le texte original !"
+    },
+    "PleaseFillInTitle": {
+        "en": "",
+        "zh": "请填写标题！",
+        "fr": "Veuillez remplir le titre !"
+    },
+    "PleaseFillInContent": {
+        "en": "",
+        "zh": "请填写正文！",
+        "fr": "Veuillez remplir le contenu !"
+    },
+    "SplitSentence": {
+        "en": "",
+        "zh": "分句",
+        "fr": "Segmenter"
+    },
+    "Apply": {
+        "en": "",
+        "zh": "应用",
+        "fr": "Appliquer"
+    },
+    "Translate": {
+        "en": "",
+        "zh": "翻译",
+        "fr": "Traduire"
+    },
+    "HowToUse": {
+        "en": "",
+        "zh": "使用方法",
+        "fr": "Mode d'emploi"
+    },
+    "CopyOriginalThenSegment": {
+        "en": "",
+        "zh": "复制原文，然后分句",
+        "fr": "Copiez le texte original, puis segmentez"
+    },
+    "ClickSegmentButton": {
+        "en": "",
+        "zh": "点击 分句 按钮进行自动分句 或 手动编辑分句",
+        "fr": "Cliquez sur Segmenter pour une segmentation automatique ou éditez manuellement"
+    },
+    "SegmentRule": {
+        "en": "",
+        "zh": "分句规则：一行一句，段落间空一行",
+        "fr": "Règle de segmentation : une phrase par ligne, ligne vide entre les paragraphes"
+    },
+    "ClickApplyToSync": {
+        "en": "",
+        "zh": "修改完成后点击 应用 按钮同步到左侧结果栏",
+        "fr": "Après modification, cliquez sur Appliquer pour synchroniser avec les résultats à gauche"
+    },
+    "CopyTranslationOrTranslate": {
+        "en": "",
+        "zh": "复制译文，如果没有请点击 翻译 按钮",
+        "fr": "Copiez la traduction, sinon cliquez sur Traduire"
+    },
+    "Result": {
+        "en": "",
+        "zh": "结果",
+        "fr": "Résultat"
+    },
+    "EditableAutoSync": {
+        "en": "",
+        "zh": "均可编辑，编辑后点击应用按钮会自动同步",
+        "fr": "Modifiable, synchronisation automatique après application"
+    },
+    "Audio": {
+        "en": "",
+        "zh": "音频",
+        "fr": "Audio"
+    },
+    "AudioManagement": {
+        "en": "",
+        "zh": "音频管理",
+        "fr": "Gestion audio"
+    },
+    "SegmentNo": {
+        "en": "",
+        "zh": "第{no}段",
+        "fr": "Paragraphe {no}"
+    },
+    "SetStartTime": {
+        "en": "",
+        "zh": "设置开始时间",
+        "fr": "Définir l'heure de début"
+    },
+    "SetEndTime": {
+        "en": "",
+        "zh": "设置结束时间",
+        "fr": "Définir l'heure de fin"
+    },
+    "UsePreviousSentenceEndTime": {
+        "en": "",
+        "zh": "使用前一句的结束时间",
+        "fr": "Utiliser l'heure de fin de la phrase précédente"
+    },
+    "Play": {
+        "en": "",
+        "zh": "播放",
+        "fr": "Lire"
+    },
+    "Status": {
+        "en": "",
+        "zh": "状态",
+        "fr": "Statut"
+    },
+    "SentencesNotTranslated": {
+        "en": "",
+        "zh": "共有{count}句没有翻译！",
+        "fr": "{count} phrase(s) non traduite(s) !"
+    },
+    "TranslationComplete": {
+        "en": "",
+        "zh": "翻译完成！",
+        "fr": "Traduction terminée !"
+    },
+    "SaveAndAddNext": {
+        "en": "",
+        "zh": "保存并添加下一篇",
+        "fr": "Enregistrer et ajouter le suivant"
+    },
+    "NoTranslationAvailable": {
+        "en": "",
+        "zh": "没有译文对照~",
+        "fr": "Aucune traduction disponible"
+    },
+    "SetAudioPosition": {
+        "en": "",
+        "zh": "设置音频与句子的对应位置(LRC)",
+        "fr": "Définir la correspondance audio-phrase (LRC)"
+    },
+    "Tutorial": {
+        "en": "",
+        "zh": "教程",
+        "fr": "Tutoriel"
+    },
+    "AudioTutorialText": {
+        "en": "",
+        "zh": "点击音频播放按钮，当播放到句子开始时，点击开始时间的 记录 按钮；当播放到句子结束时，点击结束时间的 记录 按钮，最后再试听是否正确",
+        "fr": "Cliquez sur lecture audio, lorsque la phrase commence, cliquez sur Enregistrer pour l'heure de début ; lorsque la phrase se termine, cliquez sur Enregistrer pour l'heure de fin, puis vérifiez"
+    },
+    "Record": {
+        "en": "",
+        "zh": "记录",
+        "fr": "Enregistrer"
+    },
+    "StartTime": {
+        "en": "",
+        "zh": "开始时间",
+        "fr": "Heure de début"
+    },
+    "EndTime": {
+        "en": "",
+        "zh": "结束时间",
+        "fr": "Heure de fin"
+    },
+    "Or": {
+        "en": "",
+        "zh": "或",
+        "fr": "ou"
+    },
+    "End": {
+        "en": "",
+        "zh": "结束",
+        "fr": "Fin"
+    },
+    "JumpTo": {
+        "en": "",
+        "zh": "跳转至{time}秒",
+        "fr": "Aller à {time} secondes"
+    },
+    "UsePreviousEndTime": {
+        "en": "",
+        "zh": "使用前一句的结束时间：{time}秒",
+        "fr": "Utiliser l'heure de fin précédente : {time} secondes"
+    },
+    "UploadAudio": {
+        "en": "",
+        "zh": "上传音频",
+        "fr": "Télécharger l'audio"
+    },
+    "UploadLRCFile": {
+        "en": "",
+        "zh": "上传 LRC 文件",
+        "fr": "Télécharger le fichier LRC"
+    },
+    "AudioManagementNote1": {
+        "en": "",
+        "zh": "上传的文件保存在本地电脑上，更换电脑数据将丢失，请及时备份数据",
+        "fr": "Les fichiers téléchargés sont enregistrés localement, les données seront perdues si vous changez d'ordinateur, veuillez sauvegarder"
+    },
+    "AudioManagementNote2": {
+        "en": "",
+        "zh": "LRC 文件用于解析句子对应音频的位置，不一定准确，后续可自行修改",
+        "fr": "Le fichier LRC est utilisé pour analyser la position audio des phrases, peut ne pas être précis, modifiable ultérieurement"
+    },
+    "AudioAddedSuccessfully": {
+        "en": "",
+        "zh": "音频添加成功",
+        "fr": "Audio ajouté avec succès"
+    },
+    "DataChangedSave": {
+        "en": "",
+        "zh": "检测到数据有变动，是否保存？",
+        "fr": "Modifications détectées, enregistrer ?"
+    },
+    "Hint": {
+        "en": "",
+        "zh": "提示",
+        "fr": "Conseil"
+    },
+    "ArticleAlreadyExists": {
+        "en": "",
+        "zh": "已存在同名文章！",
+        "fr": "Un article avec ce nom existe déjà !"
+    },
+    "SaveSuccessful": {
+        "en": "",
+        "zh": "保存成功！",
+        "fr": "Enregistrement réussi !"
+    },
+    "ArticlesExistOverwrite": {
+        "en": "",
+        "zh": "文章\"{titles}\" 已存在，是否覆盖原有文章？",
+        "fr": "L'article \"{titles}\" existe déjà. Voulez-vous remplacer ?"
+    },
+    "DuplicateArticlesDetected": {
+        "en": "",
+        "zh": "检测到重复文章",
+        "fr": "Articles en double détectés"
+    },
+    "AlreadyFirstChapter": {
+        "en": "",
+        "zh": "已经在第一章了~",
+        "fr": "Vous êtes déjà au premier chapitre"
+    },
+    "PlaybackSettings": {
+        "en": "",
+        "zh": "播放设置",
+        "fr": "Paramètres de lecture"
+    },
+    "Start": {
+        "en": "",
+        "zh": "开始",
+        "fr": "Commencer"
+    },
+    "Countdown": {
+        "en": "",
+        "zh": "倒计时：{time} 秒",
+        "fr": "Compte à rebours : {time} s"
+    },
+    "SubmitPaper": {
+        "en": "",
+        "zh": "提交试卷",
+        "fr": "Soumettre le formulaire"
+    },
+    "QuizResultLegend": {
+        "en": "",
+        "zh": "浅红：错误 深红：未选 绿：正确",
+        "fr": "Rouge clair : incorrect | Rouge foncé : non sélectionné | Vert : correct"
+    },
+    "QuizResults": {
+        "en": "",
+        "zh": "共 {total} 题，答对 {correct}，答错 {wrong}",
+        "fr": "{total} questions, {correct} correctes, {wrong} incorrectes"
+    },
+    "Explanation": {
+        "en": "",
+        "zh": "解析",
+        "fr": "Explication"
+    },
+    "MultipleChoice": {
+        "en": "",
+        "zh": "Multiple choice questions 选择题",
+        "fr": "Questions à choix multiples"
+    },
+    "SelectDictionaryToStart": {
+        "en": "",
+        "zh": "请选择词典开始学习",
+        "fr": "Veuillez sélectionner un dictionnaire pour commencer"
+    },
+    "SwitchDictionary": {
+        "en": "",
+        "zh": "切换词典",
+        "fr": "Changer de dictionnaire"
+    },
+    "ModificationSuccessful": {
+        "en": "",
+        "zh": "修改成功",
+        "fr": "Modification réussie"
+    },
+    "SpeedControlWarning": {
+        "en": "If you have installed extensions/scripts like \"Speed Control\" or \"Vim\" that intercept keyboard input, this website will not function properly",
+        "zh": "如果您安装了 \"调速\" \"Vim\" 等会接管键盘点击的插件/脚本，将导致本网站无法正常使用",
+        "fr": "Si vous avez installé des extensions/scripts comme \"Contrôle de vitesse\" ou \"Vim\" qui interceptent le clavier, ce site ne fonctionnera pas correctement"
+    },
+    "ExcludeInSettings": {
+        "en": "① Exclude this website in the extension/script settings",
+        "zh": "①：在对应插件/脚本的设置里面排除本网站",
+        "fr": "① Exclure ce site dans les paramètres de l'extension/script"
+    },
+    "DisableTemporarily": {
+        "en": "② Temporarily disable the extension/script",
+        "zh": "②：临时禁用对应插件/脚本",
+        "fr": "② Désactiver temporairement l'extension/script"
+    },
+    "NoExtensionIssue": {
+        "en": "If you haven't installed such extensions/scripts and still can't use it",
+        "zh": "如果您未安装以上插件/脚本，还是无法使用",
+        "fr": "Si vous n'avez pas installé de telles extensions/scripts et ne pouvez toujours pas l'utiliser"
+    },
+    "TryIncognitoMode": {
+        "en": "① Try opening in incognito mode",
+        "zh": "①：请打开浏览器无痕模式尝试",
+        "fr": "① Essayez d'ouvrir en mode navigation privée"
+    },
+    "ReportBugIncognito": {
+        "en": "② If it doesn't work in incognito mode, please report a bug to the author",
+        "zh": "②：无痕模式下无法正常使用，请给作者提 BUG",
+        "fr": "② Si ça ne fonctionne pas en mode privé, veuillez signaler un bug à l'auteur"
+    },
+    "DontRemindAgain": {
+        "en": "Don't remind again",
+        "zh": "不再提醒",
+        "fr": "Ne plus rappeler"
+    },
+    "WaitForTranslation": {
+        "en": "Please wait for translation to complete",
+        "zh": "请等候翻译完成",
+        "fr": "Veuillez attendre la fin de la traduction"
+    },
+    "Row": {
+        "en": "row",
+        "zh": "行",
+        "fr": "ligne"
+    },
+    "WordImportTemplateName": {
+        "en": "单词导入模板.xlsx",
+        "zh": "单词导入模板.xlsx",
+        "fr": "modèle_import_mots.xlsx"
+    },
+    "OriginalTitle": {
+        "en": "Original Title",
+        "zh": "原文标题",
+        "fr": "Titre original"
+    },
+    "TranslatedTitle": {
+        "en": "Translated Title",
+        "zh": "译文标题",
+        "fr": "Titre traduit"
+    },
+    "OriginalContent": {
+        "en": "Original Content",
+        "zh": "原文正文",
+        "fr": "Contenu original"
+    },
+    "TranslatedContent": {
+        "en": "Translated Content",
+        "zh": "译文正文",
+        "fr": "Contenu traduit"
+    },
+    "AudioAddress": {
+        "en": "Audio Address",
+        "zh": "音频地址",
+        "fr": "Adresse audio"
+    },
+    "WordRoot": {
+        "en": "Root",
+        "zh": "词根",
+        "fr": "Racine"
+    },
+    "EditArticleShortcut": {
+        "en": "Edit article",
+        "zh": "编辑文章",
+        "fr": "Modifier l'article"
+    },
+    "NextItem": {
+        "en": "Next",
+        "zh": "下一个",
+        "fr": "Suivant"
+    },
+    "PreviousItem": {
+        "en": "Previous",
+        "zh": "上一个",
+        "fr": "Précédent"
+    },
+    "ToggleMasteredStatus": {
+        "en": "Toggle mastered status",
+        "zh": "切换已掌握状态",
+        "fr": "Basculer le statut maîtrisé"
+    },
+    "ToggleFavoriteStatus": {
+        "en": "Toggle favorite status",
+        "zh": "切换收藏状态",
+        "fr": "Basculer le favori"
+    },
+    "PreviousGroup": {
+        "en": "Previous group",
+        "zh": "上一组",
+        "fr": "Groupe précédent"
+    },
+    "RepeatGroup": {
+        "en": "Repeat group",
+        "zh": "重复本组",
+        "fr": "Répéter le groupe"
+    },
+    "DictateGroup": {
+        "en": "Dictate group",
+        "zh": "默写本组",
+        "fr": "Dictée du groupe"
+    },
+    "ToggleShowTranslation": {
+        "en": "Toggle show translation",
+        "zh": "切换显示翻译",
+        "fr": "Basculer l'affichage de la traduction"
+    },
+    "ToggleThemeShortcut": {
+        "en": "Toggle theme",
+        "zh": "切换主题",
+        "fr": "Basculer le thème"
+    },
+    "TogglePanelShortcut": {
+        "en": "Toggle panel",
+        "zh": "切换面板",
+        "fr": "Basculer le panneau"
+    },
+    "RandomDictation": {
+        "en": "Random dictation",
+        "zh": "随机默写",
+        "fr": "Dictée aléatoire"
+    },
+    "ContinueRandomDictation": {
+        "en": "Continue random dictation",
+        "zh": "继续随机默写",
+        "fr": "Continuer la dictée aléatoire"
+    },
+    "Baidu": {
+        "en": "Baidu",
+        "zh": "百度",
+        "fr": "Baidu"
+    },
+    "On": {
+        "en": "On",
+        "zh": "开",
+        "fr": "Activé"
+    },
+    "Off": {
+        "en": "Off",
+        "zh": "关",
+        "fr": "Désactivé"
+    },
+    "NotImplemented": {
+        "en": "Not implemented",
+        "zh": "未现实",
+        "fr": "Non implémenté"
+    },
+    "Minutes": {
+        "en": "minutes",
+        "zh": "分钟",
+        "fr": "minutes"
+    },
+    "Hours": {
+        "en": "hours",
+        "zh": "小时",
+        "fr": "heures"
+    },
+    "PleaseSelectArticle": {
+        "en": "Please select an article",
+        "zh": "请选择文章",
+        "fr": "Veuillez sélectionner un article"
+    },
+    "ExportSuccessful": {
+        "en": "Export successful!",
+        "zh": "导出成功！",
+        "fr": "Export réussi !"
+    },
+    "AddingNewArticle": {
+        "en": "Adding new article...",
+        "zh": "正在添加新文章...",
+        "fr": "Ajout d'un nouvel article..."
+    },
+    "ExportOptions": {
+        "en": "Export Options",
+        "zh": "导出选项",
+        "fr": "Options d'export"
+    },
+    "All": {
+        "en": "All",
+        "zh": "全部",
+        "fr": "Tout"
+    },
+    "Current": {
+        "en": "Current",
+        "zh": "当前",
+        "fr": "Actuel"
+    },
+    "AddNew": {
+        "en": "Add",
+        "zh": "新增",
+        "fr": "Ajouter"
+    },
+    "ShortcutDuplicate": {
+        "en": "Shortcut key duplicate!",
+        "zh": "快捷键重复！",
+        "fr": "Raccourci en double !"
+    },
+    "SourceLanguage": {
+        "en": "Source Language",
+        "zh": "源语言",
+        "fr": "Langue source"
+    },
+    "TargetLanguage": {
+        "en": "Target Language",
+        "zh": "目标语言",
+        "fr": "Langue cible"
+    },
+    "SourceLanguageDesc": {
+        "en": "The language of the application interface",
+        "zh": "应用程序界面的语言",
+        "fr": "La langue de l'interface de l'application"
+    },
+    "TargetLanguageDesc": {
+        "en": "The language you want to learn",
+        "zh": "您想要学习的语言",
+        "fr": "La langue que vous souhaitez apprendre"
+    },
+    "Time": {
+        "en": "Time",
+        "zh": "时间",
+        "fr": "Temps"
+    },
+    "NextSentence": {
+        "en": "Next sentence",
+        "zh": "下一句",
+        "fr": "Phrase suivante"
+    },
+    "Replay": {
+        "en": "Replay",
+        "zh": "重听",
+        "fr": "Réécouter"
+    },
+    "Panel": {
+        "en": "Panel",
+        "zh": "面板",
+        "fr": "Panneau"
+    },
+    "CollapseExpand": {
+        "en": "Collapse/Expand",
+        "zh": "收起/展开",
+        "fr": "Réduire/Étendre"
+    },
+    "WordCountExcludesSimple": {
+        "en": "Word count excludes simple words, does not include mastered words",
+        "zh": "统计词数不包含简单词，不包含已掌握",
+        "fr": "Le comptage des mots exclut les mots simples et n'inclut pas les mots maîtrisés"
+    },
+    "WordCountIncludesSimple": {
+        "en": "Word count includes simple words, does not include mastered words",
+        "zh": "统计词数包含简单词，不包含已掌握",
+        "fr": "Le comptage des mots inclut les mots simples et n'inclut pas les mots maîtrisés"
+    },
+    "SimpleWordFilterSettings": {
+        "en": "Simple words can be modified in Settings -> Practice Settings -> Simple Word Filter",
+        "zh": "简单词可在设置 -> 练习设置 -> 简单词过滤中修改",
+        "fr": "Les mots simples peuvent être modifiés dans Paramètres -> Paramètres d'entraînement -> Filtre des mots simples"
+    },
+    "Times": {
+        "en": " times",
+        "zh": "次",
+        "fr": " fois"
+    },
+    "CollectWord": {
+        "en": "Collect word",
+        "zh": "收藏单词",
+        "fr": "Ajouter le mot aux favoris"
+    },
+    "Copy": {
+        "en": "Copy",
+        "zh": "复制",
+        "fr": "Copier"
+    },
+    "CopySentence": {
+        "en": "Copy sentence",
+        "zh": "复制句子",
+        "fr": "Copier la phrase"
+    },
+    "CopyWord": {
+        "en": "Copy word",
+        "zh": "复制单词",
+        "fr": "Copier le mot"
+    },
+    "Copied": {
+        "en": "Copied",
+        "zh": "已复制",
+        "fr": "Copié"
+    },
+    "StartFromHere": {
+        "en": "Start from here",
+        "zh": "从这开始",
+        "fr": "Commencer à partir d'ici"
+    },
+    "PlaySentence": {
+        "en": "Play sentence",
+        "zh": "播放句子",
+        "fr": "Lire la phrase"
+    },
+    "GrammarAnalysis": {
+        "en": "Grammar analysis",
+        "zh": "语法分析",
+        "fr": "Analyse grammaticale"
+    },
+    "CopiedOpeningGrammarSite": {
+        "en": "Copied! Opening grammar analysis website...",
+        "zh": "已复制！随后将打开语法分析网站！",
+        "fr": "Copié ! Ouverture du site d'analyse grammaticale..."
+    },
+    "YoudaoDictionaryTranslation": {
+        "en": "Youdao Dictionary translation",
+        "zh": "有道词典翻译",
+        "fr": "Traduction Youdao Dictionary"
+    },
+    "TranslateWord": {
+        "en": "Translate word",
+        "zh": "翻译单词",
+        "fr": "Traduire le mot"
+    },
+    "TranslateSentence": {
+        "en": "Translate sentence",
+        "zh": "翻译句子",
+        "fr": "Traduire la phrase"
+    },
+    "AddedSuccessfully": {
+        "en": "{word} added successfully",
+        "zh": "{word} 添加成功",
+        "fr": "{word} ajouté avec succès"
+    },
+    "NextArticle": {
+        "en": "Next article",
+        "zh": "下一篇",
+        "fr": "Article suivant"
+    },
+    "TotalLearningDuration": {
+        "en": "Total learning duration",
+        "zh": "总学习时长",
+        "fr": "Durée totale d'apprentissage"
+    },
+    "ShowQuestions": {
+        "en": "Show questions",
+        "zh": "显示题目",
+        "fr": "Afficher les questions"
+    },
+    "LanguageSettings": {
+        "en": "Language Settings",
+        "zh": "语言设置",
+        "fr": "Paramètres de langue"
+    },
+    "InterfaceLanguage": {
+        "en": "Interface Language",
+        "zh": "界面语言",
+        "fr": "Langue de l'interface"
+    },
+    "InterfaceLanguageDesc": {
+        "en": "The language used for the application interface (menus, buttons, messages)",
+        "zh": "应用程序界面使用的语言（菜单、按钮、消息）",
+        "fr": "La langue utilisée pour l'interface de l'application (menus, boutons, messages)"
+    },
+    "LearningLanguage": {
+        "en": "Learning Language",
+        "zh": "学习语言",
+        "fr": "Langue d'apprentissage"
+    },
+    "LearningLanguageDesc": {
+        "en": "The language you want to learn and practice",
+        "zh": "您想要学习和练习的语言",
+        "fr": "La langue que vous souhaitez apprendre et pratiquer"
+    },
+    "MechanicalKeyboard": {
+        "en": "Mechanical Keyboard",
+        "zh": "机械键盘",
+        "fr": "Clavier mécanique"
+    },
+    "MechanicalKeyboard1": {
+        "en": "Mechanical Keyboard 1",
+        "zh": "机械键盘1",
+        "fr": "Clavier mécanique 1"
+    },
+    "MechanicalKeyboard2": {
+        "en": "Mechanical Keyboard 2",
+        "zh": "机械键盘2",
+        "fr": "Clavier mécanique 2"
+    },
+    "VintageMechanicalKeyboard": {
+        "en": "Vintage Mechanical Keyboard",
+        "zh": "老式机械键盘",
+        "fr": "Clavier mécanique vintage"
+    },
+    "LaptopKeyboard": {
+        "en": "Laptop Keyboard",
+        "zh": "笔记本键盘",
+        "fr": "Clavier d'ordinateur portable"
+    },
+    "HoursMinutes": {
+        "en": "{hours} hours {minutes} minutes",
+        "zh": "{hours}小时{minutes}分钟",
+        "fr": "{hours} heures {minutes} minutes"
+    },
+    "MinutesOnly": {
+        "en": "{minutes} minutes",
+        "zh": "{minutes}分钟",
+        "fr": "{minutes} minutes"
+    }
 }

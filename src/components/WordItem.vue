@@ -35,8 +35,8 @@ const playWordAudio = usePlayWordAudio()
         <div class="item-title">
           <span class="word" :class="!showWord && 'word-shadow'">{{ item.word }}</span>
           <span class="phonetic">{{ item.phonetic0 }}</span>
-          <VolumeIcon 
-            class="volume" 
+          <VolumeIcon
+            class="volume"
             @click="playWordAudio(item.word)"
             :title="t('PlayPronunciation')"
           ></VolumeIcon>
