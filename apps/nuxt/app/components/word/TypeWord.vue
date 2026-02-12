@@ -54,11 +54,15 @@ const playKeyboardAudio = usePlayKeyboardAudio()
 const playWordAudio = usePlayWordAudio()
 const ttsPlayAudio = useTTsPlayAudio()
 const volumeIconRef: any = $ref()
+const sentenceVolumeIconsRefs: any = $ref([])
 const typingWordRef = $ref<HTMLDivElement>()
 // const volumeTranslateIconRef: any = $ref()
 
 let displayWord = $computed(() => {
   return props.word.word.slice(input.length + wrong.length)
+})
+let displaySentence = $computed(() => {
+  return props.word.sentences[currentPracticeSentenceIndex].c.slice(input.length + wrong.length)
 })
 
 // 在全局对象中存储当前单词信息，以便其他模块可以访问
@@ -77,6 +81,7 @@ function reset() {
   wrong = input = ''
   wordRepeatCount = 0
   showWordResult = inputLock = false
+  currentPracticeSentenceIndex = -1
   wordCompletedTime = 0 // 重置时间戳
   if (settingStore.wordSound) {
     if (settingStore.wordPracticeType !== WordPracticeType.Dictation) {
@@ -123,10 +128,16 @@ let showWordResult = $ref(false)
 let pressNumber = 0
 
 const right = $computed(() => {
-  if (settingStore.ignoreCase) {
-    return input.toLowerCase() === props.word.word.toLowerCase()
+  let target
+  if (currentPracticeSentenceIndex === -1) {
+    target = props.word.word
   } else {
-    return input === props.word.word
+    target = props.word.sentences[currentPracticeSentenceIndex].c
+  }
+  if (settingStore.ignoreCase) {
+    return input.toLowerCase() === target.toLowerCase()
+  } else {
+    return input === target
   }
 })
 
@@ -160,26 +171,32 @@ function unknown(e) {
   onTyping(e)
 }
 
+let currentPracticeSentenceIndex = $ref(-1)
+
 async function onTyping(e: KeyboardEvent) {
   debugger
-  let word = props.word.word
+  let target
+  let targetVolumeIcon
+  if (currentPracticeSentenceIndex == -1) {
+    target = props.word.word
+    targetVolumeIcon = volumeIconRef
+  } else {
+    target = props.word.sentences[currentPracticeSentenceIndex].c
+    targetVolumeIcon = sentenceVolumeIconsRefs[currentPracticeSentenceIndex]
+  }
   // 输入完成会锁死不能再输入
   if (inputLock) {
-    //判断是否是空格键以便切换到下一个单词
+    //判断是否是空格键以便切换到下一个
     if (e.code === 'Space') {
-      //正确时就切换到下一个单词
+      //正确时就切换到下一个
       if (right) {
         clearInterval(jumpTimer)
-        // 如果单词刚完成（300ms内），忽略空格键，避免同时按下最后一个字母和空格键时跳过单词
+        // 如果单词刚完成（300ms内），忽略空格键，避免同时按下最后一个字母和空格键时跳过
         if (wordCompletedTime && Date.now() - wordCompletedTime < 300) {
           return
         }
         showWordResult = inputLock = false
-        if (shouldRepeat()) {
-          repeat()
-        } else {
-          emit('complete')
-        }
+        completeTypeWord(false)
       } else {
         if (showWordResult) {
           // 错误时，提示用户按删除键，仅默写需要提示
@@ -215,21 +232,21 @@ async function onTyping(e: KeyboardEvent) {
     if (e.code === 'Space') {
       //如果输入长度大于单词长度/单词不包含空格，并且输入不为空（开始直接输入空格不行），则显示单词；
       // 这里inputLock 不设为 false，不能再输入了，只能删除（删除会重置 inputLock）或按空格切下一格
-      if (input.length && (input.length >= word.length || !word.includes(' '))) {
+      if (input.length && (input.length >= target.length || !target.includes(' '))) {
         //比对是否一致
-        if (input.toLowerCase() === word.toLowerCase()) {
+        if (input.toLowerCase() === target.toLowerCase()) {
           //如果已显示单词，则发射完成事件，并 return
           if (showWordResult) {
             return emit('complete')
           } else {
             //未显示单词，则播放正确音乐，并在后面设置为 showWordResult 为 true 来显示单词
             playCorrect()
-            if (settingStore.wordSound) volumeIconRef?.play()
+            if (settingStore.wordSound) targetVolumeIcon?.play()
           }
         } else {
           //错误处理
           playBeep()
-          if (settingStore.wordSound) volumeIconRef?.play()
+          if (settingStore.wordSound) targetVolumeIcon?.play()
           emit('wrong')
         }
         showWordResult = true
@@ -246,47 +263,47 @@ async function onTyping(e: KeyboardEvent) {
     //当自测模式下，按1和2会单独处理，如果按其他键则自动默认为不认识
     showWordResult = true
     emit('wrong')
-    if (settingStore.wordSound) volumeIconRef?.play()
+    if (settingStore.wordSound) targetVolumeIcon?.play()
     inputLock = false
     onTyping(e)
   } else {
     let right = false
     if (settingStore.ignoreCase) {
-      right = letter.toLowerCase() === word[input.length].toLowerCase()
+      right = letter.toLowerCase() === target[input.length].toLowerCase()
     } else {
-      right = letter === word[input.length]
+      right = letter === target[input.length]
     }
     //针对中文的特殊判断
     if (
       e.shiftKey &&
-      (('！' === word[input.length] && e.code === 'Digit1') ||
-        ('￥' === word[input.length] && e.code === 'Digit4') ||
-        ('…' === word[input.length] && e.code === 'Digit6') ||
-        ('（' === word[input.length] && e.code === 'Digit9') ||
-        ('—' === word[input.length] && e.code === 'Minus') ||
-        ('？' === word[input.length] && e.code === 'Slash') ||
-        ('》' === word[input.length] && e.code === 'Period') ||
-        ('《' === word[input.length] && e.code === 'Comma') ||
-        ('“' === word[input.length] && e.code === 'Quote') ||
-        ('：' === word[input.length] && e.code === 'Semicolon') ||
-        ('）' === word[input.length] && e.code === 'Digit0'))
+      (('！' === target[input.length] && e.code === 'Digit1') ||
+        ('￥' === target[input.length] && e.code === 'Digit4') ||
+        ('…' === target[input.length] && e.code === 'Digit6') ||
+        ('（' === target[input.length] && e.code === 'Digit9') ||
+        ('—' === target[input.length] && e.code === 'Minus') ||
+        ('？' === target[input.length] && e.code === 'Slash') ||
+        ('》' === target[input.length] && e.code === 'Period') ||
+        ('《' === target[input.length] && e.code === 'Comma') ||
+        ('“' === target[input.length] && e.code === 'Quote') ||
+        ('：' === target[input.length] && e.code === 'Semicolon') ||
+        ('）' === target[input.length] && e.code === 'Digit0'))
     ) {
       right = true
-      letter = word[input.length]
+      letter = target[input.length]
     }
     if (
       !e.shiftKey &&
-      (('【' === word[input.length] && e.code === 'BracketLeft') ||
-        ('、' === word[input.length] && e.code === 'Slash') ||
-        ('。' === word[input.length] && e.code === 'Period') ||
-        ('，' === word[input.length] && e.code === 'Comma') ||
-        ('‘' === word[input.length] && e.code === 'Quote') ||
-        ('；' === word[input.length] && e.code === 'Semicolon') ||
-        ('【' === word[input.length] && e.code === 'BracketLeft') ||
-        ('】' === word[input.length] && e.code === 'BracketRight'))
+      (('【' === target[input.length] && e.code === 'BracketLeft') ||
+        ('、' === target[input.length] && e.code === 'Slash') ||
+        ('。' === target[input.length] && e.code === 'Period') ||
+        ('，' === target[input.length] && e.code === 'Comma') ||
+        ('‘' === target[input.length] && e.code === 'Quote') ||
+        ('；' === target[input.length] && e.code === 'Semicolon') ||
+        ('【' === target[input.length] && e.code === 'BracketLeft') ||
+        ('】' === target[input.length] && e.code === 'BracketRight'))
     ) {
       right = true
-      letter = word[input.length]
+      letter = target[input.length]
     }
     // console.log('e', e, e.code, e.shiftKey, word[input.length])
 
@@ -298,7 +315,7 @@ async function onTyping(e: KeyboardEvent) {
       emit('wrong')
       wrong = letter
       playBeep()
-      if (settingStore.wordSound) volumeIconRef?.play()
+      if (settingStore.wordSound) targetVolumeIcon?.play()
       setTimeout(() => {
         if (settingStore.inputWrongClear) input = ''
         wrong = ''
@@ -307,7 +324,7 @@ async function onTyping(e: KeyboardEvent) {
     // 更新当前单词信息
     updateCurrentWordInfo()
     //不需要把inputLock设为false，输入完成不能再输入了，只能删除，删除会打开锁
-    if (input.toLowerCase() === word.toLowerCase()) {
+    if (input.toLowerCase() === target.toLowerCase()) {
       wordCompletedTime = Date.now() // 记录单词完成的时间戳
       playCorrect()
       if (
@@ -318,11 +335,7 @@ async function onTyping(e: KeyboardEvent) {
       }
       if ([WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(settingStore.wordPracticeType)) {
         if (settingStore.autoNextWord) {
-          if (shouldRepeat()) {
-            repeat()
-          } else {
-            jumpTimer = setTimeout(() => emit('complete'), settingStore.waitTimeForChangeWord)
-          }
+          completeTypeWord(true)
         }
       }
     } else {
@@ -340,6 +353,26 @@ function shouldRepeat() {
     }
   } else {
     return false
+  }
+}
+
+function completeTypeWord(delay: boolean) {
+  if (settingStore.wordPracticeType === WordPracticeType.FollowWrite && settingStore.practiceSentence) {
+    currentPracticeSentenceIndex++
+    if (currentPracticeSentenceIndex < props.word.sentences.length) {// 还有下一个句子
+      inputLock = false
+      wrong = input = ''
+      return
+    }
+  }
+  if (shouldRepeat()) {
+    repeat()
+  } else {
+    if (delay) {
+      jumpTimer = setTimeout(() => emit('complete'), settingStore.waitTimeForChangeWord)
+    } else {
+      emit('complete')
+    }
   }
 }
 
@@ -526,7 +559,7 @@ const notice = $computed(() => {
         <div
           id="word"
           class="word my-1"
-          :class="wrong && 'is-wrong'"
+          :class="(wrong && currentPracticeSentenceIndex === -1) ? 'is-wrong' : ''"
           :style="{ fontSize: settingStore.fontSize.wordForeignFontSize + 'px' }"
           @mouseenter="showWord"
           @mouseleave="mouseleave"
@@ -550,17 +583,22 @@ const notice = $computed(() => {
             </div>
           </div>
           <template v-else>
-            <span class="input" v-if="input">{{ input }}</span>
-            <span class="wrong" v-if="wrong">{{ wrong }}</span>
-            <span class="letter" v-if="settingStore.dictation && !showFullWord">
-              {{
-                displayWord
-                  .split('')
-                  .map(v => (v === ' ' ? '&nbsp;' : '_'))
-                  .join('')
-              }}
-            </span>
-            <span class="letter" v-else>{{ displayWord }}</span>
+            <div v-if="currentPracticeSentenceIndex === -1">
+              <span class="input" v-if="input">{{ input }}</span>
+              <span class="wrong" v-if="wrong">{{ wrong }}</span>
+              <span class="letter" v-if="settingStore.dictation && !showFullWord">
+                {{
+                  displayWord
+                    .split('')
+                    .map(v => (v === ' ' ? '&nbsp;' : '_'))
+                    .join('')
+                }}
+              </span>
+              <span class="letter" v-else>{{ displayWord }}</span>
+            </div>
+            <div v-else>
+              <span class="input">{{ word.word }}</span>
+            </div>
           </template>
         </div>
       </Tooltip>
@@ -624,16 +662,26 @@ const notice = $computed(() => {
       <template v-if="word?.sentences?.length">
         <div class="line-white my-3"></div>
         <div class="flex flex-col gap-3">
-          <div class="sentence" v-for="item in word.sentences">
-            <div class="flex gap-space">
-              <SentenceHightLightWord
-                class="text-xl"
-                :text="item.c"
-                :word="word.word"
-                :dictation="!(!settingStore.dictation || showFullWord || showWordResult)"
-              />
-              <VolumeIcon :title="`发音`" :simple="false" @click="ttsPlayAudio(item.c)" />
+          <div 
+            class="sentence" 
+            :class="(wrong && currentPracticeSentenceIndex === index) ? 'is-wrong' : ''" 
+            v-for="(item, index) in word.sentences"
+          >
+            <div class="flex gap-space text-xl">
+              <div v-if="index !== currentPracticeSentenceIndex">
+                <SentenceHightLightWord
+                    :text="item.c"
+                    :word="word.word"
+                    :dictation="!(!settingStore.dictation || showFullWord || showWordResult)"
+                />
+              </div>
+              <div v-else>
+                <span class="input" v-if="input">{{ input }}</span>
+                <span class="wrong" v-if="wrong">{{ wrong }}</span>
+                <span class="letter">{{ displaySentence }}</span>
+              </div>
             </div>
+            <VolumeIcon :title="`发音`" :simple="false" :cb="() => ttsPlayAudio(item.c)" ref="sentenceVolumeIconsRefs" />
             <div class="text-base anim" v-opacity="settingStore.translate || showFullWord || showWordResult">
               {{ item.cn }}
             </div>
@@ -729,7 +777,7 @@ const notice = $computed(() => {
       :style="{
         top: cursor.top + 'px',
         left: cursor.left + 'px',
-        height: settingStore.fontSize.wordForeignFontSize + 'px',
+        height: currentPracticeSentenceIndex === -1 ? settingStore.fontSize.wordForeignFontSize + 'px' : '20px',
       }"
     ></div>
   </div>
@@ -764,18 +812,19 @@ const notice = $computed(() => {
     font-family: var(--en-article-family);
     letter-spacing: 0.3rem;
 
-    .input,
-    .right {
-      color: rgb(22, 163, 74);
-    }
+  }
+  
+  .is-wrong {
+    animation: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
 
-    .wrong {
-      color: rgba(red, 0.6);
-    }
+  .input,
+  .right {
+    color: rgb(22, 163, 74);
+  }
 
-    &.is-wrong {
-      animation: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-    }
+  .wrong {
+    color: rgba(red, 0.6);
   }
 
   .tabs {

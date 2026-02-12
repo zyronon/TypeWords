@@ -11,7 +11,7 @@ export interface SettingState {
   wordSound: boolean
   wordSoundVolume: number
   wordSoundSpeed: number
-  wordReviewRatio: number //单词复习比例
+  wordReviewRatio: number // 单词复习比例
 
   articleSound: boolean
   articleAutoPlayNext: boolean
@@ -25,13 +25,13 @@ export interface SettingState {
   effectSound: boolean
   effectSoundVolume: number
 
-  repeatCount: number //重复次数
-  repeatCustomCount?: number //自定义重复次数
-  dictation: boolean //显示默写
-  translate: boolean //显示翻译
-  showNearWord: boolean //显示上/下一个词
-  ignoreCase: boolean //忽略大小写
-  allowWordTip: boolean //默写时时否允许查看提示
+  repeatCount: number // 重复次数
+  repeatCustomCount?: number // 自定义重复次数
+  dictation: boolean // 显示默写
+  translate: boolean // 显示翻译
+  showNearWord: boolean // 显示上/下一个词
+  ignoreCase: boolean // 忽略大小写
+  allowWordTip: boolean // 默写时时否允许查看提示
   waitTimeForChangeWord: number // 切下一个词的等待时间
   fontSize: {
     articleForeignFontSize: number
@@ -41,7 +41,7 @@ export interface SettingState {
   }
   showToolbar: boolean //收起/展开工具栏
   showPanel: boolean // 收起/展开面板
-  sideExpand: boolean //收起/展开左侧侧边栏
+  sideExpand: boolean // 收起/展开左侧侧边栏
   theme: string
   shortcutKeyMap: Record<string, string>
   first: boolean
@@ -54,10 +54,11 @@ export interface SettingState {
   wordPracticeMode: WordPracticeMode // 单词练习模式
   wordPracticeType: WordPracticeType // 单词练习类型
   disableShowPracticeSettingDialog: boolean // 不默认显示练习设置弹框
-  autoNextWord: boolean //自动切换下一个单词
-  inputWrongClear: boolean //单词输入错误，清空已输入内容
+  autoNextWord: boolean // 自动切换下一个单词
+  inputWrongClear: boolean // 单词输入错误，清空已输入内容
   mobileNavCollapsed: boolean // 移动端底部导航栏收缩状态
-  ignoreSymbol: boolean //过滤符号
+  ignoreSymbol: boolean // 过滤符号
+  practiceSentence: boolean // 练习例句
 }
 
 export const getDefaultSettingState = (): SettingState => ({
@@ -113,6 +114,7 @@ export const getDefaultSettingState = (): SettingState => ({
   inputWrongClear: false,
   mobileNavCollapsed: false,
   ignoreSymbol: true,
+  practiceSentence: false
 })
 
 export const useSettingStore = defineStore('setting', {

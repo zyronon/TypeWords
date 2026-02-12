@@ -30,6 +30,10 @@ const settingStore = useSettingStore()
       <Switch v-model="settingStore.inputWrongClear"/>
     </SettingItem>
 
+    <SettingItem :title="$t('practice_sentence')"
+    >
+      <Switch v-model="settingStore.practiceSentence"/>
+    </SettingItem>
 
     <SettingItem :title="$t('word_repeat_setting')" class="gap-0!">
       <RadioGroup v-model="settingStore.repeatCount">

@@ -251,6 +251,7 @@
 	"disable_practice_setting_dialog": "不默认显示练习设置弹框",
 	"disable_practice_setting_dialog_desc": "在词典详情页面，点击学习按钮后，是否显示练习设置弹框",
 	"clear_input_on_error": "输入错误时，清空已输入内容",
+	"practice_sentence": "练习例句",	
 	"word_repeat_setting": "单词循环设置(仅跟写生效)",
 	"repeat_count": "循环次数",
 	"review_ratio": "复习比",
