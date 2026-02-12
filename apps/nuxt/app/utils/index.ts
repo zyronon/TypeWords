@@ -510,3 +510,9 @@ export async function isNewUser() {
 export function jump2Feedback() {
   window.open('https://v.wjx.cn/vm/ev0W7fv.aspx#', '_blank')
 }
+
+export function isIOS() {
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+  // 判断是否包含 iPhone、iPad 或 iPod
+  return /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+}

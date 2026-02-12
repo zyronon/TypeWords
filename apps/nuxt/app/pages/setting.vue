@@ -425,7 +425,7 @@ function transferOk() {
               请注意，导入数据将<b class="text-red"> 完全覆盖 </b
               >当前所有数据，请谨慎操作。执行导入操作时，会先自动备份当前数据到您的电脑中，供您随时恢复
             </div>
-            <div class="flex gap-space mt-3">
+            <div class="flex gap-space mt-3" v-if="!isIOS()">
               <BaseButton size="large" @click="beforeImport" :loading="importLoading">{{
                 $t('import_data_restore')
               }}</BaseButton>
@@ -433,6 +433,18 @@ function transferOk() {
                 type="file"
                 id="import"
                 class="w-0 h-0 opacity-0"
+                accept="application/json,.zip,application/zip"
+                @change="importData"
+              />
+            </div>
+            <div class="inline-block mt-3 relative" v-else>
+              <BaseButton size="large" :loading="importLoading">{{
+                $t('import_data_restore')
+              }}</BaseButton>
+              <input
+                type="file"
+                id="import"
+                class="absolute left-0 top-0 w-full h-full opacity-0"
                 accept="application/json,.zip,application/zip"
                 @change="importData"
               />
