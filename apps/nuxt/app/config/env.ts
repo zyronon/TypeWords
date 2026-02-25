@@ -34,10 +34,7 @@ if (import.meta.client) {
 }
 
 AppEnv.IS_LOGIN = !!AppEnv.TOKEN
-AppEnv.CAN_REQUEST = AppEnv.IS_LOGIN && AppEnv.IS_OFFICIAL
-// AppEnv.IS_OFFICIAL = true
-// AppEnv.CAN_REQUEST = true
-// console.log('AppEnv.CAN_REQUEST',AppEnv.CAN_REQUEST)
+AppEnv.CAN_REQUEST = AppEnv.IS_LOGIN
 
 export const RESOURCE_PATH = ENV.API + 'static'
 

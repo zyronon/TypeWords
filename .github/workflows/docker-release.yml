@@ -63,12 +63,3 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Update Docker Hub description
-        uses: peter-evans/dockerhub-description@v4
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ steps.image-name.outputs.IMAGE_NAME }}
-          short-description: "TypeWords - Learn English, one keystroke at a time"
-          readme-filepath: ./README.md
