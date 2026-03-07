@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /b \"d:\\\\TypeWords\")",
+      "Bash(ls -la apps/nuxt/*.*)",
+      "Bash(wc -l apps/nuxt/app/pages/*.vue apps/nuxt/app/components/*.vue)"
+    ]
+  }
+}

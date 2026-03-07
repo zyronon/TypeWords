@@ -14,7 +14,7 @@ export const useUserStore = defineStore('user', () => {
     isLogin.value = true
     AppEnv.TOKEN = newToken
     AppEnv.IS_LOGIN = !!AppEnv.TOKEN
-    AppEnv.CAN_REQUEST = AppEnv.IS_LOGIN && AppEnv.IS_OFFICIAL
+    AppEnv.CAN_REQUEST = AppEnv.IS_LOGIN
     localStorage.setItem('token', newToken)
   }
 

@@ -78,3 +78,23 @@ export function upload(data, onUploadProgress) {
 export function getProgress() {
     return http<{ status: number; reason: string }>('dict/getProgress', null, null, 'get')
 }
+
+export function syncDictList(data) {
+    return http('dict/syncDictList', data, null, 'post')
+}
+
+export function syncPracticeWordCache(data) {
+    return http('dict/syncPracticeWord', data, null, 'post')
+}
+
+export function getPracticeWordCacheApi() {
+    return http('dict/getPracticeWord', null, null, 'get')
+}
+
+export function syncPracticeArticleCache(data) {
+    return http('dict/syncPracticeArticle', data, null, 'post')
+}
+
+export function getPracticeArticleCacheApi() {
+    return http('dict/getPracticeArticle', null, null, 'get')
+}

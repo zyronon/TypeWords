@@ -179,4 +179,12 @@ export default defineNuxtConfig({
   devServer: {
     port: 5567,
   },
+  nitro: {
+    storage: {
+      localdata: {
+        driver: 'fs',
+        base: process.env.STORAGE_PATH || './localdata',
+      },
+    },
+  },
 })

@@ -12,17 +12,19 @@ COPY . .
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Build the application
-RUN pnpm run docker-build
+# Build the application (SSR mode)
+RUN pnpm -F @typewords/nuxt build
 
 # Production stage
-FROM nginx:alpine
+FROM node:20-alpine
 
-# Copy built application from builder
-COPY --from=builder /app/apps/nuxt/.output/public /usr/share/nginx/html
+WORKDIR /app
+
+# Copy built output from builder
+COPY --from=builder /app/apps/nuxt/.output /app/.output
 
 # Expose port
-EXPOSE 80
+EXPOSE 3000
 
 # Start the application
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "/app/.output/server/index.mjs"]

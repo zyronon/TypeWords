@@ -1,6 +1,7 @@
 import type { PracticeData, TaskWords } from '@/types/types.ts'
 import type { PracticeState } from '@/stores/practice.ts'
-import { IS_DEV } from '@/config/env'
+import { IS_DEV, AppEnv } from '@/config/env'
+import { syncPracticeWordCache, syncPracticeArticleCache } from '@/apis'
 
 export const PRACTICE_WORD_CACHE = {
   key: 'PracticeSaveWord',
@@ -63,29 +64,43 @@ export function getPracticeArticleCache(): PracticeArticleCache | null {
 }
 
 export function setPracticeWordCache(cache: PracticeWordCache | null) {
-  if (cache) {
-    localStorage.setItem(
-      PRACTICE_WORD_CACHE.key,
-      JSON.stringify({
-        version: PRACTICE_WORD_CACHE.version,
-        val: cache,
-      })
-    )
+  const payload = cache
+    ? JSON.stringify({ version: PRACTICE_WORD_CACHE.version, val: cache })
+    : null
+  if (payload) {
+    localStorage.setItem(PRACTICE_WORD_CACHE.key, payload)
   } else {
     localStorage.removeItem(PRACTICE_WORD_CACHE.key)
+  }
+  // 持久化到本地服务器（不受浏览器缓存影响）
+  fetch(`/api/storage/${PRACTICE_WORD_CACHE.key}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ data: payload }),
+  }).catch(() => {})
+  // 同步到外部服务器（登录后）
+  if (AppEnv.CAN_REQUEST) {
+    syncPracticeWordCache(cache)
   }
 }
 
 export function setPracticeArticleCache(cache: PracticeArticleCache | null) {
-  if (cache) {
-    localStorage.setItem(
-      PRACTICE_ARTICLE_CACHE.key,
-      JSON.stringify({
-        version: PRACTICE_ARTICLE_CACHE.version,
-        val: cache,
-      })
-    )
+  const payload = cache
+    ? JSON.stringify({ version: PRACTICE_ARTICLE_CACHE.version, val: cache })
+    : null
+  if (payload) {
+    localStorage.setItem(PRACTICE_ARTICLE_CACHE.key, payload)
   } else {
     localStorage.removeItem(PRACTICE_ARTICLE_CACHE.key)
+  }
+  // 持久化到本地服务器（不受浏览器缓存影响）
+  fetch(`/api/storage/${PRACTICE_ARTICLE_CACHE.key}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ data: payload }),
+  }).catch(() => {})
+  // 同步到外部服务器（登录后）
+  if (AppEnv.CAN_REQUEST) {
+    syncPracticeArticleCache(cache)
   }
 }
