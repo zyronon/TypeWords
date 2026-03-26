@@ -122,7 +122,6 @@ export async function checkAndUpgradeSaveSetting(val: any) {
       let state: SettingState & { [key: string]: any } = data.val
       if (typeof state !== 'object') return defaultState
       state.load = false
-      debugger
       let version = Number(data.version)
       //为了保持永远是最新的快捷键选项列表，但保留住用户的自定义设置，去掉无效的快捷键选项
       //例: 2版本，可能有快捷键A。3版本没有了
@@ -597,11 +596,8 @@ export function shouldFetchRemote(
 }
 
 export function isEmpty(obj: any): boolean {
-  if (typeof obj === 'object') {
-    return Object.keys(obj).length === 0
-  }
-  if (Array.isArray(obj)) {
-    return obj.length === 0
-  }
-  return obj === null || obj === undefined || obj === ''
+  if (obj === null || obj === undefined || obj === '') return true
+  if (Array.isArray(obj)) return obj.length === 0
+  if (typeof obj === 'object') return Object.keys(obj).length === 0
+  return false
 }

@@ -11,39 +11,46 @@ const model = defineModel()
 const emit = defineEmits<{ ok: [] }>()
 
 async function migrateFromOldSite() {
-  return new Promise(async (resolve, reject) => {
-    // 旧域名地址
-    var OLD_ORIGIN = 'https://2study.top'
-    // 需要迁移的 IndexedDB key
-    var IDB_KEYS = ['type-words-app-version', 'typing-word-dict', 'typing-word-setting', 'typing-word-files']
-    // 需要迁移的 localStorage key
-    var LS_KEYS = ['PracticeSaveWord', 'PracticeSaveArticle']
-    const migrateWin = window.open(`${OLD_ORIGIN}/migrate.html`, '_blank', 'width=400,height=400')
+  // 旧域名地址
+  var OLD_ORIGIN = 'https://2study.top'
+  // 需要迁移的 IndexedDB key
+  var IDB_KEYS = ['type-words-app-version', 'typing-word-dict', 'typing-word-setting', 'typing-word-files']
+  // 需要迁移的 localStorage key
+  var LS_KEYS = ['PracticeSaveWord', 'PracticeSaveArticle']
+  const migrateWin = window.open(`${OLD_ORIGIN}/migrate.html`, '_blank', 'width=400,height=400')
 
-    if (!migrateWin) return reject('弹窗被阻止，请在网址输入栏最右边，点击允许弹窗')
+  if (!migrateWin) throw new Error('弹窗被阻止，请在网址输入栏最右边，点击允许弹窗')
 
+  return new Promise<boolean>((resolve, reject) => {
     async function onMessage(event) {
       if (event.origin !== OLD_ORIGIN) return
       if (event.data?.type !== 'MIGRATION_RESULT') return
       const payload = event.data.payload
       console.log('payload', payload)
 
-      // 写入 localStorage
-      LS_KEYS.forEach(key => {
-        if (payload.localStorage[key] !== undefined) {
-          localStorage.setItem(key, payload.localStorage[key])
-        }
-      })
+      try {
+        // 写入 localStorage
+        LS_KEYS.forEach(key => {
+          if (payload.localStorage[key] !== undefined) {
+            localStorage.setItem(key, payload.localStorage[key])
+          }
+        })
 
-      // 写入 IndexedDB
-      for (let key of IDB_KEYS) {
-        if (payload.indexedDB[key] !== undefined) {
-          await set(key, payload.indexedDB[key])
+        // 写入 IndexedDB
+        for (let key of IDB_KEYS) {
+          if (payload.indexedDB[key] !== undefined) {
+            await set(key, payload.indexedDB[key])
+          }
         }
+
+        window.removeEventListener('message', onMessage)
+        clearInterval(timer)
+        resolve(true)
+      } catch (err) {
+        window.removeEventListener('message', onMessage)
+        clearInterval(timer)
+        reject(err)
       }
-
-      window.removeEventListener('message', onMessage)
-      resolve(true)
     }
 
     window.addEventListener('message', onMessage)
@@ -52,7 +59,8 @@ async function migrateFromOldSite() {
     const timer = setInterval(() => {
       if (!migrateWin || migrateWin.closed) {
         clearInterval(timer)
-        reject('迁移窗口已关闭')
+        window.removeEventListener('message', onMessage)
+        reject(new Error('迁移窗口已关闭'))
       } else {
         try {
           migrateWin.postMessage({ type: 'REQUEST_MIGRATION_DATA' }, OLD_ORIGIN)

@@ -420,7 +420,7 @@ function onFileChange(e) {
               </div>
             </FormItem>
             <FormItem prop="pwd" v-if="userStore.user?.hasPwd">
-              <BaseInput v-model="changePwdForm.pwd" type="password" size="large" placeholder="请输入密码" />
+              <BaseInput v-model="changeEmailForm.pwd" type="password" size="large" placeholder="请输入密码" />
             </FormItem>
           </Form>
           <div class="text-align-end mb-2">

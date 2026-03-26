@@ -372,21 +372,24 @@ function nextWord(word: ArticleWord) {
 async function changeArticle(val: ArticleItem) {
   if (lock) return
   lock = true
-  await articlePersistence.clear()
-  let rIndex = articleData.list.findIndex(v => v.id === val.item.id)
-  if (rIndex > -1) {
-    store.sbook.lastLearnIndex = rIndex
-    getCurrentPractice()
+  try {
+    await articlePersistence.clear()
+    let rIndex = articleData.list.findIndex(v => v.id === val.item.id)
+    if (rIndex > -1) {
+      store.sbook.lastLearnIndex = rIndex
+      getCurrentPractice()
 
-    if (AppEnv.CAN_REQUEST) {
-      let res = await setUserDictProp(null, store.sbook)
-      if (!res.success) {
-        Toast.error(res.msg)
+      if (AppEnv.CAN_REQUEST) {
+        let res = await setUserDictProp(null, store.sbook)
+        if (!res.success) {
+          Toast.error(res.msg)
+        }
       }
     }
+    initAudio()
+  } finally {
+    lock = false
   }
-  initAudio()
-  lock = true
 }
 
 const handlePlayNext = (nextArticle: Article) => {

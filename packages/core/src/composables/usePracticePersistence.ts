@@ -89,7 +89,7 @@ export function usePracticeWordPersistence() {
     return null
   }
 
-  async function getLocalDataCompact(): Promise<PracticeWordCacheStored> {
+  async function getLocalDataCompact(): Promise<PracticeWordCacheStored | null> {
     return getPracticeWordCacheLocal()
   }
 

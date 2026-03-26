@@ -44,7 +44,7 @@ axiosInstance.interceptors.response.use(
   },
   // 请求出错的处理
   error => {
-    if (error.response === undefined && error.status === undefined) {
+    if (!error.response) {
       return Promise.resolve({
         code: 500,
         msg: '服务器响应超时',
@@ -62,9 +62,10 @@ axiosInstance.interceptors.response.use(
     }
     if (error.response.status === 401) {
       return Promise.resolve({
-        code: 500,
+        code: 401,
         msg: '用户名或密码不正确',
         data: null,
+        success: false,
       })
     }
     const { data } = error.response

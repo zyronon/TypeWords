@@ -706,7 +706,7 @@ async function continueStudy() {
   if (settingStore.wordPracticeMode === WordPracticeMode.Shuffle) {
     temp.review = shuffle(store.sdict.words.filter(v => !ignoreList.includes(v.word))).slice(
       0,
-      runtimeStore.routeData.total ?? temp.review.length
+      runtimeStore.routeData?.total ?? temp.review.length
     )
     if (isComplete) isComplete = false
   } else {

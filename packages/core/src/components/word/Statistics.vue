@@ -183,7 +183,7 @@ calcWeekList() // 新增：计算本周学习记录
 
       <div>
         <div class="font-medium text-lg text-center mb-2">错词统计</div>
-        <div class="flex gap-space flex-wrap max-w-150">
+        <div v-if="practiceData" class="flex gap-space flex-wrap max-w-150">
           <span
             class="bg-[var(--bg-card-secend)] py-1 px-2 rounded-md"
             v-for="item in Object.entries(practiceData.wrongTimesMap)

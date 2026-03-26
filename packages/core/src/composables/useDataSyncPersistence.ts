@@ -158,6 +158,7 @@ async function fetchServerData(type: SyncType, client?: SupabaseClient | null): 
     return data as RemoteDataRow | null
   } catch (error) {
     Supabase.setStatus('error', error?.message ?? String(error))
+    return null
   }
 }
 
@@ -266,7 +267,7 @@ export async function ensureHashGuardBeforeInit() {
   }
 }
 
-export async function saveHashSnapshot(currentHash: string, previousHash: string | null): Promise<void> {
+export async function saveHashSnapshot(currentHash: string, previousHash: string | null): Promise<boolean> {
   const backupKey = `${BACKUP_KEY}${currentHash}`
   const createdAt = Date.now()
 

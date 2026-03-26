@@ -201,7 +201,7 @@ async function init() {
   if (!dict.words.length) {
     return Toast.warning('没有单词可测试！')
   }
-  if (runtimeStore.routeData.taskWords) {
+  if (runtimeStore.routeData?.taskWords) {
     let currentStudy: TaskWords = runtimeStore.routeData.taskWords
     if (currentStudy.review.length) {
       testWords = runtimeStore.routeData.taskWords.review

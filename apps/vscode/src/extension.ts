@@ -1,6 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode'
+import * as crypto from 'crypto'
 
 // WebviewPanel 管理类
 class ChatPanel {
@@ -33,7 +34,9 @@ class ChatPanel {
     this._extensionUri = extensionUri
 
     // 设置初始 HTML
-    this._update()
+    this._update().catch(err => {
+      vscode.window.showErrorMessage(`TypeWords: Failed to load webview: ${err?.message ?? err}`)
+    })
 
     // 监听面板关闭事件
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables)
@@ -62,16 +65,22 @@ class ChatPanel {
     const cdnUrl = 'https://vs.typewords.cc'
     const fileUrl = 'https://files.typewords.cc'
 
-    let s = await fetch('https://vs.typewords.cc/vs.json')
-    let r:any = await s.json()
+    let r: any
+    try {
+      let s = await fetch('https://vs.typewords.cc/vs.json')
+      r = await s.json()
+    } catch (err: any) {
+      vscode.window.showErrorMessage(`TypeWords: Failed to fetch webview assets: ${err?.message ?? err}`)
+      return `<!DOCTYPE html><html><body><p>Failed to load TypeWords. Please check your network connection.</p></body></html>`
+    }
 
     // 生成 nonce 用于 CSP
-    const nonce = Buffer.from(Date.now().toString()).toString('base64')
+    const nonce = crypto.randomBytes(16).toString('hex')
 
     // CSP 配置：允许内联脚本（使用 nonce）和外部资源
     const csp = [
       "default-src 'none'",
-      `script-src 'nonce-${nonce}' ${cdnUrl} 'unsafe-inline'`,
+      `script-src 'nonce-${nonce}' ${cdnUrl}`,
       `style-src ${cdnUrl} 'unsafe-inline'`,
       `connect-src ${cdnUrl} ${fileUrl} https://*.supabase.co`,
       'img-src data: https:',
@@ -88,7 +97,7 @@ class ChatPanel {
     <title>New Agent</title>
 
 
-  <script type="module" src="${cdnUrl}/${r.js}"></script>
+  <script type="module" nonce="${nonce}" src="${cdnUrl}/${r.js}"></script>
   <link rel="stylesheet" href="${cdnUrl}/${r.css}">
 </head>
 <body>

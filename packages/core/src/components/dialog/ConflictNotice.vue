@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, watch } from 'vue'
+import { defineAsyncComponent, watch, onUnmounted } from 'vue'
 import { useSettingStore } from '../../stores/setting.ts'
 import { useDisableEventListener } from '../../hooks/event.ts'
 import ConflictNoticeText from './ConflictNoticeText.vue'
@@ -11,23 +11,34 @@ let settingStore = useSettingStore()
 let show = $ref(false)
 let countDown = $ref(5)
 
+let _timeout: ReturnType<typeof setTimeout> | null = null
+let _interval: ReturnType<typeof setInterval> | null = null
+
 watch(
   () => settingStore.load,
   n => {
     if (n && settingStore.conflictNotice) {
-      setTimeout(() => {
+      if (_timeout) clearTimeout(_timeout)
+      if (_interval) clearInterval(_interval)
+      _timeout = setTimeout(() => {
         show = true
       }, 300)
-      let t = setInterval(() => {
+      _interval = setInterval(() => {
         countDown--
         if (countDown === 0) {
-          clearInterval(t)
+          clearInterval(_interval!)
+          _interval = null
         }
       }, 1000)
     }
   },
   { immediate: true }
 )
+
+onUnmounted(() => {
+  if (_timeout) clearTimeout(_timeout)
+  if (_interval) clearInterval(_interval)
+})
 
 useDisableEventListener(() => show)
 </script>

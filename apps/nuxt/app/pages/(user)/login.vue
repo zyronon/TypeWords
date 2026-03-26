@@ -294,8 +294,6 @@ let timer = $ref(-1)
 let requestCount = $ref(0)
 
 async function startSync() {
-  importStep = ImportStep.PROCESSING
-  return
   if (importStep === ImportStep.PROCESSING) return
   try {
     importStep = ImportStep.PROCESSING
@@ -319,18 +317,24 @@ async function startSync() {
             clearInterval(timer)
             importStep = ImportStep.SUCCESS
           } else if (r.data.status === ImportStatus.Fail) {
-            throw new Error('同步失败，请联系管理员')
+            reason = '同步失败，请联系管理员'
+            clearInterval(timer)
+            importStep = ImportStep.FAIL
           } else {
             reason = r.data.reason
             if (requestCount > 15) {
-              throw new Error('同步失败，请联系管理员')
+              reason = '同步失败，请联系管理员'
+              clearInterval(timer)
+              importStep = ImportStep.FAIL
             }
             if (reason === '解析文件中') {
               requestCount++
             }
           }
         } else {
-          throw new Error('无同步记录')
+          reason = '无同步记录'
+          clearInterval(timer)
+          importStep = ImportStep.FAIL
         }
       }, 2000)
     } else {
