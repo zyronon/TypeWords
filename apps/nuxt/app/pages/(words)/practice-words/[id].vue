@@ -719,6 +719,9 @@ function onTypeWrong() {
     statStore.wrong++
   }
   if (!store.wrong.words.find((v: Word) => v.word.toLowerCase() === temp)) {
+    if (!word.sourceDictId && store.sdict.id) {
+      word.sourceDictId = store.sdict.id
+    }
     store.wrong.words.push(word)
     store.wrong.length = store.wrong.words.length
   }

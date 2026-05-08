@@ -224,7 +224,39 @@ export async function checkAndUpgradeSaveSetting(val: any) {
 export function shakeCommonDict(n: BaseState): BaseState {
   let data: BaseState = cloneDeep(n)
   data.word.bookList.map((v: Dict) => {
-    if (!v.custom && ![DictId.wordKnown, DictId.wordWrong, DictId.wordCollect].includes(v.id)) v.words = []
+    if (!v.custom && ![DictId.wordKnown, DictId.wordWrong, DictId.wordCollect].includes(v.id)) {
+      v.words = []
+    } else if ([DictId.wordKnown, DictId.wordWrong, DictId.wordCollect].includes(v.id)) {
+      v.words.forEach(word => {
+        // 极致瘦身：如果有来源 ID，且不是自定义词典中的词，则在同步时删除几乎所有详情
+        // 详情将由前端通过 sourceDictId 动态加载
+        if (word.sourceDictId && !word.custom) {
+          word.trans = []
+          word.phonetic0 = ''
+          word.phonetic1 = ''
+          word.sentences = []
+          word.phrases = []
+          word.synos = []
+          word.relWords = { root: '', rels: [] }
+          word.etymology = []
+        } else {
+          // 平衡瘦身：针对自定义单词或旧有无来源数据
+          // 保留核心显示字段，剔除超重详情
+          word.phrases = []
+          word.synos = []
+          word.relWords = { root: '', rels: [] }
+          word.etymology = []
+
+          // 对于“已掌握”单词，即使无来源也进一步剔除释义，仅保留标识用于过滤
+          if (v.id === DictId.wordKnown) {
+            word.trans = []
+            word.sentences = []
+            word.phonetic0 = ''
+            word.phonetic1 = ''
+          }
+        }
+      })
+    }
   })
   data.article.bookList.map((v: Dict) => {
     if (!v.custom && ![DictId.articleCollect].includes(v.id)) v.articles = []

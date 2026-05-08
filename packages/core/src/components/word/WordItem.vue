@@ -3,9 +3,12 @@ import type { Word } from '../../types'
 import { usePlayWordAudio } from '../../hooks/sound.ts'
 import { BaseIcon, Tooltip, VolumeIcon } from '@typewords/base'
 import { useWordOptions } from '../../hooks/dict.ts'
+import { useWordHydrator } from '../../hooks/useWordHydrator'
 import TranslationList from './TranslationList.vue'
+import { onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     item: Word
     showTranslate?: boolean
@@ -33,6 +36,37 @@ withDefaults(
 const playWordAudio = usePlayWordAudio()
 
 const { isWordCollect, toggleWordCollect, isWordSimple, toggleWordSimple } = useWordOptions()
+
+const { hydrate } = useWordHydrator()
+const router = useRouter()
+
+let hydrateFailed = $ref(false)
+let missingDictName = $ref('')
+
+async function doHydrate(item: Word) {
+  const result = await hydrate(item)
+  if (!result.hydrated && result.dictName) {
+    hydrateFailed = true
+    missingDictName = result.dictName
+  } else if (result.hydrated) {
+    hydrateFailed = false
+  }
+}
+
+function goDictList() {
+  router.push('/dict-list')
+}
+
+onMounted(() => {
+  doHydrate(props.item)
+})
+
+watch(
+  () => props.item,
+  val => {
+    doHydrate(val)
+  }
+)
 </script>
 
 <template>
@@ -46,7 +80,10 @@ const { isWordCollect, toggleWordCollect, isWordSimple, toggleWordSimple } = use
           <span class="phonetic text-gray" :class="!showWord && 'word-shadow'">{{ item.phonetic0 }}</span>
           <VolumeIcon class="volume" @click="playWordAudio(item.word)"></VolumeIcon>
         </div>
-        <TranslationList :pos-space="false" :word="item" :showFull="showWord" v-if="showTranslate" />
+        <TranslationList :pos-space="false" :word="item" :showFull="showWord" v-if="showTranslate && !hydrateFailed" />
+        <div v-else-if="showTranslate && hydrateFailed" class="missing-dict-hint" @click="goDictList">
+          下载 {{ missingDictName }} 查看释义
+        </div>
       </div>
     </div>
     <div class="right" v-if="showOption">
@@ -74,4 +111,16 @@ const { isWordCollect, toggleWordCollect, isWordSimple, toggleWordSimple } = use
   </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.missing-dict-hint {
+  color: var(--color-sub-text);
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+.missing-dict-hint:hover {
+  color: var(--color-icon-hightlight);
+}
+</style>

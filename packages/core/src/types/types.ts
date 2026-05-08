@@ -6,6 +6,7 @@ import { APP_VERSION } from '../config/env'
 export type Word = {
   id?: string
   custom?: boolean
+  sourceDictId?: string
   word: string
   phonetic0: string
   phonetic1: string

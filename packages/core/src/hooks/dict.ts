@@ -23,6 +23,9 @@ export function useWordOptions() {
     if (rIndex > -1) {
       store.collectWord.words.splice(rIndex, 1)
     } else {
+      if (!val.sourceDictId && store.sdict.id) {
+        val.sourceDictId = store.sdict.id
+      }
       store.collectWord.words.push(val)
     }
     store.collectWord.length = store.collectWord.words.length
@@ -37,6 +40,9 @@ export function useWordOptions() {
     if (rIndex > -1) {
       store.known.words.splice(rIndex, 1)
     } else {
+      if (!val.sourceDictId && store.sdict.id) {
+        val.sourceDictId = store.sdict.id
+      }
       store.known.words.push(val)
     }
     store.known.length = store.known.words.length
