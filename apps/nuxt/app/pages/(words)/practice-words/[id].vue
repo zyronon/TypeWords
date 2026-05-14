@@ -11,7 +11,7 @@ import {
   useStartKeyboardEventListener,
 } from '@typewords/core/hooks/event.ts'
 import useTheme from '@typewords/core/hooks/theme.ts'
-import { getCurrentStudyWord, useWordOptions } from '@typewords/core/hooks/dict.ts'
+import { ensureWordSourceDictId, getCurrentStudyWord, useWordOptions } from '@typewords/core/hooks/dict.ts'
 import {
   _getDictDataByUrl,
   _nextTick,
@@ -719,9 +719,7 @@ function onTypeWrong() {
     statStore.wrong++
   }
   if (!store.wrong.words.find((v: Word) => v.word.toLowerCase() === temp)) {
-    if (!word.sourceDictId && store.sdict.id) {
-      word.sourceDictId = store.sdict.id
-    }
+    ensureWordSourceDictId(word, store.sdict.id)
     store.wrong.words.push(word)
     store.wrong.length = store.wrong.words.length
   }

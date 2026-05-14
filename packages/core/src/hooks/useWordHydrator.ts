@@ -1,7 +1,19 @@
 import { Word } from '../types'
 import { useBaseStore } from '../stores/base'
 
-const dictIndex: Record<string, Map<string, Word>> = {}
+type DictIndexCache = {
+  signature: string
+  index: Map<string, Word>
+}
+
+const dictIndex: Record<string, DictIndexCache> = {}
+
+function getDictSignature(words: Word[]): string {
+  const length = words.length
+  const firstWord = words[0]?.word ?? ''
+  const lastWord = words[length - 1]?.word ?? ''
+  return `${length}:${firstWord}:${lastWord}`
+}
 
 export function useWordHydrator() {
   async function hydrate(
@@ -23,16 +35,21 @@ export function useWordHydrator() {
       return { hydrated: false, dictName: userDict?.name || dictId }
     }
 
+    const signature = getDictSignature(userDict.words)
+
     // 按需构建 O(1) 查找索引
-    if (!dictIndex[dictId]) {
+    if (!dictIndex[dictId] || dictIndex[dictId].signature !== signature) {
       const index = new Map<string, Word>()
       for (const w of userDict.words) {
         index.set(w.word.toLowerCase(), w)
       }
-      dictIndex[dictId] = index
+      dictIndex[dictId] = {
+        signature,
+        index,
+      }
     }
 
-    const sourceWord = dictIndex[dictId].get(word.word.toLowerCase())
+    const sourceWord = dictIndex[dictId].index.get(word.word.toLowerCase())
     if (!sourceWord) {
       return { hydrated: false, dictName: userDict.name || dictId }
     }

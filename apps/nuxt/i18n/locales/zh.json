@@ -195,6 +195,7 @@
 	"uncollect": "取消收藏",
 	"mark_mastered": "标记为已掌握",
 	"unmark_mastered": "取消标记已掌握",
+	"missing_dict_hint": "需要下载 {dictName} 以显示完整内容",
 	"about_thanks": "感谢使用本项目！本项目是开源项目，免费使用，如果觉得有帮助，请在 GitHub 点个 Star，您的支持是我持续改进的动力！",
 	"github_address": "GitHub地址：",
 	"about_wechat_feedback": "微信反馈：",

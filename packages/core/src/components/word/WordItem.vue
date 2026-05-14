@@ -55,6 +55,7 @@ async function doHydrate(item: Word) {
     missingDictName = result.dictName
   } else if (result.hydrated) {
     hydrateFailed = false
+    missingDictName = ''
   }
 }
 
@@ -72,6 +73,19 @@ watch(
     doHydrate(val)
   }
 )
+
+watch(
+  () => props.showTranslate,
+  val => {
+    if (val) {
+      doHydrate(props.item)
+      return
+    }
+    hydrateToken++
+    hydrateFailed = false
+    missingDictName = ''
+  }
+)
 </script>
 
 <template>
@@ -87,7 +101,7 @@ watch(
         </div>
         <TranslationList :pos-space="false" :word="item" :showFull="showWord" v-if="showTranslate && !hydrateFailed" />
         <button v-else-if="showTranslate && hydrateFailed" class="missing-dict-hint" @click="goDictList">
-          下载 {{ missingDictName }} 查看释义
+          {{ $t('missing_dict_hint', { dictName: missingDictName }) }}
         </button>
       </div>
     </div>

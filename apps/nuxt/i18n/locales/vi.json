@@ -195,6 +195,7 @@
 	"uncollect": "Bỏ yêu thích",
 	"mark_mastered": "Đánh dấu đã thành thạo",
 	"unmark_mastered": "Bỏ đánh dấu thành thạo",
+	"missing_dict_hint": "Download {dictName} to view full definitions",
 	"about_thanks": "Cảm ơn bạn đã sử dụng dự án này! Đây là dự án mã nguồn mở, miễn phí. Nếu thấy hữu ích, hãy cho chúng tôi một sao trên GitHub!",
 	"github_address": "GitHub:",
 	"about_wechat_feedback": "Phản hồi WeChat:",

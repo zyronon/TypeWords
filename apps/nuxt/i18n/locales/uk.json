@@ -195,6 +195,7 @@
 	"uncollect": "Видалити з обраного",
 	"mark_mastered": "Позначити як освоєне",
 	"unmark_mastered": "Зняти позначку освоєного",
+	"missing_dict_hint": "Download {dictName} to view full definitions",
 	"about_thanks": "Дякуємо за використання проекту! Це проект з відкритим кодом, безкоштовний. Якщо знайшли корисним, поставте зірку на GitHub!",
 	"github_address": "GitHub:",
 	"about_wechat_feedback": "Відгук у WeChat:",

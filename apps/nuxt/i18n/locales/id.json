@@ -195,6 +195,7 @@
 	"uncollect": "Batal favorit",
 	"mark_mastered": "Tandai sebagai dikuasai",
 	"unmark_mastered": "Hapus tanda dikuasai",
+	"missing_dict_hint": "Download {dictName} to view full definitions",
 	"about_thanks": "Terima kasih telah menggunakan proyek ini! Ini adalah proyek open source, gratis digunakan. Jika bermanfaat, beri kami bintang di GitHub!",
 	"github_address": "GitHub:",
 	"about_wechat_feedback": "Umpan Balik WeChat:",
