@@ -42,9 +42,14 @@ const router = useRouter()
 
 let hydrateFailed = $ref(false)
 let missingDictName = $ref('')
+let hydrateToken = 0
 
 async function doHydrate(item: Word) {
+  if (!props.showTranslate) return
+  const token = ++hydrateToken
   const result = await hydrate(item)
+  // 仅当 token 未过期时更新状态，避免竞态导致旧结果覆盖当前单词
+  if (token !== hydrateToken) return
   if (!result.hydrated && result.dictName) {
     hydrateFailed = true
     missingDictName = result.dictName
@@ -81,9 +86,9 @@ watch(
           <VolumeIcon class="volume" @click="playWordAudio(item.word)"></VolumeIcon>
         </div>
         <TranslationList :pos-space="false" :word="item" :showFull="showWord" v-if="showTranslate && !hydrateFailed" />
-        <div v-else-if="showTranslate && hydrateFailed" class="missing-dict-hint" @click="goDictList">
+        <button v-else-if="showTranslate && hydrateFailed" class="missing-dict-hint" @click="goDictList">
           下载 {{ missingDictName }} 查看释义
-        </div>
+        </button>
       </div>
     </div>
     <div class="right" v-if="showOption">
@@ -119,6 +124,10 @@ watch(
   text-decoration: underline;
   text-underline-offset: 2px;
   transition: color 0.15s;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
 }
 .missing-dict-hint:hover {
   color: var(--color-icon-hightlight);
