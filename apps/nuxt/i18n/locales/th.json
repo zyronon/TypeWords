@@ -195,6 +195,7 @@
 	"uncollect": "ยกเลิกรายการโปรด",
 	"mark_mastered": "ทำเครื่องหมายว่าเชี่ยวชาญ",
 	"unmark_mastered": "ยกเลิกเครื่องหมายเชี่ยวชาญ",
+	"missing_dict_hint": "Download {dictName} to view full definitions",
 	"about_thanks": "ขอบคุณที่ใช้โปรเจกต์นี้! นี่คือโปรเจกต์โอเพนซอร์ส ใช้งานฟรี หากเป็นประโยชน์ กรุณาให้ดาวบน GitHub!",
 	"github_address": "GitHub:",
 	"about_wechat_feedback": "ติดต่อ WeChat:",

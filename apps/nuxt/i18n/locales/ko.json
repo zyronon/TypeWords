@@ -195,6 +195,7 @@
 	"uncollect": "즐겨찾기 해제",
 	"mark_mastered": "마스터로 표시",
 	"unmark_mastered": "마스터 표시 해제",
+	"missing_dict_hint": "Download {dictName} to view full definitions",
 	"about_thanks": "이 프로젝트를 사용해 주셔서 감사합니다! 이것은 무료로 사용할 수 있는 오픈소스 프로젝트입니다. 도움이 되셨다면 GitHub에서 스타를 눌러주세요!",
 	"github_address": "GitHub:",
 	"about_wechat_feedback": "WeChat 피드백:",

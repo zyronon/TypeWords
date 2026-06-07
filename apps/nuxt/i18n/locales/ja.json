@@ -195,6 +195,7 @@
 	"uncollect": "お気に入り解除",
 	"mark_mastered": "習得済みとしてマーク",
 	"unmark_mastered": "習得済みマーク解除",
+	"missing_dict_hint": "Download {dictName} to view full definitions",
 	"about_thanks": "ご利用ありがとうございます！これはオープンソースプロジェクトで、無料でご利用いただけます。役に立った場合は、GitHubでスターをお願いします！",
 	"github_address": "GitHub:",
 	"about_wechat_feedback": "WeChatフィードバック:",

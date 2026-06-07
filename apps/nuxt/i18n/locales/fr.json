@@ -195,6 +195,7 @@
 	"uncollect": "Retirer des favoris",
 	"mark_mastered": "Marquer comme maîtrisé",
 	"unmark_mastered": "Démarquer comme maîtrisé",
+	"missing_dict_hint": "Download {dictName} to view full definitions",
 	"about_thanks": "Merci d'utiliser ce projet ! C'est un projet open source, gratuit. Si vous le trouvez utile, mettez-nous une étoile sur GitHub !",
 	"github_address": "GitHub:",
 	"about_wechat_feedback": "Retour WeChat:",

@@ -195,6 +195,7 @@
 	"uncollect": "Unfavorite",
 	"mark_mastered": "Mark as Mastered",
 	"unmark_mastered": "Unmark Mastered",
+	"missing_dict_hint": "Download {dictName} to view full definitions",
 	"about_thanks": "Thank you for using this project! It is open source and free. If helpful, please star us on GitHub. Your support motivates our improvement!",
 	"github_address": "GitHub: ",
 	"about_wechat_feedback": "WeChat Feedback: ",

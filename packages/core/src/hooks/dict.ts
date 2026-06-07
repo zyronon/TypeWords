@@ -14,6 +14,10 @@ import { computed } from 'vue'
 export function useWordOptions() {
   const store = useBaseStore()
 
+  function ensureCurrentWordSource(val: Word) {
+    ensureWordSourceDictId(val, store.sdict.id)
+  }
+
   function isWordCollect(val: Word) {
     return !!store.collectWord.words.find(v => v.word.toLowerCase() === val.word.toLowerCase())
   }
@@ -23,6 +27,7 @@ export function useWordOptions() {
     if (rIndex > -1) {
       store.collectWord.words.splice(rIndex, 1)
     } else {
+      ensureCurrentWordSource(val)
       store.collectWord.words.push(val)
     }
     store.collectWord.length = store.collectWord.words.length
@@ -37,6 +42,7 @@ export function useWordOptions() {
     if (rIndex > -1) {
       store.known.words.splice(rIndex, 1)
     } else {
+      ensureCurrentWordSource(val)
       store.known.words.push(val)
     }
     store.known.length = store.known.words.length
@@ -66,6 +72,13 @@ export function useWordOptions() {
     delWrongWord,
     delSimpleWord,
   }
+}
+
+export function ensureWordSourceDictId(val: Word, sourceDictId?: string): Word {
+  if (!val.sourceDictId && sourceDictId) {
+    val.sourceDictId = sourceDictId
+  }
+  return val
 }
 
 export function useArticleOptions() {

@@ -195,6 +195,7 @@
 	"uncollect": "Desfavoritar",
 	"mark_mastered": "Marcar como dominado",
 	"unmark_mastered": "Desmarcar dominado",
+	"missing_dict_hint": "Download {dictName} to view full definitions",
 	"about_thanks": "Obrigado por usar este projeto! É um projeto de código aberto, gratuito. Se achar útil, deixe uma estrela no GitHub!",
 	"github_address": "GitHub:",
 	"about_wechat_feedback": "Feedback do WeChat:",
