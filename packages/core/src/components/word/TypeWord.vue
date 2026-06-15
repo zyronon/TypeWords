@@ -121,6 +121,15 @@ let isWordTest = $computed(() => {
   )
 })
 
+let shouldHideWordByDefault = $computed(() => {
+  return [
+    WordPracticeType.Spell,
+    WordPracticeType.Listen,
+    WordPracticeType.Dictation,
+    WordPracticeType.Identify,
+  ].includes(settingStore.wordPracticeType)
+})
+
 // 在全局对象中存储当前单词信息，以便其他模块可以访问
 function updateCurrentWordInfo() {
   window.__CURRENT_WORD_INFO__ = {
@@ -131,7 +140,11 @@ function updateCurrentWordInfo() {
   }
 }
 
-watch(() => props.word, reset, { deep: true })
+watch(
+  () => props.word,
+  reset,
+  { flush: 'sync' }
+)
 
 function reset() {
   clearJumpTimer()
@@ -696,7 +709,9 @@ const isCollect = $computed(() => isWordCollect(props.word))
       </div>
 
       <Tooltip
-        :title="settingStore.dictation ? `快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示单词` : ''"
+        :title="
+          shouldHideWordByDefault ? `快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示单词` : ''
+        "
       >
         <div
           id="word"
@@ -728,7 +743,7 @@ const isCollect = $computed(() => isWordCollect(props.word))
             <div v-if="currentPracticeSentenceIndex === -1">
               <span class="input" v-if="input">{{ input }}</span>
               <span class="wrong" v-if="wrong">{{ wrong }}</span>
-              <span class="letter" v-if="settingStore.dictation && !showFullWord">
+              <span class="letter" v-if="shouldHideWordByDefault && !showFullWord">
                 {{
                   displayWord
                     .split('')
@@ -835,7 +850,7 @@ const isCollect = $computed(() => isWordCollect(props.word))
           fontSize: settingStore.fontSize.wordTranslateFontSize + 'px',
         }"
       >
-        <TranslationList :word="word" :showFull="!settingStore.dictation || showWordResult || showFullWord" />
+        <TranslationList :word="word" :showFull="!shouldHideWordByDefault || showWordResult || showFullWord" />
       </div>
     </div>
 

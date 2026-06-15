@@ -92,6 +92,15 @@ let isWordTest = $computed(() => {
   )
 })
 
+let shouldHideWordByDefault = $computed(() => {
+  return [
+    WordPracticeType.Spell,
+    WordPracticeType.Listen,
+    WordPracticeType.Dictation,
+    WordPracticeType.Identify,
+  ].includes(settingStore.wordPracticeType)
+})
+
 // 在全局对象中存储当前单词信息，以便其他模块可以访问
 function updateCurrentWordInfo() {
   window.__CURRENT_WORD_INFO__ = {
@@ -102,7 +111,11 @@ function updateCurrentWordInfo() {
   }
 }
 
-watch(() => props.word, reset, { deep: true })
+watch(
+  () => props.word,
+  reset,
+  { flush: 'sync' }
+)
 
 function reset() {
   clearJumpTimer()
@@ -624,7 +637,7 @@ const isCollect = $computed(() => isWordCollect(props.word))
       <div class="flex gap-space items-end mb-2">
         <Tooltip
           :title="
-            settingStore.dictation ? `可以按快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示单词` : ''
+            shouldHideWordByDefault ? `可以按快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示单词` : ''
           "
         >
           <div id="word" class="word" :class="wrong && 'is-wrong'" @mouseenter="showWord" @mouseleave="mouseleave">
@@ -648,7 +661,7 @@ const isCollect = $computed(() => isWordCollect(props.word))
             <template v-else>
               <span class="input" v-if="input">{{ input }}</span>
               <span class="wrong" v-if="wrong">{{ wrong }}</span>
-              <span class="letter" v-if="settingStore.dictation && !showFullWord">
+              <span class="letter" v-if="shouldHideWordByDefault && !showFullWord">
                 {{
                   displayWord
                     .split('')
@@ -728,7 +741,7 @@ const isCollect = $computed(() => isWordCollect(props.word))
           <span class="shrink-0 mr-1" :class="v.pos ? 'en-article-family' : ''">
             {{ v.pos }}
           </span>
-          <span v-if="!settingStore.dictation || showWordResult || showFullWord">{{ v.cn }}</span>
+          <span v-if="!shouldHideWordByDefault || showWordResult || showFullWord">{{ v.cn }}</span>
           <SentenceHightLightWord v-else :text="v.cn" :word="word.word" :dictation="true" :high-light="false" />
         </div>
       </div>
