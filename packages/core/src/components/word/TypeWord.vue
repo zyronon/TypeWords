@@ -65,6 +65,7 @@ let showWordResult = ref(false)
 let wrongTimes = ref(0)
 //输入锁定，因为跳转到下一个单词有延时，如果重复在延时期间内重复输入，导致会跳转N次
 let inputLock = false
+let waitClear = false
 let wordRepeatCount = 0
 // 记录单词完成的时间戳，用于防止同时按下最后一个字母和空格键时跳过单词
 let wordCompletedTime = 0
@@ -309,6 +310,10 @@ function select(e, index: number) {
 let currentPracticeSentenceIndex = $ref(-1)
 
 async function onTyping(e: KeyboardEvent) {
+  if (waitClear) {
+    return
+  }
+
   if (isWordTest) {
     if (e.code === 'Space') {
       if (completeSelect) {
@@ -469,6 +474,7 @@ async function onTyping(e: KeyboardEvent) {
       input += letter
       wrong = ''
       playKeyboardAudio()
+      inputLock = false
     } else {
       typo()
       wrong = letter
@@ -476,9 +482,12 @@ async function onTyping(e: KeyboardEvent) {
       if (settingStore.wordSound) {
         playWord(WordPlayTrigger.Typo, { volumeRef: targetVolumeIcon })
       }
+      waitClear = true
       setTimeout(() => {
         if (settingStore.inputWrongClear && !isTypingSentence()) input = ''
         wrong = ''
+        waitClear = false
+        inputLock = false
       }, 500)
     }
     // 更新当前单词信息
@@ -498,8 +507,6 @@ async function onTyping(e: KeyboardEvent) {
           completeTypeWord(true)
         }
       }
-    } else {
-      inputLock = false
     }
   }
 }
