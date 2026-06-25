@@ -3,6 +3,7 @@ import type { Question, Word } from '../../types'
 import { getDefaultWord, IdentifyMethod, ShortcutKey, WordPracticeType } from '../../types'
 import { useBaseStore, useSettingStore } from '../../stores'
 import {
+  cancelWordPracticeAudio,
   resetActiveWordPlayCount,
   usePlayBeep,
   usePlayCorrect,
@@ -141,10 +142,14 @@ function updateCurrentWordInfo() {
   }
 }
 
-watch(() => props.word, () => resetState(WordPlayTrigger.NewWord))
+watch(
+  () => props.word,
+  () => resetState(WordPlayTrigger.NewWord)
+)
 
 function resetState(trigger: WordPlayTrigger) {
   clearJumpTimer()
+  cancelWordPracticeAudio()
   wrong = input = ''
   wordRepeatCount = 0
   showWordResult.value = inputLock = completeSelect = showAllCandidates = false
@@ -430,6 +435,7 @@ async function onTyping(e: KeyboardEvent) {
     onTyping(e)
   } else {
     let right = false
+    // console.log('letter', letter, target, input.length, target[input.length])
     if (settingStore.ignoreCase) {
       right = letter.toLowerCase() === target[input.length].toLowerCase()
     } else {
@@ -474,7 +480,6 @@ async function onTyping(e: KeyboardEvent) {
       input += letter
       wrong = ''
       playKeyboardAudio()
-      inputLock = false
     } else {
       typo()
       wrong = letter
@@ -487,7 +492,6 @@ async function onTyping(e: KeyboardEvent) {
         if (settingStore.inputWrongClear && !isTypingSentence()) input = ''
         wrong = ''
         waitClear = false
-        inputLock = false
       }, 500)
     }
     // 更新当前单词信息
@@ -507,6 +511,9 @@ async function onTyping(e: KeyboardEvent) {
           completeTypeWord(true)
         }
       }
+    } else {
+      //这里不要移动inputLock，否则输入完成时无法进入空格键的判断
+      inputLock = false
     }
   }
 }
@@ -748,7 +755,15 @@ function openCollectPicker(e: MouseEvent) {
 
 const isSimple = $computed(() => isWordSimple(props.word))
 
-defineExpose({ del, showWord, hideWord, play, showWordResult, wrongTimes, getCollectAnchor: () => collectAnchorRef.value })
+defineExpose({
+  del,
+  showWord,
+  hideWord,
+  play,
+  showWordResult,
+  wrongTimes,
+  getCollectAnchor: () => collectAnchorRef.value,
+})
 </script>
 
 <template>
@@ -974,39 +989,37 @@ defineExpose({ del, showWord, hideWord, play, showWordResult, wrongTimes, getCol
     >
       <template v-if="word?.sentences?.length">
         <div class="line-white my-3"></div>
-        <div class="flex flex-col gap-3">
-          <div
-            class="sentence"
-            :class="{
-              'is-wrong': wrong && currentPracticeSentenceIndex === index,
-              'sentence-highlight': highlightedSentenceIndex === index,
-            }"
-            v-for="(item, index) in word.sentences"
-            :key="index"
-          >
-            <div class="flex gap-space text-xl">
-              <div v-if="index !== currentPracticeSentenceIndex">
-                <ClickableEnglishText
-                  :text="item.c"
-                  :word="word.word"
-                  :dictation="!(!settingStore.dictation || showFullWord || showWordResult)"
-                />
-              </div>
-              <div v-else>
-                <span class="input" v-if="input">{{ input }}</span>
-                <span class="wrong" v-if="wrong">{{ wrong }}</span>
-                <span class="letter">{{ displaySentence }}</span>
-              </div>
-              <VolumeIcon
-                :title="getSentenceShortcut(index) ? `发音(${getSentenceShortcut(index)})` : '发音'"
-                :simple="false"
-                @click.stop="() => playSentence(index)"
-                ref="sentenceVolumeIconsRefs"
+        <div
+          class="sentence"
+          :class="{
+            'is-wrong': wrong && currentPracticeSentenceIndex === index,
+            'sentence-highlight': highlightedSentenceIndex === index,
+          }"
+          v-for="(item, index) in word.sentences"
+          :key="index"
+        >
+          <div class="flex gap-space text-xl">
+            <div v-if="index !== currentPracticeSentenceIndex">
+              <ClickableEnglishText
+                :text="item.c"
+                :word="word.word"
+                :dictation="!(!settingStore.dictation || showFullWord || showWordResult)"
               />
             </div>
-            <div class="text-base anim" v-opacity="settingStore.translate || showFullWord || showWordResult">
-              {{ item.cn }}
+            <div v-else>
+              <span class="input" v-if="input">{{ input }}</span>
+              <span class="wrong" v-if="wrong">{{ wrong }}</span>
+              <span class="letter">{{ displaySentence }}</span>
             </div>
+            <VolumeIcon
+              :title="getSentenceShortcut(index) ? `发音(${getSentenceShortcut(index)})` : '发音'"
+              :simple="false"
+              @click.stop="() => playSentence(index)"
+              ref="sentenceVolumeIconsRefs"
+            />
+          </div>
+          <div class="text-base anim" v-opacity="settingStore.translate || showFullWord || showWordResult">
+            {{ item.cn }}
           </div>
         </div>
       </template>
@@ -1024,11 +1037,7 @@ defineExpose({ del, showWord, hideWord, play, showWordResult, wrongTimes, getCol
                   :word="word.word"
                   :dictation="!(!settingStore.dictation || showFullWord || showWordResult)"
                 />
-                <VolumeIcon
-                  :simple="false"
-                  title="发音"
-                  @click.stop="() => playTtsWithGuide(item.c)"
-                />
+                <VolumeIcon :simple="false" title="发音" @click.stop="() => playTtsWithGuide(item.c)" />
               </div>
               <div class="cn anim" v-opacity="settingStore.translate || showFullWord || showWordResult">
                 {{ item.cn }}
@@ -1197,8 +1206,12 @@ defineExpose({ del, showWord, hideWord, play, showWordResult, wrongTimes, getCol
     @apply min-w-10;
   }
 
-  .sentence-highlight {
+  .sentence {
     @apply rounded-lg px-3 py-2 -mx-3;
+    background: transparent;
+    transition: all .3s;
+  }
+  .sentence-highlight {
     background: rgba(124, 58, 237, 0.1);
     box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.25);
   }

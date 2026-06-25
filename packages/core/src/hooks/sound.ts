@@ -136,6 +136,25 @@ export function resetActiveWordPlayCount(word: string) {
   activeWordPlayCountMap.delete(word.trim().toLowerCase())
 }
 
+let isPlaying = false
+let activeWordAudio: HTMLAudioElement | null = null
+let ttsPlaybackGeneration = 0
+
+export function cancelWordPracticeAudio() {
+  ttsPlaybackGeneration++
+  if (typeof speechSynthesis !== 'undefined') {
+    speechSynthesis.pause()
+    speechSynthesis.cancel()
+  }
+  if (activeWordAudio) {
+    activeWordAudio.onended = null
+    activeWordAudio.onerror = null
+    activeWordAudio.pause()
+    activeWordAudio.currentTime = 0
+  }
+  isPlaying = false
+}
+
 export function usePlayWordAudio() {
   const settingStore = useSettingStore()
   let audio = ref<HTMLAudioElement>(null)
@@ -145,7 +164,10 @@ export function usePlayWordAudio() {
   })
 
   function playAudio(word: string, handle: boolean = true, onEnd?: () => void) {
-    if (!word) return
+    if (!word || isPlaying) return
+    isPlaying = true
+    speechSynthesis.pause()
+    speechSynthesis.cancel()
     let playbackRate = settingStore.wordSoundSpeed
     if (handle) {
       const key = word.trim().toLowerCase()
@@ -161,14 +183,19 @@ export function usePlayWordAudio() {
     if (settingStore.soundType === 'uk') {
       url = `${PronunciationApi}${word}&type=1`
     }
-    audio.value.onended = () => onEnd?.()
+    let onended = () => {
+      isPlaying = false
+      onEnd?.()
+    }
+    activeWordAudio = audio.value
+    audio.value.onended = onended
     audio.value.src = url
     audio.value.volume = settingStore.wordSoundVolume / 100
     audio.value.playbackRate = playbackRate
     audio.value.play()
     audio.value.onerror = () => {
       const ttsPlay = useTTsPlayAudio()
-      ttsPlay(word, { rate: playbackRate, onEnd })
+      ttsPlay(word, { rate: playbackRate, onEnd: onended })
     }
   }
 
@@ -199,6 +226,7 @@ export function useTTsPlayAudio() {
 
   function play(text: string, options: TTsPlayOptions = {}) {
     if (!text || typeof speechSynthesis === 'undefined') return
+    const generation = ++ttsPlaybackGeneration
     speechSynthesis.cancel() // 防止 Chrome 队列卡死
     let msg = new SpeechSynthesisUtterance(text)
     msg.rate = options.rate ?? settingStore.wordSoundSpeed
@@ -208,6 +236,7 @@ export function useTTsPlayAudio() {
     msg.onend = () => options.onEnd?.()
     msg.onerror = () => options.onEnd?.()
     getVoicesAsync().then((voices: any[]) => {
+      if (generation !== ttsPlaybackGeneration) return
       // 优先使用用户在当前浏览器配置的声色
       const browserKey = getBrowserKey()
       const savedVoiceName = settingStore?.ttsVoiceMap?.find(v => v.key === browserKey)?.voice

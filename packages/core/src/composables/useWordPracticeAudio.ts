@@ -2,7 +2,7 @@ import { ref, unref, type ComputedRef, type Ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Toast } from '@typewords/base'
 import type { Word } from '../types'
-import { getBrowserKey, usePlayWordAudio, useTTsPlayAudio } from '../hooks/sound'
+import { getBrowserKey, cancelWordPracticeAudio, usePlayWordAudio, useTTsPlayAudio } from '../hooks/sound'
 import { useSettingStore } from '../stores/setting'
 
 export enum WordPlayTrigger {
@@ -99,12 +99,22 @@ export function useWordPracticeAudio({ word, volumeIconRef, canSeeSentences }: W
   ) {
     if (!settingStore.wordSound) return
 
+    // 打断进行中的单词/例句播放，避免 NewWord 未播完时后续 playWord 被 isPlaying 静默跳过
+    cancelWordPracticeAudio()
+
     const handle =
       trigger === WordPlayTrigger.RepeatWord ||
       trigger === WordPlayTrigger.Manual ||
       trigger === WordPlayTrigger.Shortcut
     const chain = shouldChainFirstSentence(trigger)
-    const onEnd = chain ? () => playSentence(0, { highlight: true }) : undefined
+    const chainWord = chain ? word.value.word : undefined
+    const onEnd = chainWord
+      ? () => {
+        // 如果单词变化了，则不播放例句，防止快速切换单词时播放例句不正确
+          if (word.value.word !== chainWord) return
+          playSentence(0, { highlight: true })
+        }
+      : undefined
 
     playWordAudio(word.value.word, handle, onEnd)
 
