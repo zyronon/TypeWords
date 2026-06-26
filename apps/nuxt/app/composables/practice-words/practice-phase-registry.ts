@@ -1,201 +1,67 @@
-import {
-  WordPracticeMode,
-  WordPracticeStage,
-  WordPracticeType,
-} from '@typewords/core/types/enum.ts'
-import { getFlowIdForMode } from './builtin-flows.ts'
-import {
-  createStagePhase,
-  DISPLAY_DICTATION,
-  DISPLAY_FOLLOW_WRITE,
-  DISPLAY_FREE,
-  DISPLAY_IDENTIFY,
-  DISPLAY_LISTEN,
-  FREE_NORMAL,
-  FREE_WRONG_REVIEW,
-  GROUP_SIZE,
-  SPELL_IN_GROUP,
-  STRUCTURED_WRONG_REVIEW,
-} from './phase-templates.ts'
-import type { PracticePhaseDefinition, SessionContext } from './registry-types.ts'
+/**
+ * 练习流程「运行时注册表」入口。
+ *
+ * 职责：把已编译的 ActiveFlowRegistry 挂在模块级变量上，供 resolvePhase / Navigator 查询。
+ * 调用方：页面 init、缓存恢复、Navigator 推进阶段时。
+ */
+import { WordPracticeMode, WordPracticeStage, WordPracticeType } from '@typewords/core/types/enum.ts'
+import { getFlowConfig, getFlowIdForMode } from './builtin-flows.ts'
+import { buildWrongWordReviewFromParent } from './phase-templates.ts'
+import { buildRegistryFromConfig, validateFlowConfig } from './flow-schema.ts'
+import type { ActiveFlowRegistry, PracticeFlowConfig, PracticePhaseDefinition, SessionContext } from './registry-types.ts'
 
-let activeFlowId = 'system'
+/** 当前练习页正在使用的、已编译流程；刷新前由 loadPracticeFlow 写入 */
+let activeRegistry: ActiveFlowRegistry | null = null
 
-export function loadPracticeFlow(flowId: string) {
-  activeFlowId = flowId
+/**
+ * 加载练习流程（内置 id 或用户 JSON 对象均可）。
+ * 会校验 → 编译为 phasesByStage / stageSequence 等运行时结构。
+ * 必须在 resolvePhase、resolveFlowStart、恢复缓存之前调用。
+ */
+export function loadPracticeFlow(flowIdOrConfig: string | PracticeFlowConfig) {
+  const config =
+    typeof flowIdOrConfig === 'string'
+      ? validateFlowConfig(getFlowConfig(flowIdOrConfig))
+      : validateFlowConfig(flowIdOrConfig)
+  activeRegistry = buildRegistryFromConfig(config)
 }
 
-export function getActiveFlowId() {
-  return activeFlowId
+/** 当前 flow 的 id，写入 sessionSnapshot.flowId，刷新后用来重新 loadPracticeFlow */
+export function getActiveFlowId(): string {
+  return activeRegistry?.config.id ?? 'system'
 }
 
-function incrementAdvance(
-  wordsFrom: PracticePhaseDefinition['stageAdvance']['wordsFrom'],
-  options: Partial<PracticePhaseDefinition['stageAdvance']> = {}
-): PracticePhaseDefinition['stageAdvance'] {
-  return { wordsFrom, ...options }
+/**
+ * 取当前已编译注册表；若尚未 load 则默认加载 system。
+ * 【薄封装】仅做 null 兜底，可考虑与 loadPracticeFlow 合并。
+ */
+export function getActiveRegistry(): ActiveFlowRegistry {
+  if (!activeRegistry) {
+    loadPracticeFlow('system')
+  }
+  return activeRegistry!
 }
 
-const SYSTEM_PHASES: Partial<Record<WordPracticeStage, PracticePhaseDefinition>> = {
-  [WordPracticeStage.FollowWriteNewWord]: createStagePhase(
-    WordPracticeMode.System,
-    WordPracticeStage.FollowWriteNewWord,
-    WordPracticeType.FollowWrite,
-    DISPLAY_FOLLOW_WRITE,
-    { type: 'wordLoop', groupSize: GROUP_SIZE },
-    incrementAdvance('taskNew', { shuffle: true, nextStage: WordPracticeStage.ListenNewWord })
-  ),
-  [WordPracticeStage.ListenNewWord]: createStagePhase(
-    WordPracticeMode.System,
-    WordPracticeStage.ListenNewWord,
-    WordPracticeType.Listen,
-    DISPLAY_LISTEN,
-    { type: 'increment' },
-    incrementAdvance('taskNew', { shuffle: true, nextStage: WordPracticeStage.DictationNewWord })
-  ),
-  [WordPracticeStage.DictationNewWord]: createStagePhase(
-    WordPracticeMode.System,
-    WordPracticeStage.DictationNewWord,
-    WordPracticeType.Dictation,
-    DISPLAY_DICTATION,
-    { type: 'increment' },
-    incrementAdvance('taskReview', { nextStage: WordPracticeStage.IdentifyReview })
-  ),
-  [WordPracticeStage.IdentifyReview]: createStagePhase(
-    WordPracticeMode.System,
-    WordPracticeStage.IdentifyReview,
-    WordPracticeType.Identify,
-    DISPLAY_IDENTIFY,
-    { type: 'increment' },
-    incrementAdvance('taskReview', { shuffle: true, nextStage: WordPracticeStage.ListenReview })
-  ),
-  [WordPracticeStage.ListenReview]: createStagePhase(
-    WordPracticeMode.System,
-    WordPracticeStage.ListenReview,
-    WordPracticeType.Listen,
-    DISPLAY_LISTEN,
-    { type: 'increment' },
-    incrementAdvance('taskReview', { shuffle: true, nextStage: WordPracticeStage.DictationReview })
-  ),
-  [WordPracticeStage.DictationReview]: createStagePhase(
-    WordPracticeMode.System,
-    WordPracticeStage.DictationReview,
-    WordPracticeType.Dictation,
-    DISPLAY_DICTATION,
-    { type: 'increment' },
-    incrementAdvance('current', { complete: true })
-  ),
+/** 当前 flow 的阶段顺序数组，用于「是否已开始练习」判断、Footer 进度（后续可接） */
+export function getActiveStageSequence(): WordPracticeStage[] {
+  return getActiveRegistry().stageSequence
 }
 
-const REVIEW_PHASES: Partial<Record<WordPracticeStage, PracticePhaseDefinition>> = {
-  [WordPracticeStage.IdentifyReview]: createStagePhase(
-    WordPracticeMode.Review,
-    WordPracticeStage.IdentifyReview,
-    WordPracticeType.Identify,
-    DISPLAY_IDENTIFY,
-    { type: 'increment' },
-    incrementAdvance('taskReview', { shuffle: true, nextStage: WordPracticeStage.ListenReview })
-  ),
-  [WordPracticeStage.ListenReview]: createStagePhase(
-    WordPracticeMode.Review,
-    WordPracticeStage.ListenReview,
-    WordPracticeType.Listen,
-    DISPLAY_LISTEN,
-    { type: 'increment' },
-    incrementAdvance('taskReview', { shuffle: true, nextStage: WordPracticeStage.DictationReview })
-  ),
-  [WordPracticeStage.DictationReview]: createStagePhase(
-    WordPracticeMode.Review,
-    WordPracticeStage.DictationReview,
-    WordPracticeType.Dictation,
-    DISPLAY_DICTATION,
-    { type: 'increment' },
-    incrementAdvance('current', { complete: true })
-  ),
+/**
+ * 查当前 flow 里某 stage 的下一阶段。
+ * 【目前几乎未用】statStore.nextStage 仍走 core 的 WordPracticeModeStageMap；
+ * Phase 2.5 自定义流程接 Footer 时才会真正用到。
+ */
+export function getNextStageInFlow(current: WordPracticeStage): WordPracticeStage | undefined {
+  const seq = getActiveStageSequence()
+  const idx = seq.indexOf(current)
+  return idx >= 0 ? seq[idx + 1] : undefined
 }
 
-const IDENTIFY_ONLY_PHASES: Partial<Record<WordPracticeStage, PracticePhaseDefinition>> = {
-  [WordPracticeStage.IdentifyNewWord]: createStagePhase(
-    WordPracticeMode.IdentifyOnly,
-    WordPracticeStage.IdentifyNewWord,
-    WordPracticeType.Identify,
-    DISPLAY_IDENTIFY,
-    { type: 'increment' },
-    incrementAdvance('taskReview', { nextStage: WordPracticeStage.IdentifyReview })
-  ),
-  [WordPracticeStage.IdentifyReview]: createStagePhase(
-    WordPracticeMode.IdentifyOnly,
-    WordPracticeStage.IdentifyReview,
-    WordPracticeType.Identify,
-    DISPLAY_IDENTIFY,
-    { type: 'increment' },
-    incrementAdvance('current', { complete: true })
-  ),
-}
-
-const DICTATION_ONLY_PHASES: Partial<Record<WordPracticeStage, PracticePhaseDefinition>> = {
-  [WordPracticeStage.DictationNewWord]: createStagePhase(
-    WordPracticeMode.DictationOnly,
-    WordPracticeStage.DictationNewWord,
-    WordPracticeType.Dictation,
-    DISPLAY_DICTATION,
-    { type: 'increment' },
-    incrementAdvance('taskReview', { nextStage: WordPracticeStage.DictationReview })
-  ),
-  [WordPracticeStage.DictationReview]: createStagePhase(
-    WordPracticeMode.DictationOnly,
-    WordPracticeStage.DictationReview,
-    WordPracticeType.Dictation,
-    DISPLAY_DICTATION,
-    { type: 'increment' },
-    incrementAdvance('current', { complete: true })
-  ),
-}
-
-const LISTEN_ONLY_PHASES: Partial<Record<WordPracticeStage, PracticePhaseDefinition>> = {
-  [WordPracticeStage.ListenNewWord]: createStagePhase(
-    WordPracticeMode.ListenOnly,
-    WordPracticeStage.ListenNewWord,
-    WordPracticeType.Listen,
-    DISPLAY_LISTEN,
-    { type: 'increment' },
-    incrementAdvance('taskReview', { nextStage: WordPracticeStage.ListenReview })
-  ),
-  [WordPracticeStage.ListenReview]: createStagePhase(
-    WordPracticeMode.ListenOnly,
-    WordPracticeStage.ListenReview,
-    WordPracticeType.Listen,
-    DISPLAY_LISTEN,
-    { type: 'increment' },
-    incrementAdvance('current', { complete: true })
-  ),
-}
-
-const SHUFFLE_PHASES: Partial<Record<WordPracticeStage, PracticePhaseDefinition>> = {
-  [WordPracticeStage.Shuffle]: createStagePhase(
-    WordPracticeMode.Shuffle,
-    WordPracticeStage.Shuffle,
-    WordPracticeType.Dictation,
-    DISPLAY_DICTATION,
-    { type: 'increment' },
-    incrementAdvance('current', { complete: true })
-  ),
-}
-
-const MODE_STAGE_MAP: Partial<
-  Record<WordPracticeMode, Partial<Record<WordPracticeStage, PracticePhaseDefinition>>>
-> = {
-  [WordPracticeMode.System]: SYSTEM_PHASES,
-  [WordPracticeMode.Free]: {
-    [WordPracticeStage.FollowWriteNewWord]: FREE_NORMAL,
-  },
-  [WordPracticeMode.Review]: REVIEW_PHASES,
-  [WordPracticeMode.IdentifyOnly]: IDENTIFY_ONLY_PHASES,
-  [WordPracticeMode.DictationOnly]: DICTATION_ONLY_PHASES,
-  [WordPracticeMode.ListenOnly]: LISTEN_ONLY_PHASES,
-  [WordPracticeMode.Shuffle]: SHUFFLE_PHASES,
-}
-
+/**
+ * 把 store 里的分散字段打包成 resolvePhase 的入参。
+ * 【纯数据组装，无逻辑】存在只是为了 resolvePhase 签名稳定、少传 6 个参数。
+ */
 export function buildSessionContext(
   mode: WordPracticeMode,
   stage: WordPracticeStage,
@@ -207,32 +73,43 @@ export function buildSessionContext(
   return { mode, stage, practiceType, identifyMethod, practiceData, taskWords }
 }
 
+/**
+ * 核心查询：根据「当前会话状态」返回本时刻应生效的阶段定义（显隐 + 词内/阶段推进规则）。
+ *
+ * 优先级：
+ * 1. 错词复习中 → 由当前 stage 的主相位派生（buildWrongWordReviewFromParent）
+ * 2. 跟写 7 词一组内的 Spell 子相位 → spellInGroup
+ * 3. 按 statStore.stage 查 phasesByStage
+ * 4. 兜底 firstPhase
+ *
+ * Navigator 的 next() 和 syncPhase() 都依赖此函数，不是摆设。
+ */
 export function resolvePhase(ctx: SessionContext): PracticePhaseDefinition {
+  const registry = getActiveRegistry()
+
   if (ctx.practiceData.isTypingWrongWord) {
-    return ctx.mode === WordPracticeMode.Free ? FREE_WRONG_REVIEW : STRUCTURED_WRONG_REVIEW
+    const parent = registry.phasesByStage.get(ctx.stage) ?? registry.firstPhase
+    return buildWrongWordReviewFromParent(parent)
   }
 
   if (
-    ctx.mode !== WordPracticeMode.Free &&
+    registry.spellInGroup &&
     ctx.stage === WordPracticeStage.FollowWriteNewWord &&
     ctx.practiceType === WordPracticeType.Spell
   ) {
-    return SPELL_IN_GROUP
+    return registry.spellInGroup
   }
 
-  const phase = MODE_STAGE_MAP[ctx.mode]?.[ctx.stage]
+  const phase = registry.phasesByStage.get(ctx.stage)
   if (phase) return phase
 
-  return createStagePhase(
-    ctx.mode,
-    ctx.stage,
-    ctx.practiceType,
-    DISPLAY_FREE,
-    { type: 'increment' },
-    { wordsFrom: 'current', complete: true }
-  )
+  return registry.firstPhase
 }
 
+/**
+ * 无 flowId 的旧缓存恢复：先按 mode 猜内置 flow，再 resolvePhase。
+ * 【仅 restoreSessionFromLegacy 用一次】
+ */
 export function resolvePhaseFromLegacy(
   mode: WordPracticeMode,
   stage: WordPracticeStage,

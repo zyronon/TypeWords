@@ -221,7 +221,7 @@ async function startPractice(practiceMode: WordPracticeMode, resetCache: boolean
     })
     //把是否是第一次设置为false
     if (settingStore.first) settingStore.first = false
-    nav(WordPracticeModeUrlMap[practiceMode] + '/' + store.sdict.id, {}, practiceData)
+    nav(WordPracticeModeUrlMap[practiceMode] + '-v2/' + store.sdict.id, {}, practiceData)
   } else {
     window.umami?.track('no-dict')
     Toast.warning('请先选择一本词典')

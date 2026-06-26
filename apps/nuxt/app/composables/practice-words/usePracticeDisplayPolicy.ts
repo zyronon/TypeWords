@@ -1,6 +1,10 @@
+/**
+ * 练习页显隐策略：TypeWordV2 / FooterV2 的唯一数据源。
+ *
+ * v2 统一走 sessionDisplay（Registry 按阶段写入）+ displayOverride（用户 Footer 临时 Toggle）。
+ * 不再读 settingStore.dictation / translate（该二字段仍保留在 core 供 v1 使用）。
+ */
 import { computed, inject, provide, ref, type ComputedRef, type InjectionKey, type Ref } from 'vue'
-import { useSettingStore } from '@typewords/core/stores/setting.ts'
-import { WordPracticeMode } from '@typewords/core/types/enum.ts'
 import type {
   EffectiveDisplay,
   PracticeDisplayOverride,
@@ -14,9 +18,13 @@ export const PRACTICE_DISPLAY_ACTIONS_KEY: InjectionKey<{
   toggleTranslate: () => void
 }> = Symbol('practiceDisplayActions')
 
+/** Registry applyPhase 写入的「本阶段系统显隐」 */
 export const sessionDisplay = ref<PracticeDisplayPolicy | null>(null)
+
+/** 用户 Footer 临时 Toggle 的覆盖层（仅当前相位有效，进下一阶段由 applyPhase 清空） */
 export const displayOverride = ref<PracticeDisplayOverride | null>(null)
 
+/** 合并 sessionDisplay 与用户临时 override */
 function mergeDisplay(
   base: PracticeDisplayPolicy,
   override: PracticeDisplayOverride | null
@@ -25,23 +33,9 @@ function mergeDisplay(
   return { ...base, ...override }
 }
 
-function deriveFromSettingStore(dictation: boolean, translate: boolean): PracticeDisplayPolicy {
-  return {
-    source: 'settingStore',
-    wordMask: dictation ? 'underscore' : 'none',
-    showPhonetic: dictation ? 'shadow' : true,
-    showWordTranslation: translate,
-    showSentences: !dictation,
-    showSentenceTranslation: translate,
-    showPhrases: !dictation,
-    showEtymology: translate && !dictation,
-    showRelWords: translate && !dictation,
-    inputMode: 'typing',
-    allowWordTip: true,
-    autoNextWord: true,
-  }
-}
-
+/**
+ * Policy → 模板用的 EffectiveDisplay（含 dictation/translate 布尔、局部 reveal 展开）。
+ */
 function toEffective(
   policy: PracticeDisplayPolicy,
   localReveal?: { showFullWord?: boolean; showWordResult?: boolean }
@@ -51,7 +45,7 @@ function toEffective(
   const reveal = showFullWord || showWordResult
 
   return {
-    source: policy.source,
+    source: 'phase',
     showSentences: policy.showSentences || reveal,
     showSentenceTranslation: policy.showSentenceTranslation || reveal,
     showWordTranslation: policy.showWordTranslation || reveal,
@@ -66,41 +60,51 @@ function toEffective(
   }
 }
 
+/**
+ * 阶段变化时调用（Navigator.syncPhase 内）：写入 phase.display，清空 override。
+ */
 export function applyPhaseDefinition(phase: PracticePhaseDefinition) {
-  if (phase.display.source === 'settingStore') {
-    sessionDisplay.value = null
-    displayOverride.value = null
-    return
-  }
   sessionDisplay.value = { ...phase.display }
   displayOverride.value = null
 }
 
+/** 构造 effective 的 computed */
 export function createEffectiveDisplay(
-  settingStore = useSettingStore(),
   localReveal?: Ref<{ showFullWord: boolean; showWordResult: boolean }>
 ): ComputedRef<EffectiveDisplay> {
   return computed(() => {
     const reveal = localReveal?.value
-    const base =
-      sessionDisplay.value?.source === 'phase'
-        ? mergeDisplay(sessionDisplay.value, displayOverride.value)
-        : deriveFromSettingStore(settingStore.dictation, settingStore.translate)
+    const base = sessionDisplay.value
+      ? mergeDisplay(sessionDisplay.value, displayOverride.value)
+      : mergeDisplay(
+          {
+            source: 'phase',
+            wordMask: 'none',
+            showPhonetic: true,
+            showWordTranslation: true,
+            showSentences: true,
+            showSentenceTranslation: true,
+            showPhrases: true,
+            showEtymology: true,
+            showRelWords: true,
+            inputMode: 'typing',
+            allowWordTip: true,
+            autoNextWord: true,
+          },
+          displayOverride.value
+        )
     return toEffective(base, reveal)
   })
 }
 
+/** 页面级 composable：provide effective + Footer Toggle 方法 */
 export function usePracticeDisplayPolicy(
   localReveal?: Ref<{ showFullWord: boolean; showWordResult: boolean }>
 ) {
-  const settingStore = useSettingStore()
-  const effective = createEffectiveDisplay(settingStore, localReveal)
+  const effective = createEffectiveDisplay(localReveal)
 
+  /** 切换默写显隐：只写 displayOverride，不写 settingStore */
   function toggleDictation() {
-    if (settingStore.wordPracticeMode === WordPracticeMode.Free) {
-      settingStore.dictation = !settingStore.dictation
-      return
-    }
     const current = effective.value
     const nextMask = current.wordMask === 'none' ? 'underscore' : 'none'
     displayOverride.value = {
@@ -113,11 +117,8 @@ export function usePracticeDisplayPolicy(
     }
   }
 
+  /** 切换翻译显隐 */
   function toggleTranslate() {
-    if (settingStore.wordPracticeMode === WordPracticeMode.Free) {
-      settingStore.translate = !settingStore.translate
-      return
-    }
     const current = effective.value
     const next = !current.translate
     displayOverride.value = {
@@ -141,4 +142,4 @@ export function useInjectedDisplayActions() {
   return inject(PRACTICE_DISPLAY_ACTIONS_KEY)!
 }
 
-export { deriveFromSettingStore, mergeDisplay, toEffective }
+export { mergeDisplay, toEffective }

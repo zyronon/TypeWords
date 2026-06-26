@@ -13,8 +13,9 @@ import {
   restoreSessionFromLegacy,
   restoreSessionSnapshot,
 } from '~/composables/practice-words/usePracticeWordNavigator.ts'
-import { loadPracticeFlow } from '~/composables/practice-words/practice-phase-registry.ts'
+import { loadPracticeFlow, getActiveStageSequence } from '~/composables/practice-words/practice-phase-registry.ts'
 import { getFlowIdForMode } from '~/composables/practice-words/builtin-flows.ts'
+import { resolveFlowStart } from '~/composables/practice-words/usePracticeWordInit.ts'
 import useTheme from '@typewords/core/hooks/theme.ts'
 import { getCurrentStudyWord, useWordOptions } from '@typewords/core/hooks/dict.ts'
 import { openWordCollectPicker } from '@typewords/core/hooks/useWordCollectPicker.ts'
@@ -42,7 +43,7 @@ import { usePracticeStore } from '@typewords/core/stores/practice.ts'
 import { getDefaultDict, getDefaultWord } from '@typewords/core/types/func.ts'
 import ConflictNotice from '@typewords/core/components/dialog/ConflictNotice.vue'
 import PracticeLayout from '@typewords/core/components/PracticeLayout.vue'
-import { AppEnv, DICT_LIST, LIB_JS_URL, TourConfig, WordPracticeModeStageMap } from '@typewords/core/config/env.ts'
+import { AppEnv, DICT_LIST, LIB_JS_URL, TourConfig } from '@typewords/core/config/env.ts'
 import { watchOnce } from '@vueuse/core'
 import { addStat, setUserDictProp } from '@typewords/core/apis'
 import GroupList from '@typewords/core/components/word/GroupList.vue'
@@ -55,7 +56,6 @@ import {
   IdentifyMethod,
   ShortcutKey,
   WordPracticeMode,
-  WordPracticeStage,
   WordPracticeType,
 } from '@typewords/core/types/enum.ts'
 import ConflictNotice2 from '@typewords/core/components/dialog/ConflictNotice2.vue'
@@ -96,11 +96,8 @@ let taskWords = $ref<TaskWords>({
   review: [],
 })
 
-if (import.meta.client) {
-}
 //watch 实例列表，用于本地代码修改hrm后，导致重复watch
 let watchRefList = []
-
 let data = $ref<PracticeData>(getDefaultPracticeData({}))
 
 const navigator = createPracticeWordNavigator({
@@ -346,47 +343,19 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
     //不能直接赋值，会导致 inject 的数据为默认值
     taskWords = Object.assign(taskWords, initVal)
 
-    if (settingStore.wordPracticeMode === WordPracticeMode.Shuffle) {
-      settingStore.wordPracticeType = WordPracticeType.Dictation
-      data = getDefaultPracticeData(data, { words: taskWords.review })
-      statStore.stage = WordPracticeStage.Shuffle
-      statStore.total = taskWords.review.length
-      statStore.newWordNumber = 0
-      statStore.reviewWordNumber = 0
-    } else if (settingStore.wordPracticeMode === WordPracticeMode.Review) {
-      if (taskWords.review.length) {
-        data = getDefaultPracticeData(data, { words: taskWords.review })
-        statStore.stage = WordPracticeStage.IdentifyReview
-      }
-      statStore.total = taskWords.review.length
-      statStore.newWordNumber = 0
-      statStore.reviewWordNumber = taskWords.review.length
-    } else {
-      if (taskWords.new.length === 0) {
-        if (taskWords.review.length) {
-          data = getDefaultPracticeData(data, { words: taskWords.review })
-          if (settingStore.wordPracticeMode === WordPracticeMode.System) {
-            statStore.stage = WordPracticeStage.IdentifyReview
-          } else if (settingStore.wordPracticeMode === WordPracticeMode.Free) {
-            statStore.stage = WordPracticeModeStageMap[settingStore.wordPracticeMode][0]
-          } else if (settingStore.wordPracticeMode === WordPracticeMode.IdentifyOnly) {
-            statStore.stage = WordPracticeStage.IdentifyReview
-          } else if (settingStore.wordPracticeMode === WordPracticeMode.DictationOnly) {
-            statStore.stage = WordPracticeStage.DictationReview
-          } else if (settingStore.wordPracticeMode === WordPracticeMode.ListenOnly) {
-            statStore.stage = WordPracticeStage.ListenReview
-          }
-        } else {
-          Toast.warning('没有可学习的单词！')
-          router.push('/words')
-        }
-      } else {
-        data = getDefaultPracticeData(data, { words: taskWords.new })
-        statStore.stage = WordPracticeModeStageMap[settingStore.wordPracticeMode][0]
-      }
-      statStore.total = taskWords.review.length + taskWords.new.length
-      statStore.newWordNumber = taskWords.new.length
-      statStore.reviewWordNumber = taskWords.review.length
+    try {
+      debugger
+      const start = resolveFlowStart(settingStore.wordPracticeMode, taskWords)
+      settingStore.wordPracticeType = start.practiceType
+      data = getDefaultPracticeData(data, { words: start.words })
+      statStore.stage = start.stage
+      statStore.total = start.total
+      statStore.newWordNumber = start.newWordNumber
+      statStore.reviewWordNumber = start.reviewWordNumber
+    } catch {
+      Toast.warning('没有可学习的单词！')
+      router.push('/words')
+      return
     }
 
     statStore.startDate = Date.now()
@@ -563,10 +532,10 @@ function setWordCard(rating: number, wordStr = word.word, times?: number) {
 }
 
 async function savePracticeDataIns(where?) {
-  const stages = WordPracticeModeStageMap[settingStore.wordPracticeMode]
+  const firstStage = getActiveStageSequence()[0]
   if (
     data.index === 0 &&
-    statStore.stage === stages[0] &&
+    statStore.stage === firstStage &&
     settingStore.wordPracticeType === WordPracticeType.FollowWrite
   ) {
     //未开始练习
@@ -722,15 +691,11 @@ function randomWrite() {
   console.log('随机默写')
   data.words = shuffle(data.words)
   data.index = 0
-  if (settingStore.wordPracticeMode === WordPracticeMode.Free) {
-    settingStore.dictation = true
-  } else {
-    displayOverride.value = {
-      wordMask: 'underscore',
-      showSentences: false,
-      showWordTranslation: true,
-      showSentenceTranslation: true,
-    }
+  displayOverride.value = {
+    wordMask: 'underscore',
+    showSentences: false,
+    showWordTranslation: true,
+    showSentenceTranslation: true,
   }
 }
 
