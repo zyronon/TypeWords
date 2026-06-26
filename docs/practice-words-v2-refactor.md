@@ -1,13 +1,14 @@
 # 单词练习页 v2 重构计划
 
-> **给 Agent 的执行说明**：执行前必读「〇、Agent 冷启动执行手册」与「零侵入原则」。严格按 Phase 1 → Phase 2 顺序；**禁止修改** v1 页面与 `packages/core` 现有练习文件。开发命令：在 `Typewords/` 目录执行 `pnpm -F @typewords/nuxt dev`，访问 `/practice-words-v2/{词典id}`。
+> **给 Agent 的执行说明**：执行前必读「〇、Agent 冷启动执行手册」与「零侵入原则」。严格按 Phase 1 → Phase 2 → Phase 2.5 顺序；**禁止修改** v1 页面与 `packages/core` 现有练习文件。开发命令：在 `Typewords/` 目录执行 `pnpm -F @typewords/nuxt dev`，访问 `/practice-words-v2/{词典id}`；流程编排页 `/practice-flow-editor`（Phase 2.5）。
 
 **范围**：`../apps/nuxt` 仅新增 v2 路由与副本代码
 
 ## 任务清单（进度可勾选）
 
-- [ ] Phase 1：复制骨架 + 独立缓存 `PracticeSaveWordV2`
-- [ ] Phase 2：Registry + Navigator + sessionSnapshot + displayPolicy + keyboard
+- [x] Phase 1：复制骨架 + 独立缓存 `PracticeSaveWordV2`
+- [x] Phase 2：Registry（可序列化）+ Navigator + sessionSnapshot + displayPolicy + keyboard
+- [ ] Phase 2.5：用户自定义练习流程（档位 A：阶段块拖拽编排）
 - [ ] Phase 3：v2 组件拆分
 - [ ] Phase 4–5：例句练习线（可选）
 - [ ] Phase 6：合并 v1（远期，本次不做）
@@ -36,9 +37,10 @@
 | 优先级 | 目标 |
 |--------|------|
 | P0 | 新建 `/practice-words-v2/[id]`，**零修改** v1 与 core 现有练习文件 |
-| P0 | `PracticePhaseRegistry` 可配置阶段流转，替代 v1 `next()`/`watchStage` 硬编码 |
+| P0 | `PracticePhaseRegistry` 可配置阶段流转，替代 v1 `next()`/`watchStage` 硬编码；内置默认流程 + 用户可自定义（档位 A） |
 | P0 | 修复刷新后显隐错乱：`sessionSnapshot` + `applyPhase()` + 显隐二分 |
 | P0 | `effective.showSentences` 统一 UI 显隐与例句自动播放条件 |
+| P1 | Phase 2.5：可视化流程编排页，用户从预设阶段块拖拽排序、配置词源/shuffle/拼写子相位 |
 | P1 | 去掉 v2 中 `__CURRENT_WORD_INFO__`，新建 `usePracticeWordKeyboard` |
 | P1 | v2 内拆分 TypeWordV2，例句区只读（不在 v2 做例句输入） |
 | P2 | Phase 4–5：例句独立练习 `/practice-sentences/[id]`（与 v2 单词页解耦） |
@@ -46,7 +48,9 @@
 ### 非目标（Non-Goals）— 本次不做
 
 - 不修改 `/practice-words/[id]`、不修改 `packages/core` 下任何现有练习相关文件
-- 不修改 [`words.vue`](../apps/nuxt/app/pages/(words)/words.vue) 导航
+- 不修改 [`words.vue`](../apps/nuxt/app/pages/(words)/words.vue) 导航（流程编辑器走独立路由 `/practice-flow-editor`）
+- 不做全功能节点流程编辑器（档位 C：任意条件分支 / 自定义 wordLoop 规则）
+- 不做档位 B（每阶段显隐微调 UI）— 留作二期可选
 - 不替换正式路由、不删除 v1、不下沉 core（Phase 6）
 - 不跑 `pnpm -F @typewords/nuxt build`（见 AGENTS.md）
 - 不修改 `apps/vscode-web`（本轮仅 nuxt）
@@ -76,26 +80,36 @@
 
 ```
 Phase 1 → 复制页面+组件，抽 composables，v2 行为≈v1 副本，独立缓存
-Phase 2 → Registry + Navigator + sessionSnapshot + displayPolicy + keyboard（核心）
+Phase 2 → 可序列化 Registry + Navigator + sessionSnapshot + displayPolicy + keyboard（核心）
+Phase 2.5 → 用户自定义练习流程 UI（档位 A：阶段块拖拽编排）
 Phase 3 → 仅改 v2 副本内组件拆分
-Phase 4–5 → 例句线（可选，用户未要求时可暂停在 Phase 2/3）
+Phase 4–5 → 例句线（可选，用户未要求时可暂停在 Phase 2.5/3）
 ```
 
-### 关键新建文件清单（Phase 1–2 最低集）
+### 关键新建文件清单（Phase 1–2.5 最低集）
 
 ```
 apps/nuxt/app/pages/(words)/practice-words-v2/[id].vue
+apps/nuxt/app/pages/(words)/practice-flow-editor.vue     # Phase 2.5
 apps/nuxt/app/components/practice-words-v2/
   PracticeWordsView.vue
   TypeWordV2.vue          ← 复制自 core/TypeWord.vue
   FooterV2.vue
   StatisticsV2.vue
+apps/nuxt/app/components/practice-flow/                  # Phase 2.5
+  FlowEditor.vue
+  PhaseBlockCard.vue
+  FlowPreview.vue
 apps/nuxt/app/composables/practice-words/
   usePracticeWordSession.ts
   usePracticeWordInit.ts
   usePracticeWordNavigator.ts
   usePracticeWordPersistenceV2.ts
-  practice-phase-registry.ts
+  practice-phase-registry.ts   # 运行时入口 loadPracticeFlow()
+  phase-templates.ts           # 阶段块模板
+  builtin-flows.ts             # System/Review/... 默认流程
+  flow-schema.ts               # 校验 + PracticeFlowConfig 类型
+  usePracticeFlowStorage.ts    # 用户自定义流程持久化（独立 key）
   usePracticeDisplayPolicy.ts
   usePracticeWordKeyboard.ts
   usePracticeWordAudioV2.ts ← 复制自 core/composables/useWordPracticeAudio.ts
@@ -111,6 +125,7 @@ v2 页面 **禁止** import `@typewords/core/.../TypeWord.vue`（须用 `TypeWor
 - 访问：`http://localhost:{port}/practice-words-v2/{词典id}`（从 `/words` 选词典后手动改 URL）
 - 对比：同词典分别开 v1 / v2 标签页，**注意缓存 key 不同，进度不共享**
 - Phase 2 验收：见下文「Phase 2 验收」清单，逐项手工测
+- Phase 2.5 验收：见「三-C · Phase 2.5 验收」；流程编排页 `/practice-flow-editor`
 
 ### v1 行为对照表（Registry 填写依据）
 
@@ -172,6 +187,7 @@ flowchart LR
 ```
 ../apps/nuxt/
   app/pages/(words)/practice-words-v2/[id].vue     # 复制 [id].vue 后改
+  app/pages/(words)/practice-flow-editor.vue       # Phase 2.5 流程编排
   app/components/practice-words-v2/
     PracticeWordsView.vue
     TypeWordV2.vue              # 复制自 core/TypeWord.vue
@@ -179,9 +195,17 @@ flowchart LR
     StatisticsV2.vue            # 复制自 core/Statistics.vue
     PracticeOnboardingHostV2.vue
     ...（按需复制 ConflictNotice 等）
+  app/components/practice-flow/                    # Phase 2.5
+    FlowEditor.vue
+    PhaseBlockCard.vue
+    FlowPreview.vue
   app/composables/practice-words/
     usePracticeWordSession.ts
+    phase-templates.ts
+    builtin-flows.ts
     practice-phase-registry.ts
+    flow-schema.ts
+    usePracticeFlowStorage.ts
     usePracticeWordPersistenceV2.ts   # 新 cache key
     ...
 ```
@@ -745,7 +769,25 @@ function advanceWord(ctx) {
 }
 ```
 
-**与现有 `WordPracticeModeStageMap` 的关系**：`StageMap` 只描述「阶段顺序」，Registry 在其上扩展「每阶段的 display + advance 行为」。新增模式 = 加一组 `PracticePhaseDefinition`，不再改 `next()` 函数体。
+**与现有 `WordPracticeModeStageMap` 的关系**：`StageMap` 只描述「阶段顺序」，Registry 在其上扩展「每阶段的 display + advance 行为」。新增内置模式 = 在 `builtin-flows.ts` 加一组流程配置，不再改 `next()` 函数体。
+
+**可序列化设计（Phase 2 必做，为 Phase 2.5 档位 A 预留）**：
+
+Registry 运行时数据来自 `loadPracticeFlow(flowId)`，而非硬编码 `switch`：
+
+```mermaid
+flowchart LR
+  builtin["builtin-flows.ts 默认流程"] --> loader["loadPracticeFlow()"]
+  userJson["用户自定义 JSON"] --> loader
+  loader --> registry["PracticePhaseRegistry"]
+  registry --> navigator["usePracticeWordNavigator"]
+  registry --> display["usePracticeDisplayPolicy"]
+```
+
+- `phase-templates.ts`：阶段块模板（跟写、听写、自测…的完整 `PracticePhaseDefinition`）
+- `builtin-flows.ts`：组合模板 → System / Review / IdentifyOnly 等（对齐 v1 `WordPracticeModeStageMap`）
+- `flow-schema.ts` + `validateFlowConfig()`：校验无空阶段、词源合法、必须以 Complete 结束；失败回退 System 默认
+- Navigator 只认 `resolvePhase()` + `applyPhase()`，不关心配置来自代码还是用户 JSON
 
 ```mermaid
 flowchart LR
@@ -806,6 +848,9 @@ interface PracticeSessionSnapshot {
   identifyMethod: IdentifyMethod
   isTypingWrongWord: boolean
   wordPracticeMode: WordPracticeMode
+  flowId: string                    // 内置 flow id 或 'custom'
+  flowVersion?: number
+  customFlowHash?: string           // 用户自定义流程内容哈希，用于检测变更
   // 结构化模式专用：当前系统显隐 + 用户临时覆盖（同相位刷新用）
   sessionDisplay?: PracticeDisplayPolicy   // source 必须为 phase
   displayOverride?: Partial<PracticeDisplayPolicy>
@@ -829,6 +874,7 @@ async function restoreSession(cache: PracticeWordCache) {
   patchPracticeData(cache.practiceData)
   statStore.$patch(cache.statStoreData)
   if (cache.sessionSnapshot) {
+    loadPracticeFlow(cache.sessionSnapshot.flowId)  // ★ 先加载流程定义
     applySessionSnapshot(cache.sessionSnapshot)
   } else {
     applyPhase(resolvePhaseFromLegacy(cache))  // 旧缓存：从 stage 推导 sessionDisplay
@@ -965,6 +1011,67 @@ flowchart LR
 
 ---
 
+### 三-C、用户自定义练习流程（档位 A，Phase 2.5）
+
+> **已拍板**：采用档位 A（阶段块拖拽编排）。档位 B（每阶段显隐微调）留二期；档位 C（全功能节点编辑器）明确不做。
+
+#### 目标
+
+- **默认**：代码内置 `builtin-flows.ts`，行为与 v1 各 `WordPracticeMode` 一致
+- **用户自定义**：可视化编排页，从预设「阶段块」拖拽排序，保存为本地 JSON，练习时 `loadPracticeFlow('custom')` 加载
+
+#### 档位 A — 开放给用户配置的
+
+| 配置项 | 说明 |
+|--------|------|
+| 阶段序列 | 从阶段块库选取并排序：`FollowWriteNew`（可选 7 词一组 + 拼写子相位）、`ListenNew` / `DictationNew` / `IdentifyNew`、`IdentifyReview` / `ListenReview` / `DictationReview`、`Complete` |
+| 每阶段词源 | `taskNew` \| `taskReview` \| `wrongWords` \| `current` |
+| 是否 shuffle | 阶段推进时是否打乱词序 |
+| 多份预设 | 命名保存（如「晨读流程」「考前冲刺」），独立 localStorage key `PracticeFlowV2` |
+
+#### 保持系统内置、不开放编辑的
+
+| 能力 | 原因 |
+|------|------|
+| 错词复习 (`isTypingWrongWord`) | 跨阶段横切逻辑，放开易产生死循环 |
+| `checkWordIsNeedNext` / 已掌握跳词 | 与 FSRS / ignore 列表耦合 |
+| **Free 模式** | 无多阶段链，显隐走 `settingStore`——**单独保留，不并入自定义流程** |
+| Shuffle / words-test | 已有独立入口（[`ShufflePracticeSettingDialog`](../packages/core/src/components/word/ShufflePracticeSettingDialog.vue)），首轮不复用通用编排器 |
+| FSRS 卡片更新时机 | 绑在阶段块元数据 hook，不让用户改 |
+| `groupSize = 7` | 跟写拼写子相位内固定，不作为用户可调参数（与 v1 一致） |
+
+#### UI 形态（竖向歌单式，非 n8n 节点图）
+
+- **左侧**：可添加的阶段块列表（跟写新词、听写旧词…）
+- **中间**：当前流程 sortable 竖向列表
+- **右侧**：选中块的选项（词源、shuffle、是否含拼写子相位）
+- **底部**：保存 / 恢复默认 / 设为当前练习流程
+
+路由：[`/practice-flow-editor`](../apps/nuxt/app/pages/(words)/practice-flow-editor.vue)（开发期手动访问，不改 `words.vue` 导航）。
+
+#### 接入练习页
+
+- 用户流程存 `usePracticeFlowStorage`（独立 key，**不改** core `setting.ts` 亦可；或 nuxt 侧轻量 store 记 `activeCustomFlowId`）
+- v2 初始化：`wordPracticeMode === Custom`（或等价 flag）→ `loadPracticeFlow(activeCustomFlowId)`
+- 内置模式（System / Review / Free …）仍走 `builtin-flows.ts` 对应 id
+
+#### Phase 2.5 验收
+
+- 拖拽编排「跟写新词 → 听写新词 → 自测旧词 → 完成」可保存并在 v2 练习页跑通
+- 恢复默认流程与 System 内置一致
+- 自定义流程练习中刷新 10 次，`flowId` + 当前 stage/显隐正确恢复
+- 非法配置（空阶段、无 Complete）保存时被拦截或 toast 并回退 System 默认
+- Free / Shuffle 等内置模式不受自定义流程影响
+
+#### 工期
+
+| 工作项 | 工期 |
+|--------|------|
+| Phase 2 可序列化 + snapshot.flowId（与 Phase 2 同做） | +0.5~1 天 |
+| Phase 2.5 流程编排 UI + 存储 + v2 接入 | 3–5 天 |
+
+---
+
 ### 三问题合一后的数据流（目标态）
 
 ```mermaid
@@ -988,7 +1095,7 @@ sequenceDiagram
 
 ---
 
-## 四、分阶段实施（更新为 5+1 阶段）
+## 四、分阶段实施（更新为 6+1 阶段）
 
 ### Phase 1 — 复制骨架（1-2 天）
 
@@ -1000,14 +1107,15 @@ sequenceDiagram
 
 **验收**：v1、v2 可同时访问；v2 初始行为与 v1 副本等价；两套缓存互不影响
 
-### Phase 2 — 阶段注册表 + 缓存修复 + 显隐策略（3-4 天）**（本次核心**
+### Phase 2 — 可序列化阶段注册表 + 缓存修复 + 显隐策略（3-4 天）**（本次核心**
 
-1. 在 nuxt 新建 `practice-phase-registry.ts`（从 v1 逻辑提取，不改正文 v1 文件）
-2. `usePracticeNavigator` 基于 Registry 驱动 v2 的 `next()`
-3. **v2 专用** `PracticeWordCacheV2.sessionSnapshot`，`restoreSession()` 统一恢复
-4. `usePracticeDisplayPolicy` + **TypeWordV2** 模板改用 `effective.*`
-5. 显隐二分：Free → settingStore；其他 → sessionDisplay + override
-6. 合并 `usePracticeWordTimer`；v2 新建 `usePracticeWordKeyboard`（**去掉 `__CURRENT_WORD_INFO__`**，不修改 `event.ts`）
+1. 在 nuxt 新建 `phase-templates.ts` + `builtin-flows.ts` + `practice-phase-registry.ts`（`loadPracticeFlow(flowId)` 运行时入口；从 v1 逻辑提取，不改正文 v1 文件）
+2. `flow-schema.ts` + `validateFlowConfig()`：校验用户/内置流程配置
+3. `usePracticeNavigator` 基于 Registry 驱动 v2 的 `next()`
+4. **v2 专用** `PracticeWordCacheV2.sessionSnapshot`（含 `flowId` / `flowVersion`），`restoreSession()` 统一恢复（**先 loadPracticeFlow 再 applyPhase**）
+5. `usePracticeDisplayPolicy` + **TypeWordV2** 模板改用 `effective.*`
+6. 显隐二分：Free → settingStore；其他 → sessionDisplay + override
+7. 合并 `usePracticeWordTimer`；v2 新建 `usePracticeWordKeyboard`（**去掉 `__CURRENT_WORD_INFO__`**，不修改 `event.ts`）
 
 **验收**：
 - 自测阶段刷新 10 次，例句/释义不再偶现
@@ -1016,8 +1124,19 @@ sequenceDiagram
 - **跟写 + 自动播放开启**：例句可见时单词音后链式播首句
 - **自由模式**：全列表练完有错词 → shuffle 重练 → 结算；无错词直接结算
 - 跟写→Spell 子相位刷新后仍正确（System 模式）
-- 全模式（含 Free / Shuffle / Review / IdentifyOnly 等）阶段流转与 v1 一致
-- Registry 新增一行即可描述新阶段（代码审查标准）
+- 全内置模式（含 Free / Shuffle / Review / IdentifyOnly 等）阶段流转与 v1 一致
+- `builtin-flows.ts` 新增一行即可描述新内置阶段（代码审查标准）
+- `loadPracticeFlow('system')` 等行为与 v1 对照表一致（为 Phase 2.5 铺路）
+
+### Phase 2.5 — 用户自定义练习流程（档位 A，3-5 天）
+
+1. 新建 [`practice-flow-editor.vue`](../apps/nuxt/app/pages/(words)/practice-flow-editor.vue) + `components/practice-flow/`（`FlowEditor` / `PhaseBlockCard` / `FlowPreview`）
+2. `usePracticeFlowStorage.ts`：独立 key `PracticeFlowV2` 读写用户流程 JSON；支持多份命名预设
+3. 编排 UI：阶段块拖拽排序 + 词源 / shuffle / 拼写子相位选项（见「三-C」）
+4. v2 练习页接入：`Custom` 模式 → `loadPracticeFlow(customFlowId)`；内置模式不变
+5. i18n：编辑器文案写入 [`zh.json`](../apps/nuxt/i18n/locales/zh.json)
+
+**验收**：见「三-C · Phase 2.5 验收」
 
 ### Phase 3 — 在 v2 副本内拆分组件（2 天）
 
@@ -1052,6 +1171,9 @@ sequenceDiagram
 6. **`showFullWord`/`showWordResult` 保留为局部 override**：`effective = base + localReveal`
 7. **`next(false)` 递归与空 words 防死循环**：Registry 的 `stageAdvance` 保留空列表跳阶段语义
 8. **例句 FSRS 策略需产品确认**：Phase 5 先只做统计，FSRS 二期再加
+9. **自定义流程校验**：`validateFlowConfig` 失败必须回退 System 默认，禁止带着非法 flow 进入练习
+10. **Free 与 Custom 分区**：UI 与初始化逻辑明确区分「自由练习」与「自定义多阶段流程」
+11. **自定义流程存储零侵入**：首轮用 nuxt 独立 `PracticeFlowV2` key，不强改 core `setting.ts`
 
 ---
 
@@ -1063,4 +1185,6 @@ sequenceDiagram
 - 把 TypingArticle 整篇塞进例句练习（过度）
 - 例句练习复用 `practice-words` 的 `next()` 状态机
 - 第一轮就上 XState（Registry 表驱动足够）
+- 首轮做档位 C 全功能节点流程编辑器（任意条件分支）
+- 把错词复习 / FSRS hook / 跳词逻辑开放给用户编排
 - 把 800 行逻辑搬进一个新的 800 行 Vue 文件（只搬家）
