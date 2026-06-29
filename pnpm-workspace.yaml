@@ -4,7 +4,7 @@ packages:
   - apps/vscode
   - packages/*
 allowBuilds:
-  '@parcel/watcher': set this to true or false
-  esbuild: set this to true or false
-  less: set this to true or false
-  sharp: set this to true or false
+  '@parcel/watcher': true
+  esbuild: true
+  less: true
+  sharp: true

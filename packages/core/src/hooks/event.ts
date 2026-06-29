@@ -172,6 +172,7 @@ export function useEventListener(type: string, listener: EventListenerOrEventLis
       }
 
       const handleCompositionStart = () => {
+        // console.log('handleCompositionStart',Date.now())
         isComposing = true
         Toast.warning('请切换到英文输入')
       }
@@ -194,6 +195,7 @@ export function useEventListener(type: string, listener: EventListenerOrEventLis
       }
 
       const handleInput = (event: InputEvent) => {
+        // console.log('handleInput',Date.now())
         if (isComposing) return
         const target = event.target as HTMLInputElement | null
         if (!target) return
@@ -228,6 +230,13 @@ export function useEventListener(type: string, listener: EventListenerOrEventLis
 
       const windowListener = (e: KeyboardEvent) => {
         // if (e.code in CODE_TO_CHAR && !e.ctrlKey && !e.metaKey) return
+        // console.log('windowListener', Date.now(), e, CODE_TO_CHAR)
+        if (e.key === 'Process') {
+          // @ts-ignore
+          // e.key = CODE_TO_CHAR[e.code]
+          //todo 这里不能直接设置值，会报错，后续可以用合成事件优化
+          return
+        }
         if (emitInputKeys.has(e.key)) return
         // console.log('windowListener', Date.now(), emitInputKeys)
         invokeListener(e)

@@ -97,7 +97,7 @@ export function useWordPracticeAudio({ word, volumeIconRef, canSeeSentences }: W
     trigger: WordPlayTrigger,
     options?: { resetIcon?: boolean; volumeRef?: { animateOnly?: (reset?: boolean) => void } }
   ) {
-    if (!settingStore.wordSound) return
+    // if (!settingStore.wordSound) return
 
     // 打断进行中的单词/例句播放，避免 NewWord 未播完时后续 playWord 被 isPlaying 静默跳过
     cancelWordPracticeAudio()

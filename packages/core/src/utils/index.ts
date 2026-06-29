@@ -698,14 +698,12 @@ export function isBuiltinDictId(id: unknown): boolean {
 
 export function ensureCustomDictCopy(dict: Dict): Dict {
   const next = getDefaultDict(dict)
-  // 系统虚拟词典（system=true）和用户自建词典（custom=true）都不需要创建副本
-  if (next.custom || next.system || isBuiltinDictId(next.enName || next.id)) {
-    return next
-  }
   const sourceId = normalizeDictId(next.sourceId || next.id)
-  next.sourceId = sourceId
   next.id = `custom-${nanoid(10)}`
+  next.sourceId = sourceId
+  next.enName = ''
   next.custom = true
+  next.system = false
   next.sync = false
   next.userDictId = undefined
   return next

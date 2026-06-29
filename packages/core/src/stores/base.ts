@@ -101,16 +101,20 @@ export const useBaseStore = defineStore('base', {
   },
   getters: {
     collectWord(): Dict {
-      return this.word.bookList[0]
+      let res = this.word.bookList.find(v => [v.enName, v.id].includes(DictId.wordCollect))
+      return res ?? getDefaultDict()
     },
     collectArticle(): Dict {
-      return this.article.bookList[0]
+      let res = this.word.bookList.find(v => [v.enName, v.id].includes(DictId.articleCollect))
+      return res ?? getDefaultDict()
     },
     wrong(): Dict {
-      return this.word.bookList[1]
+      let res = this.word.bookList.find(v => [v.enName, v.id].includes(DictId.wordWrong))
+      return res ?? getDefaultDict()
     },
     known(): Dict {
-      return this.word.bookList[2]
+      let res =  this.word.bookList.find(v => [v.enName, v.id].includes(DictId.wordKnown))
+      return res ?? getDefaultDict()
     },
     knownWords(): string[] {
       return this.known.words.map((v: Word) => v.word.toLowerCase())

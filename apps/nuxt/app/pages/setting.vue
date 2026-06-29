@@ -566,6 +566,11 @@ function removeSbConfig() {
     }
   })
 }
+
+function disable360(){
+  localStorage.setItem('disable360',1)
+  Toast.success('已设置')
+}
 </script>
 
 <template>
@@ -634,14 +639,14 @@ function removeSbConfig() {
               :title="$t('export_data_title')"
               :desc="$t('data_saved_locally') + $t('export_data_desc_suffix', { appName: APP_NAME })"
             >
-              <BaseButton :loading="exportLoading" @click="exportData()">{{ $t('export_data_backup') }}</BaseButton>
+              <BaseButton size="large"  :loading="exportLoading" @click="exportData()">{{ $t('export_data_backup') }}</BaseButton>
             </SettingItem>
             <div class="text-gray text-sm">💾 {{ $t('export_zip_hint') }}</div>
             <div class="line my-3"></div>
 
             <!--            导入数据-->
             <SettingItem :title="$t('import_data_title')">
-              <BaseButton @click="openGate('import')" :loading="importLoading">{{
+              <BaseButton size="large"  @click="openGate('import')" :loading="importLoading">{{
                 $t('import_data_restore')
               }}</BaseButton>
             </SettingItem>
@@ -652,7 +657,7 @@ function removeSbConfig() {
             <template v-if="isNewHost">
               <div class="line my-3"></div>
               <SettingItem :title="$t('migrate_2study_title')">
-                <BaseButton @click="openGate('transfer')">{{ $t('migrate_btn') }}</BaseButton>
+                <BaseButton size="large"  @click="openGate('transfer')">{{ $t('migrate_btn') }}</BaseButton>
               </SettingItem>
               <i18n-t keypath="migrate_overwrite_warning" tag="span">
                 <strong class="color-red">{{ $t('complete_overflow') }}</strong>
@@ -662,10 +667,11 @@ function removeSbConfig() {
             <div class="line my-3"></div>
             <SettingItem :title="$t('other')"> </SettingItem>
             <div class="flex gap-space">
-              <BaseButton @click="openHistoryDialog">{{ $t('history_data') }}</BaseButton>
+              <BaseButton size="large"  @click="openHistoryDialog">{{ $t('history_data') }}</BaseButton>
               <PopConfirm :title="$t('clear_all_data_confirm')" @confirm="clearAllData">
-                <BaseButton>{{ $t('clear_all_data') }}</BaseButton>
+                <BaseButton size="large" >{{ $t('clear_all_data') }}</BaseButton>
               </PopConfirm>
+              <BaseButton size="large" type="info" @click="disable360" keyboard="不要乱点，点击后会使导出功能失效，仅适用于： Mac 版本 360 极速浏览器">跳过导出</BaseButton>
             </div>
           </div>
 
@@ -706,8 +712,8 @@ function removeSbConfig() {
                 </FormItem>
               </Form>
               <div class="flex justify-end">
-                <BaseButton @click="removeSbConfig" :disabled="!canSyncToServe">{{ $t('delete_config') }}</BaseButton>
-                <BaseButton @click="openSupabaseSaveGate" :loading="configLoading" :disabled="!canSyncToServe">{{
+                <BaseButton size="large"  @click="removeSbConfig" :disabled="!canSyncToServe">{{ $t('delete_config') }}</BaseButton>
+                <BaseButton size="large"  @click="openSupabaseSaveGate" :loading="configLoading" :disabled="!canSyncToServe">{{
                   runtimeStore.isError ? $t('retry') : $t('save_config')
                 }}</BaseButton>
               </div>
@@ -753,7 +759,7 @@ function removeSbConfig() {
             <div class="row">
               <label class="item-title"></label>
               <div class="wrapper">
-                <BaseButton @click="resetShortcutKeyMap">{{ $t('restore_default') }}</BaseButton>
+                <BaseButton size="large"  @click="resetShortcutKeyMap">{{ $t('restore_default') }}</BaseButton>
               </div>
             </div>
           </div>
@@ -772,13 +778,13 @@ function removeSbConfig() {
 
   <BackupGateDialog v-model="showBackupGate">
     <template v-slot="{ disabled }">
-      <BaseButton @click="doSaveSbConfig" :disabled="disabled" v-if="pendingNextAction === 'supabase_save'">{{
+      <BaseButton size="large"  @click="doSaveSbConfig" :disabled="disabled" v-if="pendingNextAction === 'supabase_save'">{{
         runtimeStore.isError ? $t('retry') : $t('save_config')
       }}</BaseButton>
-      <BaseButton @click="showTransfer = true" :disabled="disabled" v-else-if="pendingNextAction === 'transfer'">{{
+      <BaseButton size="large"  @click="showTransfer = true" :disabled="disabled" v-else-if="pendingNextAction === 'transfer'">{{
         $t('migrate_btn')
       }}</BaseButton>
-      <BaseButton
+      <BaseButton size="large"
         v-else-if="pendingNextAction === 'restore_history'"
         @click="restoreHistoryData"
         :disabled="disabled"
@@ -810,7 +816,7 @@ function removeSbConfig() {
             <div class="color-gray">{{ $t('auto_backup_time') }}{{ formatHistoryTime(item.createdAt) }}</div>
           </div>
           <div class="mt-2">
-            <BaseButton @click="openHistoryRestoreGate(item)" :disabled="restoreLoading">{{
+            <BaseButton size="large"  @click="openHistoryRestoreGate(item)" :disabled="restoreLoading">{{
               $t('restore_this_version')
             }}</BaseButton>
           </div>
@@ -825,10 +831,10 @@ function removeSbConfig() {
       <div class="color-gray mt-2">{{ $t('push_local_desc') }}</div>
       <div class="color-gray">{{ $t('pull_remote_desc') }}</div>
       <div class="flex justify-end mt-4">
-        <BaseButton :loading="sbSyncChoiceLoading" @click="onSbFirstSyncChoice('push_local')">{{
+        <BaseButton size="large"  :loading="sbSyncChoiceLoading" @click="onSbFirstSyncChoice('push_local')">{{
           $t('push_local')
         }}</BaseButton>
-        <BaseButton :loading="sbSyncChoiceLoading" @click="onSbFirstSyncChoice('pull_remote')">{{
+        <BaseButton size="large"  :loading="sbSyncChoiceLoading" @click="onSbFirstSyncChoice('pull_remote')">{{
           $t('pull_remote')
         }}</BaseButton>
       </div>

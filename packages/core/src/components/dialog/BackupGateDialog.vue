@@ -28,7 +28,7 @@ async function onBackup() {
       </div>
 
       <div class="flex justify-end mt-4">
-        <BaseButton :loading="backupLoading" @click="onBackup">数据备份</BaseButton>
+        <BaseButton size="large" :loading="backupLoading" @click="onBackup">数据备份</BaseButton>
         <slot :disabled="!backupTriggered && !IS_DEV"></slot>
       </div>
     </div>
