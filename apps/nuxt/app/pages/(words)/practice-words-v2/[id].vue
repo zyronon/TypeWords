@@ -258,10 +258,11 @@ onMounted(async () => {
   document.addEventListener('visibilitychange', onvisibilitychange)
 })
 
-onUnmounted(() => {
+onUnmounted(async () => {
   document.removeEventListener('visibilitychange', onvisibilitychange)
-  if (getPracticeWordCacheV2Local()) {
-    savePracticeDataIns('onUnmounted')
+  const cache = await getPracticeWordCacheV2Local()
+  if (cache) {
+    await savePracticeDataIns('onUnmounted')
   }
   timer && clearInterval(timer)
   watchRefList.map(v => v?.stop())
@@ -342,9 +343,8 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
     // taskWords = initVal
     //不能直接赋值，会导致 inject 的数据为默认值
     taskWords = Object.assign(taskWords, initVal)
-
     try {
-      debugger
+      // debugger
       const start = resolveFlowStart(settingStore.wordPracticeMode, taskWords)
       settingStore.wordPracticeType = start.practiceType
       data = getDefaultPracticeData(data, { words: start.words })

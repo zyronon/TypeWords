@@ -243,7 +243,7 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
 
   /**
    * 主入口，对应 v1 next(isTyping, ignoreLoop)。
-   * 流程：记错词统计 → 按 free/结构化分支推进 → syncPhase → 跳过已掌握词。
+   * 流程：记错词统计 → 按 resolvePhase 规则推进 → syncPhase → 跳过已掌握词。
    */
   function next(isTyping = true, ignoreLoop = false) {
     const data = deps.getPracticeData()

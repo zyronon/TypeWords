@@ -24,6 +24,9 @@ export const sessionDisplay = ref<PracticeDisplayPolicy | null>(null)
 /** 用户 Footer 临时 Toggle 的覆盖层（仅当前相位有效，进下一阶段由 applyPhase 清空） */
 export const displayOverride = ref<PracticeDisplayOverride | null>(null)
 
+/** 上一次 applyPhase 的 phase key，用于判断 phase 是否真正变化 */
+let lastPhaseKey: string | null = null
+
 /** 合并 sessionDisplay 与用户临时 override */
 function mergeDisplay(
   base: PracticeDisplayPolicy,
@@ -61,11 +64,16 @@ function toEffective(
 }
 
 /**
- * 阶段变化时调用（Navigator.syncPhase 内）：写入 phase.display，清空 override。
+ * 阶段变化时调用（Navigator.syncPhase 内）：写入 phase.display。
+ * 仅当 phase key 与上次不同时才清空 displayOverride，避免同阶段内每词推进都重置用户覆盖。
  */
 export function applyPhaseDefinition(phase: PracticePhaseDefinition) {
   sessionDisplay.value = { ...phase.display }
-  displayOverride.value = null
+  const key = `${phase.key.mode}_${phase.key.stage}_${phase.key.practiceType}_${phase.key.isTypingWrongWord ?? false}`
+  if (key !== lastPhaseKey) {
+    displayOverride.value = null
+    lastPhaseKey = key
+  }
 }
 
 /** 构造 effective 的 computed */

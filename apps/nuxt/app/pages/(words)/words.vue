@@ -454,7 +454,7 @@ async function onShufflePracticeSettingOk(setting: ShufflePracticeSetting) {
   const result = getShufflePracticeWords(store.sdict.words, setting, ignoreSet)
   practiceData.taskWords.review = result.words
   nav(
-    WordPracticeModeUrlMap[editingWordPracticeMode] + '/' + store.sdict.id,
+    WordPracticeModeUrlMap[editingWordPracticeMode] + '-v2/' + store.sdict.id,
     {},
     {
       ...practiceData,

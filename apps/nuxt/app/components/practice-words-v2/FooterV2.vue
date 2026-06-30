@@ -3,6 +3,7 @@ import { usePracticeStore } from '@typewords/core/stores/practice.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import type { PracticeData } from '@typewords/core/types/types.ts'
 import { ShortcutKey, WordPracticeMode, WordPracticeStage } from '@typewords/core/types/enum.ts'
+import { getActiveRegistry } from '~/composables/practice-words/practice-phase-registry.ts'
 import { BaseIcon, Tooltip } from '@typewords/base'
 import SettingDialog from '@typewords/core/components/setting/SettingDialog.vue'
 import VolumeSettingMiniDialog from '@typewords/core/components/word/VolumeSettingMiniDialog.vue'
@@ -43,8 +44,10 @@ function format(val: number, suffix: string = '', check: number = -1) {
 }
 
 const status = $computed(() => {
-  if (settingStore.wordPracticeMode === WordPracticeMode.Free) return $t('free_practice')
   if (practiceData.isTypingWrongWord) return $t('review_wrong_words')
+  // 单阶段流程（如 Free、Shuffle）显示 flow 名；多阶段流程显示当前阶段名
+  const registry = getActiveRegistry()
+  if (registry.stageSequence.length === 1) return registry.config.label
   return statStore.getStageName
 })
 
@@ -55,7 +58,7 @@ const stages = $computed(() => {
     percentage: (practiceData.index / practiceData.words.length) * 100,
     active: true,
   }
-  if ([WordPracticeMode.Shuffle, WordPracticeMode.Free].includes(settingStore.wordPracticeMode)) {
+  if (getActiveRegistry().stageSequence.length === 1) {
     return [DEFAULT_BAR]
   } else {
     // 阶段映射：将 WordPracticeStage 映射到 stageIndex 和 childIndex
@@ -255,7 +258,7 @@ const stages = $computed(() => {
           <VolumeSettingMiniDialog />
 
           <BaseIcon
-            v-if="settingStore.wordPracticeMode !== WordPracticeMode.Free"
+            v-if="getActiveRegistry().stageSequence.length > 1"
             @click="emit('skipStep')"
             :title="`${$t('skip_to_next_stage')}:${WordPracticeStageNameMap[statStore.nextStage]}(${settingStore.shortcutKeyMap[ShortcutKey.NextStep]})`"
           >
