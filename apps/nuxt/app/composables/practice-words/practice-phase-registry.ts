@@ -78,7 +78,8 @@ export function buildSessionContext(
  *
  * 优先级：
  * 1. 错词复习中 → 由当前 stage 的主相位派生（buildWrongWordReviewFromParent）
- * 2. 跟写 7 词一组内的 Spell 子相位 → spellInGroup
+ * 2. 跟写组内的 Spell 子相位 → spellInGroup
+ *    （判断依据：当前 stage 对应的主相位是 wordLoop 类型，且 practiceType 是 Spell）
  * 3. 按 statStore.stage 查 phasesByStage
  * 4. 兜底 firstPhase
  *
@@ -92,12 +93,13 @@ export function resolvePhase(ctx: SessionContext): PracticePhaseDefinition {
     return buildWrongWordReviewFromParent(parent)
   }
 
-  if (
-    registry.spellInGroup &&
-    ctx.stage === WordPracticeStage.FollowWriteNewWord &&
-    ctx.practiceType === WordPracticeType.Spell
-  ) {
-    return registry.spellInGroup
+  // 不硬编码 stage 名：只要当前 stage 对应的主相位是 wordLoop 类型，
+  // 且 practiceType 切换到了 Spell，就进入 spellInGroup 子相位。
+  if (registry.spellInGroup && ctx.practiceType === WordPracticeType.Spell) {
+    const currentPhase = registry.phasesByStage.get(ctx.stage)
+    if (currentPhase?.wordAdvance.type === 'wordLoop') {
+      return registry.spellInGroup
+    }
   }
 
   const phase = registry.phasesByStage.get(ctx.stage)

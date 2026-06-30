@@ -7,7 +7,7 @@
 import type { PracticeData, TaskWords, Word } from '@typewords/core/types/types.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { usePracticeStore } from '@typewords/core/stores/practice.ts'
-import { WordPracticeStage, WordPracticeType } from '@typewords/core/types/enum.ts'
+import { WordPracticeType } from '@typewords/core/types/enum.ts'
 import { emitter, EventKey } from '@typewords/core/utils/eventBus.ts'
 import { cloneDeep, shuffle } from '@typewords/core/utils'
 import { getFlowIdForMode } from './builtin-flows.ts'
@@ -190,14 +190,15 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
 
   /**
    * 是否应在「列表最后一个词」时切入 Spell 子相位（跟写组内拼写），而非进入下一阶段。
-   * 对应 v1 next() 里 FollowWriteNewWord + !Spell + !ignoreLoop 分支。
+   * 判断条件：
+   *  1. 当前 phase 是 wordLoop 类型（不硬编码 stage 名）
+   *  2. 当前 practiceType 不是 Spell（避免 Spell 结束后重入）
+   *  3. 未被 ignoreLoop（skipStep 跳阶段时传 true）
    */
   function shouldEnterSpellSubPhase(phase: PracticePhaseDefinition, ignoreLoop: boolean): boolean {
     if (ignoreLoop) return false
     if (settingStore.wordPracticeType === WordPracticeType.Spell) return false
-    if (phase.wordAdvance.type !== 'wordLoop') return false
-    const data = deps.getPracticeData()
-    return statStore.stage === WordPracticeStage.FollowWriteNewWord || data.isTypingWrongWord
+    return phase.wordAdvance.type === 'wordLoop'
   }
 
   /**

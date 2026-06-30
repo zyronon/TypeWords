@@ -157,7 +157,8 @@ export const PHASE_TEMPLATE_META: Record<PhaseTemplateId, PhaseTemplateMeta> = {
     stage: WordPracticeStage.Shuffle,
     practiceType: WordPracticeType.Dictation,
     display: DISPLAY_DICTATION,
-    practiceWordsFrom: 'current',
+    // Shuffle 模式洗牌复习的是旧词（taskReview），与 System/Review 等 taskReview 阶段一致
+    practiceWordsFrom: 'taskReview',
   },
   freePractice: {
     stage: WordPracticeStage.FollowWriteNewWord,

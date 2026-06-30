@@ -2,27 +2,29 @@
  * 练习页「冷启动」：根据 flow 决定初始 stage、词表、统计字段。
  *
  * 替代 v1 initData 里对 WordPracticeModeStageMap 的大段 if-else。
+ * 不再按 WordPracticeMode 分支——所有逻辑均从 flow.phases 配置推导。
  */
 import type { TaskWords } from '@typewords/core/types/types.ts'
-import { WordPracticeMode, WordPracticeType } from '@typewords/core/types/enum.ts'
+import { WordPracticeMode } from '@typewords/core/types/enum.ts'
 import { getFlowIdForMode } from './builtin-flows.ts'
 import { resolveBlockStage, resolveBlockWordsFrom } from './phase-templates.ts'
 import { getActiveRegistry, loadPracticeFlow } from './practice-phase-registry.ts'
 import type { FlowStartResult, PracticeFlowConfig } from './registry-types.ts'
 
 /**
- * 当「今天没有新词、只有复习词」时，应从 flow 里哪个 stage 开始。
- * 规则：找第一个 practiceWordsFrom === taskReview 的块；找不到则用第一块。
- * （例如 System → IdentifyReview，Free → FollowWriteNewWord）
+ * 内部：找 flow 里第一个词来源为 `taskReview` 的阶段块。
+ * 用于「今天没有新词、只有复习词」时跳到合适的起点。
+ * 找不到则返回第一块（保证总有结果）。
  */
-function findReviewOnlyStartStage(config: PracticeFlowConfig) {
+function findFirstReviewPhase(config: PracticeFlowConfig) {
+  const registry = getActiveRegistry()
   for (const block of config.phases) {
-    const wordsFrom = resolveBlockWordsFrom(block)
-    if (wordsFrom === 'taskReview') {
-      return resolveBlockStage(block)
+    if (resolveBlockWordsFrom(block) === 'taskReview') {
+      const stage = resolveBlockStage(block)
+      return registry.phasesByStage.get(stage) ?? registry.firstPhase
     }
   }
-  return resolveBlockStage(config.phases[0])
+  return registry.firstPhase
 }
 
 /** 内部：把 wordsFrom 枚举映射到 taskWords 里的具体数组 */
@@ -43,6 +45,11 @@ function resolveWordsForSource(
 /**
  * 练习开始前调用：加载 flow 并算出初始 stage / words / 计数。
  *
+ * 逻辑（不再按 mode 分流，完全由 flow.phases 配置驱动）：
+ * 1. flow 第一个 phase 词来源有新词 → 从 firstPhase 开始，用新词
+ * 2. flow 第一个 phase 词来源有词但实际为空（如只有复习词）→ 找第一个 taskReview phase
+ * 3. 任意词来源都为空 → 抛 NO_WORDS
+ *
  * @throws 'NO_WORDS' 无词可练时，页面应 toast 并跳回词书列表
  *
  * 调用方：practice-words-v2/[id].vue 的 initData（非缓存恢复分支）
@@ -56,56 +63,36 @@ export function resolveFlowStart(
   const registry = getActiveRegistry()
   const config = registry.config
 
-  if (config.mode === WordPracticeMode.Shuffle) {
-    if (!taskWords.review.length) throw new Error('NO_WORDS')
+  const total = taskWords.new.length + taskWords.review.length
+  if (total === 0) throw new Error('NO_WORDS')
+
+  // 尝试用第一个阶段块的词来源取词
+  const firstBlock = config.phases[0]
+  const firstWordsFrom = resolveBlockWordsFrom(firstBlock)
+  const firstWords = resolveWordsForSource(firstWordsFrom, taskWords)
+
+  // 第一阶段有词 → 正常从 firstPhase 开始
+  if (firstWords.length > 0) {
     return {
       stage: registry.firstPhase.key.stage,
-      practiceType: WordPracticeType.Dictation,
-      words: taskWords.review,
-      total: taskWords.review.length,
-      newWordNumber: 0,
-      reviewWordNumber: 0,
-    }
-  }
-
-  if (config.mode === WordPracticeMode.Review) {
-    if (!taskWords.review.length) throw new Error('NO_WORDS')
-    const reviewPhase = registry.phasesByStage.get(findReviewOnlyStartStage(config)) ?? registry.firstPhase
-    return {
-      stage: reviewPhase.key.stage,
-      practiceType: reviewPhase.key.practiceType,
-      words: taskWords.review,
-      total: taskWords.review.length,
-      newWordNumber: 0,
-      reviewWordNumber: taskWords.review.length,
-    }
-  }
-
-  if (taskWords.new.length === 0) {
-    if (!taskWords.review.length) {
-      throw new Error('NO_WORDS')
-    }
-    const stage = findReviewOnlyStartStage(config)
-    const phase = registry.phasesByStage.get(stage) ?? registry.firstPhase
-    return {
-      stage: phase.key.stage,
-      practiceType: phase.key.practiceType,
-      words: taskWords.review,
-      total: taskWords.review.length + taskWords.new.length,
+      practiceType: registry.firstPhase.key.practiceType,
+      words: firstWords,
+      total,
       newWordNumber: taskWords.new.length,
       reviewWordNumber: taskWords.review.length,
     }
   }
 
-  const firstBlock = config.phases[0]
-  const wordsFrom = resolveBlockWordsFrom(firstBlock)
-  const phase = registry.firstPhase
+  // 第一阶段无词（如 System 模式今天只有复习词，跳过新词阶段）→ 找第一个有词的 taskReview 阶段
+  const reviewPhase = findFirstReviewPhase(config)
+  const reviewWords = taskWords.review
+  if (!reviewWords.length) throw new Error('NO_WORDS')
 
   return {
-    stage: phase.key.stage,
-    practiceType: phase.key.practiceType,
-    words: resolveWordsForSource(wordsFrom, taskWords),
-    total: taskWords.review.length + taskWords.new.length,
+    stage: reviewPhase.key.stage,
+    practiceType: reviewPhase.key.practiceType,
+    words: reviewWords,
+    total,
     newWordNumber: taskWords.new.length,
     reviewWordNumber: taskWords.review.length,
   }
