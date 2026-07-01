@@ -2,15 +2,16 @@
 import { usePracticeStore } from '@typewords/core/stores/practice.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import type { PracticeData } from '@typewords/core/types/types.ts'
-import { ShortcutKey, WordPracticeMode, WordPracticeStage } from '@typewords/core/types/enum.ts'
+import { ShortcutKey } from '@typewords/core/types/enum.ts'
 import { getActiveRegistry } from '~/composables/practice-words/practice-phase-registry.ts'
+import { activeCursor } from '~/composables/practice-words/usePracticeWordNavigator.ts'
 import { BaseIcon, Tooltip } from '@typewords/base'
 import SettingDialog from '@typewords/core/components/setting/SettingDialog.vue'
 import VolumeSettingMiniDialog from '@typewords/core/components/word/VolumeSettingMiniDialog.vue'
 import StageProgress from '@typewords/core/components/StageProgress.vue'
-import { WordPracticeModeNameMap, WordPracticeStageNameMap } from '@typewords/core/config/env.ts'
 import { useI18n } from 'vue-i18n'
 import { useInjectedDisplayActions, useInjectedDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
+import { computed } from 'vue'
 
 const statStore = usePracticeStore()
 const settingStore = useSettingStore()
@@ -43,157 +44,89 @@ function format(val: number, suffix: string = '', check: number = -1) {
   return val === check ? '-' : val + suffix
 }
 
-const status = $computed(() => {
+/**
+ * 当前阶段状态名。
+ * 单节点单步骤流程（Free/Shuffle）显示 flow 名；多节点流程显示当前 node 名。
+ */
+const status = computed(() => {
   if (practiceData.isTypingWrongWord) return $t('review_wrong_words')
-  // 单阶段流程（如 Free、Shuffle）显示 flow 名；多阶段流程显示当前阶段名
   const registry = getActiveRegistry()
-  if (registry.stageSequence.length === 1) return registry.config.label
-  return statStore.getStageName
+  const nodes = registry.config.nodes
+  if (nodes.length === 1 && nodes[0].steps.length === 1) return registry.config.label
+  const cursor = activeCursor.value
+  const currentNode = nodes[cursor.nodeIndex]
+  return currentNode?.label ?? registry.config.label
 })
 
-const stages = $computed(() => {
-  let DEFAULT_BAR = {
-    name: '',
-    ratio: 100,
-    percentage: (practiceData.index / practiceData.words.length) * 100,
-    active: true,
+/**
+ * 进度条数据 — 完全从 registry.nodes + cursor 推导，无任何 WordPracticeMode 硬编码。
+ *
+ * 格式：
+ * - 单 node 单 step → 单进度条（Free/Shuffle 适用）
+ * - 多 node → 多组进度条，每组含子步骤
+ *
+ * 设计：
+ * - 已过去的 node 百分比 = 100
+ * - 当前 node 比例 = 70（活跃）；已过 node = 30；未来 node = 30
+ * - 当前 node 的子步骤也做进度条
+ */
+const stages = computed(() => {
+  const registry = getActiveRegistry()
+  const nodes = registry.config.nodes
+  const cursor = activeCursor.value
+  const { nodeIndex, stepIndex } = cursor
+  const currentProgress = practiceData.words.length
+    ? (practiceData.index / practiceData.words.length) * 100
+    : 0
+
+  // 单 node 单 step → 单进度条
+  if (nodes.length === 1 && nodes[0].steps.length === 1) {
+    return [{
+      name: '',
+      ratio: 100,
+      percentage: currentProgress,
+      active: true,
+    }]
   }
-  if (getActiveRegistry().stageSequence.length === 1) {
-    return [DEFAULT_BAR]
-  } else {
-    // 阶段映射：将 WordPracticeStage 映射到 stageIndex 和 childIndex
-    const stageMap: Partial<Record<WordPracticeStage, { stageIndex: number; childIndex: number }>> = {
-      [WordPracticeStage.FollowWriteNewWord]: { stageIndex: 0, childIndex: 0 },
-      [WordPracticeStage.IdentifyNewWord]: { stageIndex: 0, childIndex: 0 },
-      [WordPracticeStage.ListenNewWord]: { stageIndex: 0, childIndex: 1 },
-      [WordPracticeStage.DictationNewWord]: { stageIndex: 0, childIndex: 2 },
-      [WordPracticeStage.IdentifyReview]: { stageIndex: 1, childIndex: 0 },
-      [WordPracticeStage.ListenReview]: { stageIndex: 1, childIndex: 1 },
-      [WordPracticeStage.DictationReview]: { stageIndex: 1, childIndex: 2 },
+
+  // 多 node 进度条
+  return nodes.map((node, ni) => {
+    const isCurrentNode = ni === nodeIndex
+    const isCompleted = ni < nodeIndex
+    const isFuture = ni > nodeIndex
+
+    const nodeRatio = isCurrentNode ? 70 : isCompleted ? 30 : 30
+
+    // 子步骤（仅当前 node 展开）
+    const children = isCurrentNode && node.steps.length > 1
+      ? node.steps.map((step, si) => {
+          const isCurrentStep = si === stepIndex
+          const isCompletedStep = si < stepIndex
+          return {
+            name: step.label ?? step.templateId,
+            ratio: Math.floor(100 / node.steps.length),
+            percentage: isCompletedStep ? 100 : isCurrentStep ? currentProgress : 0,
+            active: isCurrentStep,
+          }
+        })
+      : undefined
+
+    return {
+      name: node.label,
+      ratio: nodeRatio,
+      percentage: isCompleted ? 100 : isCurrentNode ? currentProgress : 0,
+      active: isCurrentNode,
+      children,
     }
+  })
+})
 
-    // console.log('statStore.stage',statStore.stage)
-    // 获取当前阶段的配置
-    const currentStageConfig = stageMap[statStore.stage]
-    if (!currentStageConfig) {
-      return [DEFAULT_BAR]
-    }
-    const { stageIndex, childIndex } = currentStageConfig
-    const currentProgress = (practiceData.index / practiceData.words.length) * 100
-
-    if (
-      [WordPracticeMode.IdentifyOnly, WordPracticeMode.DictationOnly, WordPracticeMode.ListenOnly].includes(
-        settingStore.wordPracticeMode
-      )
-    ) {
-      const stages = [
-        {
-          name: `新词：${WordPracticeModeNameMap[settingStore.wordPracticeMode]}`,
-          ratio: 49,
-          percentage: 0,
-          active: false,
-        },
-        {
-          name: `复习：${WordPracticeModeNameMap[settingStore.wordPracticeMode]}`,
-          ratio: 49,
-          percentage: 0,
-          active: false,
-        },
-      ]
-
-      // 设置已完成阶段的百分比和比例
-      for (let i = 0; i < stageIndex; i++) {
-        stages[i].percentage = 100
-        stages[i].ratio = 49
-      }
-
-      // 设置当前激活的阶段
-      stages[stageIndex].active = true
-      stages[stageIndex].percentage = (practiceData.index / practiceData.words.length) * 100
-      return stages
-    } else {
-      // 阶段配置：定义每个阶段组的基础信息
-      const stageConfigs = [
-        {
-          name: '新词',
-          ratio: 70,
-          children: [
-            { name: WordPracticeStageNameMap[WordPracticeStage.FollowWriteNewWord] },
-            { name: WordPracticeStageNameMap[WordPracticeStage.ListenNewWord] },
-            { name: WordPracticeStageNameMap[WordPracticeStage.DictationNewWord] },
-          ],
-        },
-        {
-          name: '复习',
-          ratio: 30,
-          children: [
-            { name: WordPracticeStageNameMap[WordPracticeStage.IdentifyReview] },
-            { name: WordPracticeStageNameMap[WordPracticeStage.ListenReview] },
-            { name: WordPracticeStageNameMap[WordPracticeStage.DictationReview] },
-          ],
-        },
-      ]
-
-      // 初始化 stages
-      const stages = stageConfigs.map(config => ({
-        name: config.name,
-        percentage: 0,
-        ratio: config.ratio,
-        active: false,
-        children: config.children.map(child => ({
-          name: child.name,
-          percentage: 0,
-          ratio: 33,
-          active: false,
-        })),
-      }))
-
-      // 设置已完成阶段的百分比和比例
-      for (let i = 0; i < stageIndex; i++) {
-        stages[i].percentage = 100
-        stages[i].ratio = 30
-      }
-
-      // 设置当前激活的阶段
-      stages[stageIndex].ratio = 70
-      stages[stageIndex].active = true
-
-      // 根据类型设置子阶段的进度
-      const currentStageChildren = stages[stageIndex].children
-
-      if (childIndex === 0) {
-        // 跟写/自测：只激活第一个子阶段
-        currentStageChildren[0].active = true
-        currentStageChildren[0].percentage = currentProgress
-      } else if (childIndex === 1) {
-        // 听写：第一个完成，第三个未开始，第二个进行中
-        currentStageChildren[0].active = false
-        currentStageChildren[1].active = true
-        currentStageChildren[2].active = false
-        currentStageChildren[0].percentage = 100
-        currentStageChildren[1].percentage = currentProgress
-        currentStageChildren[2].percentage = 0
-      } else if (childIndex === 2) {
-        // 默写：前两个完成，第三个进行中
-        currentStageChildren[0].active = false
-        currentStageChildren[1].active = false
-        currentStageChildren[2].active = true
-        currentStageChildren[0].percentage = 100
-        currentStageChildren[1].percentage = 100
-        currentStageChildren[2].percentage = currentProgress
-      }
-
-      if (settingStore.wordPracticeMode === WordPracticeMode.System) {
-        return stages
-      }
-      if (settingStore.wordPracticeMode === WordPracticeMode.Review) {
-        stages.shift()
-        if (stageIndex === 1) stages[0].ratio = 100
-        return stages
-      }
-    }
-  }
-  return [DEFAULT_BAR]
+/** 是否显示「跳过当前阶段」按钮（多 step 流程才显示） */
+const showSkipStep = computed(() => {
+  const registry = getActiveRegistry()
+  const nodes = registry.config.nodes
+  // 只要有多于 1 个 node，或当前 node 有多于 1 个 step，就显示跳阶段
+  return nodes.length > 1 || (nodes[0]?.steps.length ?? 0) > 1
 })
 </script>
 
@@ -230,7 +163,6 @@ const stages = $computed(() => {
                 </template>
                 <template v-else>
                   {{ Math.floor(statStore.spend / 1000 / 60) }}{{ $t('minutes') }}
-                  <!--                  {{statStore.spend /1000}}-->
                 </template>
               </div>
             </Tooltip>
@@ -258,9 +190,9 @@ const stages = $computed(() => {
           <VolumeSettingMiniDialog />
 
           <BaseIcon
-            v-if="getActiveRegistry().stageSequence.length > 1"
+            v-if="showSkipStep"
             @click="emit('skipStep')"
-            :title="`${$t('skip_to_next_stage')}:${WordPracticeStageNameMap[statStore.nextStage]}(${settingStore.shortcutKeyMap[ShortcutKey.NextStep]})`"
+            :title="`${$t('skip_to_next_stage')}(${settingStore.shortcutKeyMap[ShortcutKey.NextStep]})`"
           >
             <IconFluentArrowRight16Regular />
           </BaseIcon>

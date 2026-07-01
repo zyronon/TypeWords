@@ -8,7 +8,8 @@
 
 - [x] Phase 1：复制骨架 + 独立缓存 `PracticeSaveWordV2`
 - [x] Phase 2：Registry（可序列化）+ Navigator + sessionSnapshot + displayPolicy + keyboard
-- [ ] Phase 2.5：node/steps 三层模型 + Cursor 导航（当前任务）
+- [x] Phase 2 Architecture Upgrade：node/steps 三层模型 + Cursor 导航
+- [ ] Phase 2.5：用户自定义流程 UI（档位 A，当前任务）
 - [ ] Phase 3：用户自定义练习流程 UI（档位 A：阶段块拖拽编排）
 - [ ] Phase 4：v2 组件拆分
 - [ ] Phase 5–6：例句练习线（可选）
@@ -1272,25 +1273,22 @@ sequenceDiagram
 - Footer 已消除 Free 模式硬编码，改为 `stageSequence.length === 1` 推导
 - 所有模式显隐统一走 `sessionDisplay + displayOverride`
 
-### Phase 2 Architecture Upgrade ← 下一步
+### Phase 2 Architecture Upgrade ✅ 完成
 
-**当前文件状态：**
+- `phase-templates.ts` → 4 个纯动作模板（`followWrite` / `listen` / `dictation` / `identify`），删除 New/Review 命名模板
+- `builtin-flows.ts` → `nodes[{ source, steps[] }]` 树状结构，7 种内置模式全部迁移
+- `flow-compiler.ts` → 适配 `nodes[]`，编译为 `phasesByCursor` + `phasesByStage`（兼容层）+ `cursorSteps`
+- `registry-types.ts` → 新增 `PracticeStepTemplate` / `PracticeFlowNode` / `PracticeFlowStep` / `PracticeFlowCursor` 类型
+- `practice-phase-registry.ts` → 新增 `resolvePhaseByCtxCursor(cursor)` / `advanceCursor()` / `getInitialCursor()`
+- `usePracticeWordNavigator.ts` → cursor 驱动推进（`activeCursor` 模块级 ref），`statStore.stage` 仍同步写入
+- `usePracticeWordInit.ts` → `resolveFlowStart` 返回 `cursor` 字段，按 node.source 定位起始词表
+- `FooterV2.vue` → 完全从 `registry.nodes + activeCursor` 推导进度条，无任何 `WordPracticeMode` / `stageMap` 硬编码
+- `sessionSnapshot` → 新增 `cursor` 字段，刷新后精确恢复
+- 删除死代码 `usePracticeWordTimer.ts`
 
-- `phase-templates.ts`：仍有 9 个 New/Review 命名模板，需精简为 4 个纯动作模板
-- `builtin-flows.ts`：仍是平铺 `phases[]` 数组，需改为 `nodes[]` 树状结构
-- `FooterV2.vue`：仍有 `stageMap` 硬编码和 `WordPracticeMode` 判断（进度条部分），需改为 cursor 驱动
-- `usePracticeWordNavigator.ts`：仍基于 `statStore.stage` + `resolvePhase()` 推进，需改为 cursor 模型
-- `usePracticeWordTimer.ts`：死代码，未被 v2 页面引用
+### Phase 2.5 ← 下一步
 
-**已知问题（已在本次对话中修复）：**
-
-- [x] 入口统一到 v2（`onShufflePracticeSettingOk` 路由修正）
-- [x] Free 显隐统一处理（删除 settingStore 依赖）
-- [x] `displayOverride` 仅 phase 变化时清空
-- [x] `debugger` 语句删除
-- [x] `onUnmounted` 缓存判断修正（await promise）
-- [x] Footer 硬编码 Free 去除
-- [x] 注释修正（"按 free/结构化分支"已删除）
+详见「三-C」。核心：Phase 3 用户自定义流程 UI（档位 A：阶段块拖拽编排）。
 
 ## 六、明确不建议
 

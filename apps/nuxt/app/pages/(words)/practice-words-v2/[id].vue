@@ -8,12 +8,14 @@ import type { Dict, PracticeData, TaskWords, Word } from '@typewords/core/types/
 import { usePracticeWordKeyboard } from '~/composables/practice-words/usePracticeWordKeyboard.ts'
 import { usePracticeDisplayPolicy, displayOverride } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
 import {
+  activeCursor,
   buildSessionSnapshot,
   createPracticeWordNavigator,
+  resetCursor,
   restoreSessionFromLegacy,
   restoreSessionSnapshot,
 } from '~/composables/practice-words/usePracticeWordNavigator.ts'
-import { loadPracticeFlow, getActiveStageSequence } from '~/composables/practice-words/practice-phase-registry.ts'
+import { loadPracticeFlow } from '~/composables/practice-words/practice-phase-registry.ts'
 import { getFlowIdForMode } from '~/composables/practice-words/builtin-flows.ts'
 import { resolveFlowStart } from '~/composables/practice-words/usePracticeWordInit.ts'
 import useTheme from '@typewords/core/hooks/theme.ts'
@@ -344,14 +346,14 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
     //不能直接赋值，会导致 inject 的数据为默认值
     taskWords = Object.assign(taskWords, initVal)
     try {
-      // debugger
       const start = resolveFlowStart(settingStore.wordPracticeMode, taskWords)
       settingStore.wordPracticeType = start.practiceType
       data = getDefaultPracticeData(data, { words: start.words })
-      statStore.stage = start.stage
-      statStore.total = start.total
+    statStore.total = start.total
       statStore.newWordNumber = start.newWordNumber
       statStore.reviewWordNumber = start.reviewWordNumber
+      // 重置 cursor 到 flow 起始位置
+      resetCursor()
     } catch {
       Toast.warning('没有可学习的单词！')
       router.push('/words')
@@ -532,13 +534,14 @@ function setWordCard(rating: number, wordStr = word.word, times?: number) {
 }
 
 async function savePracticeDataIns(where?) {
-  const firstStage = getActiveStageSequence()[0]
+  // cursor 在初始位置且 index=0 且还是跟写 → 尚未开始练习
   if (
     data.index === 0 &&
-    statStore.stage === firstStage &&
-    settingStore.wordPracticeType === WordPracticeType.FollowWrite
+    activeCursor.value.nodeIndex === 0 &&
+    activeCursor.value.stepIndex === 0 &&
+    !activeCursor.value.spellSubStep &&
+    !activeCursor.value.wrongRetry
   ) {
-    //未开始练习
     return
   }
   if (isComplete) return

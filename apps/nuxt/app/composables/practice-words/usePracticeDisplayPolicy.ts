@@ -67,9 +67,12 @@ function toEffective(
  * 阶段变化时调用（Navigator.syncPhase 内）：写入 phase.display。
  * 仅当 phase key 与上次不同时才清空 displayOverride，避免同阶段内每词推进都重置用户覆盖。
  */
-export function applyPhaseDefinition(phase: PracticePhaseDefinition) {
+export function applyPhaseDefinition(phase: PracticePhaseDefinition, cursorKey?: string) {
   sessionDisplay.value = { ...phase.display }
-  const key = `${phase.key.mode}_${phase.key.stage}_${phase.key.practiceType}_${phase.key.isTypingWrongWord ?? false}`
+  // 用 cursorKey + practiceType 标识唯一相位（跨阶段切换时清空用户 override）
+  const key = cursorKey
+    ? `${cursorKey}_${phase.practiceType}`
+    : phase.practiceType
   if (key !== lastPhaseKey) {
     displayOverride.value = null
     lastPhaseKey = key

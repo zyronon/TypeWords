@@ -3,19 +3,12 @@ import type { PracticeState } from '@typewords/core/stores/practice.ts'
 import {
   IdentifyMethod,
   WordPracticeMode,
-  WordPracticeStage,
   WordPracticeType,
 } from '@typewords/core/types/enum.ts'
 
-export interface PracticePhaseKey {
-  mode: WordPracticeMode
-  stage: WordPracticeStage
-  practiceType: WordPracticeType
-  isTypingWrongWord?: boolean
-}
+// ─── 显隐策略 ──────────────────────────────────────────────────────────────────
 
 export interface PracticeDisplayPolicy {
-  /** 显隐数据源：v2 统一走 sessionDisplay + override，不再读 settingStore */
   source: 'phase'
   wordMask: 'none' | 'underscore' | 'hidden'
   showPhonetic: boolean | 'shadow'
@@ -34,54 +27,6 @@ export type PracticeDisplayOverride = Partial<
   Pick<PracticeDisplayPolicy, 'wordMask' | 'showWordTranslation' | 'showSentences' | 'showSentenceTranslation'>
 >
 
-export interface WordAdvanceRule {
-  type: 'increment' | 'wordLoop' | 'identify-complete'
-  groupSize?: number
-}
-
-export interface StageAdvanceRule {
-  nextStage?: WordPracticeStage
-  complete?: boolean
-  wordsFrom: 'taskNew' | 'taskReview' | 'wrongWords' | 'current'
-  shuffle?: boolean
-  toast?: string
-  forcePracticeType?: WordPracticeType
-  forceWrongWordMode?: boolean
-}
-
-export interface PracticePhaseDefinition {
-  key: PracticePhaseKey
-  display: PracticeDisplayPolicy
-  wordAdvance: WordAdvanceRule
-  stageAdvance: StageAdvanceRule
-  /**
-   * 本阶段列表练完后：若仍有错词，必须先练到 0 才能进入下一阶段。
-   * 与 wordLoop 类似，由流程块配置；错词复习中的显隐/推进继承本阶段主相位。
-   */
-  requireWrongWordClear: boolean
-}
-
-export interface SessionContext {
-  mode: WordPracticeMode
-  stage: WordPracticeStage
-  practiceType: WordPracticeType
-  identifyMethod: IdentifyMethod
-  practiceData: PracticeData
-  taskWords: TaskWords
-}
-
-export interface PracticeSessionSnapshot {
-  wordPracticeType: WordPracticeType
-  identifyMethod: IdentifyMethod
-  isTypingWrongWord: boolean
-  wordPracticeMode: WordPracticeMode
-  flowId: string
-  flowVersion?: number
-  customFlowHash?: string
-  sessionDisplay?: PracticeDisplayPolicy
-  displayOverride?: PracticeDisplayOverride | null
-}
-
 export interface EffectiveDisplay {
   showSentences: boolean
   showSentenceTranslation: boolean
@@ -94,76 +39,149 @@ export interface EffectiveDisplay {
   translate: boolean
   showPhoneticShadow: boolean
   isDictationInput: boolean
-  /** 显隐数据源：v2 统一走 sessionDisplay + override，不再读 settingStore */
   source: 'phase'
 }
 
-/** 阶段块模板 id — 可序列化，供 builtin-flows 与用户 JSON 引用 */
-export type PhaseTemplateId =
-  | 'followWriteNew'
-  | 'listenNew'
-  | 'dictationNew'
-  | 'identifyNew'
-  | 'identifyReview'
-  | 'listenReview'
-  | 'dictationReview'
-  | 'shuffle'
-  | 'freePractice'
+// ─── 三层模型 ──────────────────────────────────────────────────────────────────
 
-/** 流程中的一个阶段块（可序列化配置） */
-export interface PracticeFlowPhaseBlock {
-  templateId: PhaseTemplateId
-  /** 覆盖模板默认 stage（一般不需要） */
-  stage?: WordPracticeStage
-  /** 本阶段练习词表来源；默认由模板决定 */
-  wordsFrom?: 'taskNew' | 'taskReview' | 'current'
-  /** 阶段结束时加载下一阶段的词表来源；默认取下一阶段的 wordsFrom */
-  advanceWordsFrom?: 'taskNew' | 'taskReview' | 'wrongWords' | 'current'
-  /** 进入下一阶段时是否 shuffle */
-  shuffle?: boolean
-  /** 跟写阶段：7 词一组 + Spell 子相位 */
-  wordLoop?: boolean
-  groupSize?: number
-  /**
-   * 本阶段结束时：若还有错词，必须先练到 0 再进下一阶段（与 v1 每阶段末尾检查错词一致）。
-   * 默认 true；设为 false 则本阶段结束直接 stageAdvance，错词可带到后续阶段。
-   */
-  requireWrongWordClear?: boolean
-  toast?: string
+/** Step Template 的 id — 只描述"怎么练"，不关心词源 */
+export type PracticeStepTemplateId =
+  | 'followWrite'
+  | 'listen'
+  | 'dictation'
+  | 'identify'
+
+/** Step Template — 纯动作描述（展示策略 + 练习类型） */
+export interface PracticeStepTemplate {
+  id: PracticeStepTemplateId
+  label: string
+  practiceType: WordPracticeType
+  display: PracticeDisplayPolicy
 }
 
-/** 完整练习流程配置（可 JSON 序列化，Phase 2.5 用户编排存此结构） */
+/** 词表来源 */
+export type PracticeWordsSource = 'taskNew' | 'taskReview' | 'current' | 'wrongWords'
+
+/** 词内推进配置 */
+export type PracticeWordAdvanceConfig =
+  | { type: 'increment' }
+  | { type: 'wordLoop'; groupSize?: number }
+
+/** Flow 中的一个 Step（可序列化） */
+export interface PracticeFlowStep {
+  templateId: PracticeStepTemplateId
+  label?: string
+  displayOverride?: Partial<PracticeDisplayPolicy>
+  wordAdvance?: PracticeWordAdvanceConfig
+  requireWrongWordClear?: boolean
+  shuffleOnEnter?: boolean
+}
+
+/** Flow 中的一个 Node（一批词 + 多个步骤） */
+export interface PracticeFlowNode {
+  id: string
+  label: string
+  source: PracticeWordsSource
+  steps: PracticeFlowStep[]
+}
+
+/** 完整练习流程配置（可 JSON 序列化） */
 export interface PracticeFlowConfig {
   id: string
   version: number
   mode: WordPracticeMode
   label: string
-  phases: PracticeFlowPhaseBlock[]
+  nodes: PracticeFlowNode[]
 }
+
+// ─── Cursor 模型 ───────────────────────────────────────────────────────────────
+
+/** 练习流程 Cursor — 唯一定位当前位置的指针 */
+export interface PracticeFlowCursor {
+  nodeIndex: number
+  stepIndex: number
+  /** 跟写分组内的 Spell 子步骤 */
+  spellSubStep: boolean
+  /** 当前正在错词复习 */
+  wrongRetry: boolean
+}
+
+/** cursor 序列化 key，用于 phasesByCursor Map */
+export function cursorKey(nodeIndex: number, stepIndex: number): string {
+  return `${nodeIndex}:${stepIndex}`
+}
+
+// ─── 阶段定义（cursor-native，不含 stage 字段） ──────────────────────────────────
+
+export interface WordAdvanceRule {
+  type: 'increment' | 'wordLoop'
+  groupSize?: number
+}
+
+/** 词表练完后的推进规则（纯 cursor 语义，nextCursor 由 advanceCursor() 计算，无需存 nextStage） */
+export interface StepAdvanceRule {
+  /** 进入下一 step/node 时是否打乱词表 */
+  shuffle?: boolean
+  /** toast 提示文字 */
+  toast?: string
+  /** 最后一步 → 结束 */
+  complete?: boolean
+  /** 下一步词表来源（compiler 填入，Navigator 读取） */
+  nextSource: PracticeWordsSource
+}
+
+export interface PracticePhaseDefinition {
+  /** 练习类型（FollowWrite / Listen / Dictation / Identify / Spell） */
+  practiceType: WordPracticeType
+  display: PracticeDisplayPolicy
+  wordAdvance: WordAdvanceRule
+  stepAdvance: StepAdvanceRule
+  requireWrongWordClear: boolean
+}
+
+// ─── 运行时注册表 ────────────────────────────────────────────────────────────────
 
 export interface ActiveFlowRegistry {
   config: PracticeFlowConfig
-  phasesByStage: Map<WordPracticeStage, PracticePhaseDefinition>
-  /** 阶段顺序，供进度条、保存判断等使用 */
-  stageSequence: WordPracticeStage[]
+  /** cursor key → 已编译阶段定义 */
+  phasesByCursor: Map<string, PracticePhaseDefinition>
   /**
    * 跟写阶段「7 词一组」内的 Spell 子相位定义。
-   * 当 flow 含 wordLoop 块（如 followWriteNew）时由 compile 派生；
-   * 用户练完一组跟写、进入组内拼写时 resolvePhase 返回此对象（practiceType=Spell、DISPLAY_SPELL）。
-   * 无 wordLoop 的流程（如自由/听写单阶段）为 null。
+   * 含 wordLoop step 时由 compile 派生；无 wordLoop 时为 null。
    */
   spellInGroup: PracticePhaseDefinition | null
   firstPhase: PracticePhaseDefinition
+  initialCursor: PracticeFlowCursor
+  /** 所有静态 cursor 坐标（不含 spell/wrongRetry），供 Footer 进度条用 */
+  cursorSteps: Array<{ nodeIndex: number; stepIndex: number }>
 }
 
+// ─── 流程启动结果 ────────────────────────────────────────────────────────────────
+
 export interface FlowStartResult {
-  stage: WordPracticeStage
   practiceType: WordPracticeType
   words: Word[]
   total: number
   newWordNumber: number
   reviewWordNumber: number
+  cursor: PracticeFlowCursor
 }
+
+// ─── 持久化快照 ─────────────────────────────────────────────────────────────────
+
+export interface PracticeSessionSnapshot {
+  wordPracticeType: WordPracticeType
+  identifyMethod: IdentifyMethod
+  isTypingWrongWord: boolean
+  wordPracticeMode: WordPracticeMode
+  flowId: string
+  flowVersion?: number
+  cursor?: PracticeFlowCursor
+  sessionDisplay?: PracticeDisplayPolicy
+  displayOverride?: PracticeDisplayOverride | null
+}
+
+// ─── cache 类型（供 practice-word-cache-v2.ts 引用） ─────────────────────────────
 
 export type PracticeWordCacheV2WithSnapshot = {
   taskWords: TaskWords

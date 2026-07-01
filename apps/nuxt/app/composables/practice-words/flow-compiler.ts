@@ -1,90 +1,90 @@
 /**
  * 把「可序列化的流程配置」编译成「运行时注册表」。
  *
- * 输入：PracticeFlowConfig（builtin-flows 或用户 JSON）
- * 输出：ActiveFlowRegistry（phasesByStage、错词/Spell 特殊相位等）
+ * 输入：PracticeFlowConfig（nodes[] 树状结构）
+ * 输出：ActiveFlowRegistry（phasesByCursor、spellInGroup、cursorSteps）
  *
- * 这一层存在的意义：Navigator 只读编译结果，不读 JSON 原始字段。
+ * 完全 cursor-native：无 WordPracticeStage、无 phasesByStage、无 stageSequence。
  */
-import { WordPracticeMode, WordPracticeStage, WordPracticeType } from '@typewords/core/types/enum.ts'
-import {
-  buildSpellInGroupPhase,
-  GROUP_SIZE,
-  PHASE_TEMPLATE_META,
-  resolveBlockStage,
-  resolveBlockWordsFrom,
-} from './phase-templates.ts'
+import { WordPracticeType } from '@typewords/core/types/enum.ts'
+import { STEP_TEMPLATE_META, buildSpellInGroupPhase, GROUP_SIZE } from './phase-templates.ts'
 import type {
   ActiveFlowRegistry,
   PracticeFlowConfig,
-  PracticeFlowPhaseBlock,
+  PracticeFlowCursor,
+  PracticeFlowNode,
+  PracticeFlowStep,
   PracticePhaseDefinition,
+  PracticeWordsSource,
+  StepAdvanceRule,
 } from './registry-types.ts'
+import { cursorKey } from './registry-types.ts'
 
 /**
- * 内部：根据模板元数据 + 已算好的 advance 规则，拼出一条 PracticePhaseDefinition。
- * 【内部 helper，不导出】
+ * 计算 StepAdvanceRule：
+ * - 同 node 内还有下一 step → nextSource = 当前 node.source，shuffle 取下一 step.shuffleOnEnter
+ * - 跨 node → nextSource = 下一 node.source，shuffle 取下一 node 第一 step.shuffleOnEnter
+ * - 最后一步 → complete = true
  */
-function def(
-  mode: WordPracticeMode,
-  stage: WordPracticeStage,
-  practiceType: WordPracticeType,
-  block: PracticeFlowPhaseBlock,
-  wordAdvance: PracticePhaseDefinition['wordAdvance'],
-  stageAdvance: PracticePhaseDefinition['stageAdvance'],
-  requireWrongWordClear: boolean
-): PracticePhaseDefinition {
-  const meta = PHASE_TEMPLATE_META[block.templateId]
-  return {
-    key: { mode, stage, practiceType },
-    display: meta.display,
-    wordAdvance,
-    stageAdvance,
-    requireWrongWordClear,
-  }
-}
+function computeStepAdvance(
+  allNodes: PracticeFlowNode[],
+  nodeIndex: number,
+  stepIndex: number
+): StepAdvanceRule {
+  const currentNode = allNodes[nodeIndex]
+  const isLastStepInNode = stepIndex === currentNode.steps.length - 1
+  const isLastNode = nodeIndex === allNodes.length - 1
 
-/**
- * 把流程配置里的「一个阶段块」编译成完整阶段定义。
- *
- * - wordAdvance：是否 7 词 wordLoop，来自 block.wordLoop 或模板默认
- * - stageAdvance：链到下一块的 nextStage / wordsFrom / shuffle；最后一块 → complete
- *
- * 这是「可编排」的核心：改 builtin-flows 的 phases 数组即可改行为，不必改 Navigator。
- */
-function compilePhaseBlock(
-  mode: WordPracticeMode,
-  block: PracticeFlowPhaseBlock,
-  nextBlock: PracticeFlowPhaseBlock | undefined
-): PracticePhaseDefinition {
-  const meta = PHASE_TEMPLATE_META[block.templateId]
-  const stage = resolveBlockStage(block)
-  const useWordLoop = block.wordLoop ?? meta.wordLoop ?? false
-  const groupSize = block.groupSize ?? GROUP_SIZE
-  const requireWrongWordClear = block.requireWrongWordClear ?? meta.requireWrongWordClear ?? true
-
-  const wordAdvance = useWordLoop
-    ? { type: 'wordLoop' as const, groupSize }
-    : { type: 'increment' as const }
-
-  let stageAdvance: PracticePhaseDefinition['stageAdvance']
-
-  if (!nextBlock) {
-    stageAdvance = { wordsFrom: 'current', complete: true }
-  } else {
-    const nextStage = resolveBlockStage(nextBlock)
-    const advanceWordsFrom =
-      block.advanceWordsFrom ?? resolveBlockWordsFrom(nextBlock)
-    const shuffle = block.shuffle ?? meta.shuffleOnAdvance ?? false
-    stageAdvance = {
-      nextStage,
-      wordsFrom: advanceWordsFrom,
-      shuffle,
-      toast: block.toast ?? meta.advanceToast,
+  if (!isLastStepInNode) {
+    const nextStep = currentNode.steps[stepIndex + 1]
+    return {
+      nextSource: currentNode.source as PracticeWordsSource,
+      shuffle: nextStep.shuffleOnEnter ?? false,
     }
   }
 
-  return def(mode, stage, meta.practiceType, block, wordAdvance, stageAdvance, requireWrongWordClear)
+  if (!isLastNode) {
+    const nextNode = allNodes[nodeIndex + 1]
+    const nextFirstStep = nextNode.steps[0]
+    return {
+      nextSource: nextNode.source as PracticeWordsSource,
+      shuffle: nextFirstStep.shuffleOnEnter ?? false,
+    }
+  }
+
+  return {
+    nextSource: currentNode.source as PracticeWordsSource,
+    complete: true,
+  }
+}
+
+/** 编译单个 (nodeIndex, stepIndex) → PracticePhaseDefinition */
+function compileStep(
+  allNodes: PracticeFlowNode[],
+  nodeIndex: number,
+  stepIndex: number
+): PracticePhaseDefinition {
+  const node = allNodes[nodeIndex]
+  const step = node.steps[stepIndex]
+  const template = STEP_TEMPLATE_META[step.templateId]
+
+  const wordAdvanceCfg = step.wordAdvance
+  const wordAdvance: PracticePhaseDefinition['wordAdvance'] =
+    wordAdvanceCfg?.type === 'wordLoop'
+      ? { type: 'wordLoop', groupSize: wordAdvanceCfg.groupSize ?? GROUP_SIZE }
+      : { type: 'increment' }
+
+  const display = step.displayOverride
+    ? { ...template.display, ...step.displayOverride }
+    : template.display
+
+  return {
+    practiceType: template.practiceType,
+    display,
+    wordAdvance,
+    stepAdvance: computeStepAdvance(allNodes, nodeIndex, stepIndex),
+    requireWrongWordClear: step.requireWrongWordClear ?? true,
+  }
 }
 
 /**
@@ -92,27 +92,42 @@ function compilePhaseBlock(
  * loadPracticeFlow 最终调用的就是这个（经 buildRegistryFromConfig 包一层校验）。
  */
 export function compileFlowConfig(config: PracticeFlowConfig): ActiveFlowRegistry {
-  const phasesByStage = new Map<WordPracticeStage, PracticePhaseDefinition>()
-  const stageSequence: WordPracticeStage[] = []
-  const compiled: PracticePhaseDefinition[] = []
+  const phasesByCursor = new Map<string, PracticePhaseDefinition>()
+  const cursorSteps: Array<{ nodeIndex: number; stepIndex: number }> = []
 
-  for (let i = 0; i < config.phases.length; i++) {
-    const phase = compilePhaseBlock(config.mode, config.phases[i], config.phases[i + 1])
-    compiled.push(phase)
-    phasesByStage.set(phase.key.stage, phase)
-    stageSequence.push(phase.key.stage)
+  let firstPhase: PracticePhaseDefinition | undefined
+  let wordLoopPhase: PracticePhaseDefinition | undefined
+
+  for (let ni = 0; ni < config.nodes.length; ni++) {
+    const node = config.nodes[ni]
+    for (let si = 0; si < node.steps.length; si++) {
+      const phase = compileStep(config.nodes, ni, si)
+
+      phasesByCursor.set(cursorKey(ni, si), phase)
+      cursorSteps.push({ nodeIndex: ni, stepIndex: si })
+
+      if (!firstPhase) firstPhase = phase
+      if (phase.wordAdvance.type === 'wordLoop' && !wordLoopPhase) {
+        wordLoopPhase = phase
+      }
+    }
   }
 
-  const wordLoopPhase = compiled.find(p => p.wordAdvance.type === 'wordLoop') ?? compiled[0]
-  const spellInGroup = wordLoopPhase?.wordAdvance.type === 'wordLoop'
-    ? buildSpellInGroupPhase(wordLoopPhase)
-    : null
+  const spellInGroup = wordLoopPhase ? buildSpellInGroupPhase(wordLoopPhase) : null
+
+  const initialCursor: PracticeFlowCursor = {
+    nodeIndex: 0,
+    stepIndex: 0,
+    spellSubStep: false,
+    wrongRetry: false,
+  }
 
   return {
     config,
-    phasesByStage,
-    stageSequence,
+    phasesByCursor,
     spellInGroup,
-    firstPhase: compiled[0],
+    firstPhase: firstPhase!,
+    initialCursor,
+    cursorSteps,
   }
 }
