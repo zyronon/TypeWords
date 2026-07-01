@@ -3,6 +3,7 @@ import { emitter, EventKey } from '../utils/eventBus'
 import { useSettingStore } from '../stores'
 import { isMobile } from '../utils'
 import { Toast } from '@typewords/base'
+import { wordCollectPickerState } from './useWordCollectPicker.ts'
 
 const CODE_TO_CHAR: Record<string, string> = {
   ...Object.fromEntries('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(c => [`Key${c}`, c.toLowerCase()])),
@@ -317,6 +318,7 @@ export function useStartKeyboardEventListener() {
 
   useEventListener('keydown', (e: KeyboardEvent) => {
     // console.log('keydown', e)
+    if (wordCollectPickerState.visible) return
     //解决无法复制、全选的问题
     if ((e.ctrlKey || e.metaKey) && ['KeyC', 'KeyA', 'KeyD'].includes(e.code)) return
     if (!window?.disableEventListener) {
@@ -395,6 +397,7 @@ export function useStartKeyboardEventListener() {
     }
   })
   useEventListener('keyup', (e: KeyboardEvent) => {
+    if (wordCollectPickerState.visible) return
     if (!window?.disableEventListener) {
       emitter.emit(EventKey.keyup, e)
     }
