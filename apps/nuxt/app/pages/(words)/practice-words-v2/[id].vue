@@ -173,33 +173,6 @@ function handleResumeTimer() {
   bumpPracticeTimerActivity()
 }
 
-async function loadDict() {
-  // console.log('load好了开始加载')
-  let dict = getDefaultDict()
-  let dictId = route.params.id
-  if (dictId) {
-    //先在自己的词典列表里面找，如果没有再在资源列表里面找
-    dict = store.word.bookList.find(v => v.id === dictId)
-    let r = await fetch(resourceWrap(DICT_LIST.WORD.ALL))
-    let dict_list = await r.json()
-    if (!dict) dict = dict_list.flat().find(v => v.id === dictId) as Dict
-    if (dict && dict.id) {
-      //如果是不是自定义词典，就请求数据
-      if (!dict.custom) dict = await _getDictDataByUrl(dict)
-      if (!dict.words.length) {
-        router.push('/words')
-        return Toast.warning('没有单词可学习！')
-      }
-      store.changeDict(dict)
-      await initData(null, true)
-      loading = false
-    } else {
-      router.push('/words')
-    }
-  } else {
-    router.push('/words')
-  }
-}
 
 watch(
   [() => store.load, () => loading],
@@ -312,8 +285,36 @@ watchOnce(
 )
 
 let allWords: Word[] = []
-
 let isIniting = ref(true)
+
+async function loadDict() {
+  // console.log('load好了开始加载')
+  let dict = getDefaultDict()
+  let dictId = route.params.id
+  if (dictId) {
+    //先在自己的词典列表里面找，如果没有再在资源列表里面找
+    dict = store.word.bookList.find(v => v.id === dictId)
+    let r = await fetch(resourceWrap(DICT_LIST.WORD.ALL))
+    let dict_list = await r.json()
+    if (!dict) dict = dict_list.flat().find(v => v.id === dictId) as Dict
+    if (dict && dict.id) {
+      //如果是不是自定义词典，就请求数据
+      if (!dict.custom) dict = await _getDictDataByUrl(dict)
+      if (!dict.words.length) {
+        router.push('/words')
+        return Toast.warning('没有单词可学习！')
+      }
+      store.changeDict(dict)
+      await initData(null, true)
+      loading = false
+    } else {
+      router.push('/words')
+    }
+  } else {
+    router.push('/words')
+  }
+}
+
 async function initData(initVal?: TaskWords, init: boolean = false) {
   isIniting.value = true
   //只有初始化时，才读取缓存（本地 + 可选 Supabase）
@@ -349,7 +350,7 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
       const start = resolveFlowStart(settingStore.wordPracticeMode, taskWords)
       settingStore.wordPracticeType = start.practiceType
       data = getDefaultPracticeData(data, { words: start.words })
-    statStore.total = start.total
+      statStore.total = start.total
       statStore.newWordNumber = start.newWordNumber
       statStore.reviewWordNumber = start.reviewWordNumber
       // 重置 cursor 到 flow 起始位置
@@ -359,7 +360,6 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
       router.push('/words')
       return
     }
-
     statStore.startDate = Date.now()
     statStore.inputWordNumber = 0
     statStore.wrong = 0

@@ -1,6 +1,6 @@
 # 单词练习页 v2 重构计划
 
-> **给 Agent 的执行说明**：执行前必读「〇、Agent 冷启动执行手册」与「零侵入原则」。严格按 Phase 1 → Phase 2 → Phase 2.5 → Phase 3 顺序；**禁止修改** v1 页面与 `packages/core` 现有练习文件。开发命令：在 `Typewords/` 目录执行 `pnpm -F @typewords/nuxt dev`，访问 `/practice-words-v2/{词典id}`；流程编排页 `/practice-flow-editor`（Phase 3）。
+> **给 Agent 的执行说明**：执行前必读「〇、Agent 冷启动执行手册」与「零侵入原则」。严格按 Phase 1 → Phase 2 → Phase 2.5 → Phase 2.6 → Phase 3 顺序；**禁止修改** v1 页面与 `packages/core` 现有练习文件。开发命令：在 `Typewords/` 目录执行 `pnpm -F @typewords/nuxt dev`，访问 `/practice-words-v2/{词典id}`；流程编排页 `/practice-flow-editor`（Phase 3）。
 
 **范围**：`../apps/nuxt` 仅新增 v2 路由与副本代码
 
@@ -8,8 +8,8 @@
 
 - [x] Phase 1：复制骨架 + 独立缓存 `PracticeSaveWordV2`
 - [x] Phase 2：Registry（可序列化）+ Navigator + sessionSnapshot + displayPolicy + keyboard
-- [x] Phase 2 Architecture Upgrade：node/steps 三层模型 + Cursor 导航
-- [ ] Phase 2.5：用户自定义流程 UI（档位 A，当前任务）
+- [x] Phase 2.5 Architecture Upgrade：node/steps 三层模型 + Cursor 导航（✅ 完成，待 Phase 2.6 升级类型）
+- [ ] Phase 2.6 Type System Refinement：wordLoop subSteps、onEnd 串行动作、cursor 通用化
 - [ ] Phase 3：用户自定义练习流程 UI（档位 A：阶段块拖拽编排）
 - [ ] Phase 4：v2 组件拆分
 - [ ] Phase 5–6：例句练习线（可选）
@@ -80,7 +80,8 @@
 ```
 Phase 1 → 复制页面+组件，抽 composables，v2 行为≈v1 副本，独立缓存
 Phase 2 → 可序列化 Registry + Navigator + sessionSnapshot + displayPolicy + keyboard（✅ 完成）
-Phase 2.5 → node/steps 三层模型 + Cursor 导航（当前）
+Phase 2.5 → node/steps 三层模型 + Cursor 导航（✅ 完成）
+Phase 2.6 → wordLoop subSteps、onEnd 串行动作、cursor 通用化（当前）
 Phase 3 → 用户自定义练习流程 UI（档位 A：阶段块拖拽编排）
 Phase 4 → 仅改 v2 副本内组件拆分
 Phase 5–6 → 例句线（可选，用户未要求时可暂停在 Phase 3/4）
@@ -1203,6 +1204,403 @@ sequenceDiagram
 - 刷新恢复 cursor 精确还原当前 node/step
 - Template 文件行数减半
 
+### Phase 2.6 — wordLoop subSteps、onEnd 串行动作、cursor 通用化（当前任务）
+
+> **背景**：Phase 2.5 将流程配置升级为 `nodes[{ source, steps[] }]` 三层模型，引入 Cursor 导航。但当时的类型设计有两个遗留问题，阻碍更灵活的编排：
+>
+> 1. **`wordLoop` 硬编码为 Spell + 注册表单例**：`wordAdvance: { type: 'wordLoop', groupSize: 7 }` 语义是"跟写 N 词一组 → 拼写同一组"，但 Spell 子相位定义是运行时从第一个 `wordLoop` phase 派生的全局 `registry.spellInGroup`（见 [`flow-compiler.ts:L114`](../apps/nuxt/app/composables/practice-words/flow-compiler.ts#L114) 和 [`phase-templates.ts:L121`](../apps/nuxt/app/composables/practice-words/phase-templates.ts#L121)），无法支持"每组后 Listen"或"每组后依次 Spell → Dictation"的编排。
+> 2. **错词清空不可配置**：`requireWrongWordClear: true` 仅是一个布尔开关（见 [`registry-types.ts:L76`](../apps/nuxt/app/composables/practice-words/registry-types.ts#L76)），运行时由 `buildWrongWordReviewFromParent(parent)` 派生为 FollowWrite + 继承 parent 的 wordAdvance（见 [`phase-templates.ts:L135`](../apps/nuxt/app/composables/practice-words/phase-templates.ts#L135)）。这导致错词清空不可独立配置练习类型、不可配置 subSteps、且无法与错误单词收藏/报告生成等后续动作串行。
+> 3. **cursor 使用业务专用布尔值**：`spellSubStep` 和 `wrongRetry`（见 [`registry-types.ts:L100-L106`](../apps/nuxt/app/composables/practice-words/registry-types.ts#L100-L106)）绑定了 Spell 这一种子练习类型，不通用；`wrongRetry` 优先级高于 `spellSubStep`（见 [`practice-phase-registry.ts:L56-L65`](../apps/nuxt/app/composables/practice-words/practice-phase-registry.ts#L56-L65)），错词清空期间即使有 wordLoop 子步骤也无法正确切入。
+
+#### 目标
+
+1. `wordLoop` 支持多子步骤编排：每组练完后可依次执行任意类型、任意数量的子练习。
+2. 错词清空升级为 `onEnd` 串行动作系统：不再是一个布尔开关，而是可配置的声明式动作队列，支持"错词清空 → 收藏 → 生成报告 → 跳转"等串行流程。
+3. Cursor 模型通用化：`spellSubStep` → `loop` 状态对象，`wrongRetry` → `inWrongWordClear`，支持运行时精确恢复。
+4. 5 种 `WordPracticeType` 全部纳入 Step Template：`spell` 不再作为特殊派生，与 `followWrite/listen/dictation/identify` 平级。
+
+#### 一、类型系统重构
+
+##### 1.1 Step Template 新增 `spell`
+
+```ts
+type PracticeStepTemplateId =
+  | 'followWrite'
+  | 'spell'
+  | 'listen'
+  | 'dictation'
+  | 'identify'
+```
+
+##### 1.2 wordLoop 升级为 subSteps[]
+
+```ts
+type PracticeWordAdvanceConfig =
+  | { type: 'increment' }
+  | {
+      type: 'wordLoop'
+      groupSize?: number
+      subSteps: PracticeLoopSubStep[]
+    }
+
+interface PracticeLoopSubStep {
+  templateId: PracticeStepTemplateId
+  label?: string
+  displayOverride?: Partial<PracticeDisplayPolicy>
+}
+```
+
+**语义**：主 step 每练完一组词（`groupSize` 个）后，按 `subSteps[]` 顺序依次执行子练习，所有子步骤完成后回到主 step 继续下一组。
+
+**与 v1 对齐的示例**（每组 7 词跟写后拼写）：
+
+```ts
+{
+  templateId: 'followWrite',
+  wordAdvance: {
+    type: 'wordLoop',
+    groupSize: 7,
+    subSteps: [
+      { templateId: 'spell' },
+    ],
+  },
+}
+```
+
+**未来可编排的示例**（每组跟写 → 拼写 → 默写 → 自测 多轮循环）：
+
+```ts
+{
+  templateId: 'followWrite',
+  wordAdvance: {
+    type: 'wordLoop',
+    groupSize: 5,
+    subSteps: [
+      { templateId: 'spell' },
+      { templateId: 'dictation' },
+      { templateId: 'identify' },
+    ],
+  },
+}
+```
+
+**带 label 和 displayOverride 的子步骤**：
+
+```ts
+subSteps: [
+  {
+    templateId: 'dictation',
+    label: '快速默写',
+    displayOverride: { showSentenceTranslation: false },
+  },
+  {
+    templateId: 'identify',
+    label: '自测检查',
+    displayOverride: { inputMode: 'identify-quick' },
+  },
+]
+```
+
+##### 1.3 onEnd 串行动作系统
+
+将 `requireWrongWordClear: boolean` 替换为 `onEnd?: PracticeEndAction[]`：
+
+```ts
+interface PracticeFlowStep {
+  templateId: PracticeStepTemplateId
+  label?: string
+  displayOverride?: Partial<PracticeDisplayPolicy>
+  wordAdvance?: PracticeWordAdvanceConfig
+  onEnd?: PracticeEndAction[]
+  shuffleOnEnter?: boolean
+}
+```
+
+`PracticeEndAction` 定义为可扩展的联合类型：
+
+```ts
+type PracticeEndAction =
+  | PracticeWrongWordClearAction
+  | PracticeCollectWrongWordsAction
+  | PracticeGenerateReportAction
+  | PracticeNavigateAction
+```
+
+**各 action 详细定义**：
+
+```ts
+interface PracticeWrongWordClearAction {
+  type: 'wrongWordClear'
+  templateId: PracticeStepTemplateId
+  displayOverride?: Partial<PracticeDisplayPolicy>
+  wordAdvance?: PracticeWordAdvanceConfig
+}
+
+interface PracticeCollectWrongWordsAction {
+  type: 'collectWrongWords'
+  target: 'favorite' | 'wrongBook'
+}
+
+interface PracticeGenerateReportAction {
+  type: 'generateReport'
+  reportType: 'stepSummary' | 'sessionSummary'
+}
+
+interface PracticeNavigateAction {
+  type: 'navigate'
+  target: 'nextStep' | 'complete' | string
+}
+```
+
+**执行规则**：
+
+- `onEnd` 数组中 action 按顺序执行。
+- `wrongWordClear` 是"交互型 action"——它会暂停 action 队列，进入一个练习阶段，直到错词为 0 才继续下一个 action。
+- `collectWrongWords`、`generateReport` 是"即时型 action"——执行完毕后立即继续下一个 action。
+- `navigate` 是指令型 action——跳转到指定目标，默认为 `nextStep`。
+- 如果 `onEnd` 为空或所有 action 执行完毕且没有 `navigate` action，默认行为是进入 `stepAdvance.nextStep`。
+
+**v1 对齐示例**（System 新词跟写：阶段结束后 FollowWrite + wordLoop(Spell) 清错词，然后进下一阶段）：
+
+```ts
+{
+  templateId: 'followWrite',
+  wordAdvance: {
+    type: 'wordLoop',
+    groupSize: 7,
+    subSteps: [
+      { templateId: 'spell' },
+    ],
+  },
+  onEnd: [
+    {
+      type: 'wrongWordClear',
+      templateId: 'followWrite',
+      wordAdvance: {
+        type: 'wordLoop',
+        groupSize: 7,
+        subSteps: [
+          { templateId: 'spell' },
+        ],
+      },
+    },
+  ],
+}
+```
+
+**未来串行编排示例**（错词清空 → 收藏错误单词 → 生成阶段报告 → 进下一阶段）：
+
+```ts
+onEnd: [
+  {
+    type: 'wrongWordClear',
+    templateId: 'followWrite',
+    wordAdvance: {
+      type: 'wordLoop',
+      groupSize: 7,
+      subSteps: [
+        { templateId: 'spell' },
+      ],
+    },
+  },
+  {
+    type: 'collectWrongWords',
+    target: 'favorite',
+  },
+  {
+    type: 'generateReport',
+    reportType: 'stepSummary',
+  },
+],
+// onEnd 执行完毕后默认进入 stepAdvance.nextStep
+```
+
+**仅生成报告并跳转到复盘页的示例**：
+
+```ts
+onEnd: [
+  {
+    type: 'generateReport',
+    reportType: 'stepSummary',
+  },
+  {
+    type: 'navigate',
+    target: '/review/session-xxx',
+  },
+],
+```
+
+##### 1.4 Cursor 通用化
+
+```ts
+interface PracticeFlowCursor {
+  nodeIndex: number
+  stepIndex: number
+  inWrongWordClear: boolean
+  loop: null | {
+    startIndex: number
+    endIndex: number
+    subStepIndex: number
+  }
+  endActionIndex: number | null
+}
+```
+
+**字段语义**：
+
+| 字段 | 类型 | 说明 |
+| --- | --- |
+| `nodeIndex` | `number` | 当前 FlowNode 索引（不变） |
+| `stepIndex` | `number` | 当前 node 内 step 索引（不变） |
+| `inWrongWordClear` | `boolean` | 当前是否处于错词清空阶段（替代 `wrongRetry`） |
+| `loop` | `null \| { startIndex, endIndex, subStepIndex }` | 当前是否处于 wordLoop 子步骤（替代 `spellSubStep`）；`null` 表示不在 loop 中；非 null 时 `startIndex`/`endIndex` 指定当前复用的词范围，`subStepIndex` 指向 `subSteps[subStepIndex]` |
+| `endActionIndex` | `number \| null` | 当前正在执行的 `onEnd` action 索引；`null` 表示尚未进入 `onEnd` |
+
+**cursor 状态示例**：
+
+```ts
+// 正常主 step 推进
+{ nodeIndex: 0, stepIndex: 0, inWrongWordClear: false, loop: null, endActionIndex: null }
+
+// wordLoop 第 1 个子步骤（Spell），复用 index 0~6 的词
+{ nodeIndex: 0, stepIndex: 0, inWrongWordClear: false, loop: { startIndex: 0, endIndex: 6, subStepIndex: 0 }, endActionIndex: null }
+
+// 错词清空阶段的 wordLoop 子步骤
+{ nodeIndex: 0, stepIndex: 0, inWrongWordClear: true, loop: { startIndex: 0, endIndex: 4, subStepIndex: 0 }, endActionIndex: 0 }
+
+// 已完成 onEnd[0]（错词清空），正在执行 onEnd[1]（收藏）
+{ nodeIndex: 0, stepIndex: 0, inWrongWordClear: false, loop: null, endActionIndex: 1 }
+```
+
+##### 1.5 内置流程更新
+
+更新 `builtin-flows.ts` 中 System 模式的新词跟写 step：
+
+```ts
+// 旧
+{ templateId: 'followWrite', wordAdvance: { type: 'wordLoop', groupSize: 7 }, requireWrongWordClear: true }
+
+// 新
+{
+  templateId: 'followWrite',
+  wordAdvance: {
+    type: 'wordLoop',
+    groupSize: 7,
+    subSteps: [
+      { templateId: 'spell' },
+    ],
+  },
+  onEnd: [
+    {
+      type: 'wrongWordClear',
+      templateId: 'followWrite',
+      wordAdvance: {
+        type: 'wordLoop',
+        groupSize: 7,
+        subSteps: [
+          { templateId: 'spell' },
+        ],
+      },
+    },
+  ],
+}
+```
+
+其他内置 mode 的 step 同步去掉 `requireWrongWordClear`，改为 `onEnd`：
+
+```ts
+// 旧
+{ templateId: 'listen', shuffleOnEnter: true, requireWrongWordClear: true }
+
+// 新
+{
+  templateId: 'listen',
+  shuffleOnEnter: true,
+  onEnd: [
+    {
+      type: 'wrongWordClear',
+      templateId: 'followWrite',
+      wordAdvance: {
+        type: 'wordLoop',
+        groupSize: 7,
+        subSteps: [
+          { templateId: 'spell' },
+        ],
+      },
+    },
+  ],
+}
+```
+
+##### 1.6 注册表精简
+
+`ActiveFlowRegistry` 中移除以下字段：
+
+- `spellInGroup: PracticePhaseDefinition | null` — wordLoop 子步骤定义由 step 配置的 `wordAdvance.subSteps[]` 直接提供，不再需要编译时派生成全局单例。
+
+编译器 `compileFlowConfig()` 不再需要：
+
+- 搜索第一个 `wordLoop` phase 写入 `wordLoopPhase` 变量。
+- 调用 `buildSpellInGroupPhase(wordLoopPhase)` 生成全局 `spellInGroup`。
+
+`phase-templates.ts` 中可移除：
+
+- `buildSpellInGroupPhase()` 函数。
+- `DISPLAY_SPELL` 改为直接内联到 `STEP_TEMPLATE_META.spell` 的 `display` 字段。
+
+`resolvePhaseByCtxCursor()` 优先级更新为：
+
+1. `cursor.inWrongWordClear` → 从当前 step 的 `onEnd[wrongWordClearActionIndex]` 配置动态派生相位。
+2. `cursor.loop !== null` → 从当前 step 的 `wordAdvance.subSteps[cursor.loop.subStepIndex]` 动态派生相位。
+3. `phasesByCursor` 查表。
+4. 兜底 `firstPhase`。
+
+#### 二、实施清单
+
+1. `registry-types.ts`：
+   - `PracticeStepTemplateId` 新增 `'spell'`。
+   - `PracticeWordAdvanceConfig` 增加 `subSteps: PracticeLoopSubStep[]`。
+   - 新增 `PracticeLoopSubStep` 接口。
+   - 新增 `PracticeEndAction` 联合类型及其子接口。
+   - `PracticeFlowStep`：移除 `requireWrongWordClear`，新增 `onEnd?: PracticeEndAction[]`。
+   - `PracticeFlowCursor`：`spellSubStep` → `loop`，`wrongRetry` → `inWrongWordClear`，新增 `endActionIndex`。
+   - `ActiveFlowRegistry`：移除 `spellInGroup`。
+
+2. `phase-templates.ts`：
+   - `STEP_TEMPLATE_META` 新增 `spell` 模板。
+   - 移除 `buildSpellInGroupPhase()`。
+   - 移除 `buildWrongWordReviewFromParent()`（错词清空相位由 step 的 `onEnd.wrongWordClear` 配置直接派生）。
+
+3. `builtin-flows.ts`：
+   - 所有内置 flow 的 step 从 `requireWrongWordClear: true` 迁移到 `onEnd: [{ type: 'wrongWordClear', ... }]`。
+   - 所有 `wordLoop` step 补全 `subSteps: [{ templateId: 'spell' }]`。
+
+4. `flow-compiler.ts`：
+   - 移除 `wordLoopPhase` / `buildSpellInGroupPhase` 逻辑。
+   - 不再生成 `spellInGroup`。
+
+5. `practice-phase-registry.ts`：
+   - `resolvePhaseByCtxCursor()` 重构匹配逻辑。
+   - `advanceCursor()` 重构推进逻辑（支持 loop subStepIndex++ 和 endActionIndex++）。
+
+6. `usePracticeWordNavigator.ts`：
+   - 适配新 cursor 结构。
+   - `runWordLoop()` 改为读取 `subSteps[]`，不再硬编码 Spell 切换。
+   - `handleListEnd()` 改为驱动 `onEnd` action 队列。
+   - 移除 `runWrongWordRetry()` 中的硬编码 FollowWrite。
+
+7. `flow-schema.ts`：
+   - `validateFlowConfig()` 增加 `subSteps[]` / `onEnd[]` 校验。
+
+#### 三、验收
+
+- System 模式新词跟写 7 词一组 → Spell 子步骤行为与 v1 完全一致。
+- 所有内置 mode 错词清空行为与 v1 一致（错词 > 0 时回退 FollowWrite + wordLoop(Spell) 直到清空）。
+- 将 `subSteps` 改为 `[{ templateId: 'dictation' }]` 后，每组跟写后进入默写而非拼写，行为正确。
+- 将 `onEnd` 追加 `{ type: 'navigate', target: 'complete' }` 后，阶段结束后直接完成不进入下一阶段。
+- Footer 进度条无任何 `WordPracticeMode` / `spellSubStep` / `wrongRetry` 硬编码。
+- `sessionSnapshot.cursor` 包含 `loop` / `endActionIndex`，刷新后精确恢复到 wordLoop 子步骤或 onEnd 中间状态。
+
 ### Phase 3 — 用户自定义练习流程 UI（档位 A）
 
 1. 新建 [`practice-flow-editor.vue`](../apps/nuxt/app/pages/\(words\)/practice-flow-editor.vue) + `components/practice-flow/`（`FlowEditor` / `PhaseBlockCard` / `FlowPreview`）
@@ -1249,6 +1647,7 @@ sequenceDiagram
 9. **Architecture Upgrade 风险**：Cursor 模型替换 stage 模型时，需确保 sessionSnapshot 向后兼容（旧缓存无 cursor → 从 stage 推导初始 cursor）
 10. **Free 与 Custom 分区**：UI 与初始化逻辑明确区分「自由练习」与「自定义多阶段流程」
 11. **自定义流程存储零侵入**：首轮用 nuxt 独立 `PracticeFlowV2` key，不强改 core `setting.ts`
+12. **Phase 2.6 cursor 不兼容**：`PracticeFlowCursor` 字段 `spellSubStep` / `wrongRetry` 改为 `loop` / `inWrongWordClear` / `endActionIndex`，`sessionSnapshot` 中旧 cursor 需迁移或在无 cursor 时回退到初始 cursor
 
 ***
 
@@ -1286,9 +1685,9 @@ sequenceDiagram
 - `sessionSnapshot` → 新增 `cursor` 字段，刷新后精确恢复
 - 删除死代码 `usePracticeWordTimer.ts`
 
-### Phase 2.5 ← 下一步
+### Phase 2.6 ← 下一步（当前任务）
 
-详见「三-C」。核心：Phase 3 用户自定义流程 UI（档位 A：阶段块拖拽编排）。
+详见「Phase 2.6」。核心：wordLoop subSteps 编排、onEnd 串行动作系统、cursor 通用化。这也为 Phase 3 编排器提供更完整的类型基础。
 
 ## 六、明确不建议
 

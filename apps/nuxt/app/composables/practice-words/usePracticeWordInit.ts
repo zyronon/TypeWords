@@ -58,13 +58,12 @@ export function resolveFlowStart(
   taskWords: TaskWords,
   flowId?: string
 ): FlowStartResult {
-  loadPracticeFlow(flowId ?? getFlowIdForMode(mode))
-  const registry = getActiveRegistry()
-  const config = registry.config
-
   const total = taskWords.new.length + taskWords.review.length
   if (total === 0) throw new Error('NO_WORDS')
 
+  loadPracticeFlow(flowId ?? getFlowIdForMode(mode))
+  const registry = getActiveRegistry()
+  const config = registry.config
   const firstNode = config.nodes[0]
   const firstWords = resolveWordsForSource(firstNode.source as PracticeWordsSource, taskWords)
 

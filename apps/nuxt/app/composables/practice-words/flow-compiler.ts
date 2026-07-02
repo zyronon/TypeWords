@@ -6,14 +6,12 @@
  *
  * 完全 cursor-native：无 WordPracticeStage、无 phasesByStage、无 stageSequence。
  */
-import { WordPracticeType } from '@typewords/core/types/enum.ts'
 import { STEP_TEMPLATE_META, buildSpellInGroupPhase, GROUP_SIZE } from './phase-templates.ts'
 import type {
   ActiveFlowRegistry,
   PracticeFlowConfig,
   PracticeFlowCursor,
   PracticeFlowNode,
-  PracticeFlowStep,
   PracticePhaseDefinition,
   PracticeWordsSource,
   StepAdvanceRule,

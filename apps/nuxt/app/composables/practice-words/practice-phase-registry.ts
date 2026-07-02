@@ -41,11 +41,6 @@ export function getActiveRegistry(): ActiveFlowRegistry {
   return activeRegistry!
 }
 
-/** initialCursor（flow 起始位置）*/
-export function getInitialCursor(): PracticeFlowCursor {
-  return getActiveRegistry().initialCursor
-}
-
 /**
  * 根据 cursor 查阶段定义（唯一查询接口）。
  *
