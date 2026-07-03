@@ -2,13 +2,19 @@
  * 把「可序列化的流程配置」编译成「运行时注册表」。
  *
  * 输入：PracticeFlowConfig（nodes[] 树状结构）
- * 输出：ActiveFlowRegistry（phasesByCursor、spellInGroup、cursorSteps）
+ * 输出：ActiveFlowRegistry（phasesByCursor、cursorSteps）
+ *
+ * Phase 2.6 升级：
+ * - 移除 spellInGroup 全局单例（wordLoop 子步骤由 step 配置的 subSteps[] 直接提供）
+ * - PracticePhaseDefinition.requireWrongWordClear → onEnd: PracticeEndAction[]
+ * - initialCursor 使用新字段（inWrongWordClear / loop / endActionIndex）
  *
  * 完全 cursor-native：无 WordPracticeStage、无 phasesByStage、无 stageSequence。
  */
-import { STEP_TEMPLATE_META, buildSpellInGroupPhase, GROUP_SIZE } from './phase-templates.ts'
+import { STEP_TEMPLATE_META, GROUP_SIZE } from './phase-templates.ts'
 import type {
   ActiveFlowRegistry,
+  PracticeEndAction,
   PracticeFlowConfig,
   PracticeFlowCursor,
   PracticeFlowNode,
@@ -69,19 +75,26 @@ function compileStep(
   const wordAdvanceCfg = step.wordAdvance
   const wordAdvance: PracticePhaseDefinition['wordAdvance'] =
     wordAdvanceCfg?.type === 'wordLoop'
-      ? { type: 'wordLoop', groupSize: wordAdvanceCfg.groupSize ?? GROUP_SIZE }
+      ? {
+          type: 'wordLoop',
+          groupSize: wordAdvanceCfg.groupSize ?? GROUP_SIZE,
+          subSteps: wordAdvanceCfg.subSteps ?? [],
+        }
       : { type: 'increment' }
 
   const display = step.displayOverride
     ? { ...template.display, ...step.displayOverride }
     : template.display
 
+  // onEnd：优先取 step.onEnd，兜底为空数组（Phase 2.6 前旧缓存不含 onEnd）
+  const onEnd: PracticeEndAction[] = step.onEnd ?? []
+
   return {
     practiceType: template.practiceType,
     display,
     wordAdvance,
     stepAdvance: computeStepAdvance(allNodes, nodeIndex, stepIndex),
-    requireWrongWordClear: step.requireWrongWordClear ?? true,
+    onEnd,
   }
 }
 
@@ -94,7 +107,6 @@ export function compileFlowConfig(config: PracticeFlowConfig): ActiveFlowRegistr
   const cursorSteps: Array<{ nodeIndex: number; stepIndex: number }> = []
 
   let firstPhase: PracticePhaseDefinition | undefined
-  let wordLoopPhase: PracticePhaseDefinition | undefined
 
   for (let ni = 0; ni < config.nodes.length; ni++) {
     const node = config.nodes[ni]
@@ -105,25 +117,20 @@ export function compileFlowConfig(config: PracticeFlowConfig): ActiveFlowRegistr
       cursorSteps.push({ nodeIndex: ni, stepIndex: si })
 
       if (!firstPhase) firstPhase = phase
-      if (phase.wordAdvance.type === 'wordLoop' && !wordLoopPhase) {
-        wordLoopPhase = phase
-      }
     }
   }
-
-  const spellInGroup = wordLoopPhase ? buildSpellInGroupPhase(wordLoopPhase) : null
 
   const initialCursor: PracticeFlowCursor = {
     nodeIndex: 0,
     stepIndex: 0,
-    spellSubStep: false,
-    wrongRetry: false,
+    inWrongWordClear: false,
+    loop: null,
+    endActionIndex: null,
   }
 
   return {
     config,
     phasesByCursor,
-    spellInGroup,
     firstPhase: firstPhase!,
     initialCursor,
     cursorSteps,

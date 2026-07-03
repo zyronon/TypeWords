@@ -71,8 +71,8 @@ export function applyPhaseDefinition(phase: PracticePhaseDefinition, cursorKey?:
   sessionDisplay.value = { ...phase.display }
   // 用 cursorKey + practiceType 标识唯一相位（跨阶段切换时清空用户 override）
   const key = cursorKey
-    ? `${cursorKey}_${phase.practiceType}`
-    : phase.practiceType
+    ? `${cursorKey}_${String(phase.practiceType)}`
+    : String(phase.practiceType)
   if (key !== lastPhaseKey) {
     displayOverride.value = null
     lastPhaseKey = key
@@ -122,9 +122,7 @@ export function usePracticeDisplayPolicy(
       ...displayOverride.value,
       wordMask: nextMask,
       showSentences: nextMask === 'none',
-      showPhrases: nextMask === 'none',
-      showEtymology: nextMask === 'none' && current.translate,
-      showRelWords: nextMask === 'none' && current.translate,
+      showSentenceTranslation: nextMask === 'none',
     }
   }
 

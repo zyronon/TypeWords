@@ -1,15 +1,37 @@
 /**
  * 内置练习流程的「可序列化配置表」。
  *
- * Phase 2 Architecture Upgrade：
- * - phases[] → nodes[{ source, steps[] }] 树状结构
- * - 每个 node 描述「练哪批词」，node.steps 描述「怎么练」
- * - 新增模式 = 在这里加一条配置，不必改 Navigator 里的 if-else
+ * Phase 2.6 升级：
+ * - requireWrongWordClear → onEnd: [{ type: 'wrongWordClear', ... }]
+ * - wordLoop step 补全 subSteps: [{ templateId: 'spell' }]
+ * - spell 作为独立 templateId，与其他 4 个平级
  *
  * 与 v1 WordPracticeModeStageMap + next() 行为对齐（由测试验收）。
  */
 import { WordPracticeMode } from '@typewords/core/types/enum.ts'
-import type { PracticeFlowConfig } from './registry-types.ts'
+import type { PracticeFlowConfig, PracticeEndAction, PracticeWordAdvanceConfig } from './registry-types.ts'
+import { GROUP_SIZE } from './phase-templates.ts'
+
+/** 标准错词清空 action：FollowWrite + wordLoop(Spell)，与 v1 行为对齐 */
+const WRONG_WORD_CLEAR_ACTION: PracticeEndAction = {
+  type: 'wrongWordClear',
+  templateId: 'followWrite',
+  wordAdvance: {
+    type: 'wordLoop',
+    groupSize: GROUP_SIZE,
+    subSteps: [{ templateId: 'spell' }],
+  },
+}
+
+/** 标准错词清空 onEnd 队列（单个动作） */
+const DEFAULT_ON_END: PracticeEndAction[] = [WRONG_WORD_CLEAR_ACTION]
+
+/** 跟写 + 7 词 wordLoop + Spell 子步骤 */
+const WORD_LOOP_WITH_SPELL: PracticeWordAdvanceConfig = {
+  type: 'wordLoop',
+  groupSize: GROUP_SIZE,
+  subSteps: [{ templateId: 'spell' }],
+}
 
 /** 内置流程字典：key 为 flowId，存入 sessionSnapshot.flowId */
 export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
@@ -18,7 +40,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   system: {
     id: 'system',
-    version: 2,
+    version: 3,
     mode: WordPracticeMode.System,
     label: '学习',
     nodes: [
@@ -27,9 +49,21 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
         label: '新词',
         source: 'taskNew',
         steps: [
-          { templateId: 'followWrite', wordAdvance: { type: 'wordLoop', groupSize: 7 }, requireWrongWordClear: true, shuffleOnEnter: false },
-          { templateId: 'listen', shuffleOnEnter: true, requireWrongWordClear: true },
-          { templateId: 'dictation', requireWrongWordClear: true },
+          {
+            templateId: 'followWrite',
+            wordAdvance: WORD_LOOP_WITH_SPELL,
+            onEnd: DEFAULT_ON_END,
+            shuffleOnEnter: false,
+          },
+          {
+            templateId: 'listen',
+            shuffleOnEnter: true,
+            onEnd: DEFAULT_ON_END,
+          },
+          {
+            templateId: 'dictation',
+            onEnd: DEFAULT_ON_END,
+          },
         ],
       },
       {
@@ -37,9 +71,19 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
         label: '复习',
         source: 'taskReview',
         steps: [
-          { templateId: 'identify', requireWrongWordClear: true },
-          { templateId: 'listen', shuffleOnEnter: true, requireWrongWordClear: true },
-          { templateId: 'dictation', requireWrongWordClear: true },
+          {
+            templateId: 'identify',
+            onEnd: DEFAULT_ON_END,
+          },
+          {
+            templateId: 'listen',
+            shuffleOnEnter: true,
+            onEnd: DEFAULT_ON_END,
+          },
+          {
+            templateId: 'dictation',
+            onEnd: DEFAULT_ON_END,
+          },
         ],
       },
     ],
@@ -50,7 +94,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   free: {
     id: 'free',
-    version: 2,
+    version: 3,
     mode: WordPracticeMode.Free,
     label: '自由练习',
     nodes: [
@@ -59,7 +103,12 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
         label: '自由练习',
         source: 'current',
         steps: [
-          { templateId: 'followWrite', wordAdvance: { type: 'increment' }, requireWrongWordClear: true, shuffleOnEnter: false },
+          {
+            templateId: 'followWrite',
+            wordAdvance: { type: 'increment' },
+            onEnd: DEFAULT_ON_END,
+            shuffleOnEnter: false,
+          },
         ],
       },
     ],
@@ -70,7 +119,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   review: {
     id: 'review',
-    version: 2,
+    version: 3,
     mode: WordPracticeMode.Review,
     label: '复习',
     nodes: [
@@ -79,9 +128,19 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
         label: '复习',
         source: 'taskReview',
         steps: [
-          { templateId: 'identify', requireWrongWordClear: true },
-          { templateId: 'listen', shuffleOnEnter: true, requireWrongWordClear: true },
-          { templateId: 'dictation', requireWrongWordClear: true },
+          {
+            templateId: 'identify',
+            onEnd: DEFAULT_ON_END,
+          },
+          {
+            templateId: 'listen',
+            shuffleOnEnter: true,
+            onEnd: DEFAULT_ON_END,
+          },
+          {
+            templateId: 'dictation',
+            onEnd: DEFAULT_ON_END,
+          },
         ],
       },
     ],
@@ -92,7 +151,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   identifyOnly: {
     id: 'identifyOnly',
-    version: 2,
+    version: 3,
     mode: WordPracticeMode.IdentifyOnly,
     label: '自测',
     nodes: [
@@ -100,13 +159,23 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
         id: 'new',
         label: '新词',
         source: 'taskNew',
-        steps: [{ templateId: 'identify', requireWrongWordClear: true }],
+        steps: [
+          {
+            templateId: 'identify',
+            onEnd: DEFAULT_ON_END,
+          },
+        ],
       },
       {
         id: 'review',
         label: '复习',
         source: 'taskReview',
-        steps: [{ templateId: 'identify', requireWrongWordClear: true }],
+        steps: [
+          {
+            templateId: 'identify',
+            onEnd: DEFAULT_ON_END,
+          },
+        ],
       },
     ],
   },
@@ -116,7 +185,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   dictationOnly: {
     id: 'dictationOnly',
-    version: 2,
+    version: 3,
     mode: WordPracticeMode.DictationOnly,
     label: '默写',
     nodes: [
@@ -124,13 +193,23 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
         id: 'new',
         label: '新词',
         source: 'taskNew',
-        steps: [{ templateId: 'dictation', requireWrongWordClear: true }],
+        steps: [
+          {
+            templateId: 'dictation',
+            onEnd: DEFAULT_ON_END,
+          },
+        ],
       },
       {
         id: 'review',
         label: '复习',
         source: 'taskReview',
-        steps: [{ templateId: 'dictation', requireWrongWordClear: true }],
+        steps: [
+          {
+            templateId: 'dictation',
+            onEnd: DEFAULT_ON_END,
+          },
+        ],
       },
     ],
   },
@@ -140,7 +219,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   listenOnly: {
     id: 'listenOnly',
-    version: 2,
+    version: 3,
     mode: WordPracticeMode.ListenOnly,
     label: '听写',
     nodes: [
@@ -148,13 +227,25 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
         id: 'new',
         label: '新词',
         source: 'taskNew',
-        steps: [{ templateId: 'listen', shuffleOnEnter: false, requireWrongWordClear: true }],
+        steps: [
+          {
+            templateId: 'listen',
+            shuffleOnEnter: false,
+            onEnd: DEFAULT_ON_END,
+          },
+        ],
       },
       {
         id: 'review',
         label: '复习',
         source: 'taskReview',
-        steps: [{ templateId: 'listen', shuffleOnEnter: false, requireWrongWordClear: true }],
+        steps: [
+          {
+            templateId: 'listen',
+            shuffleOnEnter: false,
+            onEnd: DEFAULT_ON_END,
+          },
+        ],
       },
     ],
   },
@@ -164,7 +255,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   shuffle: {
     id: 'shuffle',
-    version: 2,
+    version: 3,
     mode: WordPracticeMode.Shuffle,
     label: '随机复习',
     nodes: [
@@ -173,7 +264,12 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
         label: '随机复习',
         source: 'taskReview',
         steps: [
-          { templateId: 'dictation', wordAdvance: { type: 'increment' }, requireWrongWordClear: true, shuffleOnEnter: true },
+          {
+            templateId: 'dictation',
+            wordAdvance: { type: 'increment' },
+            onEnd: DEFAULT_ON_END,
+            shuffleOnEnter: true,
+          },
         ],
       },
     ],

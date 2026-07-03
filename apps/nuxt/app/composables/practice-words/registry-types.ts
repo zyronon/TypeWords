@@ -47,6 +47,7 @@ export interface EffectiveDisplay {
 /** Step Template 的 id — 只描述"怎么练"，不关心词源 */
 export type PracticeStepTemplateId =
   | 'followWrite'
+  | 'spell'
   | 'listen'
   | 'dictation'
   | 'identify'
@@ -62,10 +63,58 @@ export interface PracticeStepTemplate {
 /** 词表来源 */
 export type PracticeWordsSource = 'taskNew' | 'taskReview' | 'current' | 'wrongWords'
 
+// ─── wordLoop 子步骤 ────────────────────────────────────────────────────────────
+
+/** wordLoop 每组完成后的子练习步骤 */
+export interface PracticeLoopSubStep {
+  templateId: PracticeStepTemplateId
+  label?: string
+  displayOverride?: Partial<PracticeDisplayPolicy>
+}
+
 /** 词内推进配置 */
 export type PracticeWordAdvanceConfig =
   | { type: 'increment' }
-  | { type: 'wordLoop'; groupSize?: number }
+  | {
+      type: 'wordLoop'
+      groupSize?: number
+      /** 每组练完后依次执行的子步骤；全部完成后回主步骤继续下一组 */
+      subSteps: PracticeLoopSubStep[]
+    }
+
+// ─── onEnd 串行动作系统 ─────────────────────────────────────────────────────────
+
+/** 错词清空动作：交互型，暂停队列直到错词为 0 */
+export interface PracticeWrongWordClearAction {
+  type: 'wrongWordClear'
+  templateId: PracticeStepTemplateId
+  displayOverride?: Partial<PracticeDisplayPolicy>
+  wordAdvance?: PracticeWordAdvanceConfig
+}
+
+/** 收藏错词动作：即时型 */
+export interface PracticeCollectWrongWordsAction {
+  type: 'collectWrongWords'
+  target: 'favorite' | 'wrongBook'
+}
+
+/** 生成报告动作：即时型 */
+export interface PracticeGenerateReportAction {
+  type: 'generateReport'
+  reportType: 'stepSummary' | 'sessionSummary'
+}
+
+/** 跳转动作：指令型 */
+export interface PracticeNavigateAction {
+  type: 'navigate'
+  target: 'nextStep' | 'complete' | string
+}
+
+export type PracticeEndAction =
+  | PracticeWrongWordClearAction
+  | PracticeCollectWrongWordsAction
+  | PracticeGenerateReportAction
+  | PracticeNavigateAction
 
 /** Flow 中的一个 Step（可序列化） */
 export interface PracticeFlowStep {
@@ -73,7 +122,8 @@ export interface PracticeFlowStep {
   label?: string
   displayOverride?: Partial<PracticeDisplayPolicy>
   wordAdvance?: PracticeWordAdvanceConfig
-  requireWrongWordClear?: boolean
+  /** 词表练完后按顺序执行的动作队列（替代旧 requireWrongWordClear） */
+  onEnd?: PracticeEndAction[]
   shuffleOnEnter?: boolean
 }
 
@@ -100,10 +150,20 @@ export interface PracticeFlowConfig {
 export interface PracticeFlowCursor {
   nodeIndex: number
   stepIndex: number
-  /** 跟写分组内的 Spell 子步骤 */
-  spellSubStep: boolean
-  /** 当前正在错词复习 */
-  wrongRetry: boolean
+  /** 当前是否处于错词清空阶段；替代旧 wrongRetry */
+  inWrongWordClear: boolean
+  /**
+   * 当前是否处于 wordLoop 子步骤。
+   * null 表示不在 loop 中；
+   * 非 null 时 startIndex/endIndex 指向当前组词的范围，subStepIndex 指向当前子步骤索引
+   */
+  loop: null | {
+    startIndex: number
+    endIndex: number
+    subStepIndex: number
+  }
+  /** 当前正在执行的 onEnd action 索引；null 表示尚未进入 onEnd */
+  endActionIndex: number | null
 }
 
 /** cursor 序列化 key，用于 phasesByCursor Map */
@@ -116,6 +176,7 @@ export function cursorKey(nodeIndex: number, stepIndex: number): string {
 export interface WordAdvanceRule {
   type: 'increment' | 'wordLoop'
   groupSize?: number
+  subSteps?: PracticeLoopSubStep[]
 }
 
 /** 词表练完后的推进规则（纯 cursor 语义，nextCursor 由 advanceCursor() 计算，无需存 nextStage） */
@@ -136,7 +197,8 @@ export interface PracticePhaseDefinition {
   display: PracticeDisplayPolicy
   wordAdvance: WordAdvanceRule
   stepAdvance: StepAdvanceRule
-  requireWrongWordClear: boolean
+  /** 词表练完后执行的动作队列（替代 requireWrongWordClear） */
+  onEnd: PracticeEndAction[]
 }
 
 // ─── 运行时注册表 ────────────────────────────────────────────────────────────────
@@ -145,14 +207,9 @@ export interface ActiveFlowRegistry {
   config: PracticeFlowConfig
   /** cursor key → 已编译阶段定义 */
   phasesByCursor: Map<string, PracticePhaseDefinition>
-  /**
-   * 跟写阶段「7 词一组」内的 Spell 子相位定义。
-   * 含 wordLoop step 时由 compile 派生；无 wordLoop 时为 null。
-   */
-  spellInGroup: PracticePhaseDefinition | null
   firstPhase: PracticePhaseDefinition
   initialCursor: PracticeFlowCursor
-  /** 所有静态 cursor 坐标（不含 spell/wrongRetry），供 Footer 进度条用 */
+  /** 所有静态 cursor 坐标（不含 loop/inWrongWordClear），供 Footer 进度条用 */
   cursorSteps: Array<{ nodeIndex: number; stepIndex: number }>
 }
 

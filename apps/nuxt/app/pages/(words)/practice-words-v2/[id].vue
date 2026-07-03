@@ -119,6 +119,7 @@ function next(isTyping: boolean = true, ignoreLoop = false) {
 }
 
 function skipStep() {
+  debugger
   navigator.skipStep()
 }
 
@@ -539,8 +540,8 @@ async function savePracticeDataIns(where?) {
     data.index === 0 &&
     activeCursor.value.nodeIndex === 0 &&
     activeCursor.value.stepIndex === 0 &&
-    !activeCursor.value.spellSubStep &&
-    !activeCursor.value.wrongRetry
+    !activeCursor.value.inWrongWordClear &&
+    activeCursor.value.loop === null
   ) {
     return
   }

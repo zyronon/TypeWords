@@ -2,15 +2,18 @@
  * 流程配置的校验与解析。
  * 非法配置一律回退 system，避免带着坏 JSON 进练习页。
  *
- * Phase 2 Architecture Upgrade：校验逻辑改为适配 nodes[] 结构。
+ * Phase 2.6 升级：
+ * - VALID_TEMPLATE_IDS 新增 'spell'
+ * - 校验逻辑适配 subSteps[] 和 onEnd[]
  */
 import { compileFlowConfig } from './flow-compiler.ts'
 import { BUILTIN_FLOWS } from './builtin-flows.ts'
 import type { ActiveFlowRegistry, PracticeFlowConfig, PracticeStepTemplateId } from './registry-types.ts'
 
 const VALID_SOURCES = new Set(['taskNew', 'taskReview', 'current', 'wrongWords'])
-const VALID_TEMPLATE_IDS: PracticeStepTemplateId[] = ['followWrite', 'listen', 'dictation', 'identify']
+const VALID_TEMPLATE_IDS: PracticeStepTemplateId[] = ['followWrite', 'spell', 'listen', 'dictation', 'identify']
 const VALID_TEMPLATE_IDS_SET = new Set<string>(VALID_TEMPLATE_IDS)
+const VALID_END_ACTION_TYPES = new Set(['wrongWordClear', 'collectWrongWords', 'generateReport', 'navigate'])
 
 /**
  * 校验流程配置是否可编译；失败则返回 system 默认。
@@ -35,6 +38,31 @@ export function validateFlowConfig(
     for (const step of node.steps) {
       if (!step?.templateId || !VALID_TEMPLATE_IDS_SET.has(step.templateId)) {
         return BUILTIN_FLOWS.system
+      }
+      // 校验 wordAdvance.subSteps（若存在）
+      if (step.wordAdvance?.type === 'wordLoop' && 'subSteps' in step.wordAdvance) {
+        const subSteps = (step.wordAdvance as any).subSteps
+        if (!Array.isArray(subSteps)) return BUILTIN_FLOWS.system
+        for (const sub of subSteps) {
+          if (!sub?.templateId || !VALID_TEMPLATE_IDS_SET.has(sub.templateId)) {
+            return BUILTIN_FLOWS.system
+          }
+        }
+      }
+      // 校验 onEnd（若存在）
+      if (step.onEnd !== undefined) {
+        if (!Array.isArray(step.onEnd)) return BUILTIN_FLOWS.system
+        for (const action of step.onEnd) {
+          if (!action?.type || !VALID_END_ACTION_TYPES.has(action.type)) {
+            return BUILTIN_FLOWS.system
+          }
+          // wrongWordClear action 的 templateId 必须合法
+          if (action.type === 'wrongWordClear') {
+            if (!VALID_TEMPLATE_IDS_SET.has((action as any).templateId ?? '')) {
+              return BUILTIN_FLOWS.system
+            }
+          }
+        }
       }
     }
   }

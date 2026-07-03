@@ -1,10 +1,13 @@
 /**
  * 练习页「推进器」：对应 v1 的 next() / nextStage() / wordLoop()。
  *
- * 完全 cursor-native：
- * - cursor { nodeIndex, stepIndex, spellSubStep, wrongRetry } 是唯一位置指针
+ * Phase 2.6 升级（完全适配新 cursor 结构）：
+ * - cursor { nodeIndex, stepIndex, inWrongWordClear, loop, endActionIndex } 是唯一位置指针
  * - resolvePhaseByCtxCursor(cursor) 是唯一相位查询入口
- * - 不再读写 statStore.stage
+ * - runWordLoop 读取 subSteps[]，不再硬编码 Spell 切换
+ * - handleListEnd 驱动 onEnd action 队列，替代 requireWrongWordClear 布尔判断
+ * - runWrongWordRetry 接收来自 wrongWordClear action 的 templateId + wordAdvance 配置
+ * - 移除 spellSubStep / wrongRetry / shouldEnterSpellSubPhase / handleSpellSubPhaseTransition
  */
 import { ref } from 'vue'
 import type { PracticeData, TaskWords, Word } from '@typewords/core/types/types.ts'
@@ -19,14 +22,19 @@ import {
   advanceCursor,
   getActiveFlowId,
   getActiveRegistry,
+  getInitialCursor,
   loadPracticeFlow,
   resolvePhaseByCtxCursor,
 } from './practice-phase-registry.ts'
 import { applyPhaseDefinition, displayOverride, sessionDisplay } from './usePracticeDisplayPolicy.ts'
 import type {
+  PracticeCollectWrongWordsAction,
+  PracticeEndAction,
   PracticeFlowCursor,
+  PracticeGenerateReportAction,
   PracticePhaseDefinition,
   PracticeSessionSnapshot,
+  PracticeWrongWordClearAction,
   PracticeWordsSource,
 } from './registry-types.ts'
 import { cursorKey } from './registry-types.ts'
@@ -44,16 +52,24 @@ export type NavigatorDeps = {
 export const activeCursor = ref<PracticeFlowCursor>({
   nodeIndex: 0,
   stepIndex: 0,
-  spellSubStep: false,
-  wrongRetry: false,
+  inWrongWordClear: false,
+  loop: null,
+  endActionIndex: null,
 })
 
 export function resetCursor() {
-  activeCursor.value = { ...getActiveRegistry().initialCursor }
+  activeCursor.value = { ...getInitialCursor() }
 }
 
 export function restoreCursorFromSnapshot(cursor: PracticeFlowCursor) {
-  activeCursor.value = { ...cursor }
+  // 兼容旧缓存（Phase 2.5 以前的 cursor 无新字段）
+  activeCursor.value = {
+    nodeIndex: cursor.nodeIndex ?? 0,
+    stepIndex: cursor.stepIndex ?? 0,
+    inWrongWordClear: (cursor as any).inWrongWordClear ?? (cursor as any).wrongRetry ?? false,
+    loop: (cursor as any).loop ?? null,
+    endActionIndex: (cursor as any).endActionIndex ?? null,
+  }
 }
 
 // ─── 词源解析 ──────────────────────────────────────────────────────────────────
@@ -91,22 +107,64 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     return phase
   }
 
+  // ─── wordLoop 子步骤推进 ──────────────────────────────────────────────────────
+
+  /**
+   * wordLoop 内推进词索引。
+   * - 主步骤：index++ → 组满时进入 loop 子步骤（subStepIndex=0），重置 index 到组头
+   * - loop 子步骤：index++ → 组尾时子步骤完成，重置 subStepIndex=0 回主步骤
+   */
   function runWordLoop(groupSize = GROUP_SIZE) {
     const data = deps.getPracticeData()
-    if (settingStore.wordPracticeType === WordPracticeType.FollowWrite) {
+    const cur = activeCursor.value
+
+    if (cur.loop !== null) {
+      // 当前处于 loop 子步骤：推进 index
       data.index++
-      if (data.index % groupSize === 0) {
-        activeCursor.value = { ...activeCursor.value, spellSubStep: true }
-        settingStore.wordPracticeType = WordPracticeType.Spell
-        data.index -= groupSize
+      const { startIndex, endIndex, subStepIndex } = cur.loop
+      // 子步骤词表打完（index 超出 endIndex）
+      if (data.index > endIndex) {
+        // 取下一个 subStep
+        const mainPhase = getActiveRegistry().phasesByCursor.get(cursorKey(cur.nodeIndex, cur.stepIndex))
+        const subSteps = mainPhase?.wordAdvance.subSteps ?? []
+        const nextSubStepIndex = subStepIndex + 1
+
+        if (nextSubStepIndex < subSteps.length) {
+          // 还有更多子步骤，重置 index 到组头
+          activeCursor.value = {
+            ...cur,
+            loop: { startIndex, endIndex, subStepIndex: nextSubStepIndex },
+          }
+          data.index = startIndex
+        } else {
+          // 所有子步骤完成，退出 loop，回到主步骤继续
+          activeCursor.value = { ...cur, loop: null }
+          // index 已到 endIndex+1，即下一组的开始
+          data.index = endIndex + 1
+        }
       }
     } else {
+      // 当前处于主步骤（FollowWrite）：推进 index
       data.index++
       if (data.index % groupSize === 0) {
-        activeCursor.value = { ...activeCursor.value, spellSubStep: false }
-        settingStore.wordPracticeType = WordPracticeType.FollowWrite
+        // 一组练完，进入 loop 子步骤
+        const mainPhase = getActiveRegistry().phasesByCursor.get(cursorKey(cur.nodeIndex, cur.stepIndex))
+        const subSteps = mainPhase?.wordAdvance.subSteps ?? []
+
+        if (subSteps.length > 0) {
+          const groupStart = data.index - groupSize
+          const groupEnd = data.index - 1
+          activeCursor.value = {
+            ...cur,
+            loop: { startIndex: groupStart, endIndex: groupEnd, subStepIndex: 0 },
+          }
+          data.index = groupStart
+          emitter.emit(EventKey.resetWord)
+        }
+        // 若 subSteps 为空，则直接继续主步骤（无子步骤）
       }
     }
+
     syncPhase()
   }
 
@@ -160,63 +218,150 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     goToCursor(nextCursor, words, rule.toast ?? '')
   }
 
-  function runWrongWordRetry() {
+  // ─── 错词清空（由 onEnd wrongWordClear action 驱动） ────────────────────────
+
+  function runWrongWordRetry(action: PracticeWrongWordClearAction) {
     const data = deps.getPracticeData()
-    activeCursor.value = { ...activeCursor.value, wrongRetry: true, spellSubStep: false }
+    // 进入 inWrongWordClear 状态（cursor 已在 advanceCursor 中设为 inWrongWordClear:true）
     data.isTypingWrongWord = true
-    settingStore.wordPracticeType = WordPracticeType.FollowWrite
-    console.log('[Nav] 还有错词，进入错词复习')
+
+    // 实际 practiceType 由 resolvePhaseByCtxCursor 从 action.templateId 派生，无需在此设置
+    console.log(`[Nav] 还有错词，进入错词清空（templateId=${action.templateId}）`)
     data.words = shuffle(cloneDeep(data.wrongWords))
     data.index = 0
     data.wrongWords = []
     syncPhase()
   }
 
-  function shouldEnterSpellSubPhase(phase: PracticePhaseDefinition, ignoreLoop: boolean): boolean {
-    if (ignoreLoop) return false
-    if (settingStore.wordPracticeType === WordPracticeType.Spell) return false
-    return phase.wordAdvance.type === 'wordLoop'
+  // ─── 即时型 action 执行 ───────────────────────────────────────────────────────
+
+  function executeInstantAction(action: PracticeEndAction): void {
+    if (action.type === 'collectWrongWords') {
+      const a = action as PracticeCollectWrongWordsAction
+      console.log(`[Nav] 收藏错词 → ${a.target}`)
+      // TODO: 实际收藏逻辑（Phase 3+）
+    } else if (action.type === 'generateReport') {
+      const a = action as PracticeGenerateReportAction
+      console.log(`[Nav] 生成报告 → ${a.reportType}`)
+      // TODO: 实际报告逻辑（Phase 3+）
+    }
   }
 
-  function handleSpellSubPhaseTransition(word: Word, ignoreLoop: boolean) {
+  // ─── onEnd action 队列处理 ───────────────────────────────────────────────────
+
+  /**
+   * 执行 onEnd 队列中的下一个 action。
+   * - wrongWordClear：有错词则进入 runWrongWordRetry；无错词则继续推进队列
+   * - 即时型：执行后立即推进到下一个 action
+   * - 队列耗尽：进入 stepAdvance
+   */
+  function processNextEndAction(phase: PracticePhaseDefinition, startActionIndex: number) {
+    const onEnd = phase.onEnd
     const data = deps.getPracticeData()
-    const phase = resolvePhaseByCtxCursor(activeCursor.value)
-    const groupSize = phase.wordAdvance.groupSize ?? GROUP_SIZE
-    data.index = Math.floor(data.index / groupSize) * groupSize
-    emitter.emit(EventKey.resetWord)
-    activeCursor.value = { ...activeCursor.value, spellSubStep: true }
-    settingStore.wordPracticeType = WordPracticeType.Spell
-    syncPhase()
-    if (deps.checkWordIsNeedNext(word)) next(false, ignoreLoop)
+
+    let actionIdx = startActionIndex
+
+    while (actionIdx < onEnd.length) {
+      const action = onEnd[actionIdx]
+
+      if (action.type === 'wrongWordClear') {
+        data.wrongWords = data.wrongWords.filter(v => !deps.checkWordIsNeedNext(v))
+        if (data.wrongWords.length > 0) {
+          // 进入 inWrongWordClear 状态
+          activeCursor.value = {
+            ...activeCursor.value,
+            inWrongWordClear: true,
+            endActionIndex: actionIdx,
+            loop: null,
+          }
+          runWrongWordRetry(action as PracticeWrongWordClearAction)
+          return // 挂起，等待用户完成错词清空
+        }
+        // 无错词，跳过此 action，继续下一个
+        actionIdx++
+        continue
+      }
+
+      if (action.type === 'navigate') {
+        if (action.target === 'complete') {
+          deps.complete()
+          return
+        }
+        // nextStep 或其他 → 进入 stepAdvance
+        break
+      }
+
+      // collectWrongWords / generateReport：即时型
+      executeInstantAction(action)
+      actionIdx++
+    }
+
+    // 队列耗尽或遇到 navigate(nextStep)，进入 stepAdvance
+    if (activeCursor.value.inWrongWordClear) {
+      activeCursor.value = { ...activeCursor.value, inWrongWordClear: false, endActionIndex: null }
+    }
+    data.isTypingWrongWord = false
+    runStepAdvance(phase)
   }
 
-  function handleListEnd(phase: PracticePhaseDefinition, ignoreLoop: boolean): boolean {
+  function handleListEnd(phase: PracticePhaseDefinition): boolean {
     const data = deps.getPracticeData()
-    const word = deps.getCurrentWord()
 
-    if (data.words.length && shouldEnterSpellSubPhase(phase, ignoreLoop)) {
-      handleSpellSubPhaseTransition(word, ignoreLoop)
+    // ── 情形 1：处于 inWrongWordClear（错词清空完毕，判断是否还有错词） ──
+    if (activeCursor.value.inWrongWordClear) {
+      data.wrongWords = data.wrongWords.filter(v => !deps.checkWordIsNeedNext(v))
+
+      const cur = activeCursor.value
+      const mainPhase =
+        getActiveRegistry().phasesByCursor.get(cursorKey(cur.nodeIndex, cur.stepIndex)) ?? phase
+
+      if (data.wrongWords.length > 0) {
+        // 继续错词清空
+        const endActionIdx = cur.endActionIndex ?? 0
+        const action = mainPhase.onEnd[endActionIdx]
+        if (action?.type === 'wrongWordClear') {
+          data.words = shuffle(cloneDeep(data.wrongWords))
+          data.index = 0
+          data.wrongWords = []
+          syncPhase()
+          return true
+        }
+      }
+
+      // 错词清空完毕，继续下一个 action
+      const nextActionIdx = (cur.endActionIndex ?? 0) + 1
+      activeCursor.value = { ...cur, inWrongWordClear: false, endActionIndex: null }
+      data.isTypingWrongWord = false
+      processNextEndAction(mainPhase, nextActionIdx)
       return true
     }
 
-    if (activeCursor.value.wrongRetry) {
-      activeCursor.value = { ...activeCursor.value, wrongRetry: false }
-      data.isTypingWrongWord = false
-    }
-
-    data.wrongWords = data.wrongWords.filter(v => !deps.checkWordIsNeedNext(v))
-    if (phase.requireWrongWordClear && data.wrongWords.length) {
-      runWrongWordRetry()
+    // ── 情形 2：处于 loop 子步骤（子步骤词表练完）──
+    if (activeCursor.value.loop !== null) {
+      // loop 词表练完，runWordLoop 会处理 loop 状态转换
+      // 这里返回 false，让 next() 继续走 runWordAdvance
+      // 注意：loop 子步骤结束时 data.index 已超出 endIndex，runWordLoop 内会检测并退出
       return false
     }
 
+    // ── 情形 3：普通主步骤词表练完 → 进入 onEnd 队列 ──
+    if (phase.onEnd.length > 0) {
+      processNextEndAction(phase, 0)
+      return true
+    }
+
+    // 无 onEnd，直接 stepAdvance
     data.isTypingWrongWord = false
-    const mainCursor = { ...activeCursor.value, wrongRetry: false, spellSubStep: false }
-    runStepAdvance(resolvePhaseByCtxCursor(mainCursor))
-    return false
+    runStepAdvance(phase)
+    return true
   }
 
   function atListEnd(data: PracticeData): boolean {
+    // loop 子步骤中，词表范围是 [loop.startIndex, loop.endIndex]
+    const cur = activeCursor.value
+    if (cur.loop !== null) {
+      return data.index >= cur.loop.endIndex
+    }
     return data.words.length === 0 || data.index === data.words.length - 1
   }
 
@@ -238,11 +383,11 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     const phase = resolvePhaseByCtxCursor(activeCursor.value)
 
     if (atListEnd(data)) {
-      if (handleListEnd(phase, ignoreLoop)) return
-    } else {
-      runWordAdvance(phase)
+      const handled = handleListEnd(phase)
+      if (handled) return
     }
 
+    runWordAdvance(phase)
     syncPhase()
 
     if (data.words.length > 0 && deps.checkWordIsNeedNext(deps.getCurrentWord())) {
@@ -270,7 +415,7 @@ export function buildSessionSnapshot(practiceData: PracticeData): PracticeSessio
     isTypingWrongWord: practiceData.isTypingWrongWord,
     wordPracticeMode: settingStore.wordPracticeMode,
     flowId: getActiveFlowId(),
-    flowVersion: 2,
+    flowVersion: 3,
     cursor: { ...activeCursor.value },
     sessionDisplay: sessionDisplay.value ? { ...sessionDisplay.value } : undefined,
     displayOverride: displayOverride.value ? { ...displayOverride.value } : null,

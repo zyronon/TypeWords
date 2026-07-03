@@ -1,16 +1,14 @@
 /**
  * Step Template 库：只描述「怎么练」（展示策略 + 练习类型），不关心词源和阶段流转。
  *
- * 4 个纯动作模板：followWrite / listen / dictation / identify
+ * 5 个纯动作模板：followWrite / spell / listen / dictation / identify
  * 不含 stage / wordsFrom / wordLoop / shuffle 等——这些全部在 flow step 配置中声明。
  */
 import { WordPracticeType } from '@typewords/core/types/enum.ts'
 import type {
   PracticeDisplayPolicy,
-  PracticePhaseDefinition,
   PracticeStepTemplate,
   PracticeStepTemplateId,
-  StepAdvanceRule,
 } from './registry-types.ts'
 
 /** 跟写分组大小，与 v1 groupSize 一致，不可用户编排 */
@@ -83,13 +81,19 @@ export const DISPLAY_IDENTIFY = phaseDisplay({
   inputMode: 'identify-self',
 })
 
-/** 4 个纯动作模板 */
+/** 5 个纯动作模板（spell 从 wordLoop 子步骤衍生，与其他 4 个平级） */
 export const STEP_TEMPLATE_META: Record<PracticeStepTemplateId, PracticeStepTemplate> = {
   followWrite: {
     id: 'followWrite',
     label: '跟写',
     practiceType: WordPracticeType.FollowWrite,
     display: DISPLAY_FOLLOW_WRITE,
+  },
+  spell: {
+    id: 'spell',
+    label: '拼写',
+    practiceType: WordPracticeType.Spell,
+    display: DISPLAY_SPELL,
   },
   listen: {
     id: 'listen',
@@ -109,32 +113,4 @@ export const STEP_TEMPLATE_META: Record<PracticeStepTemplateId, PracticeStepTemp
     practiceType: WordPracticeType.Identify,
     display: DISPLAY_IDENTIFY,
   },
-}
-
-/** 占位 stepAdvance（compiler 会覆盖，这里只供 buildSpellInGroupPhase 继承） */
-const PLACEHOLDER_STEP_ADVANCE: StepAdvanceRule = { nextSource: 'current', complete: false }
-
-/**
- * 从「跟写主相位」派生 Spell 子相位。
- * 显隐改为 DISPLAY_SPELL；practiceType 改为 Spell；其余继承主相位。
- */
-export function buildSpellInGroupPhase(parent: PracticePhaseDefinition): PracticePhaseDefinition {
-  return {
-    practiceType: WordPracticeType.Spell,
-    display: DISPLAY_SPELL,
-    wordAdvance: parent.wordAdvance,
-    stepAdvance: parent.stepAdvance,
-    requireWrongWordClear: parent.requireWrongWordClear,
-  }
-}
-
-/**
- * 由「当前阶段主相位」派生错词复习相位。
- * practiceType 改为 FollowWrite；显隐/推进继承主相位。
- */
-export function buildWrongWordReviewFromParent(parent: PracticePhaseDefinition): PracticePhaseDefinition {
-  return {
-    ...parent,
-    practiceType: WordPracticeType.FollowWrite,
-  }
 }

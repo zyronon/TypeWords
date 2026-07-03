@@ -80,8 +80,9 @@ export function resolveFlowStart(
   const startCursor: PracticeFlowCursor = {
     nodeIndex: startNodeIndex,
     stepIndex: 0,
-    spellSubStep: false,
-    wrongRetry: false,
+    inWrongWordClear: false,
+    loop: null,
+    endActionIndex: null,
   }
 
   const startPhase = registry.phasesByCursor.get(cursorKey(startNodeIndex, 0)) ?? registry.firstPhase
