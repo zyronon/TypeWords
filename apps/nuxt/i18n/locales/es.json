@@ -252,6 +252,8 @@
 	"review_ratio": "Proporción de repaso",
 	"review_ratio_desc": "Proporción de palabras de repaso a palabras nuevas. Los cambios surten efecto en la próxima sesión",
 	"word_auto_pronunciation": "Pronunciación automática",
+	"word_input_auto_pronunciation": "Pronunciación automática en la fase de entrada",
+	"word_input_auto_pronunciation_desc": "Pronuncia automáticamente la palabra actual al entrar en fases de entrada como ortografía, escucha o dictado.",
 	"word_speed": "Word Speed",
 	"effect_sound": "Sonido de efecto (sonidos de error y completado)",
 	"auto_switch": "Cambio automático",

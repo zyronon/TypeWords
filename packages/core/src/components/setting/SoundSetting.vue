@@ -114,6 +114,9 @@ function previewTtsVoice(voiceName: string) {
     <SettingItem :title="$t('word_auto_pronunciation')">
       <Switch v-model="settingStore.wordSound" />
     </SettingItem>
+    <SettingItem :title="$t('word_input_auto_pronunciation')" :desc="$t('word_input_auto_pronunciation_desc')">
+      <Switch v-model="settingStore.wordInputSound" />
+    </SettingItem>
     <SettingItem v-if="showVolumeSubsInSections" :title="$t('volume')">
       <Slider v-model="settingStore.wordSoundVolume" showText showValue unit="%" />
     </SettingItem>

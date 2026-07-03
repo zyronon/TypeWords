@@ -100,6 +100,17 @@ const { highlightedSentenceIndex, playWord, playSentence, playTtsWithGuide } = u
   canSeeSentences: () => canSeeSentences.value,
 })
 
+function shouldAutoPlayWordOnEntry() {
+  if (
+    settingStore.wordPracticeType === WordPracticeType.Spell ||
+    settingStore.wordPracticeType === WordPracticeType.Listen ||
+    settingStore.wordPracticeType === WordPracticeType.Dictation
+  ) {
+    return settingStore.wordInputSound
+  }
+  return settingStore.wordSound
+}
+
 function getSentenceShortcut(index: number) {
   const key = SENTENCE_PLAY_SHORTCUT_KEYS[index]
   return key ? settingStore.shortcutKeyMap[key] : ''
@@ -160,7 +171,7 @@ function resetState(trigger: WordPlayTrigger) {
   wrongTimes.value = 0
   highlightedSentenceIndex.value = -1
   resetActiveWordPlayCount(props.word.word)
-  if (settingStore.wordSound && settingStore.wordPracticeType !== WordPracticeType.Dictation) {
+  if (shouldAutoPlayWordOnEntry()) {
     playWord(trigger, { resetIcon: trigger === WordPlayTrigger.NewWord })
   }
   updateCurrentWordInfo()

@@ -252,6 +252,8 @@
 	"review_ratio": "Tỷ lệ ôn tập",
 	"review_ratio_desc": "Tỷ lệ từ ôn tập với từ mới. Thay đổi có hiệu lực trong phiên học tiếp theo",
 	"word_auto_pronunciation": "Phát âm tự động",
+	"word_input_auto_pronunciation": "Tự động phát âm ở giai đoạn nhập",
+	"word_input_auto_pronunciation_desc": "Tự động phát âm từ hiện tại khi vào các giai đoạn nhập như chính tả, nghe hoặc chép chính tả.",
 	"word_speed": "Word Speed",
 	"effect_sound": "Âm thanh hiệu ứng (âm thanh lỗi và hoàn thành)",
 	"auto_switch": "Tự động chuyển",

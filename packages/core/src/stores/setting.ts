@@ -10,6 +10,7 @@ export interface SettingState {
   soundType: string
 
   wordSound: boolean
+  wordInputSound: boolean
   wordSoundVolume: number
   wordSoundSpeed: number
   sentenceSoundVolume: number
@@ -80,6 +81,7 @@ export const getDefaultSettingState = (): SettingState => ({
   soundType: 'us',
 
   wordSound: true,
+  wordInputSound: true,
   wordSoundVolume: 100,
   wordSoundSpeed: 1,
   sentenceSoundVolume: 100,

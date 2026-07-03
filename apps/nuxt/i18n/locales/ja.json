@@ -252,6 +252,8 @@
 	"review_ratio": "復習比率",
 	"review_ratio_desc": "復習単語と新単語の比率。変更は次回の学習時に有効",
 	"word_auto_pronunciation": "自動発音",
+	"word_input_auto_pronunciation": "入力段階の自動発音",
+	"word_input_auto_pronunciation_desc": "スペル、リスニング、ディクテーションなどの入力段階に入ると現在の単語を自動で読み上げます",
 	"word_speed": "Word Speed",
 	"effect_sound": "効果音（エラー時と完了時の音）",
 	"auto_switch": "自動切り替え",

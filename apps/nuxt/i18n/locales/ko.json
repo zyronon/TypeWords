@@ -252,6 +252,8 @@
 	"review_ratio": "복습 비율",
 	"review_ratio_desc": "복습 단어와 새 단어의 비율. 변경 사항은 다음 학습 세션에 적용됩니다",
 	"word_auto_pronunciation": "자동 발음",
+	"word_input_auto_pronunciation": "입력 단계 자동 발음",
+	"word_input_auto_pronunciation_desc": "철자, 듣기, 받아쓰기 등 입력 단계에 들어갈 때 현재 단어를 자동으로 읽습니다",
 	"word_speed": "Word Speed",
 	"effect_sound": "효과음(오류 및 완료 시 소리)",
 	"auto_switch": "자동 전환",

@@ -62,6 +62,12 @@ function eventCheck(e) {
         </div>
       </div>
       <div class="mini-row">
+        <label class="item-title">输入阶段自动发音</label>
+        <div class="wrapper">
+          <Switch v-model="settingStore.wordInputSound" inline-prompt active-text="开" inactive-text="关" />
+        </div>
+      </div>
+      <div class="mini-row">
         <label class="item-title">单词发音口音</label>
         <div class="wrapper">
           <Select v-model="settingStore.soundType" @toggle="selectToggle" placeholder="请选择" size="small">

@@ -104,6 +104,17 @@ function updateCurrentWordInfo() {
 
 watch(() => props.word, reset, { deep: true })
 
+function shouldAutoPlayWordOnEntry() {
+  if (
+    settingStore.wordPracticeType === WordPracticeType.Spell ||
+    settingStore.wordPracticeType === WordPracticeType.Listen ||
+    settingStore.wordPracticeType === WordPracticeType.Dictation
+  ) {
+    return settingStore.wordInputSound
+  }
+  return settingStore.wordSound
+}
+
 function reset() {
   clearJumpTimer()
   wrong = input = ''
@@ -112,10 +123,8 @@ function reset() {
   currentPracticeSentenceIndex = -1
   wordCompletedTime = 0 // 重置时间戳
   wrongTimes.value = 0
-  if (settingStore.wordSound) {
-    if (settingStore.wordPracticeType !== WordPracticeType.Dictation) {
-      volumeIconRef?.play(400, true)
-    }
+  if (shouldAutoPlayWordOnEntry()) {
+    volumeIconRef?.play(400, true)
   }
   // 更新当前单词信息
   updateCurrentWordInfo()

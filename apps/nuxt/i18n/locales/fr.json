@@ -252,6 +252,8 @@
 	"review_ratio": "Ratio de révision",
 	"review_ratio_desc": "Ratio des mots de révision aux nouveaux mots. Les modifications prennent effet à la prochaine session",
 	"word_auto_pronunciation": "Prononciation automatique",
+	"word_input_auto_pronunciation": "Prononciation automatique en phase de saisie",
+	"word_input_auto_pronunciation_desc": "Prononce automatiquement le mot actuel en entrant dans les phases de saisie comme épellation, écoute ou dictée.",
 	"word_speed": "Word Speed",
 	"effect_sound": "Son d'effet (sons d'erreur et de fin)",
 	"auto_switch": "Changement automatique",

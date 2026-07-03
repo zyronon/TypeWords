@@ -252,6 +252,8 @@
 	"review_ratio": "Review Ratio",
 	"review_ratio_desc": "Review to new word ratio, takes effect on next session",
 	"word_auto_pronunciation": "Auto Word Pronunciation",
+	"word_input_auto_pronunciation": "Input Stage Auto Pronunciation",
+	"word_input_auto_pronunciation_desc": "Automatically pronounce the current word when entering spelling, listening, or dictation input stages.",
 	"word_speed": "Word Speed",
 	"effect_sound": "Effect Sound (error/completion sound)",
 	"auto_switch": "Auto Switch",

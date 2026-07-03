@@ -252,6 +252,8 @@
 	"review_ratio": "Taxa de revisão",
 	"review_ratio_desc": "Proporção de palavras de revisão para novas palavras. As alterações entram em vigor na próxima sessão",
 	"word_auto_pronunciation": "Pronúncia automática",
+	"word_input_auto_pronunciation": "Pronúncia automática na etapa de entrada",
+	"word_input_auto_pronunciation_desc": "Pronuncia automaticamente a palavra atual ao entrar em etapas de entrada como soletração, escuta ou ditado.",
 	"word_speed": "Word Speed",
 	"effect_sound": "Som de efeito (sons de erro e conclusão)",
 	"auto_switch": "Troca automática",

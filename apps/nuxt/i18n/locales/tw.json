@@ -252,6 +252,8 @@
 	"review_ratio": "複习比",
 	"review_ratio_desc": "複习詞与新詞的比例，修改后下次學习生效",
 	"word_auto_pronunciation": "單詞自動发音",
+	"word_input_auto_pronunciation": "輸入階段自動发音",
+	"word_input_auto_pronunciation_desc": "進入拼寫、聽寫、默寫等輸入階段時自動朗讀當前單詞",
 	"word_speed": "Word Speed",
 	"effect_sound": "效果音（輸入错误、完成時的音效）",
 	"auto_switch": "自動切換",

@@ -252,6 +252,8 @@
 	"review_ratio": "Wiederholungsverhältnis",
 	"review_ratio_desc": "Verhältnis von Wiederholungswörtern zu neuen Wörtern. Änderungen werden in der nächsten Sitzung wirksam",
 	"word_auto_pronunciation": "Automatische Aussprache",
+	"word_input_auto_pronunciation": "Automatische Aussprache in Eingabephasen",
+	"word_input_auto_pronunciation_desc": "Spricht das aktuelle Wort automatisch aus, wenn Eingabephasen wie Rechtschreibung, Hören oder Diktat beginnen.",
 	"word_speed": "Word Speed",
 	"effect_sound": "Effektsound (Fehler- und Abschlusstöne)",
 	"auto_switch": "Automatisch wechseln",

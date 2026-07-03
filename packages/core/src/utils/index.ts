@@ -220,6 +220,12 @@ export async function checkAndUpgradeSaveSetting(val: any) {
         updateLocalData = true
       }
 
+      //拆分输入阶段自动发音；旧用户沿用原单词自动发音开关
+      if (typeof state.wordInputSound !== 'boolean') {
+        state.wordInputSound = typeof state.wordSound === 'boolean' ? state.wordSound : defaultState.wordInputSound
+        updateLocalData = true
+      }
+
       // @ts-ignore
       delete state.shortcutKeyMap
       checkRiskKey(defaultState, state)

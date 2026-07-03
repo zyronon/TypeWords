@@ -252,6 +252,8 @@
 	"review_ratio": "Rasio Ulasan",
 	"review_ratio_desc": "Rasio kata ulasan ke kata baru. Perubahan berlaku di sesi belajar berikutnya",
 	"word_auto_pronunciation": "Pengucapan Otomatis",
+	"word_input_auto_pronunciation": "Pengucapan Otomatis Tahap Input",
+	"word_input_auto_pronunciation_desc": "Otomatis melafalkan kata saat ini ketika masuk ke tahap input seperti ejaan, mendengarkan, atau dikte.",
 	"word_speed": "Word Speed",
 	"effect_sound": "Suara Efek (suara error dan selesai)",
 	"auto_switch": "Beralih Otomatis",

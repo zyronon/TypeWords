@@ -252,6 +252,8 @@
 	"review_ratio": "复习比",
 	"review_ratio_desc": "复习词与新词的比例，修改后下次学习生效",
 	"word_auto_pronunciation": "单词自动发音",
+	"word_input_auto_pronunciation": "输入阶段自动发音",
+	"word_input_auto_pronunciation_desc": "进入拼写、听写、默写等输入阶段时自动朗读当前单词",
 	"word_speed": "单词倍速",
 	"effect_sound": "效果音（输入错误、完成时的音效）",
 	"auto_switch": "自动切换",
