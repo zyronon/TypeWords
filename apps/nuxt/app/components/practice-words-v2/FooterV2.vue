@@ -46,16 +46,20 @@ function format(val: number, suffix: string = '', check: number = -1) {
 
 /**
  * 当前阶段状态名。
- * 单节点单步骤流程（Free/Shuffle）显示 flow 名；多节点流程显示当前 node 名。
+ * 对齐 v1 Footer：错词时显示「错词复习」，否则显示 node·step。
+ * 单节点单步骤流程（Free/Shuffle 等价）直接显示 flow 名。
  */
 const status = computed(() => {
   if (practiceData.isTypingWrongWord) return $t('review_wrong_words')
   const registry = getActiveRegistry()
   const nodes = registry.config.nodes
-  if (nodes.length === 1 && nodes[0].steps.length === 1) return registry.config.label
   const cursor = activeCursor.value
-  const currentNode = nodes[cursor.nodeIndex]
-  return currentNode?.label ?? registry.config.label
+  const node = nodes[cursor.nodeIndex]
+  if (!node) return registry.config.label
+  const step = node.steps[cursor.stepIndex]
+  const stepLabel = step?.label ?? step?.templateId ?? ''
+  if (nodes.length === 1 && nodes[0].steps.length === 1) return registry.config.label
+  return node.label + (stepLabel ? ' · ' + stepLabel : '')
 })
 
 /**
@@ -89,13 +93,15 @@ const stages = computed(() => {
     }]
   }
 
-  // 多 node 进度条
+  // 多 node 进度条；单 node 多 step 时 nodeRatio = 100，不切分
+  const isSingleNode = nodes.length === 1
   return nodes.map((node, ni) => {
     const isCurrentNode = ni === nodeIndex
     const isCompleted = ni < nodeIndex
-    const isFuture = ni > nodeIndex
 
-    const nodeRatio = isCurrentNode ? 70 : isCompleted ? 30 : 30
+    const nodeRatio = isSingleNode
+      ? 100
+      : isCurrentNode ? 70 : isCompleted ? 30 : 30
 
     // 子步骤（仅当前 node 展开）
     const children = isCurrentNode && node.steps.length > 1
@@ -121,12 +127,12 @@ const stages = computed(() => {
   })
 })
 
-/** 是否显示「跳过当前阶段」按钮（多 step 流程才显示） */
+/** 是否显示「跳过当前阶段」按钮（多 step 或多 node 流程才显示） */
 const showSkipStep = computed(() => {
   const registry = getActiveRegistry()
   const nodes = registry.config.nodes
-  // 只要有多于 1 个 node，或当前 node 有多于 1 个 step，就显示跳阶段
-  return nodes.length > 1 || (nodes[0]?.steps.length ?? 0) > 1
+  if (nodes.length === 0) return false
+  return nodes.length > 1 || nodes[0].steps.length > 1
 })
 </script>
 

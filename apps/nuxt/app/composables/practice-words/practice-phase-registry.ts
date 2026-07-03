@@ -4,16 +4,15 @@
  * 职责：把已编译的 ActiveFlowRegistry 挂在模块级变量上，供 Navigator 查询。
  *
  * Phase 2.6 升级：
- * - resolvePhaseByCtxCursor 优先级重构：inWrongWordClear → loop → phasesByCursor → firstPhase
- * - advanceCursor 支持 loop.subStepIndex++ 和 endActionIndex++ 推进
- * - 移除对 spellInGroup / wrongRetry / spellSubStep 的引用
+ * - resolvePhaseByCtxCursor 优先级重构：inWrongWordClear(含loop) → loop → phasesByCursor → firstPhase
+ * - advanceCursor 纯 cursor 状态推进（onEnd 入口由 Navigator.processNextEndAction 负责，不重复处理）
+ * - 移除对 spellInGroup / wrongRetry / spellSubStep / advanceEndActions 的引用
  */
 import { getFlowConfig } from './builtin-flows.ts'
 import { STEP_TEMPLATE_META, GROUP_SIZE } from './phase-templates.ts'
 import { buildRegistryFromConfig, validateFlowConfig } from './flow-schema.ts'
 import type {
   ActiveFlowRegistry,
-  PracticeEndAction,
   PracticeFlowConfig,
   PracticeFlowCursor,
   PracticePhaseDefinition,
@@ -124,14 +123,20 @@ export function resolvePhaseByCtxCursor(cursor: PracticeFlowCursor): PracticePha
     registry.phasesByCursor.get(cursorKey(cursor.nodeIndex, cursor.stepIndex)) ?? registry.firstPhase
 
   if (cursor.inWrongWordClear) {
-    // 从 onEnd 中找到第一个 wrongWordClear action（endActionIndex 指向它）
+    // 从 onEnd 中找到 wrongWordClear action（endActionIndex 指向它）
     const endActionIdx = cursor.endActionIndex ?? 0
     const action = mainPhase.onEnd[endActionIdx]
-    if (action?.type === 'wrongWordClear') {
-      return deriveWrongWordClearPhase(action, mainPhase)
+    // 错词清空主相位：由 wrongWordClear action 配置派生
+    const wcPhase = action?.type === 'wrongWordClear'
+      ? deriveWrongWordClearPhase(action, mainPhase)
+      : mainPhase
+
+    // 错词清空期间也可能处于 wordLoop 子步骤（如 FollowWrite → Spell 循环）
+    if (cursor.loop !== null) {
+      const subPhase = deriveLoopSubStepPhase(cursor, wcPhase)
+      if (subPhase) return subPhase
     }
-    // 兜底：直接用主相位
-    return mainPhase
+    return wcPhase
   }
 
   if (cursor.loop !== null) {
@@ -143,10 +148,12 @@ export function resolvePhaseByCtxCursor(cursor: PracticeFlowCursor): PracticePha
 }
 
 /**
- * cursor 推进：下一个 subStep / loop结束回主步骤 / onEnd action / step / node / complete。
+ * cursor 推进：下一个 subStep / loop结束回主步骤 / onEnd action 索引 / step / node / complete。
  *
- * 调用者（Navigator）根据 complete 决定是否触发结算。
- * inWrongWordClear / loop 结束后不立刻进入 stepAdvance，而是继续 endActionIndex 队列。
+ * 注意：onEnd 队列的实际执行（wrongWordClear 挂起、即时型动作执行）由 Navigator.processNextEndAction 负责，
+ * 此处仅做 cursor 状态推进，不重复处理 onEnd 动作内容。
+ *
+ * 调用者（Navigator.runStepAdvance）根据 complete 决定是否触发结算。
  */
 export function advanceCursor(
   cursor: PracticeFlowCursor
@@ -156,21 +163,26 @@ export function advanceCursor(
   const mainPhase =
     registry.phasesByCursor.get(cursorKey(nodeIndex, stepIndex)) ?? registry.firstPhase
 
-  // ── 情形 1：处于 inWrongWordClear（错词清空结束） ──
+  // ── 情形 1：错词清空完毕 → 推进 onEnd action 索引 ──
   if (cursor.inWrongWordClear) {
-    // 错词清空完毕，继续推进 endActionIndex 到下一个 action
     const nextEndIdx = (cursor.endActionIndex ?? 0) + 1
-    return advanceEndActions(cursor, mainPhase, nextEndIdx)
+    if (nextEndIdx >= mainPhase.onEnd.length) {
+      // onEnd 队列耗尽 → 进入 stepAdvance
+      return advanceToNextStep(cursor, mainPhase)
+    }
+    return {
+      cursor: { ...cursor, inWrongWordClear: false, endActionIndex: nextEndIdx },
+      complete: false,
+    }
   }
 
-  // ── 情形 2：处于 loop 子步骤 ──
+  // ── 情形 2：loop 子步骤推进 → 下一个 subStep 或退出 loop ──
   if (cursor.loop !== null) {
     const { startIndex, endIndex, subStepIndex } = cursor.loop
     const subSteps = mainPhase.wordAdvance.subSteps ?? []
     const isLastSubStep = subStepIndex >= subSteps.length - 1
 
     if (!isLastSubStep) {
-      // 还有更多子步骤
       return {
         cursor: {
           ...cursor,
@@ -179,72 +191,14 @@ export function advanceCursor(
         complete: false,
       }
     }
-
-    // 所有子步骤完成，退出 loop，回到主步骤继续下一组
     return {
-      cursor: {
-        ...cursor,
-        loop: null,
-      },
+      cursor: { ...cursor, loop: null },
       complete: false,
     }
   }
 
-  // ── 情形 3：普通主步骤，词表练完 → 进入 onEnd 队列 ──
-  if (mainPhase.onEnd.length > 0) {
-    return advanceEndActions(cursor, mainPhase, 0)
-  }
-
-  // onEnd 为空，直接进 stepAdvance
+  // ── 情形 3：普通状态 → step/node 推进（onEnd 入口由 Navigator 处理，不在此处重复） ──
   return advanceToNextStep(cursor, mainPhase)
-}
-
-/**
- * 推进 onEnd action 队列。
- * 遇到 wrongWordClear → 进入 inWrongWordClear 状态（需外部处理交互）。
- * 遇到即时型 action（collectWrongWords / generateReport）→ Navigator 执行后继续调用 advanceCursor。
- * 遇到 navigate / 队列结束 → 进入 stepAdvance。
- */
-function advanceEndActions(
-  cursor: PracticeFlowCursor,
-  mainPhase: PracticePhaseDefinition,
-  actionIndex: number
-): { cursor: PracticeFlowCursor; complete: boolean } {
-  const onEnd = mainPhase.onEnd
-
-  // 队列耗尽，进入 stepAdvance
-  if (actionIndex >= onEnd.length) {
-    return advanceToNextStep(cursor, mainPhase)
-  }
-
-  const action = onEnd[actionIndex]
-
-  if (action.type === 'wrongWordClear') {
-    // 交互型：挂起队列，进入错词清空状态
-    return {
-      cursor: {
-        ...cursor,
-        inWrongWordClear: true,
-        endActionIndex: actionIndex,
-        loop: null,
-      },
-      complete: false,
-    }
-  }
-
-  if (action.type === 'navigate') {
-    if (action.target === 'complete') {
-      return { cursor, complete: true }
-    }
-    // nextStep 或其他：进入 stepAdvance
-    return advanceToNextStep(cursor, mainPhase)
-  }
-
-  // collectWrongWords / generateReport：即时型，Navigator 执行后继续下一个
-  return {
-    cursor: { ...cursor, endActionIndex: actionIndex },
-    complete: false,
-  }
 }
 
 /** 按 stepAdvance 推进到下一 step / node，或结束 */

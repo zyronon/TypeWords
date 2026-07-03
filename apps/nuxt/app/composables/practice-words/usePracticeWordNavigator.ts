@@ -304,7 +304,7 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     runStepAdvance(phase)
   }
 
-  function handleListEnd(phase: PracticePhaseDefinition): boolean {
+  function handleListEnd(phase: PracticePhaseDefinition, ignoreLoop = false): boolean {
     const data = deps.getPracticeData()
 
     // ── 情形 1：处于 inWrongWordClear（错词清空完毕，判断是否还有错词） ──
@@ -320,6 +320,8 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
         const endActionIdx = cur.endActionIndex ?? 0
         const action = mainPhase.onEnd[endActionIdx]
         if (action?.type === 'wrongWordClear') {
+          // 重置 loop 状态（上一轮可能残留 loop 脏数据），避免 runWordLoop 误判
+          activeCursor.value = { ...cur, loop: null }
           data.words = shuffle(cloneDeep(data.wrongWords))
           data.index = 0
           data.wrongWords = []
@@ -342,6 +344,30 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
       // 这里返回 false，让 next() 继续走 runWordAdvance
       // 注意：loop 子步骤结束时 data.index 已超出 endIndex，runWordLoop 内会检测并退出
       return false
+    }
+
+    // ── 情形 2.5：wordLoop 主步骤词表自然结束，最后一组尚未进入 loop 子步骤 ──
+    // 例如 20 个词、groupSize=7，前三组 0-6/7-13 正常进入 loop，但最后一组 14-19 因
+    // index 停在 19 不满足 19%7===0，导致漏入。这里补刀：词表穷尽时若主步骤是 wordLoop，
+    // 将当前未完成的组强行送入 loop 子步骤。
+    // 注意：此判断仅在 index 仍处于列表有效范围内生效；若 index 已越界（loop 退出后
+    // endIndex+1 == words.length），应走情形 3 的 onEnd / stepAdvance。
+    if (!ignoreLoop && phase.wordAdvance.type === 'wordLoop' && data.words.length > 0 && data.index < data.words.length) {
+      const groupSize = phase.wordAdvance.groupSize ?? GROUP_SIZE
+      const endIndex = data.index
+      const groupStart = Math.floor(endIndex / groupSize) * groupSize
+      const subSteps = phase.wordAdvance.subSteps
+
+      if (subSteps && subSteps.length > 0) {
+        activeCursor.value = {
+          ...activeCursor.value,
+          loop: { startIndex: groupStart, endIndex, subStepIndex: 0 },
+        }
+        data.index = groupStart
+        emitter.emit(EventKey.resetWord)
+        syncPhase()
+        return true
+      }
     }
 
     // ── 情形 3：普通主步骤词表练完 → 进入 onEnd 队列 ──
@@ -383,15 +409,22 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     const phase = resolvePhaseByCtxCursor(activeCursor.value)
 
     if (atListEnd(data)) {
-      const handled = handleListEnd(phase)
+      const handled = handleListEnd(phase, ignoreLoop)
       if (handled) return
     }
 
     runWordAdvance(phase)
     syncPhase()
 
+    // loop 子步骤全部完成后 index 可能 == words.length（超出末尾，atListEnd 的 === 检测不到），
+    // 此时需补一次 handleListEnd 进入 onEnd / stepAdvance
+    if (data.index >= data.words.length && data.words.length > 0) {
+      handleListEnd(resolvePhaseByCtxCursor(activeCursor.value), false)
+      return
+    }
+
     if (data.words.length > 0 && deps.checkWordIsNeedNext(deps.getCurrentWord())) {
-      next(false, ignoreLoop)
+      next(false)
     }
   }
 

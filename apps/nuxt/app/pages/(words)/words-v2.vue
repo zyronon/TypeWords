@@ -27,7 +27,7 @@ import {
   useNav,
 } from '@typewords/core/utils'
 import type { DictResource, Statistics } from '@typewords/core/types/types.ts'
-import { shallowReactive, watch } from 'vue'
+import { onMounted, onUnmounted, shallowReactive, watch } from 'vue'
 import { getCurrentStudyWord } from '@typewords/core/hooks/dict.ts'
 import { useRuntimeStore } from '@typewords/core/stores/runtime.ts'
 import Book from '@typewords/core/components/Book.vue'
@@ -54,15 +54,16 @@ import ImportBanner from '@typewords/core/components/ImportBanner.vue'
 import ReleaseBanner from '@typewords/core/components/ReleaseBanner.vue'
 import ShufflePracticeSettingDialog from '@typewords/core/components/word/ShufflePracticeSettingDialog.vue'
 import { deleteDict } from '@typewords/core/apis/dict.ts'
-import { flushStatToStore, usePracticeWordPersistence } from '@typewords/core/composables/usePracticePersistence'
+import { flushStatToStore } from '@typewords/core/composables/usePracticePersistence'
 import { useDataSyncPersistence } from '@typewords/core/composables/useDataSyncPersistence'
 import { WordPracticeMode } from '@typewords/core/types/enum.ts'
-import type { PracticeWordCache } from '@typewords/core/utils/cache.ts'
+import { usePracticeWordPersistenceV2 } from '~/composables/practice-words/usePracticeWordPersistenceV2.ts'
+import type { PracticeWordCacheV2 } from '~/composables/practice-words/practice-word-cache-v2.ts'
 import dayjs from 'dayjs'
 
 const store = useBaseStore()
 const settingStore = useSettingStore()
-const wordPersistence = usePracticeWordPersistence()
+const wordPersistence = usePracticeWordPersistenceV2()
 const dataSync = useDataSyncPersistence()
 const router = useRouter()
 const { nav } = useNav()
@@ -73,16 +74,14 @@ let isSaveData = $ref(false)
 const shouldShowDialogPracticeMode = [WordPracticeMode.Shuffle, WordPracticeMode.ShuffleWordsTest]
 
 useHead({
-  title: APP_NAME + ' 单词',
+  title: APP_NAME + ' 单词 V2',
 })
 
-let practiceData = $ref<PracticeWordCache>({
+let practiceData = $ref<PracticeWordCacheV2>({
   taskWords: {
     new: [],
     review: [],
   },
-  practiceData: null,
-  statStoreData: null,
 } as any)
 
 async function resetCacheData() {
@@ -90,6 +89,7 @@ async function resetCacheData() {
   isSaveData = false
   practiceData.practiceData = null
   practiceData.statStoreData = null
+  practiceData.sessionSnapshot = undefined
   await wordPersistence.clear()
 }
 
@@ -133,8 +133,8 @@ watch(
 
 async function onvisibilitychange() {
   if (!document.hidden) {
-    //当页面可见时，检查是否需要从远程拉取数据
-    const d = await wordPersistence.fetch()
+    //当页面可见时，检查是否需要从缓存恢复
+    const d = await wordPersistence.load()
     if (d) {
       practiceData = d
       isSaveData = true
@@ -221,7 +221,7 @@ async function startPractice(practiceMode: WordPracticeMode, resetCache: boolean
     })
     //把是否是第一次设置为false
     if (settingStore.first) settingStore.first = false
-    nav(WordPracticeModeUrlMap[practiceMode] + '/' + store.sdict.id, {}, practiceData)
+    nav(WordPracticeModeUrlMap[practiceMode] + '-v2/' + store.sdict.id, {}, practiceData)
   } else {
     window.umami?.track('no-dict')
     Toast.warning('请先选择一本词典')
@@ -275,7 +275,6 @@ const cacheDaySpendMap = $computed((): Map<string, number> => {
     // 老数据 / 无 segments：全部归到 startDate 那天
     map.set(dayjs(st.startDate).format('YYYY-MM-DD'), st.spend)
   }
-  // console.log('map',map,practiceData.statStoreData)
   return map
 })
 
@@ -454,11 +453,11 @@ async function onShufflePracticeSettingOk(setting: ShufflePracticeSetting) {
   const result = getShufflePracticeWords(store.sdict.words, setting, ignoreSet)
   practiceData.taskWords.review = result.words
   nav(
-    WordPracticeModeUrlMap[editingWordPracticeMode] + '/' + store.sdict.id,
+    WordPracticeModeUrlMap[editingWordPracticeMode] + '-v2/' + store.sdict.id,
     {},
     {
       ...practiceData,
-      total: result.words.length, //用于再来一组时，随机出正确的长度，因为练习中可能会点击已掌握，导致重学一遍之后长度变少，如果再来一组，此时长度就不正确
+      total: result.words.length,
       shuffleRange: result.range,
     }
   )
@@ -466,7 +465,6 @@ async function onShufflePracticeSettingOk(setting: ShufflePracticeSetting) {
 
 async function saveLastPracticeIndex(e) {
   runtimeStore.editDict.lastLearnIndex = e
-  // runtimeStore.editDict.complete = e >= runtimeStore.editDict.length - 1
   showChangeLastPracticeIndexDialog = false
   await resetCacheData()
   await store.changeDict(runtimeStore.editDict)
@@ -668,28 +666,6 @@ onUnmounted(() => {
               >
                 {{ $t('random_words_test') }}
               </BaseButton>
-
-              <!--              <BaseButton-->
-              <!--                class="w-full"-->
-              <!--                v-if="settingStore.wordPracticeMode !== WordPracticeMode.IdentifyOnly"-->
-              <!--                @click="startPractice(WordPracticeMode.IdentifyOnly, true)"-->
-              <!--              >-->
-              <!--                {{ WordPracticeModeNameMap[WordPracticeMode.IdentifyOnly] }}-->
-              <!--              </BaseButton>-->
-              <!--              <BaseButton-->
-              <!--                class="w-full"-->
-              <!--                v-if="settingStore.wordPracticeMode !== WordPracticeMode.ListenOnly"-->
-              <!--                @click="startPractice(WordPracticeMode.ListenOnly, true)"-->
-              <!--              >-->
-              <!--                {{ WordPracticeModeNameMap[WordPracticeMode.ListenOnly] }}-->
-              <!--              </BaseButton>-->
-              <!--              <BaseButton-->
-              <!--                class="w-full"-->
-              <!--                v-if="settingStore.wordPracticeMode !== WordPracticeMode.DictationOnly"-->
-              <!--                @click="startPractice(WordPracticeMode.DictationOnly, true)"-->
-              <!--              >-->
-              <!--                {{ WordPracticeModeNameMap[WordPracticeMode.DictationOnly] }}-->
-              <!--              </BaseButton>-->
             </template>
           </OptionButton>
 
