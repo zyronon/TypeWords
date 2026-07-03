@@ -8,8 +8,8 @@
 
 - [x] Phase 1：复制骨架 + 独立缓存 `PracticeSaveWordV2`
 - [x] Phase 2：Registry（可序列化）+ Navigator + sessionSnapshot + displayPolicy + keyboard
-- [x] Phase 2.5 Architecture Upgrade：node/steps 三层模型 + Cursor 导航（✅ 完成，待 Phase 2.6 升级类型）
-- [ ] Phase 2.6 Type System Refinement：wordLoop subSteps、onEnd 串行动作、cursor 通用化
+- [x] Phase 2.5 Architecture Upgrade：node/steps 三层模型 + Cursor 导航（✅ 完成）
+- [x] Phase 2.6 Type System Refinement：wordLoop subSteps、onEnd 串行动作、cursor 通用化（✅ 完成）
 - [ ] Phase 3：用户自定义练习流程 UI（档位 A：阶段块拖拽编排）
 - [ ] Phase 4：v2 组件拆分
 - [ ] Phase 5–6：例句练习线（可选）
@@ -81,23 +81,23 @@
 Phase 1 → 复制页面+组件，抽 composables，v2 行为≈v1 副本，独立缓存
 Phase 2 → 可序列化 Registry + Navigator + sessionSnapshot + displayPolicy + keyboard（✅ 完成）
 Phase 2.5 → node/steps 三层模型 + Cursor 导航（✅ 完成）
-Phase 2.6 → wordLoop subSteps、onEnd 串行动作、cursor 通用化（当前）
+Phase 2.6 → wordLoop subSteps、onEnd 串行动作、cursor 通用化（✅ 完成）
 Phase 3 → 用户自定义练习流程 UI（档位 A：阶段块拖拽编排）
 Phase 4 → 仅改 v2 副本内组件拆分
 Phase 5–6 → 例句线（可选，用户未要求时可暂停在 Phase 3/4）
 ```
 
-### 关键新建文件清单（Phase 1–2.5 最低集）
+### 关键新建文件清单（Phase 1–2.6 最低集）
 
 ```
 apps/nuxt/app/pages/(words)/practice-words-v2/[id].vue
 apps/nuxt/app/pages/(words)/practice-flow-editor.vue     # Phase 3
+apps/nuxt/app/pages/(words)/words-v2.vue                 # 适配 v2 缓存的入口页
 apps/nuxt/app/components/practice-words-v2/
-  PracticeWordsView.vue
   TypeWordV2.vue          ← 复制自 core/TypeWord.vue
   FooterV2.vue
   StatisticsV2.vue
-apps/nuxt/app/components/practice-flow/                  # Phase 2.5
+apps/nuxt/app/components/practice-flow/                  # Phase 3
   FlowEditor.vue
   PhaseBlockCard.vue
   FlowPreview.vue
@@ -110,36 +110,32 @@ apps/nuxt/app/composables/practice-words/
   phase-templates.ts           # 阶段块模板
   builtin-flows.ts             # System/Review/... 默认流程
   flow-schema.ts               # 校验 + PracticeFlowConfig 类型
-  usePracticeFlowStorage.ts    # 用户自定义流程持久化（独立 key）
+  flow-compiler.ts             # 编译 nodes[] → ActiveFlowRegistry
+  usePracticeFlowStorage.ts    # Phase 3：用户自定义流程持久化（独立 key）
   usePracticeDisplayPolicy.ts
   usePracticeWordKeyboard.ts
   usePracticeWordAudioV2.ts ← 复制自 core/composables/useWordPracticeAudio.ts
+  practice-word-cache-v2.ts
+  registry-types.ts
   types.ts
+  constants.ts
 ```
 
 v2 页面 **禁止** import `@typewords/core/.../TypeWord.vue`（须用 `TypeWordV2.vue`）。\
 **可以** import：`PracticeLayout`、`Panel`、`WordList`、`stores`、`types`、`utils` 等未改动的 core 模块。
 
-### 开发验证
-
-- 启动：在 `Typewords/` 目录执行 `pnpm -F @typewords/nuxt dev`
-- 访问：`http://localhost:{port}/practice-words-v2/{词典id}`（从 `/words` 选词典后手动改 URL）
-- 对比：同词典分别开 v1 / v2 标签页，**注意缓存 key 不同，进度不共享**
-- Phase 2 验收：见下文「Phase 2 验收」清单，逐项手工测
-- Phase 2.5 验收：见「三-C · Phase 2.5 验收」；流程编排页 `/practice-flow-editor`
-
 ### v1 行为对照表（Registry 填写依据）
 
 实现 Registry 时，以 v1 [`next()`](../apps/nuxt/app/pages/\(words\)/practice-words/\[id].vue)（约 569–681 行）和 [`initData()`](../apps/nuxt/app/pages/\(words\)/practice-words/\[id].vue)（约 288–396 行）为**唯一行为真相**；重构后 v2 输出应与 v1 一致（除已修复的刷新显隐 bug）。
 
-| Mode                                      | Stage 顺序（见 env `WordPracticeModeStageMap`） | 特殊                                 |
-| ----------------------------------------- | ------------------------------------------ | ---------------------------------- |
-| System                                    | 跟写新→听写新→默写新→自测旧→听写旧→默写旧                    | 跟写阶段内 `wordLoop` 7 词分组 + Spell 子相位 |
-| Free                                      | 跟写新→Complete                               | 无 wordLoop；显隐用户控；错词 shuffle 重练     |
-| Shuffle                                   | Shuffle→Complete                           | <br />                             |
-| Review                                    | 自测旧→听写旧→默写旧                                | <br />                             |
-| IdentifyOnly / DictationOnly / ListenOnly | 各 2 阶段                                     | <br />                             |
-| 错词复习（跨 mode）                              | `isTypingWrongWord`                        | 强制 FollowWrite，shuffle wrongWords  |
+| Mode                                      | Stage 顺序（见 env `WordPracticeModeStageMap`） | 特殊                                                                 |
+| ----------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------ |
+| System                                    | 跟写新→听写新→默写新→自测旧→听写旧→默写旧                    | 跟写阶段内 `wordLoop` 7 词分组 + Spell 子相位，Stage结束后错词收集练习，直到错词清空才进入下一Stage |
+| Free                                      | 跟写新→Complete                               | 无 wordLoop；显隐用户控；错词 shuffle 重练                                     |
+| Shuffle                                   | Shuffle→Complete                           | <br />                                                             |
+| Review                                    | 自测旧→听写旧→默写旧                                | <br />                                                             |
+| IdentifyOnly / DictationOnly / ListenOnly | 各 2 阶段                                     | <br />                                                             |
+| 错词复习（跨 mode）                              | `isTypingWrongWord`                        | 强制 FollowWrite，shuffle wrongWords                                  |
 
 ### 已知 v1 Bug（v2 应修复，不要求 v1 改动）
 
@@ -188,15 +184,15 @@ flowchart LR
 ```
 ../apps/nuxt/
   app/pages/(words)/practice-words-v2/[id].vue     # 复制 [id].vue 后改
-  app/pages/(words)/practice-flow-editor.vue       # Phase 2.5 流程编排
+  app/pages/(words)/practice-flow-editor.vue       # Phase 3 流程编排
+  app/pages/(words)/words-v2.vue                   # 适配 v2 缓存的入口页
   app/components/practice-words-v2/
-    PracticeWordsView.vue
     TypeWordV2.vue              # 复制自 core/TypeWord.vue
     FooterV2.vue                # 复制自 core/Footer.vue
     StatisticsV2.vue            # 复制自 core/Statistics.vue
-    PracticeOnboardingHostV2.vue
+    PracticeOnboardingHostV2.vue # Phase 4
     ...（按需复制 ConflictNotice 等）
-  app/components/practice-flow/                    # Phase 2.5
+  app/components/practice-flow/                    # Phase 3
     FlowEditor.vue
     PhaseBlockCard.vue
     FlowPreview.vue
@@ -867,7 +863,7 @@ flowchart LR
 
 ***
 
-### 三-C、用户自定义练习流程（档位 A，Phase 2.5）
+### 三-C、用户自定义练习流程（档位 A，Phase 3）
 
 > **已拍板**：采用档位 A（阶段块拖拽编排）。档位 B（每阶段显隐微调）留二期；档位 C（全功能节点编辑器）明确不做。
 
@@ -904,7 +900,7 @@ flowchart LR
 - **右侧**：选中块的选项（词源、shuffle、是否含拼写子相位）
 - **底部**：保存 / 恢复默认 / 设为当前练习流程
 
-路由：[`/practice-flow-editor`](../apps/nuxt/app/pages/\(words\)/practice-flow-editor.vue)（开发期手动访问，不改 `words.vue` 导航）。
+路由：[`/practice-flow-editor`](../apps/nuxt/app/pages/\(words\)/practice-flow-editor.vue)（在`words-v2.vue` 添加按钮导航）。
 
 #### 接入练习页
 
@@ -912,7 +908,7 @@ flowchart LR
 - v2 初始化：`wordPracticeMode === Custom`（或等价 flag）→ `loadPracticeFlow(activeCustomFlowId)`
 - 内置模式（System / Review / Free …）仍走 `builtin-flows.ts` 对应 id
 
-#### Phase 2.5 验收
+#### Phase 3验收
 
 - 拖拽编排「跟写新词 → 听写新词 → 自测旧词 → 完成」可保存并在 v2 练习页跑通
 - 恢复默认流程与 System 内置一致
@@ -925,7 +921,7 @@ flowchart LR
 | 工作项                                          | 工期        |
 | -------------------------------------------- | --------- |
 | Phase 2 可序列化 + snapshot.flowId（与 Phase 2 同做） | +0.5\~1 天 |
-| Phase 2.5 流程编排 UI + 存储 + v2 接入               | 3–5 天     |
+| Phase 3 流程编排 UI + 存储 + v2 接入                 | 3–5 天     |
 
 ***
 
@@ -1182,11 +1178,11 @@ sequenceDiagram
 
 **验收**：已通过。
 
-### Phase 2.5 — node/steps 三层模型 + Cursor 导航（当前任务）
+### Phase 2.5 — node/steps 三层模型 + Cursor 导航（✅ 已完成）
 
-> 详见「三-D」。核心目标：将当前 `phase-templates.ts` 的 9 个 New/Review 模板精简为 4 个纯动作模板；`builtin-flows.ts` 的平铺 `phases[]` 改为 `nodes[{ source, steps[] }]` 树状结构；Navigator 从 `stage` 模型升级为 `cursor` 模型；Footer 完全泛化。
+> 详见「三-D」。核心目标：将当前 `phase-templates.ts` 的 9 个 New/Review 模板精简为纯动作模板（Phase 2.5: 4 个，Phase 2.6 新增 `spell` 共 5 个）；`builtin-flows.ts` 的平铺 `phases[]` 改为 `nodes[{ source, steps[] }]` 树状结构；Navigator 从 `stage` 模型升级为 `cursor` 模型；Footer 完全泛化。
 
-1. **Step Template 精简**：`phase-templates.ts` → `STEP_TEMPLATE_META`（`followWrite` / `listen` / `dictation` / `identify`），删除 `New`/`Review` 后缀模板
+1. **Step Template 精简**：`phase-templates.ts` → `STEP_TEMPLATE_META`（`followWrite` / `listen` / `dictation` / `identify`，Phase 2.6 新增 `spell`），删除 `New`/`Review` 后缀模板
 2. **Flow 配置升级**：`builtin-flows.ts` → `nodes[]` 结构，每 node 含 `source` + `steps[]`
 3. **类型系统更新**：`registry-types.ts` 新增 `PracticeStepTemplate` / `PracticeFlowNode` / `PracticeFlowStep` / `PracticeFlowCursor`
 4. **Compiler 改造**：`flow-compiler.ts` 负责将 `nodes[]` 编译为 runtime 可用的平铺 phases + cursor
@@ -1204,11 +1200,11 @@ sequenceDiagram
 - 刷新恢复 cursor 精确还原当前 node/step
 - Template 文件行数减半
 
-### Phase 2.6 — wordLoop subSteps、onEnd 串行动作、cursor 通用化（当前任务）
+### Phase 2.6 — wordLoop subSteps、onEnd 串行动作、cursor 通用化（✅ 已完成）
 
 > **背景**：Phase 2.5 将流程配置升级为 `nodes[{ source, steps[] }]` 三层模型，引入 Cursor 导航。但当时的类型设计有两个遗留问题，阻碍更灵活的编排：
 >
-> 1. **`wordLoop` 硬编码为 Spell + 注册表单例**：`wordAdvance: { type: 'wordLoop', groupSize: 7 }` 语义是"跟写 N 词一组 → 拼写同一组"，但 Spell 子相位定义是运行时从第一个 `wordLoop` phase 派生的全局 `registry.spellInGroup`（见 [`flow-compiler.ts:L114`](../apps/nuxt/app/composables/practice-words/flow-compiler.ts#L114) 和 [`phase-templates.ts:L121`](../apps/nuxt/app/composables/practice-words/phase-templates.ts#L121)），无法支持"每组后 Listen"或"每组后依次 Spell → Dictation"的编排。
+> 1. **`wordLoop`** **硬编码为 Spell + 注册表单例**：`wordAdvance: { type: 'wordLoop', groupSize: 7 }` 语义是"跟写 N 词一组 → 拼写同一组"，但 Spell 子相位定义是运行时从第一个 `wordLoop` phase 派生的全局 `registry.spellInGroup`（见 [`flow-compiler.ts:L114`](../apps/nuxt/app/composables/practice-words/flow-compiler.ts#L114) 和 [`phase-templates.ts:L121`](../apps/nuxt/app/composables/practice-words/phase-templates.ts#L121)），无法支持"每组后 Listen"或"每组后依次 Spell → Dictation"的编排。
 > 2. **错词清空不可配置**：`requireWrongWordClear: true` 仅是一个布尔开关（见 [`registry-types.ts:L76`](../apps/nuxt/app/composables/practice-words/registry-types.ts#L76)），运行时由 `buildWrongWordReviewFromParent(parent)` 派生为 FollowWrite + 继承 parent 的 wordAdvance（见 [`phase-templates.ts:L135`](../apps/nuxt/app/composables/practice-words/phase-templates.ts#L135)）。这导致错词清空不可独立配置练习类型、不可配置 subSteps、且无法与错误单词收藏/报告生成等后续动作串行。
 > 3. **cursor 使用业务专用布尔值**：`spellSubStep` 和 `wrongRetry`（见 [`registry-types.ts:L100-L106`](../apps/nuxt/app/composables/practice-words/registry-types.ts#L100-L106)）绑定了 Spell 这一种子练习类型，不通用；`wrongRetry` 优先级高于 `spellSubStep`（见 [`practice-phase-registry.ts:L56-L65`](../apps/nuxt/app/composables/practice-words/practice-phase-registry.ts#L56-L65)），错词清空期间即使有 wordLoop 子步骤也无法正确切入。
 
@@ -1232,7 +1228,7 @@ type PracticeStepTemplateId =
   | 'identify'
 ```
 
-##### 1.2 wordLoop 升级为 subSteps[]
+##### 1.2 wordLoop 升级为 subSteps\[]
 
 ```ts
 type PracticeWordAdvanceConfig =
@@ -1448,13 +1444,13 @@ interface PracticeFlowCursor {
 
 **字段语义**：
 
-| 字段 | 类型 | 说明 |
-| --- | --- |
-| `nodeIndex` | `number` | 当前 FlowNode 索引（不变） |
-| `stepIndex` | `number` | 当前 node 内 step 索引（不变） |
-| `inWrongWordClear` | `boolean` | 当前是否处于错词清空阶段（替代 `wrongRetry`） |
-| `loop` | `null \| { startIndex, endIndex, subStepIndex }` | 当前是否处于 wordLoop 子步骤（替代 `spellSubStep`）；`null` 表示不在 loop 中；非 null 时 `startIndex`/`endIndex` 指定当前复用的词范围，`subStepIndex` 指向 `subSteps[subStepIndex]` |
-| `endActionIndex` | `number \| null` | 当前正在执行的 `onEnd` action 索引；`null` 表示尚未进入 `onEnd` |
+\| 字段 | 类型 | 说明 |
+\| --- | --- |
+\| `nodeIndex` | `number` | 当前 FlowNode 索引（不变） |
+\| `stepIndex` | `number` | 当前 node 内 step 索引（不变） |
+\| `inWrongWordClear` | `boolean` | 当前是否处于错词清空阶段（替代 `wrongRetry`） |
+\| `loop` | `null \| { startIndex, endIndex, subStepIndex }` | 当前是否处于 wordLoop 子步骤（替代 `spellSubStep`）；`null` 表示不在 loop 中；非 null 时 `startIndex`/`endIndex` 指定当前复用的词范围，`subStepIndex` 指向 `subSteps[subStepIndex]` |
+\| `endActionIndex` | `number \| null` | 当前正在执行的 `onEnd` action 索引；`null` 表示尚未进入 `onEnd` |
 
 **cursor 状态示例**：
 
@@ -1565,30 +1561,24 @@ interface PracticeFlowCursor {
    - `PracticeFlowStep`：移除 `requireWrongWordClear`，新增 `onEnd?: PracticeEndAction[]`。
    - `PracticeFlowCursor`：`spellSubStep` → `loop`，`wrongRetry` → `inWrongWordClear`，新增 `endActionIndex`。
    - `ActiveFlowRegistry`：移除 `spellInGroup`。
-
 2. `phase-templates.ts`：
    - `STEP_TEMPLATE_META` 新增 `spell` 模板。
    - 移除 `buildSpellInGroupPhase()`。
    - 移除 `buildWrongWordReviewFromParent()`（错词清空相位由 step 的 `onEnd.wrongWordClear` 配置直接派生）。
-
 3. `builtin-flows.ts`：
    - 所有内置 flow 的 step 从 `requireWrongWordClear: true` 迁移到 `onEnd: [{ type: 'wrongWordClear', ... }]`。
    - 所有 `wordLoop` step 补全 `subSteps: [{ templateId: 'spell' }]`。
-
 4. `flow-compiler.ts`：
    - 移除 `wordLoopPhase` / `buildSpellInGroupPhase` 逻辑。
    - 不再生成 `spellInGroup`。
-
 5. `practice-phase-registry.ts`：
    - `resolvePhaseByCtxCursor()` 重构匹配逻辑。
    - `advanceCursor()` 重构推进逻辑（支持 loop subStepIndex++ 和 endActionIndex++）。
-
 6. `usePracticeWordNavigator.ts`：
    - 适配新 cursor 结构。
    - `runWordLoop()` 改为读取 `subSteps[]`，不再硬编码 Spell 切换。
    - `handleListEnd()` 改为驱动 `onEnd` action 队列。
    - 移除 `runWrongWordRetry()` 中的硬编码 FollowWrite。
-
 7. `flow-schema.ts`：
    - `validateFlowConfig()` 增加 `subSteps[]` / `onEnd[]` 校验。
 
@@ -1609,7 +1599,7 @@ interface PracticeFlowCursor {
 4. v2 练习页接入：`Custom` 模式 → `loadPracticeFlow(customFlowId)`；内置模式不变
 5. i18n：编辑器文案写入 [`zh.json`](../apps/nuxt/i18n/locales/zh.json)
 
-**验收**：见「三-C · Phase 2.5 验收」
+**验收**：见「三-C · Phase 3 验收」
 
 ### Phase 4 — 在 v2 副本内拆分组件
 
@@ -1674,9 +1664,9 @@ interface PracticeFlowCursor {
 
 ### Phase 2 Architecture Upgrade ✅ 完成
 
-- `phase-templates.ts` → 4 个纯动作模板（`followWrite` / `listen` / `dictation` / `identify`），删除 New/Review 命名模板
+- `phase-templates.ts` → 5 个纯动作模板（`followWrite` / `spell` / `listen` / `dictation` / `identify`），删除 New/Review 命名模板
 - `builtin-flows.ts` → `nodes[{ source, steps[] }]` 树状结构，7 种内置模式全部迁移
-- `flow-compiler.ts` → 适配 `nodes[]`，编译为 `phasesByCursor` + `phasesByStage`（兼容层）+ `cursorSteps`
+- `flow-compiler.ts` → 适配 `nodes[]`，编译为 `phasesByCursor` + `cursorSteps`
 - `registry-types.ts` → 新增 `PracticeStepTemplate` / `PracticeFlowNode` / `PracticeFlowStep` / `PracticeFlowCursor` 类型
 - `practice-phase-registry.ts` → 新增 `resolvePhaseByCtxCursor(cursor)` / `advanceCursor()` / `getInitialCursor()`
 - `usePracticeWordNavigator.ts` → cursor 驱动推进（`activeCursor` 模块级 ref），`statStore.stage` 仍同步写入
@@ -1685,9 +1675,21 @@ interface PracticeFlowCursor {
 - `sessionSnapshot` → 新增 `cursor` 字段，刷新后精确恢复
 - 删除死代码 `usePracticeWordTimer.ts`
 
-### Phase 2.6 ← 下一步（当前任务）
+### Phase 2.6 Type System Refinement ✅ 完成
 
-详见「Phase 2.6」。核心：wordLoop subSteps 编排、onEnd 串行动作系统、cursor 通用化。这也为 Phase 3 编排器提供更完整的类型基础。
+- `PracticeStepTemplateId` 新增 `'spell'`，5 种 `WordPracticeType` 全部纳入 Step Template
+- `PracticeLoopSubStep` 接口 + `wordAdvance.subSteps[]`，支持每组后多子步骤编排
+- `PracticeEndAction` 联合类型（`wrongWordClear` / `collectWrongWords` / `generateReport` / `navigate`）
+- `PracticeFlowStep.onEnd` 替代 `requireWrongWordClear` 布尔值
+- `PracticeFlowCursor`：`spellSubStep` → `loop { startIndex, endIndex, subStepIndex }`，`wrongRetry` → `inWrongWordClear`，新增 `endActionIndex`
+- `ActiveFlowRegistry` 移除 `spellInGroup` 全局单例
+- `phase-templates.ts`：移除 `buildSpellInGroupPhase()` / `buildWrongWordReviewFromParent()`
+- `builtin-flows.ts`：所有内置 flow 迁移 `onEnd` + `subSteps[]`，version=3
+- `flow-compiler.ts`：移除 `wordLoopPhase` / `buildSpellInGroupPhase` 逻辑
+- `flow-schema.ts`：校验适配 `subSteps[]` / `onEnd[]`
+- `usePracticeWordNavigator.ts`：`runWordLoop` 读取 `subSteps[]`（不再硬编码 Spell），`processNextEndAction` 驱动 onEnd 队列
+- Cursor 恢复兼容旧缓存（`wrongRetry` → `inWrongWordClear`，无 `loop` → `null`）
+- 新增路由 `/words-v2`（适配 v2 缓存 `PracticeSaveWordV2`，支持「继续练习」）
 
 ## 六、明确不建议
 
