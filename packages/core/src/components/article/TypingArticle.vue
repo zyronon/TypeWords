@@ -102,7 +102,7 @@ const articlePersistence = usePracticeArticlePersistence()
 const isMob = isMobile()
 
 const savePracticeData = async () => {
-  if (runtimeStore.globalLoading) return
+  if (runtimeStore.globalLoading || isEnd) return
   runtimeStore.globalLoading = true
   try {
     await articlePersistence.save({
@@ -324,7 +324,7 @@ let isTyping = false
 //专用锁，因为这个方法父级要调用
 let lock = false
 
-function nextSentence() {
+async function nextSentence() {
   if (lock || isEnd) return
   checkTranslateLocation()
   lock = true
@@ -349,6 +349,9 @@ function nextSentence() {
     sectionIndex++
     if (!props.article.sections[sectionIndex]) {
       console.log('打完了')
+      runtimeStore.globalLoading = true
+      await articlePersistence.clear()
+      runtimeStore.globalLoading = false
       isEnd = true
       emit('complete')
     } else {
@@ -774,12 +777,7 @@ const currentPractice = inject('currentPractice', [])
       <div class="mt-2 text-2xl" v-if="props.article?.question?.text">
         <div class="inline-flex items-center gap-1 flex-wrap">
           <span>Question:</span>
-          <ClickableEnglishText
-            :text="props.article?.question?.text"
-            word=""
-            :dictation="false"
-            :high-light="false"
-          />
+          <ClickableEnglishText :text="props.article?.question?.text" word="" :dictation="false" :high-light="false" />
           <VolumeIcon :simple="true" :title="$t('play')" :cb="playArticleQuestionAudio" />
         </div>
         <div class="text-xl color-translate-second" v-if="settingStore.translate">
@@ -858,7 +856,10 @@ const currentPractice = inject('currentPractice', [])
             />
             <VolumeIcon :simple="true" :title="$t('play')" :cb="playArticleQuoteAudio" />
           </div>
-          <div class="text-xl color-translate-second mt-1" v-if="settingStore.translate && props.article.quote.translate">
+          <div
+            class="text-xl color-translate-second mt-1"
+            v-if="settingStore.translate && props.article.quote.translate"
+          >
             {{ props.article.quote.translate }}
           </div>
         </div>

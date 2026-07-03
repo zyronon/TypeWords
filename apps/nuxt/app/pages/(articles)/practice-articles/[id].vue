@@ -269,11 +269,6 @@ function setArticle(val: Article) {
 
 async function complete() {
   clearInterval(timer)
-  //延时删除缓存，因为可能还有输入，需要保存
-  setTimeout(() => {
-    articlePersistence.clear()
-  }, 1500)
-
   //todo 有空了改成实时保存
   let data: Partial<Statistics> & { title: string; articleId: number } = {
     articleId: Number(articleData.article.id),
