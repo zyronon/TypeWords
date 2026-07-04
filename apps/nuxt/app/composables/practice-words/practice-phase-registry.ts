@@ -11,6 +11,7 @@
 import { getFlowConfig } from './builtin-flows.ts'
 import { STEP_TEMPLATE_META, GROUP_SIZE } from './phase-templates.ts'
 import { buildRegistryFromConfig, validateFlowConfig } from './flow-schema.ts'
+import { loadCustomFlow } from './usePracticeFlowStorage.ts'
 import type {
   ActiveFlowRegistry,
   PracticeFlowConfig,
@@ -31,7 +32,9 @@ let activeRegistry: ActiveFlowRegistry | null = null
 export function loadPracticeFlow(flowIdOrConfig: string | PracticeFlowConfig) {
   const config =
     typeof flowIdOrConfig === 'string'
-      ? validateFlowConfig(getFlowConfig(flowIdOrConfig))
+      ? validateFlowConfig(
+          flowIdOrConfig === 'custom' ? loadCustomFlow() : getFlowConfig(flowIdOrConfig)
+        )
       : validateFlowConfig(flowIdOrConfig)
   activeRegistry = buildRegistryFromConfig(config)
 }

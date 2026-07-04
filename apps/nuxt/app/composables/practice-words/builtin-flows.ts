@@ -281,6 +281,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
  * 无自定义流程时，mode 与 flow 一一对应。
  */
 export function getFlowIdForMode(mode: WordPracticeMode): string {
+  if (mode === WordPracticeMode.Custom) return 'custom'
   const entry = Object.values(BUILTIN_FLOWS).find(flow => flow.mode === mode)
   return entry?.id ?? 'system'
 }

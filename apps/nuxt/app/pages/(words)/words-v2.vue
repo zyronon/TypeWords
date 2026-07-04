@@ -233,9 +233,11 @@ function freePractice() {
 }
 
 function systemPractice() {
+  const currentMode = settingStore.wordPracticeMode
+  const isFreeOrCustom = currentMode === WordPracticeMode.Free || currentMode === WordPracticeMode.Custom
   startPractice(
-    settingStore.wordPracticeMode === WordPracticeMode.Free ? WordPracticeMode.System : settingStore.wordPracticeMode,
-    settingStore.wordPracticeMode === WordPracticeMode.Free
+    isFreeOrCustom ? WordPracticeMode.System : currentMode,
+    isFreeOrCustom
   )
 }
 
@@ -477,6 +479,10 @@ const { data: recommendDictList, isFetching } = useFetch(resourceWrap(DICT_LIST.
 const systemPracticeText = $computed(() => {
   if (settingStore.wordPracticeMode === WordPracticeMode.Free) {
     return '开始学习'
+  } else if (settingStore.wordPracticeMode === WordPracticeMode.Custom) {
+    return isSaveData
+      ? '继续自定义练习'
+      : '开始自定义练习'
   } else {
     return isSaveData
       ? '继续' + WordPracticeModeNameMap[settingStore.wordPracticeMode]
@@ -580,6 +586,7 @@ onUnmounted(() => {
             <span class="color-link cursor-pointer" v-if="store.sdict.id" @click="showPracticeWordListDialog = true">{{
               $t('word_list')
             }}</span>
+            <span class="color-link cursor-pointer ml-2" @click="nav('/practice-flow-editor', {})">流程编排</span>
           </div>
           <div class="flex gap-1 items-center" v-if="store.sdict.id">
             {{ $t('daily_goal') }}
@@ -665,6 +672,13 @@ onUnmounted(() => {
                 @click="startPractice(WordPracticeMode.ShuffleWordsTest, true)"
               >
                 {{ $t('random_words_test') }}
+              </BaseButton>
+              <BaseButton
+                class="w-full"
+                v-if="settingStore.wordPracticeMode !== WordPracticeMode.Custom"
+                @click="startPractice(WordPracticeMode.Custom, true)"
+              >
+                自定义流程
               </BaseButton>
             </template>
           </OptionButton>

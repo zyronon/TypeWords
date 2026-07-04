@@ -10,7 +10,7 @@
 - [x] Phase 2：Registry（可序列化）+ Navigator + sessionSnapshot + displayPolicy + keyboard
 - [x] Phase 2.5 Architecture Upgrade：node/steps 三层模型 + Cursor 导航（✅ 完成）
 - [x] Phase 2.6 Type System Refinement：wordLoop subSteps、onEnd 串行动作、cursor 通用化（✅ 完成）
-- [ ] Phase 3：用户自定义练习流程 UI（档位 A：阶段块拖拽编排）
+- [x] Phase 3：用户自定义练习流程 UI（档位 A：阶段块拖拽编排）（✅ 完成）
 - [ ] Phase 4：v2 组件拆分
 - [ ] Phase 5–6：例句练习线（可选）
 - [ ] Phase 7：合并 v1（远期，本次不做）
@@ -82,7 +82,7 @@ Phase 1 → 复制页面+组件，抽 composables，v2 行为≈v1 副本，独�
 Phase 2 → 可序列化 Registry + Navigator + sessionSnapshot + displayPolicy + keyboard（✅ 完成）
 Phase 2.5 → node/steps 三层模型 + Cursor 导航（✅ 完成）
 Phase 2.6 → wordLoop subSteps、onEnd 串行动作、cursor 通用化（✅ 完成）
-Phase 3 → 用户自定义练习流程 UI（档位 A：阶段块拖拽编排）
+Phase 3 → 用户自定义练习流程 UI（档位 A：阶段块拖拽编排）（✅ 完成）
 Phase 4 → 仅改 v2 副本内组件拆分
 Phase 5–6 → 例句线（可选，用户未要求时可暂停在 Phase 3/4）
 ```
@@ -1591,7 +1591,7 @@ interface PracticeFlowCursor {
 - Footer 进度条无任何 `WordPracticeMode` / `spellSubStep` / `wrongRetry` 硬编码。
 - `sessionSnapshot.cursor` 包含 `loop` / `endActionIndex`，刷新后精确恢复到 wordLoop 子步骤或 onEnd 中间状态。
 
-### Phase 3 — 用户自定义练习流程 UI（档位 A）
+### Phase 3 — 用户自定义练习流程 UI（档位 A）（✅ 已完成）
 
 1. 新建 [`practice-flow-editor.vue`](../apps/nuxt/app/pages/\(words\)/practice-flow-editor.vue) + `components/practice-flow/`（`FlowEditor` / `PhaseBlockCard` / `FlowPreview`）
 2. `usePracticeFlowStorage.ts`：独立 key `PracticeFlowV2` 读写用户流程 JSON；支持多份命名预设
@@ -1690,6 +1690,17 @@ interface PracticeFlowCursor {
 - `usePracticeWordNavigator.ts`：`runWordLoop` 读取 `subSteps[]`（不再硬编码 Spell），`processNextEndAction` 驱动 onEnd 队列
 - Cursor 恢复兼容旧缓存（`wrongRetry` → `inWrongWordClear`，无 `loop` → `null`）
 - 新增路由 `/words-v2`（适配 v2 缓存 `PracticeSaveWordV2`，支持「继续练习」）
+
+### Phase 3 ✅ 完成
+
+- `practice-flow-editor.vue` + `components/practice-flow/`（`FlowEditor` / `PhaseBlockCard` / `FlowPreview`）
+- `usePracticeFlowStorage.ts`：独立 key `PracticeFlowV2`，支持多份命名预设 + 激活标记
+- 编排 UI：竖向歌单式，左侧可添加阶段块，中间拖拽排序，右侧属性面板
+- 可配置项：node 添加/删除/排序，step 添加/删除/排序，词源选择，wordLoop，错词清空开关，shuffleOnEnter
+- 快捷预设：「新词 + 复习」双阶段一键添加
+- Custom 模式接入：`WordPracticeMode.Custom = 9`，`getFlowIdForMode` → `'custom'`，`loadPracticeFlow` → `loadCustomFlow()`
+- words-v2.vue：新增"自定义流程"按钮 + "流程编排"入口链接
+- `validateFlowConfig` 作为保存时的校验屏障，非法配置回退 system 默认
 
 ## 六、明确不建议
 
