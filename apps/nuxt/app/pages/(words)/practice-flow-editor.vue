@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { BackIcon, BaseButton, BaseInput, BasePage, Dialog, Toast } from '@typewords/base'
+import { BackIcon, BaseButton, BaseIcon, BaseInput, BasePage, Dialog, Toast } from '@typewords/base'
 import { APP_NAME } from '@typewords/core/config/env.ts'
 import { WordPracticeMode } from '@typewords/core/types/enum.ts'
 import type { PracticeFlowConfig } from '~/composables/practice-words/registry-types.ts'
 import { validateFlowConfig } from '~/composables/practice-words/flow-schema.ts'
-import {
-  getAllBuiltinFlowIds,
-  getFlowConfig,
-} from '~/composables/practice-words/builtin-flows.ts'
+import { getAllBuiltinFlowIds, getFlowConfig } from '~/composables/practice-words/builtin-flows.ts'
 import {
   deleteUserFlow,
   getActiveCustomFlowId,
@@ -261,8 +258,8 @@ if (activeFlowId) {
         <div class="flow-title-block">
           <BackIcon />
           <div>
-            <h1>流程编排</h1>
-            <p>拖拽编排你的单词练习流程</p>
+            <h1>流程管理</h1>
+            <p>创建专属于你的单词练习流程</p>
           </div>
         </div>
 
@@ -270,7 +267,7 @@ if (activeFlowId) {
           <BaseInput
             v-model="flowName"
             placeholder="流程名称"
-            class="flow-name-input"
+            class="flow-name-input mr-4"
             :disabled="isBuiltinActive"
           />
           <BaseButton type="primary" @click="handleSave" :disabled="isBuiltinActive || !isDirty">
@@ -279,12 +276,7 @@ if (activeFlowId) {
               保存
             </div>
           </BaseButton>
-          <BaseButton
-            v-if="!isBuiltinActive"
-            type="primary"
-            class="danger-button"
-            @click="requestDeleteCurrent"
-          >
+          <BaseButton v-if="!isBuiltinActive" type="primary" class="danger-button" @click="requestDeleteCurrent">
             <div class="inline-center gap-1">
               <IconFluentDelete20Regular />
               删除
@@ -296,7 +288,12 @@ if (activeFlowId) {
       <div class="flow-workspace">
         <!-- Left: Flow list -->
         <aside class="flow-list-panel">
-          <div class="flow-list-title">流程列表</div>
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-lg">流程列表</span>
+            <BaseIcon title="新建流程" @click="createNew">
+              <IconFluentAdd24Regular />
+            </BaseIcon>
+          </div>
           <div class="flow-list">
             <div
               v-for="item in flowListItems"
@@ -306,36 +303,25 @@ if (activeFlowId) {
               @click="loadFlow(item.id, item.builtin)"
             >
               <div class="flex items-center gap-1">
-                <span v-if="item.builtin" class="builtin-badge">系统</span>
                 <span class="flow-list-name">{{ item.name }}</span>
-              </div>
-              <div class="flow-list-meta">
-                <span v-if="item.builtin" class="text-xs text-blue-400">内置</span>
-                <span v-else class="text-xs text-gray-400">{{ formatTime(item.updatedAt) }}</span>
+                <span v-if="item.builtin" class="builtin-badge">内置</span>
               </div>
             </div>
-          </div>
-          <div class="flow-list-add" title="新建流程" @click="createNew">
-            <IconFluentAdd24Regular />
           </div>
         </aside>
 
         <!-- Center: Canvas -->
         <div class="flow-canvas-wrapper">
           <!-- Builtin readonly banner -->
-          <div v-if="isBuiltinActive" class="builtin-readonly-banner">
-            <IconFluentLockClosed20Regular />
-            <span>系统内置流程，仅可查看。点击流程列表中的流程名可创建副本。</span>
-          </div>
-
-          <!-- Duplicate button for builtin -->
-          <div v-if="isBuiltinActive" class="builtin-dup-row">
-            <BaseButton type="outline" @click="duplicateBuiltin(config.id)">
-              <div class="inline-center gap-1">
-                <IconFluentCopy20Regular />
-                创建副本
-              </div>
-            </BaseButton>
+          <div v-if="isBuiltinActive" class="flex gap-2 items-center">
+            <!-- Duplicate button for builtin -->
+            <div class="builtin-dup-row">
+              <BaseButton @click="duplicateBuiltin(config.id)"> 创建副本 </BaseButton>
+            </div>
+            <div class="builtin-readonly-banner">
+              <IconFluentLockClosed20Regular />
+              <span>系统内置流程，仅可查看，可创建副本后编辑。</span>
+            </div>
           </div>
 
           <FlowCanvas
@@ -349,7 +335,7 @@ if (activeFlowId) {
     </div>
 
     <Dialog v-model="showDeleteDialog" title="确认删除" :footer="true" @ok="handleDeleteCurrent">
-      <p class="text-sm">确定要删除当前流程吗？此操作不可撤销。</p>
+      <div class="p-4 pb-0">确定要删除当前流程吗？此操作不可撤销。</div>
     </Dialog>
   </BasePage>
 </template>
@@ -390,7 +376,6 @@ if (activeFlowId) {
 .flow-actions {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
@@ -410,20 +395,14 @@ if (activeFlowId) {
 
 .flow-workspace {
   display: grid;
-  grid-template-columns: 15rem minmax(0, 1fr);
+  grid-template-columns: 12rem minmax(0, 1fr);
   gap: 2rem;
   min-height: 42rem;
 }
 
 .flow-list-panel {
-  border-right: 1px solid var(--color-border-1, #e5e7eb);
+  border-right: 1px solid #ababab;
   padding-right: 1.8rem;
-}
-
-.flow-list-title {
-  color: var(--color-font-2);
-  font-size: 1.15rem;
-  margin-bottom: 1.4rem;
 }
 
 .flow-list {
@@ -432,9 +411,8 @@ if (activeFlowId) {
   gap: 1rem;
 }
 
-.flow-list-item,
-.flow-list-add {
-  min-height: 4.1rem;
+.flow-list-item, {
+  min-height: 2.5rem;
   border-radius: 0.45rem;
   background: var(--color-fourth);
   color: var(--color-font-3);
@@ -446,9 +424,7 @@ if (activeFlowId) {
 }
 
 .flow-list-item {
-  flex-direction: column;
   gap: 0.25rem;
-  padding: 0.4rem 0.8rem;
   text-align: center;
 
   &.active,
@@ -482,11 +458,6 @@ if (activeFlowId) {
   flex-shrink: 0;
 }
 
-.flow-list-add {
-  margin-top: 1.2rem;
-  font-size: 2rem;
-}
-
 .flow-canvas-wrapper {
   min-width: 0;
 }
@@ -499,7 +470,7 @@ if (activeFlowId) {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.6rem 1rem;
+  padding: 0.4rem 1rem;
   margin-bottom: 1rem;
   border-radius: 0.4rem;
   background: #fffbe6;
@@ -510,42 +481,5 @@ if (activeFlowId) {
 
 .builtin-dup-row {
   margin-bottom: 1rem;
-}
-
-@media (max-width: 900px) {
-  .flow-header {
-    flex-direction: column;
-  }
-
-  .flow-actions {
-    justify-content: flex-start;
-    width: 100%;
-  }
-
-  .flow-name-input {
-    width: 100%;
-    max-width: none;
-  }
-
-  .flow-workspace {
-    grid-template-columns: 1fr;
-  }
-
-  .flow-list-panel {
-    border-right: 0;
-    border-bottom: 1px solid var(--color-border-1, #e5e7eb);
-    padding-right: 0;
-    padding-bottom: 1rem;
-  }
-
-  .flow-list {
-    flex-direction: row;
-    overflow-x: auto;
-  }
-
-  .flow-list-item,
-  .flow-list-add {
-    min-width: 10rem;
-  }
 }
 </style>

@@ -12,6 +12,7 @@ import { STEP_TEMPLATE_META } from '~/composables/practice-words/phase-templates
 
 const props = defineProps<{
   config: PracticeFlowConfig
+  readonly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -21,7 +22,6 @@ const emit = defineEmits<{
 const sourceOptions: { value: PracticeWordsSource; label: string }[] = [
   { value: 'taskNew', label: '新词' },
   { value: 'taskReview', label: '复习词' },
-  { value: 'current', label: '当前词' },
 ]
 
 const stepOptions: { value: PracticeStepTemplateId; label: string }[] = [
@@ -34,6 +34,8 @@ const stepOptions: { value: PracticeStepTemplateId; label: string }[] = [
 
 let showSourceDialog = $ref(false)
 let showStepDialog = $ref(false)
+let showViewDialog = $ref(false)
+let viewStepTitle = $ref('')
 let stepTargetNodeIndex = $ref(0)
 let draggedNodeIndex = $ref<number | null>(null)
 let draggedStep = $ref<{ nodeIndex: number; stepIndex: number } | null>(null)
@@ -52,6 +54,7 @@ function cloneNodes() {
 }
 
 function emitNodes(nextNodes: PracticeFlowNode[]) {
+  if (props.readonly) return
   emit('update:config', {
     ...props.config,
     nodes: nextNodes,
@@ -173,10 +176,7 @@ function toggleWrongWordClear(nodeIndex: number, stepIndex: number, checked: boo
   const step = nodes[nodeIndex].steps[stepIndex]
   if (checked) {
     updateStep(nodeIndex, stepIndex, {
-      onEnd: [
-        ...(step.onEnd?.filter(action => action.type !== 'wrongWordClear') ?? []),
-        makeWrongWordClear(),
-      ],
+      onEnd: [...(step.onEnd?.filter(action => action.type !== 'wrongWordClear') ?? []), makeWrongWordClear()],
     })
     return
   }
@@ -190,7 +190,13 @@ function openStepDialog(nodeIndex: number) {
   showStepDialog = true
 }
 
+function openViewDialog(step: PracticeFlowStep) {
+  viewStepTitle = stepLabel(step)
+  showViewDialog = true
+}
+
 function onNodeDragStart(index: number, event: DragEvent) {
+  if (props.readonly) return
   draggedNodeIndex = index
   event.dataTransfer?.setData('text/plain', String(index))
 }
@@ -201,6 +207,7 @@ function onNodeDrop(index: number) {
 }
 
 function onStepDragStart(nodeIndex: number, stepIndex: number, event: DragEvent) {
+  if (props.readonly) return
   draggedStep = { nodeIndex, stepIndex }
   event.dataTransfer?.setData('text/plain', `${nodeIndex}:${stepIndex}`)
 }
@@ -216,74 +223,87 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
 <template>
   <div class="flow-canvas-root">
     <div class="nodes-scroll" @dragover.prevent>
-      <div v-if="!nodes.length" class="empty-stage" @click="showSourceDialog = true">
+      <!-- Empty state: single "+" -->
+      <div v-if="!nodes.length" class="empty-stage" @click="!readonly && (showSourceDialog = true)">
         <IconFluentAdd24Regular />
       </div>
 
       <template v-for="(node, nodeIndex) in nodes" :key="node.id || nodeIndex">
         <section
           class="stage-column"
-          :class="{ dragging: draggedNodeIndex === nodeIndex }"
-          draggable="true"
+          :class="{ dragging: draggedNodeIndex === nodeIndex, readonly }"
+          :draggable="!readonly"
           @dragstart="onNodeDragStart(nodeIndex, $event)"
           @dragend="draggedNodeIndex = null"
           @drop="onNodeDrop(nodeIndex)"
         >
           <header class="stage-header">
-            <Tooltip title="拖拽阶段排序">
+            <Tooltip v-if="!readonly" title="拖拽阶段排序">
               <IconFluentArrowMove24Regular class="stage-drag" />
             </Tooltip>
+            <div v-else class="stage-drag-placeholder" />
             <div class="stage-title">{{ node.label || sourceLabel(node.source) }}</div>
-            <BaseIcon title="删除阶段" no-bg @click="removeNode(nodeIndex)">
+            <BaseIcon v-if="!readonly" title="删除阶段" no-bg @click="removeNode(nodeIndex)">
               <IconFluentDelete20Regular />
             </BaseIcon>
+            <div v-else class="stage-delete-placeholder" />
           </header>
 
           <div class="steps-list">
             <template v-for="(step, stepIndex) in node.steps" :key="`${node.id}-${stepIndex}`">
               <article
                 class="step-card"
-                draggable="true"
+                :draggable="!readonly"
                 @dragstart.stop="onStepDragStart(nodeIndex, stepIndex, $event)"
                 @dragend="draggedStep = null"
                 @drop.stop="onStepDrop(nodeIndex, stepIndex)"
               >
                 <div class="step-header">
-                  <Tooltip title="拖拽步骤排序">
+                  <Tooltip v-if="!readonly" title="拖拽步骤排序">
                     <IconFluentArrowMove24Regular class="step-drag" />
                   </Tooltip>
+                  <div v-else class="step-drag-placeholder" />
                   <div class="step-title">{{ stepLabel(step) }}</div>
                   <div class="step-actions">
-                    <BaseIcon title="上移" no-bg :disabled="stepIndex === 0" @click="moveStep(nodeIndex, stepIndex, stepIndex - 1)">
-                      <IconFluentArrowUp16Regular />
+                    <BaseIcon title="查看步骤详情" no-bg @click="openViewDialog(step)">
+                      <IconFluentEye20Regular />
                     </BaseIcon>
-                    <BaseIcon title="下移" no-bg :disabled="stepIndex === node.steps.length - 1" @click="moveStep(nodeIndex, stepIndex, stepIndex + 1)">
-                      <IconFluentArrowDown16Regular />
-                    </BaseIcon>
-                    <BaseIcon title="删除步骤" no-bg @click="removeStep(nodeIndex, stepIndex)">
+                    <BaseIcon v-if="!readonly" title="删除步骤" no-bg @click="removeStep(nodeIndex, stepIndex)">
                       <IconFluentDelete20Regular />
                     </BaseIcon>
                   </div>
                 </div>
 
-                <div class="step-options">
-                  <Checkbox :model-value="!!step.shuffleOnEnter" @on-change="checked => toggleShuffle(nodeIndex, stepIndex, checked)">
+                <div class="step-options" :class="{ disabled: readonly }">
+                  <Checkbox
+                    :disabled="readonly"
+                    :model-value="!!step.shuffleOnEnter"
+                    @on-change="checked => toggleShuffle(nodeIndex, stepIndex, checked)"
+                  >
                     进入时打乱单词
                   </Checkbox>
-                  <Checkbox :model-value="step.wordAdvance?.type === 'wordLoop'" @on-change="checked => toggleLoop(nodeIndex, stepIndex, checked)">
+                  <Checkbox
+                    :disabled="readonly"
+                    :model-value="step.wordAdvance?.type === 'wordLoop'"
+                    @on-change="checked => toggleLoop(nodeIndex, stepIndex, checked)"
+                  >
                     是否循环练习
                   </Checkbox>
-                  <div class="loop-size-row" :class="{ disabled: step.wordAdvance?.type !== 'wordLoop' }">
+                  <div class="loop-size-row" :class="{ disabled: step.wordAdvance?.type !== 'wordLoop' || readonly }">
                     <span class="required">*</span>
                     <span>每第几个词循环：</span>
                     <InputNumber
-                      :model-value="step.wordAdvance?.type === 'wordLoop' ? step.wordAdvance.groupSize ?? 7 : 0"
+                      :model-value="step.wordAdvance?.type === 'wordLoop' ? (step.wordAdvance.groupSize ?? 7) : 0"
                       :min="1"
-                      :disabled="step.wordAdvance?.type !== 'wordLoop'"
+                      :disabled="step.wordAdvance?.type !== 'wordLoop' || readonly"
                       @update:model-value="value => updateLoopGroupSize(nodeIndex, stepIndex, value)"
                     />
                   </div>
-                  <Checkbox :model-value="hasWrongWordClear(step)" @on-change="checked => toggleWrongWordClear(nodeIndex, stepIndex, checked)">
+                  <Checkbox
+                    :disabled="readonly"
+                    :model-value="hasWrongWordClear(step)"
+                    @on-change="checked => toggleWrongWordClear(nodeIndex, stepIndex, checked)"
+                  >
                     结束后进入错词练习
                   </Checkbox>
                 </div>
@@ -294,23 +314,25 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
               </div>
             </template>
 
-            <div class="add-step-card" @click="openStepDialog(nodeIndex)">
-              <IconFluentAdd24Regular />
+            <!-- Add step button (only when not readonly) -->
+            <div v-if="!readonly" class="add-step-card" @click="openStepDialog(nodeIndex)">
+              <IconFluentAdd24Regular class="text-2xl"/>
             </div>
           </div>
         </section>
 
-        <div class="node-arrow">
+        <div v-if="nodeIndex < nodes.length - 1" class="node-arrow">
           <IconFluentArrowRight24Regular />
         </div>
       </template>
 
-      <div class="add-stage-card" @click="showSourceDialog = true">
+      <!-- Add node button: only show when there's at least one node and not readonly -->
+      <div v-if="!readonly && nodes.length > 0" class="add-stage-card" @click="showSourceDialog = true">
         <IconFluentAdd24Regular />
       </div>
     </div>
 
-    <Dialog v-model="showSourceDialog" title="新增阶段" :footer="false">
+    <Dialog v-model="showSourceDialog" title="选择词源" :footer="false">
       <div class="choice-list">
         <div v-for="source in sourceOptions" :key="source.value" class="choice-item" @click="addNode(source.value)">
           {{ source.label }}
@@ -320,8 +342,23 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
 
     <Dialog v-model="showStepDialog" title="新增步骤" :footer="false">
       <div class="choice-list">
-        <div v-for="step in stepOptions" :key="step.value" class="choice-item" @click="addStep(stepTargetNodeIndex, step.value)">
+        <div
+          v-for="step in stepOptions"
+          :key="step.value"
+          class="choice-item"
+          @click="addStep(stepTargetNodeIndex, step.value)"
+        >
           {{ step.label }}
+        </div>
+      </div>
+    </Dialog>
+
+    <!-- View step dialog -->
+    <Dialog v-model="showViewDialog" :title="viewStepTitle + ' - 视图预览'" :footer="false">
+      <div class="view-dialog-content">
+        <div class="view-placeholder">
+          <IconFluentImage24Regular class="view-placeholder-icon" />
+          <p class="view-placeholder-text">此处将展示练习步骤的预览截图</p>
         </div>
       </div>
     </Dialog>
@@ -338,18 +375,19 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
   overflow-x: auto;
   display: flex;
   align-items: center;
-  gap: 2rem;
-  padding: 2.2rem 1rem 2rem;
+  gap: 1rem;
+  padding-bottom: 1rem;
 }
 
 .stage-column {
-  width: 27rem;
+  min-width: 23rem;
   min-height: 38rem;
-  flex: 0 0 27rem;
   border: 1px solid #1677ff;
   border-radius: 0.35rem;
   background: var(--color-bg-1, transparent);
-  transition: opacity 0.2s, box-shadow 0.2s;
+  transition:
+    opacity 0.2s,
+    box-shadow 0.2s;
 
   &.dragging {
     opacity: 0.45;
@@ -361,7 +399,7 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
 }
 
 .stage-header {
-  height: 3.4rem;
+  height: 2.6rem;
   display: grid;
   grid-template-columns: 2.6rem 1fr 2.6rem;
   align-items: center;
@@ -377,6 +415,12 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
   color: var(--color-font-3);
 }
 
+.stage-drag-placeholder,
+.step-drag-placeholder,
+.stage-delete-placeholder {
+  width: 1.8rem;
+}
+
 .stage-title {
   text-align: center;
   font-size: 1.25rem;
@@ -387,14 +431,15 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 3.8rem 2.5rem 2rem;
+  padding: 1.4rem;
 }
 
 .step-card {
+  box-sizing: border-box;
   width: 100%;
   border-radius: 0.55rem;
   background: var(--color-fourth);
-  padding: 0.85rem 1rem 1rem;
+  padding: 0.5rem 1rem 1rem;
   color: var(--color-font-1);
 }
 
@@ -423,6 +468,10 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
+
+  &.disabled {
+    cursor: not-allowed;
+  }
 }
 
 .loop-size-row {
@@ -478,34 +527,30 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
     color: #1677ff;
     box-shadow: inset 0 0 0 1px #1677ff;
   }
-
-  :deep(svg) {
-    width: 3rem;
-    height: 3rem;
-  }
 }
 
 .add-step-card {
   width: 100%;
-  height: 7.5rem;
-  margin-top: 2.2rem;
+  height: 4rem;
+  margin-top: 2rem;
 }
 
 .add-stage-card,
 .empty-stage {
-  width: 21rem;
-  height: 8rem;
-  flex: 0 0 21rem;
+  min-width: 23rem;
+  height: 4rem;
+  margin-left: 1rem;
 }
 
 .choice-list {
   display: grid;
+  padding: 1rem;
   gap: 0.7rem;
   min-width: 16rem;
 }
 
 .choice-item {
-  border: 1px solid var(--color-border-1, #e5e7eb);
+  border: 1px solid #a5a5a5;
   border-radius: 0.4rem;
   padding: 0.8rem 1rem;
   cursor: pointer;
@@ -518,19 +563,29 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
   }
 }
 
-@media (max-width: 900px) {
-  .nodes-scroll {
-    min-height: 30rem;
-    padding: 1rem 0;
-  }
+.view-dialog-content {
+  min-width: 20rem;
+  min-height: 15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  .stage-column {
-    width: 23rem;
-    flex-basis: 23rem;
-  }
+.view-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  color: var(--color-font-3);
+}
 
-  .steps-list {
-    padding: 2rem 1.5rem;
-  }
+.view-placeholder-icon {
+  font-size: 3.5rem;
+  opacity: 0.4;
+}
+
+.view-placeholder-text {
+  font-size: 0.9rem;
+  opacity: 0.6;
 }
 </style>

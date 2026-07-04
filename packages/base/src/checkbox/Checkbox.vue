@@ -1,8 +1,9 @@
 <template>
-  <label class="checkbox" @click.stop>
+  <label class="checkbox" :class="{ 'is-disabled': disabled }" @click.stop>
     <input
       type="checkbox"
       :checked="modelValue"
+      :disabled="disabled"
       @change="change"
     />
     <span class="checkbox-box">
@@ -14,7 +15,11 @@
 
 <script setup lang="ts">
 defineProps({
-  modelValue: Boolean
+  modelValue: Boolean,
+  disabled: {
+    type: Boolean,
+    default: false
+  }
 })
 
 const emit = defineEmits(['update:modelValue', 'click', 'onChange'])
@@ -70,6 +75,16 @@ function change($event) {
   .checkbox-label {
     font-size: 14px;
     color: #606266;
+  }
+
+  &.is-disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+
+    .checkbox-box {
+      border-color: #e4e7ed;
+      background-color: #f5f7fa;
+    }
   }
 }
 </style>
