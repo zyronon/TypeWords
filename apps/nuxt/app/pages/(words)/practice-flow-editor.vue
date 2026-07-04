@@ -1,233 +1,551 @@
 <script setup lang="ts">
-/**
- * 用户自定义练习流程编排页（Phase 3 · 档位 A）
- *
- * 路由：/practice-flow-editor
- * 提供可视化的阶段块拖拽排序编排能力，保存为本地 JSON 预设。
- */
-import { BaseButton, BasePage, Dialog, Toast } from '@typewords/base'
+import { BackIcon, BaseButton, BaseInput, BasePage, Dialog, Toast } from '@typewords/base'
 import { APP_NAME } from '@typewords/core/config/env.ts'
 import { WordPracticeMode } from '@typewords/core/types/enum.ts'
 import type { PracticeFlowConfig } from '~/composables/practice-words/registry-types.ts'
 import { validateFlowConfig } from '~/composables/practice-words/flow-schema.ts'
 import {
+  getAllBuiltinFlowIds,
+  getFlowConfig,
+} from '~/composables/practice-words/builtin-flows.ts'
+import {
+  deleteUserFlow,
+  getActiveCustomFlowId,
+  getUserFlow,
   listUserFlows,
   saveUserFlow,
-  deleteUserFlow,
-  getUserFlow,
   setActiveCustomFlowId,
-  getActiveCustomFlowId,
 } from '~/composables/practice-words/usePracticeFlowStorage.ts'
 
 useHead({ title: APP_NAME + ' 流程编排' })
 
-// ─── State ───
-let config = $ref<PracticeFlowConfig>(createDefaultConfig())
-let flowName = $ref('我的流程')
-let savedFlows = $ref<{ id: string; name: string; updatedAt: number }[]>([])
-let activeFlowId = $ref('')
-let showDeleteDialog = $ref(false)
-let deleteTargetId = $ref('')
-let showResetConfirm = $ref(false)
-let isDirty = $ref(false)
-
-// ─── Init ───
-function refreshFlowList() {
-  savedFlows = listUserFlows()
-  activeFlowId = getActiveCustomFlowId()
+// ─── Types ───
+interface FlowListItem {
+  id: string
+  name: string
+  updatedAt: number
+  builtin: boolean
 }
 
-function createDefaultConfig(): PracticeFlowConfig {
-  const id = `custom_${Date.now()}`
+// ─── State ───
+let config = $ref<PracticeFlowConfig>(createBlankConfig())
+let flowName = $ref('自由学习')
+let flowListItems = $ref<FlowListItem[]>([])
+let activeFlowId = $ref('')
+let isBuiltinActive = $ref(false)
+let isDirty = $ref(false)
+let showDeleteDialog = $ref(false)
+
+function nowId(prefix: string) {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+}
+
+function cloneConfig(value: PracticeFlowConfig): PracticeFlowConfig {
+  return JSON.parse(JSON.stringify(value))
+}
+
+function createBlankConfig(): PracticeFlowConfig {
   return {
-    id,
+    id: nowId('custom'),
     version: 3,
     mode: WordPracticeMode.Custom,
-    label: '自定义流程',
+    label: '自由学习',
     nodes: [],
   }
 }
 
-function loadFlow(flowId: string) {
-  const saved = getUserFlow(flowId)
-  if (saved) {
-    config = JSON.parse(JSON.stringify(saved)) // deep clone
-    flowName = savedFlows.find(f => f.id === flowId)?.name || '我的流程'
-    setActiveCustomFlowId(flowId)
-    activeFlowId = flowId
-    isDirty = false
-    Toast.success('已加载')
+// ─── Flow list ───
+function buildFlowList() {
+  const items: FlowListItem[] = []
+
+  // 系统内置流程
+  const builtinIds = getAllBuiltinFlowIds()
+  for (const id of builtinIds) {
+    const cfg = getFlowConfig(id)
+    if (cfg) {
+      items.push({ id, name: cfg.label || id, updatedAt: 0, builtin: true })
+    }
+  }
+
+  // 用户自定义流程
+  const userFlows = listUserFlows()
+  for (const uf of userFlows) {
+    items.push({ id: uf.id, name: uf.name, updatedAt: uf.updatedAt, builtin: false })
+  }
+
+  flowListItems = items
+  activeFlowId = getActiveCustomFlowId()
+  // 如果当前激活的是用户流程且存在
+  if (activeFlowId && userFlows.some(f => f.id === activeFlowId)) {
+    isBuiltinActive = false
+  } else if (!activeFlowId) {
+    isBuiltinActive = false
   }
 }
 
-function resetToDefault() {
-  config = createDefaultConfig()
-  flowName = '我的流程'
+// ─── Load flow ───
+function loadFlow(flowId: string, builtin: boolean) {
+  if (builtin) {
+    // 系统内置 → 只读查看
+    const cfg = getFlowConfig(flowId)
+    if (!cfg) return
+    config = cloneConfig(cfg)
+    flowName = cfg.label || flowId
+    isBuiltinActive = true
+    isDirty = false
+    // 不修改 activeFlowId（保留用户激活的流程）
+    return
+  }
+
+  const saved = getUserFlow(flowId)
+  if (!saved) {
+    Toast.warning('流程不存在')
+    buildFlowList()
+    return
+  }
+  config = cloneConfig(saved)
+  flowName = saved.label || '自由学习'
+  setActiveCustomFlowId(flowId)
+  activeFlowId = flowId
+  isBuiltinActive = false
   isDirty = false
-  showResetConfirm = false
 }
 
-function onConfigUpdate(newConfig: PracticeFlowConfig) {
-  config = newConfig
+// ─── Duplicate builtin flow ───
+function duplicateBuiltin(flowId: string) {
+  const cfg = getFlowConfig(flowId)
+  if (!cfg) return
+  const newId = nowId('custom')
+  const dup = cloneConfig(cfg)
+  dup.id = newId
+  dup.mode = WordPracticeMode.Custom
+  dup.label = cfg.label + '（副本）'
+  saveUserFlow(newId, dup, dup.label)
+  setActiveCustomFlowId(newId)
+  config = cloneConfig(dup)
+  flowName = dup.label
+  activeFlowId = newId
+  isBuiltinActive = false
+  isDirty = false
+  buildFlowList()
+  Toast.success('已创建副本')
+}
+
+// ─── Create new (directly blank) ───
+function createNew() {
+  config = createBlankConfig()
+  flowName = '自由学习'
+  activeFlowId = ''
+  isBuiltinActive = false
   isDirty = true
 }
 
-// ─── Save ───
-function handleSave() {
-  if (!config.nodes.length) {
-    Toast.warning('请至少添加一个阶段')
-    return
-  }
-  if (!flowName.trim()) {
+// ─── Config update (only allowed for user flows) ───
+function onConfigUpdate(nextConfig: PracticeFlowConfig) {
+  if (isBuiltinActive) return
+  config = nextConfig
+  isDirty = true
+}
+
+// ─── Normalize & save ───
+function normalizeBeforeSave(): PracticeFlowConfig | null {
+  const name = flowName.trim()
+  if (!name) {
     Toast.warning('请输入流程名称')
-    return
+    return null
+  }
+  if (!config.nodes.length || config.nodes.some(node => !node.steps.length)) {
+    Toast.warning('请至少添加一个阶段和一个练习步骤')
+    return null
   }
 
-  // Assign IDs to nodes without one
-  const configToSave = {
+  return {
     ...config,
-    label: flowName.trim(),
-    nodes: config.nodes.map((n, i) => ({
-      ...n,
-      id: n.id || `node_${i}_${n.source}`,
+    id: config.id || nowId('custom'),
+    version: 3,
+    mode: WordPracticeMode.Custom,
+    label: name,
+    nodes: config.nodes.map((node, nodeIndex) => ({
+      ...node,
+      id: node.id || nowId(`node_${nodeIndex}`),
+      label: node.label?.trim() || `阶段 ${nodeIndex + 1}`,
+      steps: node.steps.map(step => ({
+        ...step,
+        wordAdvance:
+          step.wordAdvance?.type === 'wordLoop'
+            ? {
+                type: 'wordLoop',
+                groupSize: Math.max(1, Number(step.wordAdvance.groupSize || 7)),
+                subSteps: step.wordAdvance.subSteps?.length ? step.wordAdvance.subSteps : [{ templateId: 'spell' }],
+              }
+            : step.wordAdvance,
+      })),
     })),
   }
+}
 
-  // Validate
+function handleSave() {
+  if (isBuiltinActive) return
+  const configToSave = normalizeBeforeSave()
+  if (!configToSave) return
+
   const validated = validateFlowConfig(configToSave)
   if (validated.id === 'system' && configToSave.id !== 'system') {
-    Toast.warning('流程配置无效，已回退为默认流程。请检查是否有空阶段或非法配置。')
+    Toast.warning('流程配置无效，请检查是否有空阶段或非法配置')
     return
   }
 
-  saveUserFlow(configToSave.id, configToSave, flowName.trim())
+  saveUserFlow(configToSave.id, configToSave, configToSave.label)
   setActiveCustomFlowId(configToSave.id)
+  config = cloneConfig(configToSave)
+  flowName = configToSave.label
   activeFlowId = configToSave.id
   isDirty = false
-  refreshFlowList()
+  buildFlowList()
   Toast.success('保存成功')
 }
 
 // ─── Delete ───
-function confirmDelete(flowId: string) {
-  deleteTargetId = flowId
+function requestDeleteCurrent() {
+  if (isBuiltinActive) {
+    Toast.warning('系统内置流程不可删除')
+    return
+  }
+  if (!activeFlowId && !listUserFlows().some(flow => flow.id === config.id)) {
+    config = createBlankConfig()
+    flowName = config.label
+    isDirty = false
+    return
+  }
   showDeleteDialog = true
 }
 
-function handleDelete() {
-  deleteUserFlow(deleteTargetId)
-  if (activeFlowId === deleteTargetId) {
-    activeFlowId = ''
-    resetToDefault()
+function handleDeleteCurrent() {
+  const targetId = activeFlowId || config.id
+  if (targetId) {
+    deleteUserFlow(targetId)
   }
+  buildFlowList()
+  config = createBlankConfig()
+  flowName = config.label
+  activeFlowId = ''
+  isBuiltinActive = false
+  isDirty = false
   showDeleteDialog = false
-  refreshFlowList()
   Toast.success('已删除')
 }
 
-// ─── Preview ───
-let showPreview = $ref(false)
+function formatTime(ts: number): string {
+  if (!ts) return ''
+  const d = new Date(ts)
+  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`
+}
 
 // ─── Init ───
-refreshFlowList()
+buildFlowList()
 if (activeFlowId) {
   const existing = getUserFlow(activeFlowId)
   if (existing) {
-    config = JSON.parse(JSON.stringify(existing))
-    flowName = savedFlows.find(f => f.id === activeFlowId)?.name || '我的流程'
+    config = cloneConfig(existing)
+    flowName = existing.label || '自由学习'
+    isBuiltinActive = false
+    isDirty = false
   }
-}
-
-// Format time
-function formatTime(ts: number): string {
-  const d = new Date(ts)
-  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 </script>
 
 <template>
   <BasePage>
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-      <div>
-        <h1 class="text-2xl font-bold">流程编排</h1>
-        <p class="text-sm text-gray-500 mt-1">拖拽编排你的单词练习流程</p>
-      </div>
-      <div class="flex items-center gap-3">
-        <input
-          v-model="flowName"
-          placeholder="流程名称"
-          class="px-3 py-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 min-w-[150px]"
-        />
-        <BaseButton type="primary" @click="handleSave" :disabled="!isDirty">
-          <div class="flex items-center gap-1">
-            <IconFluentSave20Regular class="text-lg" />
-            <span>保存</span>
+    <div class="flow-page">
+      <div class="flow-header">
+        <div class="flow-title-block">
+          <BackIcon />
+          <div>
+            <h1>流程编排</h1>
+            <p>拖拽编排你的单词练习流程</p>
           </div>
-        </BaseButton>
-        <BaseButton type="info" @click="showResetConfirm = true">
-          恢复默认
-        </BaseButton>
-        <BaseButton type="info" @click="showPreview = !showPreview">
-          {{ showPreview ? '编辑' : '预览' }}
-        </BaseButton>
-      </div>
-    </div>
-
-    <!-- Main content -->
-    <div class="flex flex-col lg:flex-row gap-6">
-      <!-- Editor / Preview -->
-      <div class="flex-1 min-w-0">
-        <FlowEditor v-if="!showPreview" :config="config" @update:config="onConfigUpdate" />
-        <div v-else class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
-          <div class="text-sm font-medium mb-3 text-gray-500">流程预览</div>
-          <FlowPreview :nodes="config.nodes" />
-        </div>
-      </div>
-
-      <!-- Sidebar: Saved flows list -->
-      <div class="w-full lg:w-56 shrink-0">
-        <div class="text-sm font-medium mb-3 text-gray-500">
-          已保存的流程
-          <span class="text-xs text-gray-400 ml-1">({{ savedFlows.length }})</span>
         </div>
 
-        <div class="space-y-1.5" v-if="savedFlows.length">
-          <div
-            v-for="flow in savedFlows"
-            :key="flow.id"
-            class="flex items-center justify-between px-3 py-2 rounded-lg text-sm cursor-pointer transition-colors"
-            :class="flow.id === activeFlowId
-              ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-300'
-              : 'bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-transparent'"
-            @click="loadFlow(flow.id)"
-          >
-            <div class="min-w-0 flex-1">
-              <div class="truncate font-medium">{{ flow.name }}</div>
-              <div class="text-xs text-gray-400">{{ formatTime(flow.updatedAt) }}</div>
+        <div class="flow-actions">
+          <BaseInput
+            v-model="flowName"
+            placeholder="流程名称"
+            class="flow-name-input"
+            :disabled="isBuiltinActive"
+          />
+          <BaseButton type="primary" @click="handleSave" :disabled="isBuiltinActive || !isDirty">
+            <div class="inline-center gap-1">
+              <IconFluentSave20Regular />
+              保存
             </div>
-            <button
-              class="ml-2 p-0.5 text-gray-400 hover:text-red-500 shrink-0 transition-colors"
-              @click.stop="confirmDelete(flow.id)"
-            >
-              <IconFluentDismiss12Regular />
-            </button>
-          </div>
+          </BaseButton>
+          <BaseButton
+            v-if="!isBuiltinActive"
+            type="primary"
+            class="danger-button"
+            @click="requestDeleteCurrent"
+          >
+            <div class="inline-center gap-1">
+              <IconFluentDelete20Regular />
+              删除
+            </div>
+          </BaseButton>
         </div>
-        <div v-else class="text-sm text-gray-400 text-center py-4">
-          暂无保存的流程
+      </div>
+
+      <div class="flow-workspace">
+        <!-- Left: Flow list -->
+        <aside class="flow-list-panel">
+          <div class="flow-list-title">流程列表</div>
+          <div class="flow-list">
+            <div
+              v-for="item in flowListItems"
+              :key="item.id"
+              class="flow-list-item"
+              :class="{ active: item.id === activeFlowId && !isBuiltinActive }"
+              @click="loadFlow(item.id, item.builtin)"
+            >
+              <div class="flex items-center gap-1">
+                <span v-if="item.builtin" class="builtin-badge">系统</span>
+                <span class="flow-list-name">{{ item.name }}</span>
+              </div>
+              <div class="flow-list-meta">
+                <span v-if="item.builtin" class="text-xs text-blue-400">内置</span>
+                <span v-else class="text-xs text-gray-400">{{ formatTime(item.updatedAt) }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="flow-list-add" title="新建流程" @click="createNew">
+            <IconFluentAdd24Regular />
+          </div>
+        </aside>
+
+        <!-- Center: Canvas -->
+        <div class="flow-canvas-wrapper">
+          <!-- Builtin readonly banner -->
+          <div v-if="isBuiltinActive" class="builtin-readonly-banner">
+            <IconFluentLockClosed20Regular />
+            <span>系统内置流程，仅可查看。点击流程列表中的流程名可创建副本。</span>
+          </div>
+
+          <!-- Duplicate button for builtin -->
+          <div v-if="isBuiltinActive" class="builtin-dup-row">
+            <BaseButton type="outline" @click="duplicateBuiltin(config.id)">
+              <div class="inline-center gap-1">
+                <IconFluentCopy20Regular />
+                创建副本
+              </div>
+            </BaseButton>
+          </div>
+
+          <FlowCanvas
+            class="flow-canvas"
+            :config="config"
+            :readonly="isBuiltinActive"
+            @update:config="onConfigUpdate"
+          />
         </div>
       </div>
     </div>
 
-    <!-- Delete confirm dialog -->
-    <Dialog v-model="showDeleteDialog" title="确认删除" :footer="true" @confirm="handleDelete">
-      <p class="text-sm">确定要删除此流程吗？此操作不可撤销。</p>
-    </Dialog>
-
-    <!-- Reset confirm dialog -->
-    <Dialog v-model="showResetConfirm" title="恢复默认" :footer="true" @confirm="resetToDefault">
-      <p class="text-sm">将清除当前编辑内容，恢复为空白流程。确定继续？</p>
+    <Dialog v-model="showDeleteDialog" title="确认删除" :footer="true" @ok="handleDeleteCurrent">
+      <p class="text-sm">确定要删除当前流程吗？此操作不可撤销。</p>
     </Dialog>
   </BasePage>
 </template>
+
+<style scoped lang="scss">
+.flow-page {
+  min-height: calc(100vh - 4rem);
+  color: var(--color-font-1);
+}
+
+.flow-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.flow-title-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    line-height: 1.2;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.6rem 0 0;
+    color: var(--color-font-3);
+    font-size: 0.95rem;
+  }
+}
+
+.flow-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.flow-name-input {
+  width: 20rem;
+  max-width: min(20rem, 45vw);
+}
+
+.danger-button {
+  background: #f43f5e !important;
+
+  &:hover {
+    background: #e11d48 !important;
+  }
+}
+
+.flow-workspace {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  gap: 2rem;
+  min-height: 42rem;
+}
+
+.flow-list-panel {
+  border-right: 1px solid var(--color-border-1, #e5e7eb);
+  padding-right: 1.8rem;
+}
+
+.flow-list-title {
+  color: var(--color-font-2);
+  font-size: 1.15rem;
+  margin-bottom: 1.4rem;
+}
+
+.flow-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.flow-list-item,
+.flow-list-add {
+  min-height: 4.1rem;
+  border-radius: 0.45rem;
+  background: var(--color-fourth);
+  color: var(--color-font-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.flow-list-item {
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.4rem 0.8rem;
+  text-align: center;
+
+  &.active,
+  &:hover {
+    color: #1677ff;
+    box-shadow: inset 0 0 0 1px #1677ff;
+    background: rgba(22, 119, 255, 0.08);
+  }
+}
+
+.flow-list-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1rem;
+}
+
+.flow-list-meta {
+  font-size: 0.75rem;
+  opacity: 0.65;
+}
+
+.builtin-badge {
+  font-size: 0.65rem;
+  padding: 0 0.3rem;
+  border-radius: 0.2rem;
+  background: #e6f4ff;
+  color: #1677ff;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+.flow-list-add {
+  margin-top: 1.2rem;
+  font-size: 2rem;
+}
+
+.flow-canvas-wrapper {
+  min-width: 0;
+}
+
+.flow-canvas {
+  min-width: 0;
+}
+
+.builtin-readonly-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 0.4rem;
+  background: #fffbe6;
+  color: #ad6800;
+  font-size: 0.9rem;
+  border: 1px solid #ffe58f;
+}
+
+.builtin-dup-row {
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 900px) {
+  .flow-header {
+    flex-direction: column;
+  }
+
+  .flow-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .flow-name-input {
+    width: 100%;
+    max-width: none;
+  }
+
+  .flow-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .flow-list-panel {
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border-1, #e5e7eb);
+    padding-right: 0;
+    padding-bottom: 1rem;
+  }
+
+  .flow-list {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .flow-list-item,
+  .flow-list-add {
+    min-width: 10rem;
+  }
+}
+</style>
