@@ -132,16 +132,6 @@ let isWordTest = $computed(() => {
   )
 })
 
-// 在全局对象中存储当前单词信息，以便其他模块可以访问
-function updateCurrentWordInfo() {
-  window.__CURRENT_WORD_INFO__ = {
-    word: props.word.word,
-    input: input,
-    inputLock: inputLock,
-    containsSpace: props.word.word.includes(' '),
-  }
-}
-
 watch(
   () => props.word,
   () => resetState(WordPlayTrigger.NewWord)
@@ -163,17 +153,8 @@ function resetState(trigger: WordPlayTrigger) {
   if (settingStore.wordSound && settingStore.wordPracticeType !== WordPracticeType.Dictation) {
     playWord(trigger, { resetIcon: trigger === WordPlayTrigger.NewWord })
   }
-  updateCurrentWordInfo()
   checkCursorPosition()
 }
-
-// 监听输入变化，更新当前单词信息
-watch(
-  () => input,
-  () => {
-    updateCurrentWordInfo()
-  }
-)
 
 function onKeyUp(e: KeyboardEvent) {
   hideWord()
@@ -190,9 +171,6 @@ function onKeyDown(e: KeyboardEvent) {
 useOnKeyboardEventListener(onKeyDown, onKeyUp)
 
 onMounted(() => {
-  // 初始化当前单词信息
-  updateCurrentWordInfo()
-
   emitter.on(EventKey.resetWord, onResetWord)
   emitter.on(EventKey.onTyping, onTyping)
 })
@@ -422,7 +400,6 @@ async function onTyping(e: KeyboardEvent) {
     input += letter
     wrong = ''
     playKeyboardAudio()
-    updateCurrentWordInfo()
     inputLock = false
   } else if (settingStore.wordPracticeType === WordPracticeType.Identify && !showWordResult.value) {
     //当自测模式下，按其他键则自动默认为不认识
@@ -494,8 +471,6 @@ async function onTyping(e: KeyboardEvent) {
         waitClear = false
       }, 500)
     }
-    // 更新当前单词信息
-    updateCurrentWordInfo()
     //不需要把inputLock设为false，输入完成不能再输入了，只能删除，删除会打开锁
     if (input.toLowerCase() === target.toLowerCase()) {
       wordCompletedTime = Date.now() // 记录单词完成的时间戳
@@ -574,8 +549,6 @@ function del() {
       input = input.slice(0, -1)
     }
   }
-  // 更新当前单词信息
-  updateCurrentWordInfo()
 }
 
 function showWord() {

@@ -78,6 +78,10 @@ onMounted(() => {
     <div class="aside anim fixed">
       <div class="top" :class="!expand && 'hidden-span'">
         <Logo v-if="expand" />
+        <NuxtLink to="/words-v2" class="row">
+          <IconFluentTextUnderlineDouble20Regular />
+          <span>{{ $t('words') }}-v2</span>
+        </NuxtLink>
         <NuxtLink to="/words" class="row">
           <IconFluentTextUnderlineDouble20Regular />
           <span>{{ $t('words') }}</span>

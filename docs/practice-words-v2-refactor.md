@@ -1603,7 +1603,7 @@ interface PracticeFlowCursor {
 
 ### Phase 4 — v2 组件拆分
 
-> **目标**：将 TypeWordV2（~1209 行上帝组件）拆为 4 个子组件；从 `[id].vue`（~949 行）提取 3 个 composable + 1 个 OnboardingHost 组件。FooterV2 / StatisticsV2 已基本 Props 化，本轮可不动。
+> **目标**：将 TypeWordV2（\~1209 行上帝组件）拆为 4 个子组件；从 `[id].vue`（\~949 行）提取 3 个 composable + 1 个 OnboardingHost 组件。FooterV2 / StatisticsV2 已基本 Props 化，本轮可不动。
 
 #### 4.1 TypeWordV2 拆分：4 个子组件
 
@@ -1620,6 +1620,7 @@ TypeWordV2.vue (1209行)
 ##### Step 4.1a：WordTypingCoreV2 — 纯键入引擎
 
 **提取内容（从 TypeWordV2 移出）**：
+
 - 状态：`input`, `wrong`, `inputLock`, `waitClear`, `showWordResult`, `wrongTimes`, `wordRepeatCount`, `wordCompletedTime`, `jumpTimer`, `currentPracticeSentenceIndex`, `pressNumber`, `showNotice`
 - 核心函数：`onTyping()`, `del()`, `completeTypeWord()`, `shouldRepeat()`, `repeat()`, `resetState()`, `typo()`, `isTypingSentence()`, `clearJumpTimer()`
 - 计算属性：`right`, `displayWord`, `displaySentence`
@@ -1628,6 +1629,7 @@ TypeWordV2.vue (1209行)
 - watch：`props.word → resetState()`, `input → checkCursorPosition()`
 
 **Props 设计**：
+
 ```ts
 interface WordTypingCoreProps {
   word: Word
@@ -1652,6 +1654,7 @@ interface WordTypingCoreProps {
 ##### Step 4.1b：WordIdentifyPanelV2 — 自测 / WordTest UI
 
 **提取内容**：
+
 - 函数：`know()`, `mastered()`, `unknown()`, `select()`
 - 状态：`showAllCandidates`, `completeSelect`, `selectIndex`, `showNotice`
 - 计算属性：`isSelfAssessment`, `isWordTest`
@@ -1664,6 +1667,7 @@ interface WordTypingCoreProps {
 ##### Step 4.1c：WordMetaPanelV2 — 只读元信息面板
 
 **提取内容（从 TypeWordV2 模板移出，不承载输入逻辑）**：
+
 - 音标行（`phonetic0`/`phonetic1` + VolumeIcon）
 - 翻译区（`TranslationList`，受 `effective` 控制显隐）
 - 例句列表（`ClickableEnglishText` + VolumeIcon，纯只读展示，点击发音）
@@ -1679,6 +1683,7 @@ interface WordTypingCoreProps {
 ##### Step 4.1d：TypeWordV2（壳）— 保留内容
 
 **保留在 TypeWordV2 中**：
+
 - 布局容器（`typing-word` div）
 - `effective` 计算属性（组合 `baseDisplay` + `showFullWord`/`showWordResult` 局部 override）
 - 操作按钮行（标记已掌握 / 编辑笔记 / 收藏 / 跳过）
@@ -1691,11 +1696,12 @@ interface WordTypingCoreProps {
 
 **size 目标**：1209 → 250 行
 
-#### 4.2 [id].vue 提取：3 composable + 1 组件
+#### 4.2 \[id].vue 提取：3 composable + 1 组件
 
 ##### Step 4.2a：`usePracticeWordActions.ts` — 单词级页面操作
 
 从 `[id].vue` 提取：
+
 - `onTypeWrong(word)` — 错词记录（更新 `data.wrongWords` / `data.allWrongWords` / `data.wrongTimesMap` / `store.wrong` / `data.excludeWords` + `savePracticeData('wrong')`）
 - `onWordKnow()` — 标记认识（Rating.Good + `addExcludeWord`）
 - `addExcludeWord()`
@@ -1706,6 +1712,7 @@ interface WordTypingCoreProps {
 - `show(e)` — 调用 typingRef.showWord
 
 **签名**：
+
 ```ts
 function usePracticeWordActions(data: PracticeData, typingRef: Ref<ComponentPublicInstance | null>, store, statStore) {
   return { onTypeWrong, onWordKnow, addExcludeWord, toggleWordSimpleWrapper, skip, collect, play, show }
@@ -1715,6 +1722,7 @@ function usePracticeWordActions(data: PracticeData, typingRef: Ref<ComponentPubl
 ##### Step 4.2b：`usePracticeIdleTimer.ts` — 空闲检测
 
 从 `[id].vue` 提取：
+
 - `IDLE_MS = 3 * 60 * 1000`
 - `lastKeyActivity` 状态
 - `bumpPracticeTimerActivity()`
@@ -1722,6 +1730,7 @@ function usePracticeWordActions(data: PracticeData, typingRef: Ref<ComponentPubl
 - `timer = setInterval(...)` 的创建与清理
 
 **签名**：
+
 ```ts
 function usePracticeIdleTimer(isFocus: Ref<boolean>, statStore, IDLE_MS: number) {
   return { bumpPracticeTimerActivity, handleResumeTimer, startTimer, stopTimer }
@@ -1730,7 +1739,8 @@ function usePracticeIdleTimer(isFocus: Ref<boolean>, statStore, IDLE_MS: number)
 
 ##### Step 4.2c：`usePracticeComplete.ts` — 结算逻辑
 
-从 `[id].vue` 提取 `complete()` 函数（~120 行）：
+从 `[id].vue` 提取 `complete()` 函数（\~120 行）：
+
 - `isComplete = true`, 停止计时
 - 更新 `store.sdict.lastLearnIndex`（非 Shuffle 模式）
 - `flushStatToStore(statStore.$state)`
@@ -1741,6 +1751,7 @@ function usePracticeIdleTimer(isFocus: Ref<boolean>, statStore, IDLE_MS: number)
 - Umami 埋点
 
 **签名**：
+
 ```ts
 function usePracticeComplete(data, taskWords, statStore, store, wordPersistence, dataSync, settingStore, getGradeByWrongTimes, nextCard) {
   return { complete } // 返回 promise
@@ -1750,6 +1761,7 @@ function usePracticeComplete(data, taskWords, statStore, store, wordPersistence,
 ##### Step 4.2d：`PracticeOnboardingHostV2.vue` — 引导 + 通知宿主
 
 从 `[id].vue` 模板提取：
+
 - `ConflictNotice`（首次输入法冲突提示）
 - `CollectNotice`（收藏引导弹窗）
 - `ConflictNotice2`（无法输入？弹窗）
@@ -1773,11 +1785,11 @@ function usePracticeComplete(data, taskWords, statStore, store, wordPersistence,
 
 #### 4.4 验收标准
 
-- [ ] TypeWordV2.vue 行数从 1209 降至 ~250 行以内
+- [ ] TypeWordV2.vue 行数从 1209 降至 \~250 行以内
 - [ ] WordTypingCoreV2 可独立测试（单独渲染一个输入框即可验证键入流程）
 - [ ] 拆分后所有内置 flow（System/Free/Shuffle/Review 等）行为与拆分前完全一致
 - [ ] 跟写分组（wordLoop + subSteps）、错词复习、自测/WordTest 各路径无回归
-- [ ] `[id].vue` 行数从 949 降至 ~550 行以内
+- [ ] `[id].vue` 行数从 949 降至 \~550 行以内
 - [ ] `onWordMarkPickComplete` 逻辑保留在 `[id].vue`（与 QuickIdentify 模式强耦合，不适合抽离）
 - [ ] 原 core 组件零修改
 
@@ -1787,7 +1799,7 @@ function usePracticeComplete(data, taskWords, statStore, store, wordPersistence,
 - **TypeWordV2 的 defineExpose 保持兼容**：`[id].vue` 通过 `typingRef.showWord()` / `typingRef.play()` / `typingRef.getCollectAnchor()` 调用，拆分后壳组件需透传
 - **WordMetaPanelV2 是纯展示组件**：不含任何输入状态，props 驱动即可
 - **例句只读**：v2 中 `currentPracticeSentenceIndex` 恒为 -1，例句区不渲染输入态，仅展示文本 + 发音按钮
-- **`effective` 计算保留在壳**：因为需要组合 `baseDisplay`（来自 inject）+ `showFullWord`/`showWordResult` 局部状态
+- **`effective`** **计算保留在壳**：因为需要组合 `baseDisplay`（来自 inject）+ `showFullWord`/`showWordResult` 局部状态
 
 ### Phase 5 — 公共输入引擎
 
@@ -1888,21 +1900,21 @@ function usePracticeComplete(data, taskWords, statStore, store, wordPersistence,
 
 **4.1 TypeWordV2 拆分为 4 子组件**：
 
-| 文件 | 行数 | 职责 |
-|------|------|------|
-| `TypeWordV2.vue`（壳） | 568（原 1209） | 布局编排 + effective 计算 + 笔记/收藏 + 提示 Toast + 组合子组件 |
-| `WordTypingCoreV2.vue` | 622 | 纯键入引擎：input/wrong/lock/cursor/onTyping/del/completeTypeWord 等 |
-| `WordIdentifyPanelV2.vue` | 187 | 自测三按钮 + WordTest 四选一 UI + 快捷键绑定 |
-| `WordMetaPanelV2.vue` | 312 | 只读展示：音标/翻译/例句/短语/词源/近义词（Props 驱动，无输入逻辑） |
+| 文件                        | 行数          | 职责                                                            |
+| ------------------------- | ----------- | ------------------------------------------------------------- |
+| `TypeWordV2.vue`（壳）       | 568（原 1209） | 布局编排 + effective 计算 + 笔记/收藏 + 提示 Toast + 组合子组件                |
+| `WordTypingCoreV2.vue`    | 622         | 纯键入引擎：input/wrong/lock/cursor/onTyping/del/completeTypeWord 等 |
+| `WordIdentifyPanelV2.vue` | 187         | 自测三按钮 + WordTest 四选一 UI + 快捷键绑定                               |
+| `WordMetaPanelV2.vue`     | 312         | 只读展示：音标/翻译/例句/短语/词源/近义词（Props 驱动，无输入逻辑）                       |
 
 TypeWordV2 行数从 **1209 → 568**，减少 53%。
 
 **4.2 新建 composable + 组件**：
 
-| 文件 | 行数 | 职责 |
-|------|------|------|
-| `usePracticeIdleTimer.ts` | ~50 | 空闲检测：记录活动时间 / 3 分钟自动暂停 / 恢复计时 |
-| `PracticeOnboardingHostV2.vue` | ~80 | 引导 + 通知宿主：ConflictNotice / CollectNotice / ConflictNotice2 / Shepherd Tour |
+| 文件                             | 行数   | 职责                                                                         |
+| ------------------------------ | ---- | -------------------------------------------------------------------------- |
+| `usePracticeIdleTimer.ts`      | \~50 | 空闲检测：记录活动时间 / 3 分钟自动暂停 / 恢复计时                                              |
+| `PracticeOnboardingHostV2.vue` | \~80 | 引导 + 通知宿主：ConflictNotice / CollectNotice / ConflictNotice2 / Shepherd Tour |
 
 `usePracticeWordActions` 和 `usePracticeComplete` 因与页面 `data`/`statStore`/`store` 等状态紧密耦合（需传 8-10 个参数），提取为 composable 的收益不足以抵消接口复杂度，**本次延后**，页面内联代码保持不变。
 

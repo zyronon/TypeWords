@@ -17,12 +17,6 @@ declare global {
     LA: any
     dataLayer: any
     JSZip: any
-    __CURRENT_WORD_INFO__?: {
-      word: string
-      input: string
-      inputLock: boolean
-      containsSpace: boolean
-    }
   }
 
   interface ImportMeta {

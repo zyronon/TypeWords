@@ -8,23 +8,25 @@
  * - ConflictNotice2（无法输入？弹窗）
  * - Shepherd Tour 初始化
  */
-import { nextTick, ref, watchOnce } from 'vue'
+import { watchOnce } from '@vueuse/core'
 import ConflictNotice from '@typewords/core/components/dialog/ConflictNotice.vue'
 import CollectNotice from '@typewords/core/components/dialog/CollectNotice.vue'
 import ConflictNotice2 from '@typewords/core/components/dialog/ConflictNotice2.vue'
 import { useRoute } from 'vue-router'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { LIB_JS_URL, TourConfig } from '@typewords/core/config/env.ts'
-import { isMobile, loadJsLib } from '@typewords/core/utils'
+import { _nextTick, isMobile, loadJsLib } from '@typewords/core/utils'
 
 interface IProps {
   /** 是否已加载完数据，有了 words 之后再初始化 Tour */
   ready: boolean
-  /** 词典 ID，Tour 结束后设置 guide 参数 */
+  /** 词典 ID，保留给后续引导扩展 */
   dictId: string
 }
 
 const props = defineProps<IProps>()
+
+void props.dictId
 
 const route = useRoute()
 const settingStore = useSettingStore()
@@ -32,6 +34,14 @@ const settingStore = useSettingStore()
 let showConflictNotice = $ref(false)
 let showCollectNotice = $ref(false)
 let showConflictNotice2 = $ref(false)
+
+function openConflictNotice2() {
+  showConflictNotice2 = true
+}
+
+defineExpose({
+  openConflictNotice2,
+})
 
 // 首次加载时显示提示
 if (!route.query.guide) {
@@ -44,7 +54,7 @@ if (!route.query.guide) {
 // Tour 引导初始化
 watchOnce(
   () => props.ready,
-  (ready) => {
+  ready => {
     if (!ready) return
     _nextTick(async () => {
       const r = localStorage.getItem('tour-guide')

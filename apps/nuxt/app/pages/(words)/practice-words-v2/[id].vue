@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, provide, watch } from 'vue'
+import { onMounted, onUnmounted, provide, ref, watch } from 'vue'
 import StatisticsV2 from '~/components/practice-words-v2/StatisticsV2.vue'
 import { emitter, EventKey, useEvents } from '@typewords/core/utils/eventBus.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { useRuntimeStore } from '@typewords/core/stores/runtime.ts'
 import type { Dict, PracticeData, TaskWords, Word } from '@typewords/core/types/types.ts'
-import { usePracticeWordKeyboard } from '~/composables/practice-words/usePracticeWordKeyboard.ts'
+import { useStartKeyboardEventListener } from '@typewords/core/hooks/event.ts'
 import { usePracticeDisplayPolicy, displayOverride } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
 import {
   activeCursor,
@@ -23,12 +23,9 @@ import { getCurrentStudyWord, useWordOptions } from '@typewords/core/hooks/dict.
 import { openWordCollectPicker } from '@typewords/core/hooks/useWordCollectPicker.ts'
 import {
   _getDictDataByUrl,
-  _nextTick,
   cloneDeep,
   debounce,
   getShufflePracticeWords,
-  isMobile,
-  loadJsLib,
   resourceWrap,
   shuffle,
   throttle,
@@ -43,10 +40,9 @@ import Empty from '@typewords/core/components/Empty.vue'
 import { useBaseStore } from '@typewords/core/stores/base.ts'
 import { usePracticeStore } from '@typewords/core/stores/practice.ts'
 import { getDefaultDict, getDefaultWord } from '@typewords/core/types/func.ts'
-import ConflictNotice from '@typewords/core/components/dialog/ConflictNotice.vue'
 import PracticeLayout from '@typewords/core/components/PracticeLayout.vue'
-import { AppEnv, DICT_LIST, LIB_JS_URL, TourConfig } from '@typewords/core/config/env.ts'
-import { watchOnce } from '@vueuse/core'
+import PracticeOnboardingHostV2 from '~/components/practice-words-v2/PracticeOnboardingHostV2.vue'
+import { AppEnv, DICT_LIST } from '@typewords/core/config/env.ts'
 import { addStat, setUserDictProp } from '@typewords/core/apis'
 import GroupList from '@typewords/core/components/word/GroupList.vue'
 import { getPracticeWordCacheV2Local } from '~/composables/practice-words/practice-word-cache-v2.ts'
@@ -60,13 +56,12 @@ import {
   WordPracticeMode,
   WordPracticeType,
 } from '@typewords/core/types/enum.ts'
-import ConflictNotice2 from '@typewords/core/components/dialog/ConflictNotice2.vue'
 import { createEmptyCard, Rating } from 'ts-fsrs'
 import { useGetGradeByWrongTimes, useNextCard } from '@typewords/core/hooks/fsrs.ts'
 import WordMarkPickList, { type WordMarkPickResult } from '@typewords/core/components/word/WordMarkPickList.vue'
 import { buildQuestion } from '@typewords/core/utils/word-test.ts'
-import CollectNotice from '@typewords/core/components/dialog/CollectNotice.vue'
 import type { PracticeSessionSnapshot } from '~/composables/practice-words/registry-types.ts'
+import { usePracticeIdleTimer } from '~/composables/practice-words/usePracticeIdleTimer.ts'
 
 const { isWordSimple, toggleWordSimple } = useWordOptions()
 const settingStore = useSettingStore()
@@ -82,17 +77,12 @@ const { effective, toggleDictation, toggleTranslate } = usePracticeDisplayPolicy
 let { getGradeByWrongTimes } = useGetGradeByWrongTimes()
 let { nextCard } = useNextCard()
 const typingRef: any = $ref()
-let showConflictNotice = $ref(false)
-let showCollectNotice = $ref(false)
-let showConflictNotice2 = $ref(false)
+const onboardingHostRef = ref<InstanceType<typeof PracticeOnboardingHostV2>>()
 let isComplete = $ref(false)
 let loading = $ref(false)
 let settling = $ref(false)
-let timer = $ref<any>(-1)
 /** 仅用于 visibilitychange 内 fetch：与 `!document.hidden` 一致 */
-let isFocus = true
-const IDLE_MS = 3 * 60 * 1000
-let lastKeyActivity = Date.now()
+const isFocus = ref(true)
 let taskWords = $ref<TaskWords>({
   new: [],
   review: [],
@@ -160,20 +150,12 @@ function updateQuestion() {
 provide('practiceData', data)
 provide('practiceTaskWords', taskWords)
 
-function bumpPracticeTimerActivity() {
-  lastKeyActivity = Date.now()
-}
-provide('bumpPracticeTimerActivity', bumpPracticeTimerActivity)
+const { bumpActivity, handleResumeTimer, startTimer, stopTimer } = usePracticeIdleTimer({
+  isFocus,
+  statStore,
+})
 
-function handleResumeTimer() {
-  if (!isFocus) return
-  if (statStore.timerPaused) {
-    statStore.resumeTimer()
-    Toast.success('已恢复计时')
-  }
-  bumpPracticeTimerActivity()
-}
-
+provide('bumpPracticeTimerActivity', bumpActivity)
 
 watch(
   [() => store.load, () => loading],
@@ -184,9 +166,9 @@ watch(
 )
 
 const onvisibilitychange = async () => {
-  isFocus = !document.hidden
-  if (isFocus) {
-    bumpPracticeTimerActivity()
+  isFocus.value = !document.hidden
+  if (isFocus.value) {
+    bumpActivity()
     if (statStore.timerPaused && statStore.timerPauseReason === 'auto_visibility') {
       //特意延迟提示用户，让用户看到，免得用户焦虑，以为没暂停
       setTimeout(() => {
@@ -224,12 +206,6 @@ onMounted(async () => {
   } else {
     loading = true
   }
-  if (!route.query.guide) {
-    showConflictNotice = true
-    setTimeout(() => {
-      showCollectNotice = true
-    }, 10000)
-  }
   document.removeEventListener('visibilitychange', onvisibilitychange)
   document.addEventListener('visibilitychange', onvisibilitychange)
 })
@@ -240,50 +216,9 @@ onUnmounted(async () => {
   if (cache) {
     await savePracticeDataIns('onUnmounted')
   }
-  timer && clearInterval(timer)
+  stopTimer()
   watchRefList.map(v => v?.stop())
 })
-
-watchOnce(
-  () => data.words.length,
-  (newVal, oldVal) => {
-    //如果是从无值变有值，代表是开始
-    if (!oldVal && newVal) {
-      _nextTick(async () => {
-        const Shepherd = await loadJsLib('Shepherd', LIB_JS_URL.SHEPHERD)
-        const tour = new Shepherd.Tour(TourConfig)
-        tour.on('cancel', () => {
-          localStorage.setItem('tour-guide', '1')
-        })
-        tour.addStep({
-          id: 'step5',
-          text: '这里可以练习拼写单词，只需要按下键盘上对应的按键即可，没有输入框！',
-          attachTo: { element: '#word', on: 'bottom' },
-          buttons: [
-            {
-              text: `关闭`,
-              action() {
-                settingStore.first = false
-                tour.next()
-                setTimeout(() => {
-                  showConflictNotice = true
-                }, 1500)
-                setTimeout(() => {
-                  showCollectNotice = true
-                }, 10000)
-              },
-            },
-          ],
-        })
-
-        const r = localStorage.getItem('tour-guide')
-        if (settingStore.first && !r && !isMobile()) {
-          tour.start()
-        }
-      }, 500)
-    }
-  }
-)
 
 let allWords: Word[] = []
 let isIniting = ref(true)
@@ -378,18 +313,7 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
   allWords = shuffle(d.words)
   updateQuestion()
 
-  clearInterval(timer)
-  bumpPracticeTimerActivity()
-  timer = setInterval(() => {
-    if (!isFocus) return
-    if (statStore.timerPaused) return
-
-    const now = Date.now()
-    if (now - lastKeyActivity >= IDLE_MS) {
-      return statStore.pauseTimer('auto_idle')
-    }
-    statStore.spend += 1000
-  }, 1000)
+  startTimer()
   isIniting.value = false
   settling = isComplete = false
 }
@@ -413,7 +337,7 @@ async function complete() {
     isComplete = true
     settling = true
     runtimeStore.globalLoading = true
-    clearInterval(timer)
+    stopTimer()
 
     //如果 shuffle 数组不为空，就说明是复习，不用修改 lastLearnIndex
     if (settingStore.wordPracticeMode !== WordPracticeMode.Shuffle) {
@@ -703,7 +627,7 @@ function randomWrite() {
   }
 }
 
-usePracticeWordKeyboard()
+useStartKeyboardEventListener()
 
 watch(isIniting, n => {
   if (!n) {
@@ -817,7 +741,7 @@ useEvents([
             <div
               class="center gap-1 absolute w-full cp"
               v-if="settingStore.showConflictNotice2"
-              @click="showConflictNotice2 = true"
+              @click="onboardingHostRef?.openConflictNotice2()"
             >
               <IconFluentQuestionCircle20Regular />
               <span class="">无法输入？</span>
@@ -895,9 +819,7 @@ useEvents([
     </template>
   </PracticeLayout>
   <StatisticsV2 v-model="isComplete" :loading="settling" />
-  <ConflictNotice v-if="showConflictNotice" />
-  <CollectNotice v-model="showCollectNotice" />
-  <ConflictNotice2 v-model="showConflictNotice2" />
+  <PracticeOnboardingHostV2 ref="onboardingHostRef" :ready="data.words.length > 0" :dict-id="String(route.params.id ?? '')" />
 </template>
 
 <style scoped lang="scss">

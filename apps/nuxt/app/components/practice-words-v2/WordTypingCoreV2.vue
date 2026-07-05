@@ -42,8 +42,6 @@ interface IProps {
   wordFontSize: number
   /** 发音图标的 DOM ref，用于音量动画定位 */
   volumeIconRef: any
-  /** 例句发音图标的 DOM ref 数组 */
-  sentenceVolumeIconsRefs: any
   /** 外部注入的 playWord 函数 */
   playWord: (trigger: WordPlayTrigger, opts?: { volumeRef?: any; resetIcon?: boolean }) => void
   /** 是否正在编辑笔记（隐藏光标） */
@@ -58,7 +56,6 @@ const props = withDefaults(defineProps<IProps>(), {
   isDictation: false,
   wordFontSize: 48,
   volumeIconRef: undefined,
-  sentenceVolumeIconsRefs: () => [],
   playWord: () => {},
   editingNote: false,
 })
@@ -84,7 +81,6 @@ let waitClear = false
 let wordRepeatCount = 0
 let wordCompletedTime = 0
 let jumpTimer: ReturnType<typeof setTimeout> | null = null
-let currentPracticeSentenceIndex = $ref(-1)
 let pressNumber = 0
 let showNotice = false
 let cursor = $ref({
@@ -108,19 +104,9 @@ let displayWord = $computed(() => {
   return props.word.word.slice(input.length + wrong.length)
 })
 
-let displaySentence = $computed(() => {
-  if (currentPracticeSentenceIndex === -1 || !props.word.sentences?.[currentPracticeSentenceIndex]) return ''
-  return props.word.sentences[currentPracticeSentenceIndex].c.slice(input.length + wrong.length)
-})
-
 const right = $computed(() => {
   let a = input
-  let b: string
-  if (isTypingSentence()) {
-    b = props.word.sentences?.[currentPracticeSentenceIndex]?.c ?? ''
-  } else {
-    b = props.word.word
-  }
+  let b = props.word.word
 
   if (settingStore.wordPracticeType === WordPracticeType.Dictation) {
     a = normalizeWord(a)
@@ -136,7 +122,7 @@ const right = $computed(() => {
 // ============ 辅助函数 ============
 
 function isTypingSentence() {
-  return currentPracticeSentenceIndex !== -1
+  return false
 }
 
 function clearJumpTimer() {
@@ -177,15 +163,6 @@ function repeat() {
 // ============ 核心键入逻辑 ============
 
 function completeTypeWord(delay: boolean) {
-  if (settingStore.wordPracticeType === WordPracticeType.FollowWrite && settingStore.practiceSentence) {
-    currentPracticeSentenceIndex++
-    if (currentPracticeSentenceIndex < (props.word.sentences?.length ?? 0)) {
-      // 还有下一个句子
-      inputLock = false
-      wrong = input = ''
-      return
-    }
-  }
   if (shouldRepeat()) {
     repeat()
   } else {
@@ -224,15 +201,8 @@ async function onTyping(e: KeyboardEvent) {
   }
 
   // debugger
-  let target: string
-  let targetVolumeIcon: any
-  if (isTypingSentence()) {
-    target = props.word.sentences?.[currentPracticeSentenceIndex]?.c ?? ''
-    targetVolumeIcon = props.sentenceVolumeIconsRefs?.[currentPracticeSentenceIndex]
-  } else {
-    target = props.word.word
-    targetVolumeIcon = props.volumeIconRef
-  }
+  const target = props.word.word
+  const targetVolumeIcon = props.volumeIconRef
 
   // 输入完成会锁死不能再输入
   if (inputLock) {
@@ -379,7 +349,7 @@ async function onTyping(e: KeyboardEvent) {
       }
       waitClear = true
       setTimeout(() => {
-        if (settingStore.inputWrongClear && !isTypingSentence()) input = ''
+        if (settingStore.inputWrongClear) input = ''
         wrong = ''
         waitClear = false
       }, 500)
@@ -417,7 +387,6 @@ function resetTypingCore(trigger: WordPlayTrigger) {
   wordRepeatCount = 0
   emitShowWordResult(false)
   inputLock = false
-  currentPracticeSentenceIndex = -1
   wordCompletedTime = 0
   emitWrongTimes(0)
   resetActiveWordPlayCount(props.word.word)
@@ -436,14 +405,10 @@ function onResetWord() {
 function checkCursorPosition() {
   _nextTick(() => {
     let cursorOffset: { top: number; left: number }
-    if (isTypingSentence()) {
-      cursorOffset = { top: 0, left: 0 }
-    } else {
-      cursorOffset = { top: 0, left: -3 }
-    }
+    cursorOffset = { top: 0, left: -3 }
     // 选中目标元素
-    const cursorEl = document.querySelector(`.cursor`)
-    const inputList = document.querySelectorAll(`.l`)
+    const cursorEl = typingWordRef?.parentElement?.querySelector(`.cursor`)
+    const inputList = typingWordRef?.querySelectorAll(`.l`) ?? []
     if (!typingWordRef || !cursorEl) return
     const typingWordRect = typingWordRef.getBoundingClientRect()
 
@@ -454,12 +419,12 @@ function checkCursorPosition() {
         left: inputRect.right - typingWordRect.left + cursorOffset.left,
       }
     } else {
-      const dictation = document.querySelector(`.dictation`)
+      const dictation = typingWordRef.querySelector(`.dictation`)
       let elRect: DOMRect | undefined
       if (dictation) {
         elRect = dictation.getBoundingClientRect()
       } else {
-        const letter = document.querySelector(`.letter`)
+        const letter = typingWordRef.querySelector(`.letter`)
         elRect = letter?.getBoundingClientRect()
       }
       if (!elRect) return
@@ -546,9 +511,7 @@ defineExpose({
   wrongTimes: () => props.wrongTimes,
   right,
   displayWord,
-  displaySentence,
   isTypingSentence,
-  currentPracticeSentenceIndex,
   cursor,
   resetTypingCore,
   del,
@@ -582,22 +545,17 @@ defineExpose({
 
     <!-- 非默写模式 -->
     <template v-else>
-      <div v-if="currentPracticeSentenceIndex === -1">
-        <span class="input" v-if="input">{{ input }}</span>
-        <span class="wrong" v-if="wrong">{{ wrong }}</span>
-        <span class="letter" v-if="isDictation && !showFullWord">
-          {{
-            displayWord
-              .split('')
-              .map(v => (v === ' ' ? '&nbsp;' : '_'))
-              .join('')
-          }}
-        </span>
-        <span class="letter" v-else>{{ displayWord }}</span>
-      </div>
-      <div v-else>
-        <span class="input">{{ word.word }}</span>
-      </div>
+      <span class="input" v-if="input">{{ input }}</span>
+      <span class="wrong" v-if="wrong">{{ wrong }}</span>
+      <span class="letter" v-if="isDictation && !showFullWord">
+        {{
+          displayWord
+            .split('')
+            .map(v => (v === ' ' ? '&nbsp;' : '_'))
+            .join('')
+        }}
+      </span>
+      <span class="letter" v-else>{{ displayWord }}</span>
     </template>
   </div>
 </template>

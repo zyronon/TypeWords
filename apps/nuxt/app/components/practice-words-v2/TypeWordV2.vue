@@ -328,7 +328,9 @@ onUnmounted(() => {
 // keyup 时隐藏单词
 useOnKeyboardEventListener(
   () => {},
-  () => { hideWord() }
+  () => {
+    hideWord()
+  }
 )
 
 function onResetWord() {
@@ -357,16 +359,14 @@ defineExpose({
       <div class="flex gap-1 mt-10 md:mt-30">
         <div
           class="phonetic"
-          :class="
-            (effective.showPhoneticShadow && !showFullWord && !showWordResult && 'word-shadow')
-          "
+          :class="effective.showPhoneticShadow && !showFullWord && !showWordResult && 'word-shadow'"
           v-if="settingStore.soundType === 'uk' && word.phonetic0"
         >
           / {{ word.phonetic0 }} /
         </div>
         <div
           class="phonetic"
-          :class="(effective.showPhoneticShadow && !showFullWord && !showWordResult && 'word-shadow')"
+          :class="effective.showPhoneticShadow && !showFullWord && !showWordResult && 'word-shadow'"
           v-if="settingStore.soundType === 'us' && word.phonetic1"
         >
           / {{ word.phonetic1 }} /
@@ -397,7 +397,7 @@ defineExpose({
             v-model:showWordResult="showWordResult"
             v-model:wrongTimes="wrongTimesModel"
             :showFullWord="showFullWord"
-            :isDictation="effective.dictation"
+            :isDictation="effective.isDictationInput"
             :wordFontSize="settingStore.fontSize.wordForeignFontSize"
             :volumeIconRef="volumeIconRef"
             :sentenceVolumeIconsRefs="sentenceVolumeIconsRefs"
@@ -438,6 +438,30 @@ defineExpose({
         </BaseIcon>
       </div>
 
+      <!-- 笔记编辑区 -->
+      <template v-if="editingNote || store.noteData[word.word]?.trim()">
+        <div class="flex flex-col gap-2 w-full">
+          <div class="flex">
+            <div class="label">笔记</div>
+            <Textarea
+              autofocus
+              v-if="editingNote"
+              v-model="noteInputValue"
+              placeholder="记录这个单词的个人笔记"
+              :autosize="{ minRows: 4, maxRows: 8 }"
+              class="note-textarea"
+            />
+            <div v-else class="note-content">{{ store.noteData[word.word] }}</div>
+          </div>
+          <div v-if="editingNote" class="flex justify-end mt-2">
+            <BaseButton size="large" type="info" v-if="store.noteData[word.word]" @click="deleteNote">删除</BaseButton>
+            <BaseButton size="large" @click="cancelNote">取消</BaseButton>
+            <BaseButton size="large" type="primary" @click="saveNote">保存</BaseButton>
+          </div>
+        </div>
+        <div class="line-white my-3"></div>
+      </template>
+
       <!-- 自测 / WordTest UI -->
       <WordIdentifyPanelV2
         ref="identifyPanelRef"
@@ -474,30 +498,6 @@ defineExpose({
       />
     </div>
 
-    <!-- 笔记编辑区 -->
-    <template v-if="editingNote || store.noteData[word.word]?.trim()">
-      <div class="line-white my-3"></div>
-      <div class="flex flex-col gap-2">
-        <div class="flex">
-          <div class="label">笔记</div>
-          <Textarea
-            autofocus
-            v-if="editingNote"
-            v-model="noteInputValue"
-            placeholder="记录这个单词的个人笔记"
-            :autosize="{ minRows: 4, maxRows: 8 }"
-            class="note-textarea"
-          />
-          <div v-else class="note-content">{{ store.noteData[word.word] }}</div>
-        </div>
-        <div v-if="editingNote" class="flex justify-end mt-2">
-          <BaseButton size="large" type="info" v-if="store.noteData[word.word]" @click="deleteNote">删除</BaseButton>
-          <BaseButton size="large" @click="cancelNote">取消</BaseButton>
-          <BaseButton size="large" type="primary" @click="saveNote">保存</BaseButton>
-        </div>
-      </div>
-    </template>
-
     <!-- 光标 -->
     <div
       v-if="!editingNote"
@@ -505,7 +505,7 @@ defineExpose({
       :style="{
         top: (typingCoreRef?.cursor?.top ?? 0) + 'px',
         left: (typingCoreRef?.cursor?.left ?? 0) + 'px',
-        height: (typingCoreRef?.isTypingSentence?.() ? '20px' : settingStore.fontSize.wordForeignFontSize + 'px'),
+        height: typingCoreRef?.isTypingSentence?.() ? '20px' : settingStore.fontSize.wordForeignFontSize + 'px',
       }"
     ></div>
     <WordLookupPopover />

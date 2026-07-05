@@ -52,9 +52,6 @@ export const DISPLAY_LISTEN = phaseDisplay({
   showWordTranslation: false,
   showSentences: false,
   showSentenceTranslation: false,
-  showPhrases: false,
-  showEtymology: false,
-  showRelWords: false,
   inputMode: 'listen',
 })
 
@@ -63,9 +60,6 @@ export const DISPLAY_DICTATION = phaseDisplay({
   showPhonetic: 'shadow',
   showSentences: false,
   showSentenceTranslation: false,
-  showPhrases: false,
-  showEtymology: false,
-  showRelWords: false,
   inputMode: 'dictation',
 })
 

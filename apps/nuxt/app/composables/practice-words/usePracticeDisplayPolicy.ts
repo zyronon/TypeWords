@@ -121,8 +121,6 @@ export function usePracticeDisplayPolicy(
     displayOverride.value = {
       ...displayOverride.value,
       wordMask: nextMask,
-      showSentences: nextMask === 'none',
-      showSentenceTranslation: nextMask === 'none',
     }
   }
 

@@ -24,7 +24,7 @@ export interface PracticeDisplayPolicy {
 }
 
 export type PracticeDisplayOverride = Partial<
-  Pick<PracticeDisplayPolicy, 'wordMask' | 'showWordTranslation' | 'showSentences' | 'showSentenceTranslation'>
+  Pick<PracticeDisplayPolicy, 'wordMask' | 'showWordTranslation' | 'showSentenceTranslation'>
 >
 
 export interface EffectiveDisplay {
