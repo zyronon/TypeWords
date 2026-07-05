@@ -46,6 +46,7 @@ interface IProps {
   playWord: (trigger: WordPlayTrigger, opts?: { volumeRef?: any; resetIcon?: boolean }) => void
   /** 是否正在编辑笔记（隐藏光标） */
   editingNote: boolean
+  containerRef?: HTMLElement
 }
 
 const props = withDefaults(defineProps<IProps>(), {
@@ -63,6 +64,7 @@ const props = withDefaults(defineProps<IProps>(), {
 const emit = defineEmits<{
   'update:showWordResult': [value: boolean]
   'update:wrongTimes': [value: number]
+  'cursor-change': [value: { top: number; left: number }]
   complete: []
   wrong: []
 }>()
@@ -96,6 +98,11 @@ function emitShowWordResult(val: boolean) {
 
 function emitWrongTimes(val: number) {
   emit('update:wrongTimes', val)
+}
+
+function setCursor(nextCursor: { top: number; left: number }) {
+  cursor = nextCursor
+  emit('cursor-change', nextCursor)
 }
 
 // ============ 计算属性 ============
@@ -407,17 +414,18 @@ function checkCursorPosition() {
     let cursorOffset: { top: number; left: number }
     cursorOffset = { top: 0, left: -3 }
     // 选中目标元素
-    const cursorEl = typingWordRef?.parentElement?.querySelector(`.cursor`)
     const inputList = typingWordRef?.querySelectorAll(`.l`) ?? []
-    if (!typingWordRef || !cursorEl) return
+    if (!typingWordRef) return
     const typingWordRect = typingWordRef.getBoundingClientRect()
+    const containerRect = props.containerRef?.getBoundingClientRect() ?? typingWordRect
+    const cursorHeight = isTypingSentence() ? 20 : props.wordFontSize
 
     if (inputList.length) {
       let inputRect = last(Array.from(inputList)).getBoundingClientRect()
-      cursor = {
-        top: inputRect.top + inputRect.height - cursorEl.clientHeight - typingWordRect.top + cursorOffset.top,
-        left: inputRect.right - typingWordRect.left + cursorOffset.left,
-      }
+      setCursor({
+        top: inputRect.top + inputRect.height - cursorHeight - containerRect.top + cursorOffset.top,
+        left: inputRect.right - containerRect.left + cursorOffset.left,
+      })
     } else {
       const dictation = typingWordRef.querySelector(`.dictation`)
       let elRect: DOMRect | undefined
@@ -428,10 +436,10 @@ function checkCursorPosition() {
         elRect = letter?.getBoundingClientRect()
       }
       if (!elRect) return
-      cursor = {
-        top: elRect.top + elRect.height - cursorEl.clientHeight - typingWordRect.top + cursorOffset.top,
-        left: elRect.left - typingWordRect.left + cursorOffset.left,
-      }
+      setCursor({
+        top: elRect.top + elRect.height - cursorHeight - containerRect.top + cursorOffset.top,
+        left: elRect.left - containerRect.left + cursorOffset.left,
+      })
     }
   })
 }
@@ -476,6 +484,7 @@ watch(
 onMounted(() => {
   emitter.on(EventKey.resetWord, onResetWord)
   emitter.on(EventKey.onTyping, onTyping)
+  checkCursorPosition()
 })
 
 onUnmounted(() => {

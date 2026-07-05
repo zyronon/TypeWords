@@ -119,6 +119,8 @@ function getSentenceShortcut(index: number) {
 
 const typingCoreRef = $ref<InstanceType<typeof WordTypingCoreV2>>()
 const identifyPanelRef = $ref<InstanceType<typeof WordIdentifyPanelV2>>()
+const typingWordRef = $ref<HTMLDivElement>()
+let typingCursor = $ref({ top: 0, left: 0 })
 
 function onTypingCoreComplete() {
   emit('complete')
@@ -126,6 +128,10 @@ function onTypingCoreComplete() {
 
 function onTypingCoreWrong() {
   emit('wrong')
+}
+
+function onTypingCursorChange(nextCursor: { top: number; left: number }) {
+  typingCursor = nextCursor
 }
 
 // ============ 单词操作 ============
@@ -353,7 +359,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="typing-word" v-if="word.word.length">
+  <div class="typing-word" ref="typingWordRef" v-if="word.word.length">
     <div class="flex flex-col items-center">
       <!-- 音标 + 发音按钮（通过 slot 传入 VolumeIcon） -->
       <div class="flex gap-1 mt-10 md:mt-30">
@@ -403,6 +409,8 @@ defineExpose({
             :sentenceVolumeIconsRefs="sentenceVolumeIconsRefs"
             :playWord="playWord"
             :editingNote="editingNote"
+            :containerRef="typingWordRef"
+            @cursor-change="onTypingCursorChange"
             @complete="onTypingCoreComplete"
             @wrong="onTypingCoreWrong"
           />
@@ -503,8 +511,8 @@ defineExpose({
       v-if="!editingNote"
       class="cursor"
       :style="{
-        top: (typingCoreRef?.cursor?.top ?? 0) + 'px',
-        left: (typingCoreRef?.cursor?.left ?? 0) + 'px',
+        top: typingCursor.top + 'px',
+        left: typingCursor.left + 'px',
         height: typingCoreRef?.isTypingSentence?.() ? '20px' : settingStore.fontSize.wordForeignFontSize + 'px',
       }"
     ></div>
