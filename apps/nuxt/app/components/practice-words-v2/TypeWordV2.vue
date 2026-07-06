@@ -33,6 +33,8 @@ import WordTypingCoreV2 from './WordTypingCoreV2.vue'
 import WordIdentifyPanelV2 from './WordIdentifyPanelV2.vue'
 import WordMetaPanelV2 from './WordMetaPanelV2.vue'
 import { useOnKeyboardEventListener } from '@typewords/core/hooks/event.ts'
+import SentencePractice from '~/components/practice-sentences/SentencePractice.vue'
+import { usePracticeWordSentencePractice } from '~/composables/practice-words/usePracticeWordSentencePractice.ts'
 
 const SENTENCE_PLAY_SHORTCUT_KEYS = [
   ShortcutKey.PlaySentence1,
@@ -108,6 +110,14 @@ const { highlightedSentenceIndex, playWord, playSentence, playTtsWithGuide } = u
   shouldShowSentences: () => effective.value.showSentences,
 })
 
+const {
+  active: sentencePracticeActive,
+  currentItem: sentencePracticeItem,
+  mode: sentencePracticeMode,
+  start: startSentencePractice,
+  completeCurrent: completeSentencePracticeCurrent,
+} = usePracticeWordSentencePractice(toRef(props, 'word'))
+
 function getSentenceShortcut(index: number) {
   const key = SENTENCE_PLAY_SHORTCUT_KEYS[index]
   return key ? settingStore.shortcutKeyMap[key] : ''
@@ -119,6 +129,7 @@ const typingCoreRef = $ref<InstanceType<typeof WordTypingCoreV2>>()
 const identifyPanelRef = $ref<InstanceType<typeof WordIdentifyPanelV2>>()
 
 function onTypingCoreComplete() {
+  if (startSentencePractice()) return
   emit('complete')
 }
 
@@ -126,9 +137,25 @@ function onTypingCoreWrong() {
   emit('wrong')
 }
 
+function onSentencePracticeComplete() {
+  if (completeSentencePracticeCurrent()) {
+    emit('complete')
+  }
+}
+
+function onSentencePracticeWrong() {
+  emit('wrong')
+}
+
+function onSentencePracticePlay() {
+  if (!sentencePracticeItem.value?.source.text) return
+  playTtsWithGuide(sentencePracticeItem.value.source.text)
+}
+
 // ============ 单词操作 ============
 
 function checkIsWrong() {
+  if (sentencePracticeActive.value) return
   if (effective.value.isDictationInput || effective.value.showWordMask) {
     if (!showWordResult.value && !typingCoreRef?.right) {
       emit('wrong')
@@ -378,6 +405,7 @@ defineExpose({
 
       <!-- 单词键入区 -->
       <Tooltip
+        v-if="!sentencePracticeActive"
         :title="effective.showWordMask ? `快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示单词` : ''"
       >
         <div
@@ -399,11 +427,22 @@ defineExpose({
             :sentenceVolumeIconsRefs="sentenceVolumeIconsRefs"
             :playWord="playWord"
             :editingNote="editingNote"
-            @complete="onTypingCoreComplete"
+            @wordComplete="onTypingCoreComplete"
             @wrong="onTypingCoreWrong"
           />
         </div>
       </Tooltip>
+
+      <SentencePractice
+        v-else
+        class="mt-6"
+        :item="sentencePracticeItem"
+        :mode="sentencePracticeMode"
+        :active="sentencePracticeActive"
+        @complete="onSentencePracticeComplete"
+        @wrong="onSentencePracticeWrong"
+        @play="onSentencePracticePlay"
+      />
 
       <!-- 操作按钮行 -->
       <div class="mt-2 flex gap-4">
@@ -434,9 +473,22 @@ defineExpose({
         </BaseIcon>
       </div>
 
+      <!-- 自测 / WordTest UI -->
+      <WordIdentifyPanelV2
+        v-if="!sentencePracticeActive"
+        ref="identifyPanelRef"
+        :word="word"
+        :question="question"
+        :showWordResult="showWordResult"
+        @know="onIdentifyKnow"
+        @unknown="onIdentifyUnknown"
+        @mastered="onIdentifyMastered"
+        @wrong="onIdentifyWrong"
+      />
+
       <!-- 笔记编辑区 -->
       <template v-if="editingNote || store.noteData[word.word]?.trim()">
-        <div class="flex flex-col gap-2 w-full">
+        <div class="flex flex-col gap-2 w-full mt-4">
           <div class="flex">
             <div class="label">笔记</div>
             <Textarea
@@ -458,20 +510,8 @@ defineExpose({
         <div class="line-white my-3"></div>
       </template>
 
-      <!-- 自测 / WordTest UI -->
-      <WordIdentifyPanelV2
-        ref="identifyPanelRef"
-        :word="word"
-        :question="question"
-        :showWordResult="showWordResult"
-        @know="onIdentifyKnow"
-        @unknown="onIdentifyUnknown"
-        @mastered="onIdentifyMastered"
-        @wrong="onIdentifyWrong"
-      />
-
       <!-- 提示 Toast -->
-      <div class="center mt-3" v-if="notice.show && settingStore.showUsageTips">
+      <div class="center mt-3" v-if="!sentencePracticeActive && notice.show && settingStore.showUsageTips">
         <ToastComponent
           :duration="0"
           confirm
@@ -484,6 +524,7 @@ defineExpose({
 
       <!-- WordMetaPanelV2: 翻译 + 例句 + 短语 + 词源 等只读展示 -->
       <WordMetaPanelV2
+        v-if="!sentencePracticeActive"
         :word="word"
         :effective="effective"
         :showFullWord="showFullWord"

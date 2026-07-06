@@ -78,6 +78,10 @@ onMounted(() => {
     <div class="aside anim fixed">
       <div class="top" :class="!expand && 'hidden-span'">
         <Logo v-if="expand" />
+        <NuxtLink to="/practice-sentences" class="row">
+          <IconFluentTextUnderlineDouble20Regular />
+          <span>例句</span>
+        </NuxtLink>
         <NuxtLink to="/words-v2" class="row">
           <IconFluentTextUnderlineDouble20Regular />
           <span>{{ $t('words') }}-v2</span>
@@ -93,11 +97,7 @@ onMounted(() => {
         <NuxtLink to="/setting" class="row">
           <IconFluentSettings20Regular />
           <span>{{ $t('setting') }}</span>
-          <div
-            class="red-point"
-            :class="!settingStore.sideExpand && 'top-1 right-0'"
-            v-if="runtimeStore.isError"
-          ></div>
+          <div class="red-point" :class="!settingStore.sideExpand && 'top-1 right-0'" v-if="runtimeStore.isError"></div>
         </NuxtLink>
         <NuxtLink to="/feedback" class="row">
           <IconFluentCommentEdit20Regular />
@@ -161,7 +161,13 @@ onMounted(() => {
         @click="router.push('/setting?index=6 ')"
         v-if="runtimeStore.isError"
       >
-        <ToastComponent type="error" :duration="0" :shadow="false" :showClose="false" :message="$t('sync_failed_toast')" />
+        <ToastComponent
+          type="error"
+          :duration="0"
+          :shadow="false"
+          :showClose="false"
+          :message="$t('sync_failed_toast')"
+        />
       </div>
       <!--      <slot></slot>-->
       <router-view></router-view>

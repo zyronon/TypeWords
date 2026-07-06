@@ -64,6 +64,7 @@ const emit = defineEmits<{
   'update:showWordResult': [value: boolean]
   'update:wrongTimes': [value: number]
   complete: []
+  wordComplete: []
   wrong: []
 }>()
 
@@ -168,9 +169,9 @@ function completeTypeWord(delay: boolean) {
   } else {
     if (delay) {
       clearJumpTimer()
-      jumpTimer = setTimeout(() => emit('complete'), settingStore.waitTimeForChangeWord)
+      jumpTimer = setTimeout(() => emit('wordComplete'), settingStore.waitTimeForChangeWord)
     } else {
-      emit('complete')
+      emit('wordComplete')
     }
   }
 }
@@ -199,6 +200,17 @@ async function onTyping(e: KeyboardEvent) {
   if (waitClear) {
     return
   }
+
+  // if (isWordTest) {
+  //   if (e.code === 'Space') {
+  //     if (completeSelect) {
+  //       completeTypeWord(false)
+  //     } else {
+  //       select(e, -1)
+  //     }
+  //   }
+  //   return
+  // }
 
   // debugger
   const target = props.word.word
@@ -260,7 +272,7 @@ async function onTyping(e: KeyboardEvent) {
         if (right) {
           //如果已显示单词，则发射完成事件，并 return
           if (props.showWordResult) {
-            return emit('complete')
+            return emit('wordComplete')
           } else {
             //未显示单词，则播放正确音乐，并在后面设置为 showWordResult.value 为 true 来显示单词
             emitShowWordResult(true)
@@ -290,6 +302,7 @@ async function onTyping(e: KeyboardEvent) {
     //当自测模式下，按其他键则自动默认为不认识
     emitShowWordResult(true)
     typo()
+    console.log('???')
     if (settingStore.wordSound) {
       props.playWord(WordPlayTrigger.IdentifyWrongKey, { volumeRef: targetVolumeIcon })
     }
@@ -365,9 +378,7 @@ async function onTyping(e: KeyboardEvent) {
       ) {
         emitShowWordResult(true)
       }
-      if (
-        [WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(settingStore.wordPracticeType)
-      ) {
+      if ([WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(settingStore.wordPracticeType)) {
         if (settingStore.autoNextWord) {
           completeTypeWord(true)
         }
@@ -466,12 +477,9 @@ watch(
   }
 )
 
-watch(
-  [() => input, () => props.showFullWord, () => props.showWordMask],
-  () => {
-    checkCursorPosition()
-  }
-)
+watch([() => input, () => props.showFullWord, () => props.showWordMask], () => {
+  checkCursorPosition()
+})
 
 onMounted(() => {
   emitter.on(EventKey.resetWord, onResetWord)

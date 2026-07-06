@@ -13,7 +13,6 @@ import { IdentifyMethod, ShortcutKey, WordPracticeType } from '@typewords/core/t
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { WordPlayTrigger } from '~/composables/practice-words/usePracticeWordAudioV2.ts'
 import { useEventsByWatch } from '@typewords/core/utils/eventBus.ts'
-import { computed } from 'vue'
 import { BaseButton } from '@typewords/base'
 import TranslationList from '@typewords/core/components/word/TranslationList.vue'
 import { useI18n } from 'vue-i18n'
@@ -144,19 +143,19 @@ defineExpose({
         :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.KnowWord]})`"
         size="large"
         @click="know"
-      >{{ $t('i_know') }}
+        >{{ $t('i_know') }}
       </BaseButton>
       <BaseButton
         :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.UnknownWord]})`"
         size="large"
         @click="unknown"
-      >{{ $t('i_dont_know') }}
+        >{{ $t('i_dont_know') }}
       </BaseButton>
       <BaseButton
         :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.MasteredWord]})`"
         size="large"
         @click="mastered"
-      >已掌握
+        >已掌握
       </BaseButton>
     </div>
   </template>

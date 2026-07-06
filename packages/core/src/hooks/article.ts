@@ -7,7 +7,7 @@ import { useBaseStore } from '../stores/base'
 import { useRuntimeStore } from '../stores/runtime'
 import { useSettingStore } from '../stores/setting'
 
-function parseSentence(sentence: string) {
+export function parseSentence(sentence: string) {
   // 先统一一些常见的“智能引号” -> 直引号，避免匹配问题
   sentence = sentence
     .replace(/[\u2018\u2019\u201A\u201B]/g, "'") // 各种单引号 → '
