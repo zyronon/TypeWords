@@ -35,7 +35,7 @@ export interface EffectiveDisplay {
   showEtymology: boolean
   showRelWords: boolean
   wordMask: 'none' | 'underscore' | 'hidden'
-  dictation: boolean
+  showWordMask: boolean
   translate: boolean
   showPhoneticShadow: boolean
   isDictationInput: boolean

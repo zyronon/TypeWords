@@ -37,7 +37,7 @@ function mergeDisplay(
 }
 
 /**
- * Policy → 模板用的 EffectiveDisplay（含 dictation/translate 布尔、局部 reveal 展开）。
+ * Policy → 模板用的 EffectiveDisplay（含 showWordMask / translate / isDictationInput、局部 reveal 展开）。
  */
 function toEffective(
   policy: PracticeDisplayPolicy,
@@ -56,7 +56,7 @@ function toEffective(
     showEtymology: policy.showEtymology || reveal,
     showRelWords: policy.showRelWords || reveal,
     wordMask: showWordResult ? 'none' : policy.wordMask,
-    dictation: policy.wordMask !== 'none',
+    showWordMask: (showWordResult ? 'none' : policy.wordMask) !== 'none',
     translate: policy.showWordTranslation || reveal,
     showPhoneticShadow: policy.showPhonetic === 'shadow' || policy.wordMask !== 'none',
     isDictationInput: policy.inputMode === 'dictation',

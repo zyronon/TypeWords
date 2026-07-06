@@ -39,19 +39,14 @@ function runAnimation(reset = false, time = props.time) {
   }, time)
 }
 
-function play(handle: boolean = false, reset = false, time = props.time) {
-  if (reset) {
-    step = 2
-    count = 0
-  }
-  if (count === 0) {
-    props?.cb?.(handle)
-  }
-  runAnimation(false, time)
+function play(handle: boolean = false) {
+  props?.cb?.(handle)
+  runAnimation(true)
 }
 
-function animateOnly(reset = false, time = props.time) {
-  runAnimation(reset, time)
+// todo 废弃
+function animateOnly(reset = false) {
+  runAnimation(reset)
 }
 
 function click(event: MouseEvent) {
@@ -63,20 +58,11 @@ defineExpose({ play, animateOnly })
 </script>
 
 <template>
-  <template v-if="props.simple">
-    <BaseIcon :title="title" @click.stop="click" no-bg>
-      <IconBxVolume v-if="step === 0" />
-      <IconBxVolumeLow v-if="step === 1" />
-      <IconBxVolumeFull v-if="step === 2" />
-    </BaseIcon>
-  </template>
-  <template v-else>
-    <BaseIcon :title="title" @click.stop="click">
-      <IconBxVolume v-if="step === 0" />
-      <IconBxVolumeLow v-if="step === 1" />
-      <IconBxVolumeFull v-if="step === 2" />
-    </BaseIcon>
-  </template>
+  <BaseIcon :title="title" @click.stop="click" :no-bg="props.simple">
+    <IconBxVolume v-if="step === 0" />
+    <IconBxVolumeLow v-if="step === 1" />
+    <IconBxVolumeFull v-if="step === 2" />
+  </BaseIcon>
 </template>
 
 <style scoped lang="scss"></style>

@@ -1,8 +1,8 @@
-import { ref, unref, type ComputedRef, type Ref } from 'vue'
+import { ref, type Ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Toast } from '@typewords/base'
 import type { Word } from '@typewords/core/types/types.ts'
-import { getBrowserKey, cancelWordPracticeAudio, usePlayWordAudio, useTTsPlayAudio } from '@typewords/core/hooks/sound'
+import { cancelWordPracticeAudio, getBrowserKey, usePlayWordAudio, useTTsPlayAudio } from '@typewords/core/hooks/sound.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { WordPlayTrigger } from '@typewords/core/composables/useWordPracticeAudio.ts'
 
@@ -17,11 +17,10 @@ const CHAIN_FIRST_SENTENCE_TRIGGERS = new Set([
 
 export interface PracticeWordAudioV2Options {
   word: Ref<Word>
-  volumeIconRef: Ref<{ animateOnly?: (reset?: boolean) => void } | undefined> | ComputedRef<{ animateOnly?: (reset?: boolean) => void } | undefined>
   shouldShowSentences: () => boolean
 }
 
-export function usePracticeWordAudioV2({ word, volumeIconRef, shouldShowSentences }: PracticeWordAudioV2Options) {
+export function usePracticeWordAudioV2({ word, shouldShowSentences }: PracticeWordAudioV2Options) {
   const settingStore = useSettingStore()
   const router = useRouter()
   const playWordAudio = usePlayWordAudio()
@@ -79,11 +78,7 @@ export function usePracticeWordAudioV2({ word, volumeIconRef, shouldShowSentence
     })
   }
 
-  function playWord(
-    trigger: WordPlayTrigger,
-    options?: { resetIcon?: boolean; volumeRef?: { animateOnly?: (reset?: boolean) => void } }
-  ) {
-    if (!settingStore.wordSound) return
+  function playWord(trigger: WordPlayTrigger) {
     cancelWordPracticeAudio()
 
     const handle =
@@ -100,8 +95,6 @@ export function usePracticeWordAudioV2({ word, volumeIconRef, shouldShowSentence
       : undefined
 
     playWordAudio(word.value.word, handle, onEnd)
-    const iconRef = options?.volumeRef ?? unref(volumeIconRef)
-    iconRef?.animateOnly?.(options?.resetIcon ?? false)
   }
 
   return { highlightedSentenceIndex, playWord, playSentence, playTtsWithGuide }

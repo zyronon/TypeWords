@@ -42,7 +42,7 @@ interface DisplayPolicy {
   showEtymology: boolean
   showRelWords: boolean
   showPhoneticShadow: boolean
-  dictation: boolean
+  showWordMask: boolean
   translate: boolean
 }
 
@@ -72,7 +72,7 @@ const props = withDefaults(defineProps<IProps>(), {
     showEtymology: true,
     showRelWords: true,
     showPhoneticShadow: false,
-    dictation: false,
+    showWordMask: false,
     translate: true,
   }),
   playSentence: () => {},
@@ -105,7 +105,7 @@ defineExpose({
         fontSize: settingStore.fontSize.wordTranslateFontSize + 'px',
       }"
     >
-      <TranslationList :word="word" :showFull="!effective.dictation || showWordResult || showFullWord" />
+      <TranslationList :word="word" :showFull="!effective.showWordMask || showWordResult || showFullWord" />
     </div>
 
     <!-- 例句列表 -->
@@ -123,7 +123,7 @@ defineExpose({
           <ClickableEnglishText
             :text="item.c"
             :word="word.word"
-            :dictation="!(!effective.dictation || showFullWord || showWordResult)"
+            :dictation="effective.showWordMask && !showFullWord && !showWordResult"
           />
           <VolumeIcon
             :title="getSentenceShortcut(index) ? `发音(${getSentenceShortcut(index)})` : '发音'"
@@ -149,7 +149,7 @@ defineExpose({
                 class="en"
                 :text="item.c"
                 :word="word.word"
-                :dictation="!(!effective.dictation || showFullWord || showWordResult)"
+                :dictation="effective.showWordMask && !showFullWord && !showWordResult"
               />
               <VolumeIcon :simple="false" title="发音" @click.stop="() => playTtsWithGuide(item.c)" />
             </div>
@@ -162,7 +162,7 @@ defineExpose({
     </template>
 
     <!-- 近义词 -->
-    <template v-if="(effective.translate || !effective.dictation) && word?.synos?.length">
+    <template v-if="(effective.translate || !effective.showWordMask) && word?.synos?.length">
       <div class="line-white my-3"></div>
       <div class="flex">
         <div class="label">{{ $t('synonyms') }}</div>
@@ -173,7 +173,7 @@ defineExpose({
               <div class="cn anim" v-opacity="effective.showSentenceTranslation || showFullWord || showWordResult">
                 {{ item.cn }}
               </div>
-              <div class="anim" v-opacity="!effective.dictation || showFullWord || showWordResult">
+              <div class="anim" v-opacity="!effective.showWordMask || showFullWord || showWordResult">
                 <template v-for="(i, j) in item.ws" :key="j">
                   <ClickableWord :word="i" />
                   <span v-if="j !== item.ws.length - 1"> / </span>
@@ -189,7 +189,7 @@ defineExpose({
     <div
       class="anim"
       v-opacity="
-        ((effective.translate && !effective.dictation) || showFullWord || showWordResult) &&
+        ((effective.translate && !effective.showWordMask) || showFullWord || showWordResult) &&
         settingStore.showEtymologyAndRelWords
       "
     >

@@ -749,7 +749,7 @@ useEvents([
 
             <Tooltip :title="`下一个(${settingStore.shortcutKeyMap[ShortcutKey.Next]})`">
               <div class="relative center gap-2 cp float-right mr-3" @click="next(false)" v-if="nextWord">
-                <div class="word" :class="effective.dictation && 'word-shadow'">
+                <div class="word" :class="effective.showWordMask && 'word-shadow'">
                   {{ nextWord.word }}
                 </div>
                 <IconFluentArrowRight16Regular class="arrow" width="22" />
@@ -801,7 +801,7 @@ useEvents([
             v-if="data.words.length"
             :is-active="settingStore.showPanel"
             :static="false"
-            :show-word="!effective.dictation"
+            :show-word="!effective.showWordMask"
             :show-translate="effective.translate"
             :list="data.words"
             :activeIndex="data.index"

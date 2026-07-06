@@ -37,7 +37,7 @@ interface IProps {
   wrongTimes: number
   showFullWord: boolean
   /** 当前是否为听写模式（仅用于字母遮罩） */
-  isDictation: boolean
+  showWordMask: boolean
   /** 当前单词字体大小 */
   wordFontSize: number
   /** 发音图标的 DOM ref，用于音量动画定位 */
@@ -46,7 +46,6 @@ interface IProps {
   playWord: (trigger: WordPlayTrigger, opts?: { volumeRef?: any; resetIcon?: boolean }) => void
   /** 是否正在编辑笔记（隐藏光标） */
   editingNote: boolean
-  containerRef?: HTMLElement
 }
 
 const props = withDefaults(defineProps<IProps>(), {
@@ -54,7 +53,7 @@ const props = withDefaults(defineProps<IProps>(), {
   showWordResult: false,
   wrongTimes: 0,
   showFullWord: false,
-  isDictation: false,
+  showWordMask: false,
   wordFontSize: 48,
   volumeIconRef: undefined,
   playWord: () => {},
@@ -64,7 +63,6 @@ const props = withDefaults(defineProps<IProps>(), {
 const emit = defineEmits<{
   'update:showWordResult': [value: boolean]
   'update:wrongTimes': [value: number]
-  'cursor-change': [value: { top: number; left: number }]
   complete: []
   wrong: []
 }>()
@@ -98,11 +96,6 @@ function emitShowWordResult(val: boolean) {
 
 function emitWrongTimes(val: number) {
   emit('update:wrongTimes', val)
-}
-
-function setCursor(nextCursor: { top: number; left: number }) {
-  cursor = nextCursor
-  emit('cursor-change', nextCursor)
 }
 
 // ============ 计算属性 ============
@@ -417,15 +410,14 @@ function checkCursorPosition() {
     const inputList = typingWordRef?.querySelectorAll(`.l`) ?? []
     if (!typingWordRef) return
     const typingWordRect = typingWordRef.getBoundingClientRect()
-    const containerRect = props.containerRef?.getBoundingClientRect() ?? typingWordRect
     const cursorHeight = isTypingSentence() ? 20 : props.wordFontSize
 
     if (inputList.length) {
       let inputRect = last(Array.from(inputList)).getBoundingClientRect()
-      setCursor({
-        top: inputRect.top + inputRect.height - cursorHeight - containerRect.top + cursorOffset.top,
-        left: inputRect.right - containerRect.left + cursorOffset.left,
-      })
+      cursor = {
+        top: inputRect.top + inputRect.height - cursorHeight - typingWordRect.top + cursorOffset.top,
+        left: inputRect.right - typingWordRect.left + cursorOffset.left,
+      }
     } else {
       const dictation = typingWordRef.querySelector(`.dictation`)
       let elRect: DOMRect | undefined
@@ -436,10 +428,10 @@ function checkCursorPosition() {
         elRect = letter?.getBoundingClientRect()
       }
       if (!elRect) return
-      setCursor({
-        top: elRect.top + elRect.height - cursorHeight - containerRect.top + cursorOffset.top,
-        left: elRect.left - containerRect.left + cursorOffset.left,
-      })
+      cursor = {
+        top: elRect.top + elRect.height - cursorHeight - typingWordRect.top + cursorOffset.top,
+        left: elRect.left - typingWordRect.left + cursorOffset.left,
+      }
     }
   })
 }
@@ -475,7 +467,7 @@ watch(
 )
 
 watch(
-  [() => input, () => props.showFullWord, () => props.isDictation],
+  [() => input, () => props.showFullWord, () => props.showWordMask],
   () => {
     checkCursorPosition()
   }
@@ -521,7 +513,6 @@ defineExpose({
   right,
   displayWord,
   isTypingSentence,
-  cursor,
   resetTypingCore,
   del,
   checkCursorPosition,
@@ -531,12 +522,12 @@ defineExpose({
 </script>
 
 <template>
-  <div class="typing-core" ref="typingWordRef">
+  <div class="typing-core" ref="typingWordRef" :class="wrong && !isTypingSentence() ? 'is-wrong' : ''">
     <!-- 默写模式 -->
     <div v-if="settingStore.wordPracticeType === WordPracticeType.Dictation">
       <div
         class="letter text-align-center w-full inline-block"
-        v-opacity="!isDictation || showWordResult || showFullWord"
+        v-opacity="!showWordMask || showWordResult || showFullWord"
       >
         {{ word.word }}
       </div>
@@ -556,7 +547,7 @@ defineExpose({
     <template v-else>
       <span class="input" v-if="input">{{ input }}</span>
       <span class="wrong" v-if="wrong">{{ wrong }}</span>
-      <span class="letter" v-if="isDictation && !showFullWord">
+      <span class="letter" v-if="showWordMask && !showFullWord">
         {{
           displayWord
             .split('')
@@ -566,6 +557,16 @@ defineExpose({
       </span>
       <span class="letter" v-else>{{ displayWord }}</span>
     </template>
+
+    <div
+      v-if="!editingNote"
+      class="cursor"
+      :style="{
+        top: cursor.top + 'px',
+        left: cursor.left + 'px',
+        height: isTypingSentence() ? '20px' : wordFontSize + 'px',
+      }"
+    ></div>
   </div>
 </template>
 
@@ -576,6 +577,10 @@ defineExpose({
 
 .typing-core {
   position: relative;
+
+  &.is-wrong {
+    animation: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
 
   .input,
   .right {

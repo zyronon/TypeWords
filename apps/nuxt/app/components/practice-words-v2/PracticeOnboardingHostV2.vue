@@ -95,5 +95,5 @@ watchOnce(
 <template>
   <ConflictNotice v-if="showConflictNotice" />
   <CollectNotice v-model="showCollectNotice" />
-  <ConflictNotice2 v-model="showConflictNotice2" />
+  <ConflictNotice2 v-if="showConflictNotice2" v-model="showConflictNotice2" />
 </template>

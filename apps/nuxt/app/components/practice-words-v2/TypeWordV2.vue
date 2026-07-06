@@ -19,13 +19,13 @@ import { getDefaultWord } from '@typewords/core/types/func.ts'
 import { IdentifyMethod, ShortcutKey, WordPracticeType } from '@typewords/core/types/enum.ts'
 import { useBaseStore } from '@typewords/core/stores/base.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
-import { usePlayBeep, usePlayCorrect, usePlayKeyboardAudio } from '@typewords/core/hooks/sound.ts'
-import { WordPlayTrigger, usePracticeWordAudioV2 } from '~/composables/practice-words/usePracticeWordAudioV2.ts'
+import { usePlayBeep, usePlayCorrect } from '@typewords/core/hooks/sound.ts'
+import { usePracticeWordAudioV2, WordPlayTrigger } from '~/composables/practice-words/usePracticeWordAudioV2.ts'
 import { useInjectedDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
 import { emitter, EventKey, useEventsByWatch } from '@typewords/core/utils/eventBus.ts'
 import { computed, onMounted, onUnmounted, ref, toRef, watch } from 'vue'
 import WordLookupPopover from '@typewords/core/components/word/WordLookupPopover.vue'
-import { BaseButton, BaseIcon, Textarea, Toast, ToastComponent, Tooltip, VolumeIcon } from '@typewords/base'
+import { BaseButton, BaseIcon, Textarea, ToastComponent, Tooltip, VolumeIcon } from '@typewords/base'
 import { useI18n } from 'vue-i18n'
 import { useWordOptions } from '@typewords/core/hooks/dict.ts'
 import { openWordCollectPicker } from '@typewords/core/hooks/useWordCollectPicker.ts'
@@ -73,7 +73,6 @@ const store = useBaseStore()
 
 const playBeep = usePlayBeep()
 const playCorrect = usePlayCorrect()
-const playKeyboardAudio = usePlayKeyboardAudio()
 
 const volumeIconRef: any = $ref()
 const sentenceVolumeIconsRefs: any = $ref([])
@@ -98,7 +97,7 @@ const effective = computed(() => {
     showEtymology: b.showEtymology || reveal,
     showRelWords: b.showRelWords || reveal,
     wordMask: showWordResult.value ? 'none' : b.wordMask,
-    dictation: showWordResult.value ? false : b.dictation,
+    showWordMask: (showWordResult.value ? 'none' : b.wordMask) !== 'none',
     translate: b.translate || reveal,
     showPhoneticShadow: showWordResult.value ? false : b.showPhoneticShadow,
   }
@@ -106,7 +105,6 @@ const effective = computed(() => {
 
 const { highlightedSentenceIndex, playWord, playSentence, playTtsWithGuide } = usePracticeWordAudioV2({
   word: toRef(props, 'word'),
-  volumeIconRef: computed(() => volumeIconRef),
   shouldShowSentences: () => effective.value.showSentences,
 })
 
@@ -119,8 +117,6 @@ function getSentenceShortcut(index: number) {
 
 const typingCoreRef = $ref<InstanceType<typeof WordTypingCoreV2>>()
 const identifyPanelRef = $ref<InstanceType<typeof WordIdentifyPanelV2>>()
-const typingWordRef = $ref<HTMLDivElement>()
-let typingCursor = $ref({ top: 0, left: 0 })
 
 function onTypingCoreComplete() {
   emit('complete')
@@ -130,29 +126,26 @@ function onTypingCoreWrong() {
   emit('wrong')
 }
 
-function onTypingCursorChange(nextCursor: { top: number; left: number }) {
-  typingCursor = nextCursor
-}
-
 // ============ 单词操作 ============
 
 function checkIsWrong() {
-  if (effective.value.isDictationInput || effective.value.dictation) {
+  if (effective.value.isDictationInput || effective.value.showWordMask) {
     if (!showWordResult.value && !typingCoreRef?.right) {
       emit('wrong')
     }
   }
 }
 
-function onVolumeIconClick() {
+function onVolumeIconClick(handle: boolean) {
   checkIsWrong()
-  playWord(WordPlayTrigger.Manual)
+  playWord(handle ? WordPlayTrigger.Manual : WordPlayTrigger.Shortcut)
 }
 
 function showWord() {
+  console.log('showWord')
   if (settingStore.allowWordTip) {
     //如果不是跟写模式，查看单词一律标记为错词
-    if (settingStore.wordPracticeType !== WordPracticeType.FollowWrite || effective.value.dictation) {
+    if (settingStore.wordPracticeType !== WordPracticeType.FollowWrite || effective.value.showWordMask) {
       // 原版 typo() 无条件调用
       if (!showWordResult.value) {
         emit('wrong')
@@ -175,8 +168,7 @@ function hideWord() {
 }
 
 function play() {
-  checkIsWrong()
-  playWord(WordPlayTrigger.Shortcut)
+  volumeIconRef?.play()
 }
 
 function mouseleave() {
@@ -359,7 +351,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="typing-word" ref="typingWordRef" v-if="word.word.length">
+  <div class="typing-word" v-if="word.word.length">
     <div class="flex flex-col items-center">
       <!-- 音标 + 发音按钮（通过 slot 传入 VolumeIcon） -->
       <div class="flex gap-1 mt-10 md:mt-30">
@@ -380,19 +372,17 @@ defineExpose({
         <VolumeIcon
           :title="`发音(${settingStore.shortcutKeyMap[ShortcutKey.PlayWordPronunciation]})`"
           ref="volumeIconRef"
-          :simple="true"
-          @click="onVolumeIconClick"
+          :cb="onVolumeIconClick"
         />
       </div>
 
       <!-- 单词键入区 -->
       <Tooltip
-        :title="effective.dictation ? `快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示单词` : ''"
+        :title="effective.showWordMask ? `快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示单词` : ''"
       >
         <div
           id="word"
           class="word my-1"
-          :class="typingCoreRef?.wrong && !typingCoreRef?.isTypingSentence?.() ? 'is-wrong' : ''"
           :style="{ fontSize: settingStore.fontSize.wordForeignFontSize + 'px' }"
           @mouseenter="showWord"
           @mouseleave="mouseleave"
@@ -403,14 +393,12 @@ defineExpose({
             v-model:showWordResult="showWordResult"
             v-model:wrongTimes="wrongTimesModel"
             :showFullWord="showFullWord"
-            :isDictation="effective.isDictationInput"
+            :showWordMask="effective.showWordMask"
             :wordFontSize="settingStore.fontSize.wordForeignFontSize"
             :volumeIconRef="volumeIconRef"
             :sentenceVolumeIconsRefs="sentenceVolumeIconsRefs"
             :playWord="playWord"
             :editingNote="editingNote"
-            :containerRef="typingWordRef"
-            @cursor-change="onTypingCursorChange"
             @complete="onTypingCoreComplete"
             @wrong="onTypingCoreWrong"
           />
@@ -505,17 +493,6 @@ defineExpose({
         :playTtsWithGuide="playTtsWithGuide"
       />
     </div>
-
-    <!-- 光标 -->
-    <div
-      v-if="!editingNote"
-      class="cursor"
-      :style="{
-        top: typingCursor.top + 'px',
-        left: typingCursor.left + 'px',
-        height: typingCoreRef?.isTypingSentence?.() ? '20px' : settingStore.fontSize.wordForeignFontSize + 'px',
-      }"
-    ></div>
     <WordLookupPopover />
   </div>
 </template>
