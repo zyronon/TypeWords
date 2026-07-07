@@ -5,7 +5,7 @@ import { BaseButton, Toast } from '@typewords/base'
 import PracticeLayout from '@typewords/core/components/PracticeLayout.vue'
 import Panel from '@typewords/core/components/Panel.vue'
 import Empty from '@typewords/core/components/Empty.vue'
-import TypingArticle from '@/components/practice-sentences/TypingArticle.vue'
+import TypingSentence from '@/components/practice-sentences/TypingSentence.vue'
 import { useBaseStore } from '@typewords/core/stores/base.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { useStartKeyboardEventListener } from '@typewords/core/hooks/event.ts'
@@ -16,6 +16,7 @@ import { usePracticeSentenceInit } from '~/composables/practice-sentences/usePra
 import { usePracticeSentencePersistence } from '~/composables/practice-sentences/usePracticeSentencePersistence.ts'
 import { usePracticeSentenceSession } from '~/composables/practice-sentences/usePracticeSentenceSession.ts'
 import { type Article, getDefaultArticle, getDefaultDict, getDefaultWord } from '@typewords/core'
+import WordLookupPopover from '@typewords/core/components/word/WordLookupPopover.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -198,16 +199,9 @@ useStartKeyboardEventListener()
 
         <div v-if="!isComplete" class="current-sentence-wrap">
           <div class="current-source-word">来源单词：{{ word.word }}</div>
-          <!--          <SentencePractice-->
-          <!--            :text="currentItem?.source.text ?? ''"-->
-          <!--            :mode="mode"-->
-          <!--            :active="!loading"-->
-          <!--            @complete="onCompleteSentence"-->
-          <!--            @wrong="onWrongSentence"-->
-          <!--            @play="playCurrentSentence"-->
-          <!--          />-->
+
           <div>
-            <TypingArticle
+            <TypingSentence
               :key="j"
               :index="j"
               :article="getDefaultArticle({ text: i.c, textTranslate: i.cn })"
@@ -309,6 +303,7 @@ useStartKeyboardEventListener()
       </div>
     </template>
   </PracticeLayout>
+  <WordLookupPopover />
 </template>
 
 <style scoped lang="scss">

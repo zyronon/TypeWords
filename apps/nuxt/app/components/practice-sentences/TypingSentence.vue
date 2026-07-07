@@ -4,7 +4,6 @@ import { openWordCollectPicker } from '@typewords/core/hooks/useWordCollectPicke
 import { usePlayBeep, usePlayKeyboardAudio, usePlayWordAudio } from '@typewords/core/hooks/sound'
 import Space from '@typewords/core/components/article/Space.vue'
 import TypingWord from '@typewords/core/components/article/TypingWord.vue'
-import WordLookupPopover from '@typewords/core/components/word/WordLookupPopover.vue'
 import { lookupWord } from '@typewords/core/hooks/useWordLookup.ts'
 import { useBaseStore } from '@typewords/core/stores/base'
 import { usePracticeStore } from '@typewords/core/stores/practice'
@@ -12,9 +11,9 @@ import { useRuntimeStore } from '@typewords/core/stores/runtime'
 import { useSettingStore } from '@typewords/core/stores/setting'
 import type { Article, ArticleWord, Sentence, Word } from '@typewords/core/types'
 import { getDefaultArticle, getDefaultWord } from '@typewords/core/types/func.ts'
-import { PracticeArticleWordType, ShortcutKey } from '@typewords/core/types/enum.ts'
+import { PracticeArticleWordType } from '@typewords/core/types/enum.ts'
 import { _nextTick, debounce } from '@typewords/core/utils'
-import { emitter, EventKey, useEvents } from '@typewords/core/utils/eventBus'
+import { emitter, EventKey } from '@typewords/core/utils/eventBus'
 import ContextMenu from '@imengyu/vue3-context-menu'
 import '@imengyu/vue3-context-menu/lib/vue3-context-menu.css'
 import nlp from 'compromise/three'
@@ -137,13 +136,6 @@ watch([() => sectionIndex, () => sentenceIndex, () => wordIndex, () => stringInd
 })
 
 watch(
-  () => settingStore.translate,
-  () => {
-    checkTranslateLocation().then(() => checkCursorPosition())
-  }
-)
-
-watch(
   () => isEnd,
   n => {
     if (n) {
@@ -179,10 +171,9 @@ async function init() {
   })
   window.scrollTo({ top: 0 })
   _nextTick(() => {
-    emit('play', { sentence: article.sections[sectionIndex][sentenceIndex], handle: false })
     if (isNameWord()) next()
   })
-  checkTranslateLocation().then(() => checkCursorPosition())
+  checkCursorPosition()
 }
 
 function checkCursorPosition(a = sectionIndex, b = sentenceIndex, c = wordIndex) {
@@ -226,33 +217,6 @@ function checkCursorPosition(a = sectionIndex, b = sentenceIndex, c = wordIndex)
   })
 }
 
-function checkTranslateLocation() {
-  // console.log('checkTranslateLocation')
-  return new Promise<void>(resolve => {
-    _nextTick(() => {
-      let articleRect = articleWrapperRef.getBoundingClientRect()
-      article.sections.map((v, i) => {
-        v.map((w, j) => {
-          let location = i + '-' + j
-          let wordClassName = `#article_${props.index} .word${location}`
-          let word = document.querySelector(wordClassName)
-          let wordRect = word.getBoundingClientRect()
-          let translateClassName = `#article_${props.index} .translate${location}`
-          let translate: HTMLDivElement = document.querySelector(translateClassName)
-
-          translate.style.opacity = '1'
-          translate.style.top = wordRect.top - articleRect.top + 24 + 'px'
-          // @ts-ignore
-          translate.firstChild.style.width = wordRect.left - articleRect.left + 'px'
-          // console.log(word, wordRect.left - articleRect.left)
-          // console.log('word-wordRect', wordRect)
-        })
-      })
-      resolve()
-    }, 10)
-  })
-}
-
 const normalize = (s: string) => s.toLowerCase().trim()
 const namePatterns = $computed(() => {
   return Array.from(
@@ -280,7 +244,6 @@ let lock = false
 
 async function nextSentence() {
   if (lock || isEnd) return
-  checkTranslateLocation()
   lock = true
   let currentSection = article.sections[sectionIndex]
   let currentSentence = currentSection[sentenceIndex]
@@ -467,7 +430,6 @@ function del() {
     if (endWord) wordIndex = currentSentence.words.length - 1
     let currentWord: ArticleWord = currentSentence.words[wordIndex]
     if (endString) {
-      checkTranslateLocation()
       if (currentWord.nextSpace) {
         isSpace = true
         stringIndex = currentWord.word.length
@@ -526,10 +488,9 @@ function applyPracticeCache(cache: PracticeArticleCache) {
     if (sentence) {
       emit('play', { sentence, handle: false })
     }
-    checkTranslateLocation().then(() => checkCursorPosition())
+    checkCursorPosition()
   })
 }
-
 
 function onContextMenu(e: MouseEvent, sentence: Sentence, i, j, w) {
   const selectedText = window.getSelection().toString()
@@ -648,13 +609,6 @@ watch(
 
 onUnmounted(clear)
 
-useEvents([
-  [ShortcutKey.ChooseA, onTyping],
-  [ShortcutKey.ChooseB, onTyping],
-  [ShortcutKey.ChooseC, onTyping],
-  [ShortcutKey.ChooseD, onTyping],
-])
-
 defineExpose({
   showSentence,
   play,
@@ -738,25 +692,10 @@ function isCurrent(i: number, j: number, w: number) {
         </div>
       </article>
       <div class="translate">
-        <template v-for="(v, indexI) in article.sections">
-          <div
-            class="row"
-            :class="[
-              `translate${indexI + '-' + indexJ}`,
-              sectionIndex > indexI ? 'wrote' : sectionIndex >= indexI && sentenceIndex > indexJ ? 'wrote' : '',
-            ]"
-            v-for="(item, indexJ) in v"
-          >
-            <span class="space"></span>
-            <Transition name="fade">
-              <span class="text" v-if="item.translate">{{ item.translate }}</span>
-            </Transition>
-          </div>
-        </template>
+        {{ article.textTranslate }}
       </div>
       <div class="cursor" v-if="!isEnd && active" :style="{ top: cursor.top + 'px', left: cursor.left + 'px' }"></div>
     </div>
-    <WordLookupPopover />
   </div>
 </template>
 
@@ -855,31 +794,12 @@ $article-lh: 2.4;
   }
 
   .translate {
-    pointer-events: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
     font-size: 1.2rem;
-    line-height: $translate-lh;
+    //line-height: $translate-lh;
     letter-spacing: 0.2rem;
     font-family: var(--zh-article-family);
     font-weight: bold;
     color: #818181;
-
-    .row {
-      position: absolute;
-      left: 0;
-      width: 100%;
-      opacity: 0;
-      transition: all 0.3s;
-
-      .space {
-        transition: all 0.3s;
-        display: inline-block;
-      }
-    }
   }
 }
 
