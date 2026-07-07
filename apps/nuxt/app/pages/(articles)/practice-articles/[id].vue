@@ -410,11 +410,6 @@ function onKeyUp() {
 }
 
 async function onKeyDown(e: KeyboardEvent) {
-  switch (e.key) {
-    case 'Backspace':
-      typingArticleRef.del()
-      break
-  }
 }
 
 useOnKeyboardEventListener(onKeyDown, onKeyUp)

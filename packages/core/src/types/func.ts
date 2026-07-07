@@ -36,7 +36,7 @@ export function getDefaultArticleWord(val: Partial<ArticleWord> = {}): ArticleWo
 
 export function getDefaultArticle(val: Partial<Article> = {}): Article {
   return {
-    id: null,
+    id: nanoid(6),
     title: '',
     titleTranslate: '',
     text: '',

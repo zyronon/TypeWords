@@ -436,7 +436,7 @@ defineExpose({
       <SentencePractice
         v-else
         class="mt-6"
-        :item="sentencePracticeItem"
+        :text="sentencePracticeItem?.source.text ?? ''"
         :mode="sentencePracticeMode"
         :active="sentencePracticeActive"
         @complete="onSentencePracticeComplete"

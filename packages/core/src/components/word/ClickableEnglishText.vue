@@ -27,8 +27,7 @@ function onWordClick(e: MouseEvent, token: string) {
 }
 
 /** 与 SentenceHightLightWord 一致：仅目标词（含变形）应用高亮 / 默写遮罩 */
-function tokenClass(token: string, isWord: boolean) {
-  if (!isWord) return ''
+function tokenClass(token: string,) {
   const classes = ['clickable-word']
   if (props.word && isHighlightToken(token, props.word)) {
     if (props.highLight) classes.push('highlight-word')
@@ -41,7 +40,7 @@ function tokenClass(token: string, isWord: boolean) {
 <template>
   <span class="clickable-english-text">
     <template v-for="(token, index) in tokens" :key="index">
-      <span v-if="token.isWord" :class="tokenClass(token.text, true)" @click="onWordClick($event, token.text)">{{
+      <span v-if="token.isWord" :class="tokenClass(token.text)" @click="onWordClick($event, token.text)">{{
         token.text
       }}</span>
       <span v-else>{{ token.text }}</span>
@@ -60,7 +59,4 @@ function tokenClass(token: string, isWord: boolean) {
   }
 }
 
-.highlight-word {
-  color: var(--color-select-bg);
-}
 </style>

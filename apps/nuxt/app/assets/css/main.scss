@@ -462,7 +462,7 @@ a {
     border-left: 0.1rem solid transparent;
   }
 }
- 
+
 
 .btn-no-margin {
   .base-button + .base-button {
@@ -473,4 +473,8 @@ a {
 .target-number {
   @apply text-3xl!;
   color: rgb(176, 116, 211) !important;
+}
+
+.highlight-word {
+  color: var(--color-select-bg);
 }

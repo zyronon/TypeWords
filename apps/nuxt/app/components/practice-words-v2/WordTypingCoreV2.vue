@@ -197,6 +197,7 @@ function del() {
 }
 
 async function onTyping(e: KeyboardEvent) {
+  if (e.code === 'Backspace') return del()
   if (waitClear) {
     return
   }
@@ -449,13 +450,7 @@ function checkCursorPosition() {
 
 // ============ 键盘事件 ============
 
-function onKeyDown(e: KeyboardEvent) {
-  switch (e.key) {
-    case 'Backspace':
-      del()
-      break
-  }
-}
+function onKeyDown(e: KeyboardEvent) {}
 
 function onKeyUp(_e: KeyboardEvent) {
   // hideWord 由父组件处理

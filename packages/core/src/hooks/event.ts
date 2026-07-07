@@ -338,13 +338,7 @@ export function useStartKeyboardEventListener() {
         e.preventDefault()
         shortcutEvent.map(s => emitter.emit(s, e))
       } else {
-        //非英文模式下，输入区域的 keyCode 均为 229时，
-        // 空格键始终应该被转发到onTyping函数，由它来决定是作为输入还是切换单词
-        if (e.code === 'Space') {
-          e.preventDefault()
-          return emitter.emit(EventKey.onTyping, e)
-        }
-
+        // 非英文模式下，输入区域的 keyCode 均为 229时，
         if (
           ((e.keyCode >= 65 && e.keyCode <= 90) ||
             (e.keyCode >= 48 && e.keyCode <= 57) ||
@@ -359,6 +353,8 @@ export function useStartKeyboardEventListener() {
             e.code === 'Minus' ||
             e.code === 'Equal' ||
             e.code === 'Semicolon' ||
+            e.code === 'Backspace' ||
+            e.code === 'Space' ||
             // || e.code === 'Backquote'
             e.keyCode === 229) &&
           //当按下功能键时，不阻止事件传播

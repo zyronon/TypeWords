@@ -160,13 +160,7 @@ function onKeyUp(e: KeyboardEvent) {
   hideWord()
 }
 
-function onKeyDown(e: KeyboardEvent) {
-  switch (e.key) {
-    case 'Backspace':
-      del()
-      break
-  }
-}
+function onKeyDown(e: KeyboardEvent) {}
 
 useOnKeyboardEventListener(onKeyDown, onKeyUp)
 
@@ -293,6 +287,8 @@ function select(e, index: number) {
 let currentPracticeSentenceIndex = $ref(-1)
 
 async function onTyping(e: KeyboardEvent) {
+  if (e.code === 'Backspace') return del()
+
   if (waitClear) {
     return
   }
@@ -1182,7 +1178,7 @@ defineExpose({
   .sentence {
     @apply rounded-lg px-3 py-2 -mx-3;
     background: transparent;
-    transition: all .3s;
+    transition: all 0.3s;
   }
   .sentence-highlight {
     background: rgba(124, 58, 237, 0.1);

@@ -1,21 +1,23 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BaseButton, Toast } from '@typewords/base'
+import { Toast } from '@typewords/base'
 import PracticeLayout from '@typewords/core/components/PracticeLayout.vue'
 import Panel from '@typewords/core/components/Panel.vue'
 import Empty from '@typewords/core/components/Empty.vue'
-import TypingArticle from '@/components/practice-sentences/TypingArticle.vue'
 import { useBaseStore } from '@typewords/core/stores/base.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { useStartKeyboardEventListener } from '@typewords/core/hooks/event.ts'
 import { useTTsPlayAudio } from '@typewords/core/hooks/sound.ts'
 import { debounce } from '@typewords/core/utils'
+import SentencePractice from '~/components/practice-sentences/SentencePractice.vue'
 import type { SentencePracticeMode } from '~/composables/practice-sentences/types.ts'
 import { usePracticeSentenceInit } from '~/composables/practice-sentences/usePracticeSentenceInit.ts'
 import { usePracticeSentencePersistence } from '~/composables/practice-sentences/usePracticeSentencePersistence.ts'
 import { usePracticeSentenceSession } from '~/composables/practice-sentences/usePracticeSentenceSession.ts'
 import { type Article, getDefaultArticle, getDefaultDict, getDefaultWord } from '@typewords/core'
+import { nanoid } from 'nanoid'
+import { genArticleSectionData } from '@typewords/core/hooks/article.ts'
 
 const route = useRoute()
 const router = useRouter()
@@ -72,7 +74,19 @@ let word = $computed(() => {
   return dict.words?.[index] ?? getDefaultWord()
 })
 let sentenceIndex = $ref(0)
-let sentence: Article = $ref(getDefaultArticle())
+let sentence: Article = $computed(() => {
+  let article = getDefaultArticle({
+    id: nanoid(6),
+    text: word?.sentences?.[sentenceIndex]?.c,
+    textTranslate: word?.sentences?.[sentenceIndex]?.cn,
+  })
+  genArticleSectionData(article)
+  return article
+})
+
+watchEffect(() => {
+  console.log('sentence', sentence)
+})
 
 async function loadPractice() {
   if (!dictId.value) {
@@ -82,34 +96,35 @@ async function loadPractice() {
 
   loading.value = true
   try {
-    dict = await sentenceInit.loadDictById(dictId.value)
-    // if (!dict.id) {
-    //   router.push('/words')
-    //   Toast.warning('词书不存在')
-    //   return
-    // }
-    //
-    // dictName.value = dict.name
-    // const cache = await sentencePersistence.load()
-    // if (cache?.dictId === dictId.value && cache.items?.length) {
-    //   mode.value = cache.mode ?? 'followWrite'
-    //   applyCache(cache, items)
-    // } else {
-    //   initSession(items)
-    // }
-    //
-    // if (!items.length) {
-    //   Toast.warning('当前词书没有可练习的例句')
-    // }
+    const { dict: data, items } = await sentenceInit.loadItemsByDictId(dictId.value)
+    dict = data
+    if (!dict.id) {
+      router.push('/words')
+      Toast.warning('词书不存在')
+      return
+    }
+
+    dictName.value = dict.name
+    const cache = await sentencePersistence.load()
+    if (cache?.dictId === dictId.value && cache.items?.length) {
+      mode.value = cache.mode ?? 'followWrite'
+      applyCache(cache, items)
+    } else {
+      initSession(items)
+    }
+
+    if (!items.length) {
+      Toast.warning('当前词书没有可练习的例句')
+    }
   } finally {
     loading.value = false
   }
 }
 
 function onCompleteSentence() {
-  if (sentenceIndex < word.sentences.length - 1) {
-    sentenceIndex++
-  } else {
+  const complete = completeCurrent()
+  void savePracticeData()
+  if (complete) {
     Toast.success('句子练习完成')
   }
 }
@@ -119,8 +134,9 @@ function onWrongSentence() {
   savePracticeDataDebounced()
 }
 
-function playCurrentSentence({ sentence }) {
-  ttsPlayAudio(sentence.text, {
+function playCurrentSentence() {
+  if (!currentItem.value?.source.text) return
+  ttsPlayAudio(currentItem.value.source.text, {
     volume: settingStore.sentenceSoundVolume / 100,
     rate: settingStore.sentenceSoundSpeed,
   })
@@ -180,7 +196,7 @@ useStartKeyboardEventListener()
           </div>
 
           <div class="mode-switch" role="tablist" aria-label="句子练习模式">
-            <BaseButton
+            <div
               v-for="option in modeOptions"
               :key="option.value"
               class="mode-option"
@@ -188,7 +204,7 @@ useStartKeyboardEventListener()
               @click="setMode(option.value)"
             >
               {{ option.label }}
-            </BaseButton>
+            </div>
           </div>
         </div>
 
@@ -196,8 +212,8 @@ useStartKeyboardEventListener()
           <div class="progress-bar" :style="{ width: progressPercent + '%' }"></div>
         </div>
 
-        <div v-if="!isComplete" class="current-sentence-wrap">
-          <div class="current-source-word">来源单词：{{ word.word }}</div>
+        <div v-if="currentItem && !isComplete" class="current-sentence-wrap">
+          <div v-if="currentItem.source.sourceWord?.word" class="current-source-word">来源单词：{{ word.word }}</div>
           <!--          <SentencePractice-->
           <!--            :text="currentItem?.source.text ?? ''"-->
           <!--            :mode="mode"-->
@@ -206,18 +222,7 @@ useStartKeyboardEventListener()
           <!--            @wrong="onWrongSentence"-->
           <!--            @play="playCurrentSentence"-->
           <!--          />-->
-          <div>
-            <TypingArticle
-              :key="j"
-              :index="j"
-              :article="getDefaultArticle({ text: i.c, textTranslate: i.cn })"
-              v-for="(i, j) in word.sentences"
-              :active="sentenceIndex === j"
-              @complete="onCompleteSentence"
-              @play="playCurrentSentence"
-              :highlight-words="['cancel']"
-            />
-          </div>
+          <TypingArticle :article="sentence" />
         </div>
 
         <div v-else-if="isComplete" class="complete-state">
@@ -236,7 +241,7 @@ useStartKeyboardEventListener()
               <div class="label">完成度</div>
             </div>
           </div>
-          <BaseButton
+          <div
             class="action-control primary"
             role="button"
             tabindex="0"
@@ -246,7 +251,7 @@ useStartKeyboardEventListener()
           >
             <IconFluentArrowClockwise20Regular />
             <span>重新开始</span>
-          </BaseButton>
+          </div>
         </div>
 
         <div v-else class="empty-wrap">
@@ -292,7 +297,7 @@ useStartKeyboardEventListener()
 
     <template v-slot:footer>
       <div class="sentence-footer">
-        <BaseButton
+        <div
           class="footer-control"
           role="button"
           tabindex="0"
@@ -300,12 +305,17 @@ useStartKeyboardEventListener()
         >
           <IconFluentTextBulletListSquare20Regular />
           <span>列表</span>
-        </BaseButton>
+        </div>
         <div class="footer-progress">{{ activeProgressText }}</div>
-        <BaseButton class="footer-control" role="button" tabindex="0" @click="restartPractice">
+        <div
+          class="footer-control"
+          role="button"
+          tabindex="0"
+          @click="restartPractice"
+        >
           <IconFluentArrowClockwise20Regular />
           <span>重练</span>
-        </BaseButton>
+        </div>
       </div>
     </template>
   </PracticeLayout>

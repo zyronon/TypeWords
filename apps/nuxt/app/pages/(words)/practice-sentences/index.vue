@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { BasePage, Toast } from '@typewords/base'
+import { BaseButton, BasePage, Toast } from '@typewords/base'
 import Book from '@typewords/core/components/Book.vue'
 import Empty from '@typewords/core/components/Empty.vue'
 import { useBaseStore } from '@typewords/core/stores/base.ts'
@@ -44,17 +44,12 @@ function startPracticeSentences(dict: DictResource) {
         </div>
         <div class="current-dict-card">
           <Book :is-add="false" quantifier="词" :item="currentDict" @click="startPracticeSentences(currentDict)" />
-          <div
-            class="start-control"
-            role="button"
-            tabindex="0"
-            @click="startPracticeSentences(currentDict)"
-            @keydown.enter.prevent="startPracticeSentences(currentDict)"
-            @keydown.space.prevent="startPracticeSentences(currentDict)"
-          >
-            <span>开始例句练习</span>
-            <IconFluentArrowCircleRight20Regular />
-          </div>
+          <BaseButton size="large" @click="startPracticeSentences(currentDict)">
+            <div class="center gap-2">
+              <span>开始例句练习</span>
+              <IconFluentArrowCircleRight20Regular />
+            </div>
+          </BaseButton>
         </div>
       </div>
 
@@ -64,7 +59,6 @@ function startPracticeSentences(dict: DictResource) {
             <div class="section-title">我的词书</div>
             <div class="section-subtitle">选择词书进入对应的例句练习</div>
           </div>
-          <div class="book-count">{{ bookList.length }}</div>
         </div>
 
         <div v-if="bookList.length" class="book-grid">
@@ -97,7 +91,7 @@ function startPracticeSentences(dict: DictResource) {
 
 <style scoped lang="scss">
 .practice-sentences-entry {
-  @apply flex flex-col gap-5;
+  @apply flex flex-col;
 }
 
 .hero-card,

@@ -1,3 +1,7 @@
+/**
+ * @deprecated 此 composable 存在响应式链断裂问题，已被 SentencePractice 组件的内置状态方案替代。
+ * 请勿在新代码中使用。直接使用 SentencePractice.vue（接收 text: string prop）即可。
+ */
 import { computed, onUnmounted, reactive, watch, type Ref } from 'vue'
 import { PracticeArticleWordType } from '@typewords/core/types/enum.ts'
 import type { ArticleWord } from '@typewords/core/types/types.ts'

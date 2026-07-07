@@ -1,30 +1,29 @@
 <script setup lang="ts">
-import { BaseButton, Toast, VolumeIcon } from '@typewords/base'
-import { openWordCollectPicker } from '../../hooks/useWordCollectPicker.ts'
-import { usePlayBeep, usePlayKeyboardAudio, usePlayWordAudio } from '../../hooks/sound'
-import QuestionForm from './QuestionForm.vue'
-import Space from './Space.vue'
-import TypingWord from './TypingWord.vue'
-import ClickableEnglishText from '../word/ClickableEnglishText.vue'
-import WordLookupPopover from '../word/WordLookupPopover.vue'
-import { lookupWord } from '../../hooks/useWordLookup.ts'
-import { useBaseStore } from '../../stores/base'
-import { usePracticeStore } from '../../stores/practice'
-import { useRuntimeStore } from '../../stores/runtime'
-import { useSettingStore } from '../../stores/setting'
-import { getDefaultArticle, getDefaultWord } from '../../types'
-import type { Article, ArticleWord, Sentence, Word } from '../../types'
-import { _dateFormat, _nextTick, isMobile, msToHourMinute, total, debounce } from '../../utils'
-import { emitter, EventKey, useEvents } from '../../utils/eventBus'
+import { Toast, VolumeIcon } from '@typewords/base'
+import { openWordCollectPicker } from '@typewords/core/hooks/useWordCollectPicker.ts'
+import { usePlayBeep, usePlayKeyboardAudio, usePlayWordAudio } from '@typewords/core/hooks/sound'
+import Space from '@typewords/core/components/article/Space.vue'
+import TypingWord from '@typewords/core/components/article/TypingWord.vue'
+import WordLookupPopover from '@typewords/core/components/word/WordLookupPopover.vue'
+import { lookupWord } from '@typewords/core/hooks/useWordLookup.ts'
+import { useBaseStore } from '@typewords/core/stores/base'
+import { usePracticeStore } from '@typewords/core/stores/practice'
+import { useRuntimeStore } from '@typewords/core/stores/runtime'
+import { useSettingStore } from '@typewords/core/stores/setting'
+import type { Article, ArticleWord, Sentence, Word } from '@typewords/core/types'
+import { getDefaultArticle, getDefaultWord } from '@typewords/core/types/func.ts'
+import { PracticeArticleWordType, ShortcutKey } from '@typewords/core/types/enum.ts'
+import { _nextTick, debounce } from '@typewords/core/utils'
+import { emitter, EventKey, useEvents } from '@typewords/core/utils/eventBus'
 import ContextMenu from '@imengyu/vue3-context-menu'
 import '@imengyu/vue3-context-menu/lib/vue3-context-menu.css'
 import nlp from 'compromise/three'
 import { nanoid } from 'nanoid'
-import { inject, onMounted, onUnmounted, watch } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
 
-import { usePracticeArticlePersistence } from '../../composables/usePracticePersistence'
-import { PracticeArticleWordType, ShortcutKey } from '../../types'
-import type { PracticeArticleCache } from '../../utils/cache'
+import { usePracticeArticlePersistence } from '@typewords/core/composables/usePracticePersistence'
+import type { PracticeArticleCache } from '@typewords/core/utils/cache'
+import { genArticleSectionData } from '@typewords/core/hooks/article.ts'
 
 interface IProps {
   article: Article
@@ -32,6 +31,9 @@ interface IProps {
   sentenceIndex?: number
   wordIndex?: number
   stringIndex?: number
+  active?: boolean
+  index?: number
+  highlightWords?: string[]
 }
 
 const props = withDefaults(defineProps<IProps>(), {
@@ -40,6 +42,9 @@ const props = withDefaults(defineProps<IProps>(), {
   sentenceIndex: 0,
   wordIndex: 0,
   stringIndex: 0,
+  index: 0,
+  active: false,
+  highlightWords: [],
 })
 
 const emit = defineEmits<{
@@ -65,7 +70,6 @@ const emit = defineEmits<{
 }>()
 
 let typeArticleRef = $ref<HTMLInputElement>()
-let mobileInputRef = $ref<HTMLInputElement>()
 let articleWrapperRef = $ref<HTMLInputElement>(null)
 let sectionIndex = $ref(0)
 let sentenceIndex = $ref(0)
@@ -73,6 +77,7 @@ let wordIndex = $ref(0)
 let stringIndex = $ref(0)
 let input = $ref('')
 let wrong = $ref('')
+let article = $ref(getDefaultArticle())
 //是否是输入空格
 let isSpace = $ref(false)
 let isEnd = $ref(false)
@@ -99,7 +104,6 @@ const settingStore = useSettingStore()
 const statStore = usePracticeStore()
 const runtimeStore = useRuntimeStore()
 const articlePersistence = usePracticeArticlePersistence()
-const isMob = isMobile()
 
 const savePracticeData = async () => {
   if (runtimeStore.globalLoading || isEnd) return
@@ -132,8 +136,6 @@ watch([() => sectionIndex, () => sentenceIndex, () => wordIndex, () => stringInd
   checkCursorPosition(a, b, c)
 })
 
-// watch(() => props.article.id, init, {immediate: true})
-
 watch(
   () => settingStore.translate,
   () => {
@@ -160,35 +162,27 @@ watch(
 async function init() {
   if (!props.article.id) return
   isSpace = isEnd = false
-  const d = await articlePersistence.load()
-  if (d) {
-    sectionIndex = d.practiceData.sectionIndex
-    sentenceIndex = d.practiceData.sentenceIndex
-    wordIndex = d.practiceData.wordIndex
-    jump(sectionIndex, sentenceIndex, wordIndex)
-    statStore.$patch(d.statStoreData)
-  } else {
-    wrong = input = ''
-    sectionIndex = 0
-    sentenceIndex = 0
-    wordIndex = 0
-    stringIndex = 0
-    //todo 这在直接修改不太合理
-    props.article.sections.map(v => {
-      v.map(w => {
-        w.words.map(s => {
-          s.input = ''
-        })
+  wrong = input = ''
+  sectionIndex = 0
+  sentenceIndex = 0
+  wordIndex = 0
+  stringIndex = 0
+  article = getDefaultArticle(props.article)
+  genArticleSectionData(article)
+  //todo 这在直接修改不太合理
+  article.sections.map(v => {
+    v.map(w => {
+      w.words.map(s => {
+        s.input = ''
       })
     })
-    window.scrollTo({ top: 0 })
-  }
+  })
+  window.scrollTo({ top: 0 })
   _nextTick(() => {
-    emit('play', { sentence: props.article.sections[sectionIndex][sentenceIndex], handle: false })
+    emit('play', { sentence: article.sections[sectionIndex][sentenceIndex], handle: false })
     if (isNameWord()) next()
   })
   checkTranslateLocation().then(() => checkCursorPosition())
-  focusMobileInput()
 }
 
 function checkCursorPosition(a = sectionIndex, b = sentenceIndex, c = wordIndex) {
@@ -196,7 +190,7 @@ function checkCursorPosition(a = sectionIndex, b = sentenceIndex, c = wordIndex)
   _nextTick(() => {
     // 选中目标元素
     const currentWord = document.querySelector(
-      `.section:nth-of-type(${a + 1}) .sentence:nth-of-type(${b + 1}) .word:nth-of-type(${c + 1})`
+      `#article_${props.index} .section:nth-of-type(${a + 1}) .sentence:nth-of-type(${b + 1}) .word:nth-of-type(${c + 1})`
     )
     if (currentWord) {
       // 在 currentWord 内找 .word-end
@@ -235,19 +229,15 @@ function checkCursorPosition(a = sectionIndex, b = sentenceIndex, c = wordIndex)
 function checkTranslateLocation() {
   // console.log('checkTranslateLocation')
   return new Promise<void>(resolve => {
-    if (isMob) {
-      resolve()
-      return
-    }
     _nextTick(() => {
       let articleRect = articleWrapperRef.getBoundingClientRect()
-      props.article.sections.map((v, i) => {
+      article.sections.map((v, i) => {
         v.map((w, j) => {
           let location = i + '-' + j
-          let wordClassName = `.word${location}`
+          let wordClassName = `#article_${props.index} .word${location}`
           let word = document.querySelector(wordClassName)
           let wordRect = word.getBoundingClientRect()
-          let translateClassName = `.translate${location}`
+          let translateClassName = `#article_${props.index} .translate${location}`
           let translate: HTMLDivElement = document.querySelector(translateClassName)
 
           translate.style.opacity = '1'
@@ -259,51 +249,15 @@ function checkTranslateLocation() {
         })
       })
       resolve()
-    }, 300)
+    }, 10)
   })
-}
-
-function focusMobileInput() {
-  if (!isMob) return
-  mobileInputRef?.focus()
-}
-
-function processMobileCharacter(char: string) {
-  if (!char) return
-  const code = char === ' ' ? 'Space' : char === '\n' ? 'Enter' : `Key${char.toUpperCase()}`
-  const fakeEvent = {
-    key: char,
-    code,
-    preventDefault() {},
-    stopPropagation() {},
-  } as unknown as KeyboardEvent
-  onTyping(fakeEvent)
-}
-
-function handleMobileInput(event: Event) {
-  if (!isMob) return
-  const target = event.target as HTMLInputElement
-  const value = target?.value ?? ''
-  if (!value) return
-  for (const char of value) {
-    processMobileCharacter(char)
-  }
-  target.value = ''
-}
-
-function handleMobileBeforeInput(event: InputEvent) {
-  if (!isMob) return
-  if (event.inputType === 'deleteContentBackward') {
-    event.preventDefault()
-    del()
-  }
 }
 
 const normalize = (s: string) => s.toLowerCase().trim()
 const namePatterns = $computed(() => {
   return Array.from(
     new Set(
-      (props.article?.nameList ?? [])
+      (article?.nameList ?? [])
         .map(normalize)
         .filter(Boolean)
         .map(s => s.split(/\s+/).filter(Boolean))
@@ -314,7 +268,7 @@ const namePatterns = $computed(() => {
 })
 
 const isNameWord = () => {
-  let currentSection = props.article.sections[sectionIndex]
+  let currentSection = article.sections[sectionIndex]
   let currentSentence = currentSection[sentenceIndex]
   let w: ArticleWord = currentSentence.words[wordIndex]
   return w?.type === PracticeArticleWordType.Word && namePatterns.length > 0 && namePatterns.includes(normalize(w.word))
@@ -328,7 +282,7 @@ async function nextSentence() {
   if (lock || isEnd) return
   checkTranslateLocation()
   lock = true
-  let currentSection = props.article.sections[sectionIndex]
+  let currentSection = article.sections[sectionIndex]
   let currentSentence = currentSection[sentenceIndex]
   //这里把未输入的单词补全，因为删除时会用到input
   currentSentence.words.forEach((word, i) => {
@@ -347,7 +301,7 @@ async function nextSentence() {
   if (!currentSection[sentenceIndex]) {
     sentenceIndex = 0
     sectionIndex++
-    if (!props.article.sections[sectionIndex]) {
+    if (!article.sections[sectionIndex]) {
       console.log('打完了')
       runtimeStore.globalLoading = true
       await articlePersistence.clear()
@@ -356,14 +310,13 @@ async function nextSentence() {
       emit('complete')
     } else {
       if (isNameWord()) next()
-      emit('play', { sentence: props.article.sections[sectionIndex][0], handle: false })
+      emit('play', { sentence: article.sections[sectionIndex][0], handle: false })
     }
   } else {
     if (isNameWord()) next()
     emit('play', { sentence: currentSection[sentenceIndex], handle: false })
   }
   lock = false
-  focusMobileInput()
 }
 
 const next = () => {
@@ -371,7 +324,7 @@ const next = () => {
   input = wrong = ''
   stringIndex = 0
 
-  let currentSection = props.article.sections[sectionIndex]
+  let currentSection = article.sections[sectionIndex]
   let currentSentence = currentSection[sentenceIndex]
   let currentWord: ArticleWord = currentSentence.words[wordIndex]
 
@@ -399,14 +352,14 @@ const next = () => {
 }
 
 function onTyping(e: KeyboardEvent) {
+  // console.log('keyDown', e.key, e.code, e.keyCode)
   if (e.code === 'Backspace') return del()
-  // debugger
-  if (!props.article.sections.length) return
+
+  if (!article.sections.length) return
   if (isTyping || isEnd) return
   isTyping = true
-  // console.log('keyDown', e.key, e.code, e.keyCode)
   try {
-    let currentSection = props.article.sections[sectionIndex]
+    let currentSection = article.sections[sectionIndex]
     let currentSentence = currentSection[sentenceIndex]
     let currentWord: ArticleWord = currentSentence.words[wordIndex]
     wrong = ''
@@ -474,31 +427,9 @@ function onTyping(e: KeyboardEvent) {
   }
 }
 
-function play() {
-  let currentSection = props.article.sections[sectionIndex]
-  emit('play', { sentence: currentSection[sentenceIndex], handle: true })
-}
-
-function playArticleTitleAudio() {
-  emit('playArticleTextAudio', { text: props.article?.title ?? '' })
-}
-
-function playArticleQuestionAudio() {
-  if (!props.article?.question?.text) return
-  emit('playArticleTextAudio', {
-    text: props.article.question.text,
-    start: props.article.question.start,
-    end: props.article.question.end,
-  })
-}
-
-function playArticleQuoteAudio() {
-  if (!props.article?.quote?.text) return
-  emit('playArticleTextAudio', {
-    text: props.article.quote.text,
-    start: props.article.quote.start,
-    end: props.article.quote.end,
-  })
+function play(handle: boolean = true) {
+  let currentSection = article.sections[sectionIndex]
+  emit('play', { sentence: currentSection[sentenceIndex], handle })
 }
 
 function del() {
@@ -530,7 +461,7 @@ function del() {
         wordIndex--
       }
     } else stringIndex--
-    let currentSection = props.article.sections[sectionIndex]
+    let currentSection = article.sections[sectionIndex]
     if (endSentence) sentenceIndex = currentSection.length - 1
     let currentSentence = currentSection[sentenceIndex]
     if (endWord) wordIndex = currentSentence.words.length - 1
@@ -546,7 +477,6 @@ function del() {
     }
     input = currentWord.input = currentWord.input.slice(0, stringIndex)
     checkCursorPosition()
-    focusMobileInput()
   }
 }
 
@@ -570,7 +500,7 @@ function jump(i, j, w, sentence?) {
   stringIndex = 0
   input = wrong = ''
   isEnd = isSpace = false
-  props.article.sections.map((v, i) => {
+  article.sections.map((v, i) => {
     v.map((w, j) => {
       w.words.map((v, k) => {
         if (i <= sectionIndex && j <= sentenceIndex && k < wordIndex) {
@@ -592,14 +522,14 @@ function applyPracticeCache(cache: PracticeArticleCache) {
   statStore.$patch(cache.statStoreData ?? {})
   jump(i, j, w)
   _nextTick(() => {
-    const sentence = props.article.sections?.[sectionIndex]?.[sentenceIndex]
+    const sentence = article.sections?.[sectionIndex]?.[sentenceIndex]
     if (sentence) {
       emit('play', { sentence, handle: false })
     }
     checkTranslateLocation().then(() => checkCursorPosition())
-    focusMobileInput()
   })
 }
+
 
 function onContextMenu(e: MouseEvent, sentence: Sentence, i, j, w) {
   const selectedText = window.getSelection().toString()
@@ -614,7 +544,7 @@ function onContextMenu(e: MouseEvent, sentence: Sentence, i, j, w) {
       {
         label: $t('collect_word'),
         onClick: () => {
-          let word = props.article.sections[i][j].words[w]
+          let word = article.sections[i][j].words[w]
           let text = word.word
           let doc = nlp(text)
           // 优先判断是不是动词
@@ -643,7 +573,7 @@ function onContextMenu(e: MouseEvent, sentence: Sentence, i, j, w) {
           {
             label: $t('copy_word'),
             onClick: () => {
-              let word = props.article.sections[i][j].words[w]
+              let word = article.sections[i][j].words[w]
               navigator.clipboard.writeText(word.word).then(r => {
                 Toast.success($t('copied'))
               })
@@ -659,9 +589,7 @@ function onContextMenu(e: MouseEvent, sentence: Sentence, i, j, w) {
       },
       {
         label: $t('play_sentence'),
-        onClick: () => {
-          emit('play', { sentence: sentence, handle: true })
-        },
+        onClick: () => play(),
       },
       {
         label: $t('grammar_analysis'),
@@ -680,7 +608,7 @@ function onContextMenu(e: MouseEvent, sentence: Sentence, i, j, w) {
           {
             label: $t('translate_word'),
             onClick: () => {
-              let word = props.article.sections[i][j].words[w]
+              let word = article.sections[i][j].words[w]
               window.open(`https://www.youdao.com/result?word=${word.word}&lang=en`, '_blank')
             },
           },
@@ -696,20 +624,29 @@ function onContextMenu(e: MouseEvent, sentence: Sentence, i, j, w) {
   })
 }
 
-onMounted(() => {
-  emitter.on(EventKey.resetWord, () => {
-    wrong = input = ''
-  })
-  emitter.on(EventKey.onTyping, onTyping)
-  if (isMob) {
-    focusMobileInput()
-  }
-})
+onMounted(init)
 
-onUnmounted(() => {
+function clear() {
   emitter.off(EventKey.resetWord)
   emitter.off(EventKey.onTyping, onTyping)
-})
+}
+
+watch(
+  () => props.active,
+  v => {
+    if (v) {
+      emitter.on(EventKey.resetWord, () => {
+        wrong = input = ''
+      })
+      emitter.on(EventKey.onTyping, onTyping)
+    } else {
+      clear()
+    }
+  },
+  { immediate: true }
+)
+
+onUnmounted(clear)
 
 useEvents([
   [ShortcutKey.ChooseA, onTyping],
@@ -721,7 +658,6 @@ useEvents([
 defineExpose({
   showSentence,
   play,
-  del,
   hideSentence,
   nextSentence,
   init,
@@ -739,62 +675,18 @@ defineExpose({
 function isCurrent(i: number, j: number, w: number) {
   return `${i}${j}${w}` === currentIndex
 }
-
-let showQuestions = $ref(false)
-
-const currentPractice = inject('currentPractice', [])
 </script>
 
 <template>
-  <div class="typing-article" ref="typeArticleRef" @click="focusMobileInput">
-    <input
-      v-if="isMob"
-      ref="mobileInputRef"
-      class="mobile-input"
-      type="text"
-      inputmode="text"
-      autocomplete="off"
-      autocorrect="off"
-      autocapitalize="none"
-      @beforeinput="handleMobileBeforeInput"
-      @input="handleMobileInput"
-    />
-    <header class="md:pt-10 pb-6">
-      <div class="text-center">
-        <span class="text-3xl">{{ store.sbook.lastLearnIndex + 1 }}. </span>
-        <span class="inline-flex items-center gap-1">
-          <ClickableEnglishText
-            class="text-3xl"
-            :text="props.article?.title ?? ''"
-            word=""
-            :dictation="false"
-            :high-light="false"
-          />
-          <VolumeIcon :simple="true" :title="$t('play')" :cb="playArticleTitleAudio" />
-        </span>
-        <span class="ml-6 text-2xl" v-if="settingStore.translate">{{ props.article?.titleTranslate }}</span>
-      </div>
-
-      <div class="mt-2 text-2xl" v-if="props.article?.question?.text">
-        <div class="inline-flex items-center gap-1 flex-wrap">
-          <span>Question:</span>
-          <ClickableEnglishText :text="props.article?.question?.text" word="" :dictation="false" :high-light="false" />
-          <VolumeIcon :simple="true" :title="$t('play')" :cb="playArticleQuestionAudio" />
-        </div>
-        <div class="text-xl color-translate-second" v-if="settingStore.translate">
-          问题: {{ props.article?.question?.translate }}
-        </div>
-      </div>
-    </header>
-
+  <div class="typing-article" ref="typeArticleRef">
     <div
-      id="article-content"
+      :id="`article_` + index"
       class="article-content"
       :class="[settingStore.translate && 'tall', settingStore.dictation && 'dictation']"
       ref="articleWrapperRef"
     >
       <article>
-        <div class="section" v-for="(section, indexI) in props.article.sections">
+        <div class="section" v-for="(section, indexI) in article.sections">
           <span class="sentence" v-for="(sentence, indexJ) in section">
             <span
               v-for="(word, indexW) in sentence.words"
@@ -830,7 +722,7 @@ const currentPractice = inject('currentPractice', [])
                 @click.stop="onArticleWordClick($event, word.word)"
               >
                 <TypingWord :word="word" :is-typing="true" v-if="isCurrent(indexI, indexJ, indexW) && !isSpace" />
-                <TypingWord :word="word" :is-typing="false" v-else />
+                <TypingWord :isHighLight="highlightWords.includes(word.word)" :word="word" :is-typing="false" v-else />
                 <span class="border-bottom" v-if="settingStore.dictation"></span>
               </span>
               <Space
@@ -841,32 +733,12 @@ const currentPractice = inject('currentPractice', [])
                 :is-shake="isCurrent(indexI, indexJ, indexW) && isSpace && wrong !== ''"
               />
             </span>
-            <span class="sentence-translate-mobile" v-if="isMob && settingStore.translate && sentence.translate">
-              {{ sentence.translate }}
-            </span>
+            <VolumeIcon class="ml-2" />
           </span>
         </div>
-        <div class="text-right italic mt-4" v-if="props.article?.quote?.text">
-          <div class="inline-flex items-center gap-1 justify-end flex-wrap">
-            <ClickableEnglishText
-              class="text-2xl"
-              :text="props.article.quote.text"
-              word=""
-              :dictation="false"
-              :high-light="false"
-            />
-            <VolumeIcon :simple="true" :title="$t('play')" :cb="playArticleQuoteAudio" />
-          </div>
-          <div
-            class="text-xl color-translate-second mt-1"
-            v-if="settingStore.translate && props.article.quote.translate"
-          >
-            {{ props.article.quote.translate }}
-          </div>
-        </div>
       </article>
-      <div class="translate" v-show="settingStore.translate">
-        <template v-for="(v, indexI) in props.article.sections">
+      <div class="translate">
+        <template v-for="(v, indexI) in article.sections">
           <div
             class="row"
             :class="[
@@ -882,43 +754,8 @@ const currentPractice = inject('currentPractice', [])
           </div>
         </template>
       </div>
-      <div class="cursor" v-if="!isEnd" :style="{ top: cursor.top + 'px', left: cursor.left + 'px' }"></div>
+      <div class="cursor" v-if="!isEnd && active" :style="{ top: cursor.top + 'px', left: cursor.left + 'px' }"></div>
     </div>
-
-    <div class="options flex justify-center" v-if="isEnd">
-      <BaseButton @click="emit('replay')">{{ $t('restart_practice') }} </BaseButton>
-      <BaseButton v-if="store.sbook.lastLearnIndex < store.sbook.articles.length - 1" @click="emit('next')"
-        >{{ $t('next_article') }}
-      </BaseButton>
-    </div>
-
-    <div class="font-family text-base pr-2 mb-50 mt-10" v-if="currentPractice.length && isEnd">
-      <div class="text-2xl font-bold">{{ $t('learning_record') }}</div>
-      <div class="mt-1 mb-3">
-        {{ $t('total_learning_time') }}：{{ msToHourMinute(total(currentPractice, 'spend')) }}
-      </div>
-      <div
-        class="item border border-item border-solid mt-2 p-2 bg-[var(--bg-history)] rounded-md flex justify-between"
-        :class="i === currentPractice.length - 1 && 'color-red!'"
-        v-for="(item, i) in currentPractice"
-      >
-        <span :class="i === currentPractice.length - 1 ? 'color-red' : 'color-gray'"
-          >{{ i === currentPractice.length - 1 ? $t('current') : i + 1 }}.&nbsp;&nbsp;{{
-            _dateFormat(item.startDate)
-          }}</span
-        >
-        <span>{{ msToHourMinute(item.spend) }}</span>
-      </div>
-    </div>
-
-    <template v-if="false">
-      <div class="center">
-        <BaseButton @click="showQuestions = !showQuestions">{{ $t('show_questions') }}</BaseButton>
-      </div>
-      <div class="toggle" v-if="showQuestions">
-        <QuestionForm :questions="article?.questions" :duration="300" :immediateFeedback="false" :randomize="true" />
-      </div>
-    </template>
     <WordLookupPopover />
   </div>
 </template>
@@ -935,15 +772,6 @@ $article-lh: 2.4;
   color: var(--color-article);
   width: var(--article-width);
   font-size: 1.6rem;
-  margin-bottom: 20rem;
-
-  .mobile-input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-    height: 0;
-    width: 0;
-  }
 
   .article-content {
     position: relative;
@@ -989,10 +817,15 @@ $article-lh: 2.4;
       :deep(.hide) {
         opacity: 1 !important;
       }
+      :deep(span) {
+        color: black !important;
+      }
     }
 
     .section {
-      margin-bottom: 1.5rem;
+      &:not(:last-child) {
+        margin-bottom: 1.5rem;
+      }
 
       .sentence {
         transition: all 0.3s;
@@ -1052,12 +885,5 @@ $article-lh: 2.4;
 
 .sentence-translate-mobile {
   display: none;
-}
-
-// 移动端适配
-@media (max-width: 768px) {
-  .typing-article {
-    max-width: 100%;
-  }
 }
 </style>

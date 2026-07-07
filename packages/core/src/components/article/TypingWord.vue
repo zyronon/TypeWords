@@ -1,13 +1,14 @@
 <script setup lang="tsx">
-import {useSettingStore} from "../../stores/setting.ts";
-import Space from "./Space.vue";
+import { useSettingStore } from '../../stores/setting.ts'
+import Space from './Space.vue'
 
-import {PracticeArticleWordType} from '../../types';
-import type {ArticleWord} from '../../types';
+import { PracticeArticleWordType } from '../../types'
+import type { ArticleWord } from '../../types'
 
 const props = defineProps<{
-  word: ArticleWord,
-  isTyping: boolean,
+  word: ArticleWord
+  isTyping: boolean
+  isHighLight?: boolean
 }>()
 const settingStore = useSettingStore()
 
@@ -20,23 +21,35 @@ const isHide = $computed(() => {
   return ''
 })
 
+const isHighLight = $computed(() => {
+  if (props.isHighLight && props.word.type === PracticeArticleWordType.Word) return 'highlight-word'
+  return ''
+})
+
+const classNames = $computed(() => {
+  return [isHide, isHighLight]
+})
+
 const list = $computed(() => {
   let t = []
   let right = ''
   let wrong = ''
   if (props.word.input.length) {
     if (props.word.input.length === props.word.word.length) {
-      if (settingStore.ignoreCase ? props.word.input.toLowerCase() === props.word.word.toLowerCase() : props.word.input === props.word.word) {
-        t.push({type: 'word-complete', val: props.word.input})
+      if (
+        settingStore.ignoreCase
+          ? props.word.input.toLowerCase() === props.word.word.toLowerCase()
+          : props.word.input === props.word.word
+      ) {
+        t.push({ type: 'word-complete', val: props.word.input })
         return t
       }
     }
     props.word.input.split('').forEach((k, i) => {
       if (k === ' ') {
         right = wrong = ''
-        t.push({type: 'space'})
-      }
-      else {
+        t.push({ type: 'space' })
+      } else {
         if (compare(k, props.word.word[i])) {
           right += k
           wrong = ''
@@ -45,10 +58,10 @@ const list = $computed(() => {
             if (last.type === 'input-right') {
               last.val = right
             } else {
-              t.push({type: 'input-right', val: right})
+              t.push({ type: 'input-right', val: right })
             }
           } else {
-            t.push({type: 'input-right', val: right})
+            t.push({ type: 'input-right', val: right })
           }
         } else {
           wrong += k
@@ -58,20 +71,20 @@ const list = $computed(() => {
             if (last.type === 'input-wrong') {
               last.val = wrong
             } else {
-              t.push({type: 'input-wrong', val: wrong})
+              t.push({ type: 'input-wrong', val: wrong })
             }
           } else {
-            t.push({type: 'input-wrong', val: wrong})
+            t.push({ type: 'input-wrong', val: wrong })
           }
         }
       }
     })
     if (props.word.input.length < props.word.word.length) {
-      t.push({type: 'word-end', val: props.word.word.slice(props.word.input.length)})
+      t.push({ type: 'word-end', val: props.word.word.slice(props.word.input.length) })
     }
   } else {
     //word-end这个class用于光标定位，光标会定位到第一个word-end的位置
-    t.push({type: 'word-end', val: props.word.word})
+    t.push({ type: 'word-end', val: props.word.word })
   }
   return t
 })
@@ -79,24 +92,23 @@ const list = $computed(() => {
 defineRender(() => {
   return list.map((item, i) => {
     if (item.type === 'word-complete') {
-      return <span>{item.val}</span>
+      return <span className={isHighLight}>{item.val}</span>
     }
     if (item.type === 'word-end') {
-      return <span className={'word-end ' + isHide}>{item.val}</span>
+      return <span className={'word-end ' + classNames.join(' ')}>{item.val}</span>
     }
     if (item.type === 'input-right') {
-      return <span className={props.isTyping ? 'input-right' : ''}>{item.val}</span>
+      return <span className={props.isTyping && 'input-right'}>{item.val}</span>
     }
     if (item.type === 'input-wrong') {
       return <span className="input-wrong">{item.val}</span>
     }
     if (item.type === 'space') {
-      return <Space isWrong={true}/>
+      return <Space isWrong={true} />
     }
   })
 })
 </script>
-
 
 <style scoped lang="scss">
 .input-right {
@@ -104,7 +116,7 @@ defineRender(() => {
 }
 
 .input-wrong {
-  @apply color-red
+  @apply color-red;
 }
 
 .hide {
