@@ -455,11 +455,11 @@ a {
 @keyframes underline {
   0%,
   100% {
-    border-left: 0.1rem solid var(--color-article);
+    border-left: 0.12rem solid var(--color-article);
   }
 
   50% {
-    border-left: 0.1rem solid transparent;
+    border-left: 0.12rem solid transparent;
   }
 }
 

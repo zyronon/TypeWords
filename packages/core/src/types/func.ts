@@ -1,4 +1,4 @@
-import type { Article, ArticleWord, Dict, Word } from './types'
+import type { Article, ArticleWord, Dict, Sentence, Word } from './types'
 import { shallowReactive } from 'vue'
 import { cloneDeep } from '../utils'
 import { nanoid } from 'nanoid'
@@ -83,5 +83,14 @@ export function getDefaultDict(val: Partial<Dict> = {}): Dict {
     words: shallowReactive(val.words ?? []),
     articles: shallowReactive(val.articles ?? []),
     statistics: shallowReactive(val.statistics ?? []),
+  }
+}
+export function getDefaultSentence(val?: Partial<Sentence>): Sentence {
+  return {
+    text: '',
+    translate: '',
+    words: [],
+    audioPosition: [],
+    ...val,
   }
 }

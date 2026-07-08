@@ -33,7 +33,7 @@ import WordTypingCoreV2 from './WordTypingCoreV2.vue'
 import WordIdentifyPanelV2 from './WordIdentifyPanelV2.vue'
 import WordMetaPanelV2 from './WordMetaPanelV2.vue'
 import { useOnKeyboardEventListener } from '@typewords/core/hooks/event.ts'
-import SentencePractice from '~/components/practice-sentences/SentencePractice.vue'
+import TypingSentenceItem from '~/components/practice-sentences/TypingSentenceItem.vue'
 import { usePracticeWordSentencePractice } from '~/composables/practice-words/usePracticeWordSentencePractice.ts'
 
 const SENTENCE_PLAY_SHORTCUT_KEYS = [
@@ -433,11 +433,10 @@ defineExpose({
         </div>
       </Tooltip>
 
-      <SentencePractice
-        v-else
+      <TypingSentenceItem
+        v-if="sentencePracticeActive && sentencePracticeItem"
         class="mt-6"
-        :text="sentencePracticeItem?.source.text ?? ''"
-        :mode="sentencePracticeMode"
+        :sentence="sentencePracticeItem.sentence"
         :active="sentencePracticeActive"
         @complete="onSentencePracticeComplete"
         @wrong="onSentencePracticeWrong"

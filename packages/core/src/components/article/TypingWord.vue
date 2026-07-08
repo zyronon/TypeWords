@@ -4,6 +4,7 @@ import Space from './Space.vue'
 
 import { PracticeArticleWordType } from '../../types'
 import type { ArticleWord } from '../../types'
+import { watchEffect } from 'vue'
 
 const props = defineProps<{
   word: ArticleWord

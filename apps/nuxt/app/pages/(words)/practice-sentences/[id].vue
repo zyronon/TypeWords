@@ -12,10 +12,14 @@ import { useStartKeyboardEventListener } from '@typewords/core/hooks/event.ts'
 import { useTTsPlayAudio } from '@typewords/core/hooks/sound.ts'
 import { debounce } from '@typewords/core/utils'
 import type { SentencePracticeMode } from '~/composables/practice-sentences/types.ts'
-import { usePracticeSentenceInit } from '~/composables/practice-sentences/usePracticeSentenceInit.ts'
+import type { Article, Sentence } from '@typewords/core/types/types.ts'
+import {
+  usePracticeSentenceInit,
+  flattenDictSentencePracticeItems,
+} from '~/composables/practice-sentences/usePracticeSentenceInit.ts'
 import { usePracticeSentencePersistence } from '~/composables/practice-sentences/usePracticeSentencePersistence.ts'
 import { usePracticeSentenceSession } from '~/composables/practice-sentences/usePracticeSentenceSession.ts'
-import { type Article, getDefaultArticle, getDefaultDict, getDefaultWord } from '@typewords/core'
+import { getDefaultArticle, getDefaultDict, getDefaultWord } from '@typewords/core/types/func.ts'
 import WordLookupPopover from '@typewords/core/components/word/WordLookupPopover.vue'
 
 const route = useRoute()
@@ -73,7 +77,6 @@ let word = $computed(() => {
   return dict.words?.[index] ?? getDefaultWord()
 })
 let sentenceIndex = $ref(0)
-let sentence: Article = $ref(getDefaultArticle())
 
 async function loadPractice() {
   if (!dictId.value) {
@@ -84,24 +87,25 @@ async function loadPractice() {
   loading.value = true
   try {
     dict = await sentenceInit.loadDictById(dictId.value)
-    // if (!dict.id) {
-    //   router.push('/words')
-    //   Toast.warning('词书不存在')
-    //   return
-    // }
-    //
-    // dictName.value = dict.name
-    // const cache = await sentencePersistence.load()
-    // if (cache?.dictId === dictId.value && cache.items?.length) {
-    //   mode.value = cache.mode ?? 'followWrite'
-    //   applyCache(cache, items)
-    // } else {
-    //   initSession(items)
-    // }
-    //
-    // if (!items.length) {
-    //   Toast.warning('当前词书没有可练习的例句')
-    // }
+    if (!dict.id) {
+      router.push('/words')
+      Toast.warning('词书不存在')
+      return
+    }
+
+    dictName.value = dict.name
+    const items = flattenDictSentencePracticeItems(dict)
+    const cache = await sentencePersistence.load()
+    if (cache?.dictId === dictId.value && cache.items?.length) {
+      mode.value = cache.mode ?? 'followWrite'
+      applyCache(cache, items)
+    } else {
+      initSession(items)
+    }
+
+    if (!items.length) {
+      Toast.warning('当前词书没有可练习的例句')
+    }
   } finally {
     loading.value = false
   }
@@ -120,7 +124,7 @@ function onWrongSentence() {
   savePracticeDataDebounced()
 }
 
-function playCurrentSentence({ sentence }) {
+function playCurrentSentence({ sentence }: { sentence: Sentence; handle: boolean }) {
   ttsPlayAudio(sentence.text, {
     volume: settingStore.sentenceSoundVolume / 100,
     rate: settingStore.sentenceSoundSpeed,
@@ -197,21 +201,22 @@ useStartKeyboardEventListener()
           <div class="progress-bar" :style="{ width: progressPercent + '%' }"></div>
         </div>
 
-        <div v-if="!isComplete" class="current-sentence-wrap">
-          <div class="current-source-word">来源单词：{{ word.word }}</div>
-
-          <div>
-            <TypingSentence
-              :key="j"
-              :index="j"
-              :article="getDefaultArticle({ text: i.c, textTranslate: i.cn })"
-              v-for="(i, j) in word.sentences"
-              :active="sentenceIndex === j"
-              @complete="onCompleteSentence"
-              @play="playCurrentSentence"
-              :highlight-words="['cancel']"
-            />
+        <div v-if="!isComplete && currentItem" class="current-sentence-wrap">
+          <div v-if="currentItem.source.sourceWord?.word" class="current-source-word">
+            来源单词：{{ currentItem.source.sourceWord.word }}
           </div>
+
+          <TypingSentence
+            v-for="(i, j) in word.sentences"
+            :key="j"
+            :index="j"
+            :sentence="i"
+            :active="sentenceIndex === j"
+            :show-play-button="true"
+            :highlight-words="['Hello','is']"
+            @complete="onCompleteSentence"
+            @play="playCurrentSentence"
+          />
         </div>
 
         <div v-else-if="isComplete" class="complete-state">

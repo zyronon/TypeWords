@@ -9,16 +9,17 @@
  * - 短语列表
  * - 近义词 / 词源 / 关联词
  */
-import type { Word } from '@typewords/core/types/types.ts'
+import type { Sentence, Word } from '@typewords/core/types/types.ts'
 import { getDefaultWord } from '@typewords/core/types/func.ts'
 import { ShortcutKey, WordPracticeType } from '@typewords/core/types/enum.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import SentenceHightLightWord from '@typewords/core/components/word/SentenceHightLightWord.vue'
 import ClickableEnglishText from '@typewords/core/components/word/ClickableEnglishText.vue'
 import ClickableWord from '@typewords/core/components/word/ClickableWord.vue'
-import { VolumeIcon } from '@typewords/base'
+import { Toast, VolumeIcon } from '@typewords/base'
 import { useI18n } from 'vue-i18n'
 import TranslationList from '@typewords/core/components/word/TranslationList.vue'
+import TypingSentence from '~/components/practice-sentences/TypingSentence.vue'
 
 const SENTENCE_PLAY_SHORTCUT_KEYS = [
   ShortcutKey.PlaySentence1,
@@ -93,6 +94,23 @@ function getSentenceShortcut(index: number) {
 defineExpose({
   // 由父组件通过 template ref 获取 VolumeIcon 的 DOM ref
 })
+
+let sentenceIndex = $ref(-1)
+
+// function playCurrentSentence({ sentence }: { sentence: Sentence; handle: boolean }) {
+//   ttsPlayAudio(sentence.text, {
+//     volume: settingStore.sentenceSoundVolume / 100,
+//     rate: settingStore.sentenceSoundSpeed,
+//   })
+// }
+
+function onCompleteSentence() {
+  if (sentenceIndex < props.word.sentences.length - 1) {
+    sentenceIndex++
+  } else {
+    Toast.success('句子练习完成')
+  }
+}
 </script>
 
 <template>
@@ -110,6 +128,27 @@ defineExpose({
 
     <!-- 例句列表 -->
     <template v-if="word?.sentences?.length">
+      <div class="line-white my-3"></div>
+      <div
+        class="sentence-typing"
+        :class="{
+          'sentence-highlight': highlightedSentenceIndex === j,
+        }"
+        v-for="(i, j) in word.sentences"
+        :key="j"
+      >
+        <TypingSentence
+          :key="j"
+          :index="j"
+          :sentence="i"
+          :active="sentenceIndex === j"
+          :show-play-button="true"
+          :highlight-words="[word.word]"
+          @complete="onCompleteSentence"
+          @play="playSentence(j)"
+        />
+      </div>
+
       <div class="line-white my-3"></div>
       <div
         class="sentence"
@@ -262,7 +301,12 @@ defineExpose({
   .sentence {
     @apply rounded-lg px-3 py-2 -mx-3;
     background: transparent;
-    transition: all .3s;
+    transition: all 0.3s;
+  }
+  .sentence-typing {
+    @apply rounded-lg px-3 pb-1 -mx-3;
+    background: transparent;
+    transition: all 0.3s;
   }
 
   .sentence-highlight {

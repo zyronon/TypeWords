@@ -3,6 +3,10 @@ import type { Rating } from 'ts-fsrs'
 import { PRACTICE_ARTICLE_CACHE, PRACTICE_WORD_CACHE } from '../utils/cache'
 import { APP_VERSION } from '../config/env'
 
+export type WordSubContent = {
+  c: string //content
+  cn: string
+}
 export type Word = {
   id?: string
   custom?: boolean
@@ -14,14 +18,8 @@ export type Word = {
     cn: string
     frequency?: Frequency
   }[]
-  sentences: {
-    c: string //content
-    cn: string
-  }[]
-  phrases: {
-    c: string
-    cn: string
-  }[]
+  sentences: WordSubContent[]
+  phrases: WordSubContent[]
   synos: {
     pos: string
     cn: string
@@ -31,10 +29,7 @@ export type Word = {
     root: string
     rels: {
       pos: string
-      words: {
-        c: string
-        cn: string
-      }[]
+      words: WordSubContent[]
     }[]
   }
   etymology: {
