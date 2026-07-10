@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { BaseButton, BasePage } from '@typewords/base'
+import QRCode from 'qrcode'
 import ResourceCard from '@typewords/core/components/ResourceCard.vue'
 import { APP_NAME, Origin } from '@typewords/core/config/env.ts'
 import type { Resource } from '@typewords/core'
@@ -107,85 +108,138 @@ const categories = ref<Category[]>([
       },
     ],
   },
-  // {
-  //   id: 'exam',
-  //   name: '电视/电影',
-  //   description: '一些不错的美/英剧，可练听力和口语',
-  //   resources: [
-  //     {
-  //       name: '电视/电影资源合集',
-  //       difficulty: '包含后面所有的内容',
-  //       link: 'https://pan.quark.cn/s/544c77960c3d', //187
-  //       // link: 'https://pan.quark.cn/s/84ecb30b700b', //159
-  //       // link: 'https://pan.quark.cn/s/e9b62b79c48c',
-  //     },
-  //     {
-  //       type: 'list',
-  //       children: [
-  //         {
-  //           name: '老友记',
-  //           description: '',
-  //           difficulty: '喜剧/爱情',
-  //         },
-  //         {
-  //           name: '生活大爆炸',
-  //           description: '',
-  //           difficulty: '喜剧/爱情',
-  //         },
-  //         {
-  //           name: '是大臣/是首相',
-  //           description: '',
-  //           difficulty: '喜剧/讽刺',
-  //         },
-  //         {
-  //           name: '破产姐妹',
-  //           description: '',
-  //           difficulty: '喜剧',
-  //         },
-  //         {
-  //           name: '绝望主妇',
-  //           description: '',
-  //           difficulty: '悬疑',
-  //         },
-  //         {
-  //           name: '纸牌屋',
-  //           description: '',
-  //           difficulty: '纸牌屋',
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       type: 'list',
-  //       children: [
-  //         {
-  //           name: '实习医生格蕾',
-  //           description: '',
-  //           difficulty: '电视剧',
-  //         },
-  //         {
-  //           name: '唐顿庄园',
-  //           description: '',
-  //           difficulty: '电视剧',
-  //         },
-  //         {
-  //           name: '破产姐妹',
-  //           description: '',
-  //           difficulty: '喜剧',
-  //         },
-  //         {
-  //           name: '王冠',
-  //           description: '',
-  //           difficulty: '悬疑',
-  //         },
-  //         {
-  //           name: '经典英文电影大片',
-  //           description: '',
-  //           difficulty: '电影',
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
+  {
+    id: 'exam',
+    name: '电视/电影',
+    description: '一些不错的美/英剧，可练听力和口语',
+    resources: [
+      {
+        name: '经典美/英剧资源合集',
+        difficulty: '包含后面所有的内容',
+        link: 'https://pan.quark.cn/s/773f11b5062b?pwd=kRp5',
+      },
+      {
+        type: 'list',
+        children: [
+          {
+            name: '老友记',
+            description: '',
+            difficulty: '喜剧 / 爱情',
+          },
+          {
+            name: '生活大爆炸',
+            description: '',
+            difficulty: '喜剧 / 爱情',
+          },
+          {
+            name: '是大臣 / 是首相',
+            description: '',
+            difficulty: '喜剧 / 讽刺',
+          },
+          {
+            name: '绝命毒师',
+            description: '',
+            difficulty: '犯罪 / 剧情',
+          },
+          {
+            name: '行尸走肉',
+            description: '',
+            difficulty: '恐怖 / 惊悚 / 丧尸',
+          },
+          {
+            name: '越狱',
+            description: '',
+            difficulty: '犯罪 / 剧情',
+          },
+          {
+            name: '火线',
+            description: '',
+            difficulty: '剧情 / 犯罪 / 惊悚',
+          },
+          {
+            name: '纸牌屋',
+            description: '',
+            difficulty: '剧情 / 棋牌馆 / 众议院要人',
+          },
+          {
+            name: '纸钞屋',
+            description: '',
+            difficulty: '剧情 / 动作 / 悬疑 / 纸房子',
+          },
+          {
+            name: '哈利波特',
+            description: '',
+            difficulty: '奇幻 / 冒险',
+          },
+          {
+            name: '良医',
+            description: '',
+            difficulty: '剧情 / 好医生 / 仁医 ',
+          },
+        ],
+      },
+      {
+        type: 'list',
+        children: [
+          {
+            name: '黑道家族',
+            description: '',
+            difficulty: '剧情 / 惊悚 / 犯罪',
+          },
+          {
+            name: '风骚律师',
+            description: '',
+            difficulty: '剧情 / 喜剧 / 犯罪',
+          },
+          {
+            name: '爱死亡和机器人',
+            description: '',
+            difficulty: '喜剧 / 科幻 / 动画 / 奇幻',
+          },
+          {
+            name: '毒枭',
+            description: '',
+            difficulty: '剧情 / 传记 / 动作 / 犯罪 ',
+          },
+          {
+            name: '西部世界',
+            description: '',
+            difficulty: '科幻 / 西部',
+          },
+          {
+            name: '破产姐妹',
+            description: '',
+            difficulty: '喜剧',
+          },
+          {
+            name: '实习医生格蕾',
+            description: '',
+            difficulty: '剧情 / 爱情',
+          },
+          {
+            name: '唐顿庄园',
+            description: '',
+            difficulty: '剧情',
+          },
+          {
+            name: '破产姐妹',
+            description: '',
+            difficulty: '喜剧',
+          },
+          {
+            name: '王冠',
+            description: '',
+            difficulty: '剧情 / 历史 / 王权 ',
+          },
+          {
+            name: '经典英文电影大片',
+            description: '',
+            difficulty: '电影',
+          },
+        ],
+      },
+    ],
+  },
   {
     id: 'grammar',
     name: '语法学习',
@@ -306,9 +360,29 @@ const filteredResources = computed(() => {
   return categories.value.filter(cat => cat.id === selectedCategory.value)
 })
 
-// 跳转到网盘链接
-const openLink = (url: string) => {
-  window.open(url, '_blank')
+const Dialog = defineAsyncComponent(() => import('@typewords/base/Dialog'))
+
+// QR 弹窗状态
+let showQrDialog = $ref(false)
+let currentResourceName = $ref('')
+let qrDataUrl = $ref('')
+
+// 生成二维码并显示弹窗
+async function openLink(url: string, name?: string) {
+  currentResourceName = name || ''
+  try {
+    qrDataUrl = await QRCode.toDataURL(url, {
+      width: 300,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#ffffff',
+      },
+    })
+  } catch {
+    qrDataUrl = ''
+  }
+  showQrDialog = true
 }
 </script>
 
@@ -365,7 +439,7 @@ const openLink = (url: string) => {
                   v-for="resource in subcategory.resources"
                   :key="resource.name"
                   :resource="resource"
-                  @openLink="openLink"
+                  @openLink="(url: string) => openLink(url, resource.name)"
                 />
               </div>
             </div>
@@ -378,7 +452,7 @@ const openLink = (url: string) => {
                 v-for="resource in category.resources"
                 :key="resource.name"
                 :resource="resource"
-                @openLink="openLink"
+                @openLink="(url: string) => openLink(url, resource.name)"
               />
             </div>
           </template>
@@ -398,5 +472,17 @@ const openLink = (url: string) => {
         </div>
       </div>
     </div>
+
+    <Dialog v-model="showQrDialog" title="手机扫码访问资源">
+      <div class="w-90 p-6 pt-0 flex flex-col items-center">
+        <p class="text-center text-gray-600 text-xl dark:text-gray-300">
+          {{ currentResourceName }}
+        </p>
+        <div class="text-center">
+          <img v-if="qrDataUrl" :src="qrDataUrl" alt="QR Code" class="w-70 rounded-lg shadow-md" />
+        </div>
+        <p class="text-center text-gray-600 text-xl font-bold dark:text-gray-300">请在手机上打开夸克 App 扫码访问</p>
+      </div>
+    </Dialog>
   </BasePage>
 </template>
