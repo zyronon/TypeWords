@@ -116,7 +116,7 @@ const categories = ref<Category[]>([
       {
         name: '经典美/英剧资源合集',
         difficulty: '包含后面所有的内容',
-        link: 'https://pan.quark.cn/s/773f11b5062b?pwd=kRp5',
+        link: 'https://v.v8l.cn/s/TG3sgVg',
       },
       {
         type: 'list',
@@ -369,6 +369,10 @@ let qrDataUrl = $ref('')
 
 // 生成二维码并显示弹窗
 async function openLink(url: string, name?: string) {
+  if (url === 'https://v.v8l.cn/s/TG3sgVg') {
+    window.open(url, '_blank')
+    return
+  }
   currentResourceName = name || ''
   try {
     qrDataUrl = await QRCode.toDataURL(url, {
