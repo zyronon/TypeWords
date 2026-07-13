@@ -626,7 +626,9 @@ function onContextMenu(e: MouseEvent, sentence: Sentence, i, j, w) {
             text = doc.nouns().toSingular().text()
           }
           if (!text.length) text = word.word
-          openWordCollectPicker(getDefaultWord({ word: text, id: nanoid() }), { x: e.x, y: e.y })
+          setTimeout(() => {
+            openWordCollectPicker(getDefaultWord({ word: text, id: nanoid() }), { x: e.x, y: e.y })
+          },300)
         },
       },
       {

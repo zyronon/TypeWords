@@ -11,11 +11,12 @@ import { nextTick, onUnmounted, watch } from 'vue'
 import Space from '@typewords/core/components/article/Space.vue'
 import TypingArticleWord from './TypingArticleWord.vue'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
-import { usePlayBeep, usePlayKeyboardAudio } from '@typewords/core/hooks/sound.ts'
+import { usePlayBeep, usePlayKeyboardAudio, usePlayWordAudio } from '@typewords/core/hooks/sound.ts'
 import { emitter, EventKey } from '@typewords/core/utils/eventBus.ts'
 import { _nextTick } from '@typewords/core/utils/index.ts'
 import { PracticeArticleWordType, PracticeType } from '@typewords/core/types/enum.ts'
 import type { ArticleWord, Sentence } from '@typewords/core/types/types.ts'
+import { lookupWord } from '@typewords/core/hooks/useWordLookup.ts'
 
 interface IProps {
   /** 要练习的句子 */
@@ -24,16 +25,16 @@ interface IProps {
   active?: boolean
   /** 需要高亮标注的词列表 */
   highlightWords?: string[]
+  /** 高亮单词遮罩 */
+  isHighlightWordsMask?: boolean
   nameList?: string[]
-  /** 默写模式（控制 border-bottom 显隐） */
-  dictation?: boolean
   mode?: PracticeType
 }
 
 const props = withDefaults(defineProps<IProps>(), {
   active: true,
   highlightWords: () => [],
-  dictation: false,
+  isHighlightWordsMask: false,
   mode: PracticeType.FollowWrite,
 })
 
@@ -69,8 +70,6 @@ let cursor = $ref({ top: 0, left: 0 })
 let words = $computed(() => props.sentence.words ?? [])
 
 let currentWord = $computed(() => words[wordIndex] ?? null)
-
-// ============ 辅助函数 ============
 
 function compareText(a: string, b: string) {
   return settingStore.ignoreCase ? a.toLowerCase() === b.toLowerCase() : a === b
@@ -331,7 +330,7 @@ watch(
     emitter.off(EventKey.onTyping, handleTyping)
     emitter.off(EventKey.resetWord)
     if (active) {
-      emit('play')
+      emit('play', { handle: false })
       emitter.on(EventKey.onTyping, handleTyping)
       emitter.on(EventKey.resetWord, () => {
         input = ''
@@ -356,9 +355,17 @@ defineExpose({
   wordIndex,
   currentWord,
 })
+const playWordAudio = usePlayWordAudio()
 
 function onWordClick(e: MouseEvent, word: ArticleWord) {
-  emit('wordClick', { wordText: word.word, event: e })
+  lookupWord(e, word.word, playWordAudio)
+}
+
+function getWordIsDictation(word: ArticleWord, index: number) {
+  if (isCurrent(index) && !isSpace && props.highlightWords.includes(word.word) && props.isHighlightWordsMask) {
+    return true
+  }
+  return props.mode === PracticeType.Dictation
 }
 </script>
 
@@ -383,19 +390,13 @@ function onWordClick(e: MouseEvent, word: ArticleWord) {
           @click.stop="onWordClick($event, word)"
         >
           <TypingArticleWord
-            :is-dictation="mode === PracticeType.Dictation"
+            :is-dictation="getWordIsDictation(word, w)"
             :word="word"
-            :is-typing="true"
-            v-if="isCurrent(w) && !isSpace"
-          />
-          <TypingArticleWord
-            :is-dictation="mode === PracticeType.Dictation"
-            :word="word"
-            :is-typing="false"
-            v-else
+            :is-typing="isCurrent(w) && !isSpace"
             :isHighLight="highlightWords.includes(word.word)"
+            :isHighlightWordsMask="isHighlightWordsMask"
           />
-          <span class="border-bottom" v-if="mode === PracticeType.Dictation"></span>
+          <span class="border-bottom" v-if="getWordIsDictation(word, w)"></span>
         </span>
         <Space v-if="word.nextSpace" class="word-end" :is-wrong="false" :is-wait="isCurrent(w) && isSpace" />
       </span>

@@ -16,6 +16,7 @@ export interface PracticeDisplayPolicy {
   showSentences: boolean
   showSentenceTranslation: boolean
   showPhrases: boolean
+  showSynos: boolean
   showEtymology: boolean
   showRelWords: boolean
   inputMode: 'typing' | 'dictation' | 'listen' | 'identify-self' | 'identify-test' | 'identify-quick'
@@ -32,6 +33,7 @@ export interface EffectiveDisplay {
   showSentenceTranslation: boolean
   showWordTranslation: boolean
   showPhrases: boolean
+  showSynos: boolean
   showEtymology: boolean
   showRelWords: boolean
   wordMask: 'none' | 'underscore' | 'hidden'

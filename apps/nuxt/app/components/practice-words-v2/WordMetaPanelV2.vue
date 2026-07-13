@@ -40,6 +40,7 @@ interface DisplayPolicy {
   showSentenceTranslation: boolean
   showWordTranslation: boolean
   showPhrases: boolean
+  showSynos: boolean
   showEtymology: boolean
   showRelWords: boolean
   showPhoneticShadow: boolean
@@ -74,7 +75,6 @@ const props = withDefaults(defineProps<IProps>(), {
     showRelWords: true,
     showPhoneticShadow: false,
     showWordMask: false,
-    translate: true,
   }),
   playSentence: () => {},
   playTtsWithGuide: () => {},
@@ -112,17 +112,17 @@ defineExpose({ startPracticeSentence })
   <div class="word-meta">
     <!-- 翻译区 -->
     <div
-      class="translate flex flex-col gap-2 my-3"
-      v-opacity="effective.showWordTranslation || showWordResult || showFullWord"
+      class="translate flex flex-col items-center gap-2 my-3"
+      v-if="effective.showWordTranslation"
       :style="{
         fontSize: settingStore.fontSize.wordTranslateFontSize + 'px',
       }"
     >
-      <TranslationList :word="word" :showFull="!effective.showWordMask || showWordResult || showFullWord" />
+      <TranslationList :word="word" :showFull="!effective.showWordMask" />
     </div>
 
     <!-- 例句列表 -->
-    <template v-if="word?.sentences?.length">
+    <template v-if="word?.sentences?.length && effective.showSentences">
       <div class="line-white my-3"></div>
       <div
         class="sentence-typing"
@@ -136,58 +136,27 @@ defineExpose({ startPracticeSentence })
           :key="i.c"
           :index="j"
           :sentence="i"
+          :isHighlightWordsMask="effective.showWordMask"
           :active="sentenceIndex === j"
-          :show-play-button="true"
           :highlight-words="[word.word]"
           @complete="onCompleteSentence"
           @play="playSentence(j)"
         />
       </div>
-
-      <div class="line-white my-3"></div>
-      <div
-        class="sentence"
-        :class="{
-          'sentence-highlight': highlightedSentenceIndex === index,
-        }"
-        v-for="(item, index) in word.sentences"
-        :key="index"
-      >
-        <div class="flex gap-space text-xl">
-          <ClickableEnglishText
-            :text="item.c"
-            :word="word.word"
-            :dictation="effective.showWordMask && !showFullWord && !showWordResult"
-          />
-          <VolumeIcon
-            :title="getSentenceShortcut(index) ? `发音(${getSentenceShortcut(index)})` : '发音'"
-            :simple="false"
-            @click.stop="() => playSentence(index)"
-          />
-        </div>
-        <div class="text-base anim" v-opacity="effective.showSentenceTranslation || showFullWord || showWordResult">
-          {{ item.cn }}
-        </div>
-      </div>
     </template>
 
     <!-- 短语列表 -->
-    <template v-if="word?.phrases?.length">
+    <template v-if="word?.phrases?.length && effective.showPhrases">
       <div class="line-white my-3"></div>
       <div class="flex">
         <div class="label">{{ $t('phrases') }}</div>
         <div class="flex flex-col">
           <div class="flex items-center gap-4" v-for="(item, index) in word.phrases" :key="index">
             <div class="flex gap-space items-center">
-              <ClickableEnglishText
-                class="en"
-                :text="item.c"
-                :word="word.word"
-                :dictation="effective.showWordMask && !showFullWord && !showWordResult"
-              />
+              <ClickableEnglishText class="en" :text="item.c" :word="word.word" :dictation="effective.showWordMask" />
               <VolumeIcon :simple="false" title="发音" @click.stop="() => playTtsWithGuide(item.c)" />
             </div>
-            <div class="cn anim" v-opacity="effective.showSentenceTranslation || showFullWord || showWordResult">
+            <div class="cn anim" v-opacity="effective.showSentenceTranslation">
               {{ item.cn }}
             </div>
           </div>
@@ -196,7 +165,7 @@ defineExpose({ startPracticeSentence })
     </template>
 
     <!-- 近义词 -->
-    <template v-if="(effective.translate || !effective.showWordMask) && word?.synos?.length">
+    <template v-if="effective.showSynos && word?.synos?.length">
       <div class="line-white my-3"></div>
       <div class="flex">
         <div class="label">{{ $t('synonyms') }}</div>
@@ -220,14 +189,8 @@ defineExpose({ startPracticeSentence })
     </template>
 
     <!-- 词源 / 关联词 -->
-    <div
-      class="anim"
-      v-opacity="
-        ((effective.translate && !effective.showWordMask) || showFullWord || showWordResult) &&
-        settingStore.showEtymologyAndRelWords
-      "
-    >
-      <template v-if="word?.etymology?.length">
+    <template class="anim" v-if="settingStore.showEtymologyAndRelWords">
+      <template v-if="word?.etymology?.length && effective.showEtymology">
         <div class="line-white my-3"></div>
         <div class="flex">
           <div class="label">{{ $t('etymology') }}</div>
@@ -240,7 +203,8 @@ defineExpose({ startPracticeSentence })
         </div>
       </template>
 
-      <template v-if="word?.relWords?.root">
+      <template v-if="word?.relWords?.root && effective.showRelWords">
+        <div class="line-white my-3"></div>
         <div class="flex">
           <div class="label">{{ $t('related_words') }}</div>
           <div class="flex flex-col gap-3">
@@ -259,12 +223,13 @@ defineExpose({ startPracticeSentence })
           </div>
         </div>
       </template>
-    </div>
+    </template>
   </div>
 </template>
 
 <style scoped lang="scss">
 .word-meta {
+  width: 100%;
   .phonetic {
     color: var(--color-font-1);
     font-family: var(--word-font-family);

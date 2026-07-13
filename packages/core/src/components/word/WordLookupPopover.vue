@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BaseIcon, Close, VolumeIcon } from '@typewords/base'
+import { BaseButton, BaseIcon, Close, VolumeIcon } from '@typewords/base'
 import { computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useSettingStore } from '../../stores/setting.ts'
@@ -8,6 +8,7 @@ import { closeWordLookup, wordLookupState } from '../../hooks/useWordLookup.ts'
 import { openWordCollectPicker } from '../../hooks/useWordCollectPicker.ts'
 import { getDefaultWord } from '../../types/func.ts'
 import TranslationList from './TranslationList.vue'
+import { goYoudao } from '../../utils'
 
 const { t: $t } = useI18n()
 const settingStore = useSettingStore()
@@ -81,12 +82,7 @@ watch(
 <template>
   <Teleport to="body">
     <Transition name="fade">
-      <div
-        v-if="wordLookupState.visible"
-        class="word-lookup-popover"
-        :style="style"
-        @click.stop
-      >
+      <div v-if="wordLookupState.visible" class="word-lookup-popover" :style="style" @click.stop>
         <Close class="close-btn" :title="$t('close')" @click="closeWordLookup" />
 
         <template v-if="wordLookupState.loading">
@@ -96,15 +92,19 @@ watch(
           <div class="flex items-center gap-2 flex-wrap pr-5">
             <span class="text-lg font-medium">{{ wordLookupState.queryWord }}</span>
             <VolumeIcon :simple="true" :cb="() => playWordAudio(wordLookupState.queryWord)" />
-            <BaseIcon
-              v-if="collectTarget"
-              @click="openCollect"
-              :title="$t('collect_to_dict')"
-            >
+            <BaseIcon v-if="collectTarget" @click="openCollect" :title="$t('collect_to_dict')">
               <IconFluentStarAdd16Regular />
             </BaseIcon>
           </div>
-          <div class="text-sm color-gray mt-1">未收录该单词</div>
+          <div class="color-gray mt-1 flex items-center gap-2">
+            <span>暂未收录该单词</span>
+            <BaseButton @click="goYoudao(wordLookupState.queryWord)">
+              <div class="flex items-center gap-2">
+                <IconFluentSearch20Regular />
+                <span>有道词典</span>
+              </div>
+            </BaseButton>
+          </div>
         </template>
         <template v-else-if="wordLookupState.data">
           <div class="flex items-center gap-2 flex-wrap pr-5">
@@ -138,7 +138,7 @@ watch(
   position: fixed;
   z-index: 10000;
   max-width: 22rem;
-  min-width: 12rem;
+  min-width: 15rem;
   transform: translateX(-50%);
   background: var(--color-tooltip-bg);
   border: 1px solid var(--color-item-border);

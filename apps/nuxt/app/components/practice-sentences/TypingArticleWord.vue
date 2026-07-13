@@ -8,6 +8,7 @@ import type { ArticleWord } from '@typewords/core/types/types.ts'
 const props = defineProps<{
   word: ArticleWord
   isDictation: boolean
+  isHighlightWordsMask: boolean
   isTyping: boolean
   isHighLight?: boolean
 }>()
@@ -23,12 +24,18 @@ const isHide = $computed(() => {
 })
 
 const isHighLight = $computed(() => {
-  if (props.isHighLight && props.word.type === PracticeArticleWordType.Word) return 'highlight-word'
+  if (!props.isTyping && props.isHighLight && props.word.type === PracticeArticleWordType.Word) return 'highlight-word'
+  return ''
+})
+
+const isHighlightWordsMask = $computed(() => {
+  if (props.isHighlightWordsMask && isHighLight && props.word.type === PracticeArticleWordType.Word)
+    return 'word-shadow'
   return ''
 })
 
 const classNames = $computed(() => {
-  return [isHide, isHighLight]
+  return [isHide, isHighLight, isHighlightWordsMask]
 })
 
 const list = $computed(() => {

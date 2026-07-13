@@ -77,7 +77,6 @@ const playBeep = usePlayBeep()
 const playCorrect = usePlayCorrect()
 
 const volumeIconRef: any = $ref()
-const sentenceVolumeIconsRefs: any = $ref([])
 let isTypingWord = $ref(true)
 
 const baseDisplay = useInjectedDisplayPolicy()
@@ -93,17 +92,22 @@ const effective = computed(() => {
   const reveal = showFullWord || showWordResult.value
   return {
     ...b,
-    showSentences: b.showSentences || reveal,
-    showSentenceTranslation: b.showSentenceTranslation || reveal,
-    showWordTranslation: b.showWordTranslation || reveal,
-    showPhrases: b.showPhrases || reveal,
-    showEtymology: b.showEtymology || reveal,
-    showRelWords: b.showRelWords || reveal,
-    wordMask: showWordResult.value ? 'none' : b.wordMask,
-    showWordMask: (showWordResult.value ? 'none' : b.wordMask) !== 'none',
-    translate: b.translate || reveal,
-    showPhoneticShadow: showWordResult.value ? false : b.showPhoneticShadow,
+    showSentences: reveal || b.showSentences,
+    showSentenceTranslation: reveal || b.showSentenceTranslation,
+    showWordTranslation: reveal || b.showWordTranslation,
+    showPhrases: reveal || b.showPhrases,
+    showSynos: reveal || b.showSynos,
+    showEtymology: reveal || b.showEtymology,
+    showRelWords: reveal || b.showRelWords,
+    wordMask: reveal ? false : b.wordMask !== 'none',
+    showWordMask: reveal ? false : b.wordMask !== 'none',
+    translate: reveal || b.translate,
+    showPhoneticShadow: reveal ? false : b.showPhoneticShadow,
   }
+})
+
+watchEffect(() => {
+  console.log('effective', JSON.stringify(effective.value))
 })
 
 const { highlightedSentenceIndex, playWord, playSentence, playTtsWithGuide } = usePracticeWordAudioV2({
@@ -138,7 +142,7 @@ function onTypingCoreWrong() {
 }
 
 function onSentencePracticeComplete() {
-  isTypingWord = false
+  isTypingWord = true
   emit('complete')
 }
 
@@ -424,7 +428,6 @@ defineExpose({
             :showWordMask="effective.showWordMask"
             :wordFontSize="settingStore.fontSize.wordForeignFontSize"
             :volumeIconRef="volumeIconRef"
-            :sentenceVolumeIconsRefs="sentenceVolumeIconsRefs"
             :playWord="playWord"
             :editingNote="editingNote"
             @wordComplete="onTypingCoreComplete"

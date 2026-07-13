@@ -11,6 +11,7 @@ import type {
   PracticeDisplayPolicy,
   PracticePhaseDefinition,
 } from './registry-types.ts'
+import { phaseDisplay } from './phase-templates.ts'
 
 export const PRACTICE_DISPLAY_POLICY_KEY: InjectionKey<ComputedRef<EffectiveDisplay>> = Symbol('practiceDisplayPolicy')
 export const PRACTICE_DISPLAY_ACTIONS_KEY: InjectionKey<{
@@ -28,10 +29,7 @@ export const displayOverride = ref<PracticeDisplayOverride | null>(null)
 let lastPhaseKey: string | null = null
 
 /** 合并 sessionDisplay 与用户临时 override */
-function mergeDisplay(
-  base: PracticeDisplayPolicy,
-  override: PracticeDisplayOverride | null
-): PracticeDisplayPolicy {
+function mergeDisplay(base: PracticeDisplayPolicy, override: PracticeDisplayOverride | null): PracticeDisplayPolicy {
   if (!override) return base
   return { ...base, ...override }
 }
@@ -70,9 +68,7 @@ function toEffective(
 export function applyPhaseDefinition(phase: PracticePhaseDefinition, cursorKey?: string) {
   sessionDisplay.value = { ...phase.display }
   // 用 cursorKey + practiceType 标识唯一相位（跨阶段切换时清空用户 override）
-  const key = cursorKey
-    ? `${cursorKey}_${String(phase.practiceType)}`
-    : String(phase.practiceType)
+  const key = cursorKey ? `${cursorKey}_${String(phase.practiceType)}` : String(phase.practiceType)
   if (key !== lastPhaseKey) {
     displayOverride.value = null
     lastPhaseKey = key
@@ -87,31 +83,13 @@ export function createEffectiveDisplay(
     const reveal = localReveal?.value
     const base = sessionDisplay.value
       ? mergeDisplay(sessionDisplay.value, displayOverride.value)
-      : mergeDisplay(
-          {
-            source: 'phase',
-            wordMask: 'none',
-            showPhonetic: true,
-            showWordTranslation: true,
-            showSentences: true,
-            showSentenceTranslation: true,
-            showPhrases: true,
-            showEtymology: true,
-            showRelWords: true,
-            inputMode: 'typing',
-            allowWordTip: true,
-            autoNextWord: true,
-          },
-          displayOverride.value
-        )
+      : mergeDisplay(phaseDisplay(), displayOverride.value)
     return toEffective(base, reveal)
   })
 }
 
 /** 页面级 composable：provide effective + Footer Toggle 方法 */
-export function usePracticeDisplayPolicy(
-  localReveal?: Ref<{ showFullWord: boolean; showWordResult: boolean }>
-) {
+export function usePracticeDisplayPolicy(localReveal?: Ref<{ showFullWord: boolean; showWordResult: boolean }>) {
   const effective = createEffectiveDisplay(localReveal)
 
   /** 切换默写显隐：只写 displayOverride，不写 settingStore */
@@ -135,6 +113,7 @@ export function usePracticeDisplayPolicy(
     }
   }
 
+  console.log('usePracticeDisplayPolicy-effective', JSON.stringify(effective.value))
   provide(PRACTICE_DISPLAY_POLICY_KEY, effective)
   provide(PRACTICE_DISPLAY_ACTIONS_KEY, { toggleDictation, toggleTranslate })
 

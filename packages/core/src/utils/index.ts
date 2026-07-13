@@ -816,3 +816,7 @@ export function normalizeWord(word: string) {
     .map(ch => charMap[ch] || ch)
     .join('')
 }
+
+export function goYoudao(word: string) {
+  window.open(`https://www.youdao.com/result?word=${word}&lang=en`, '_blank')
+}

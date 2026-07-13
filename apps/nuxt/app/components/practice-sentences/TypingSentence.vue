@@ -55,28 +55,32 @@ const itemRef = $ref<InstanceType<typeof TypingSentenceItem>>()
 
 function onContextMenu(e: MouseEvent, word: ArticleWord, wordIndex: number) {
   e.preventDefault()
-  const sentence = props.sentence
   ContextMenu.showContextMenu({
     x: e.x,
     y: e.y,
     items: [
-      {
-        label: $t('collect_word'),
-        onClick: () => {
-          let text = word.word
-          let doc = nlp(text)
-          // 优先判断是不是动词
-          if (doc.verbs().found) {
-            text = doc.verbs().toInfinitive().text()
-          }
-          // 如果是名词（复数 → 单数）
-          if (doc.nouns().found) {
-            text = doc.nouns().toSingular().text()
-          }
-          if (!text.length) text = word.word
-          openWordCollectPicker(getDefaultWord({ word: text, id: nanoid() }), { x: e.x, y: e.y })
-        },
-      },
+      // todo 后续优化
+      // {
+      //   label: $t('collect_word'),
+      //   onClick: () => {
+      //     let text = word.word
+      //     let doc = nlp(text)
+      //     // 优先判断是不是动词
+      //     if (doc.verbs().found) {
+      //       text = doc.verbs().toInfinitive().text()
+      //     }
+      //     // 如果是名词（复数 → 单数）
+      //     if (doc.nouns().found) {
+      //       text = doc.nouns().toSingular().text()
+      //     }
+      //     if (!text.length) text = word.word
+      //
+      //
+      //     setTimeout(() => {
+      //       openWordCollectPicker(getDefaultWord({ word: text, id: nanoid() }), { x: e.x, y: e.y + 15 })
+      //     }, 300)
+      //   },
+      // },
       {
         label: $t('copy'),
         children: [
@@ -165,11 +169,12 @@ defineExpose({
 
 <template>
   <div class="typing-sentence">
-    <div class="flex items-center gap-2">
+    <div class="flex items-start gap-2">
       <TypingSentenceItem
         ref="itemRef"
         :sentence="data"
         :active="active"
+        :isHighlightWordsMask="$attrs.isHighlightWordsMask"
         :highlight-words="highlightWords"
         :dictation="settingStore.dictation"
         @complete="emit('complete')"
@@ -190,8 +195,9 @@ defineExpose({
 
   .translate {
     //color: #818181;
-    margin-bottom: .5rem;
-    transition: all .3s;
+    margin-top: 0.2rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s;
 
     &.active {
       margin-top: -0.5rem;

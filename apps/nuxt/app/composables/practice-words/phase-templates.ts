@@ -15,7 +15,7 @@ import type {
 export const GROUP_SIZE = 7
 
 /** 内部：拼一条默认显隐策略 */
-function phaseDisplay(overrides: Partial<PracticeDisplayPolicy>): PracticeDisplayPolicy {
+export function phaseDisplay(overrides: Partial<PracticeDisplayPolicy>): PracticeDisplayPolicy {
   return {
     source: 'phase',
     wordMask: 'none',
@@ -24,6 +24,7 @@ function phaseDisplay(overrides: Partial<PracticeDisplayPolicy>): PracticeDispla
     showSentences: true,
     showSentenceTranslation: true,
     showPhrases: true,
+    showSynos: true,
     showEtymology: true,
     showRelWords: true,
     inputMode: 'typing',
@@ -33,16 +34,11 @@ function phaseDisplay(overrides: Partial<PracticeDisplayPolicy>): PracticeDispla
   }
 }
 
-export const DISPLAY_FOLLOW_WRITE = phaseDisplay({
-  wordMask: 'none',
-  showSentences: true,
-  inputMode: 'typing',
-})
+export const DISPLAY_FOLLOW_WRITE = phaseDisplay()
 
 export const DISPLAY_SPELL = phaseDisplay({
   wordMask: 'underscore',
   showPhonetic: 'shadow',
-  showSentences: true,
   inputMode: 'typing',
 })
 
@@ -52,7 +48,13 @@ export const DISPLAY_LISTEN = phaseDisplay({
   showWordTranslation: false,
   showSentences: false,
   showSentenceTranslation: false,
+  showPhrases: false,
+  showSynos: false,
+  showEtymology: false,
+  showRelWords: false,
   inputMode: 'listen',
+  allowWordTip: false,
+  autoNextWord: false,
 })
 
 export const DISPLAY_DICTATION = phaseDisplay({
