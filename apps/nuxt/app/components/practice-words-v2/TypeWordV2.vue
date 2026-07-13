@@ -79,36 +79,17 @@ const playCorrect = usePlayCorrect()
 const volumeIconRef: any = $ref()
 let isTypingWord = $ref(true)
 
-const baseDisplay = useInjectedDisplayPolicy()
-
 // ============ 共享状态 ============
 
 let showFullWord = $ref(false)
 const showWordResult = ref(false)
 const wrongTimesModel = ref(0)
 
-const effective = computed(() => {
-  const b = baseDisplay.value
-  const reveal = showFullWord || showWordResult.value
-  return {
-    ...b,
-    showSentences: reveal || b.showSentences,
-    showSentenceTranslation: reveal || b.showSentenceTranslation,
-    showWordTranslation: reveal || b.showWordTranslation,
-    showPhrases: reveal || b.showPhrases,
-    showSynos: reveal || b.showSynos,
-    showEtymology: reveal || b.showEtymology,
-    showRelWords: reveal || b.showRelWords,
-    wordMask: reveal ? false : b.wordMask !== 'none',
-    showWordMask: reveal ? false : b.wordMask !== 'none',
-    translate: reveal || b.translate,
-    showPhoneticShadow: reveal ? false : b.showPhoneticShadow,
-  }
-})
-
-watchEffect(() => {
-  console.log('effective', JSON.stringify(effective.value))
-})
+const localReveal = computed(() => ({
+  showFullWord,
+  showWordResult: showWordResult.value,
+}))
+const effective = useInjectedDisplayPolicy(localReveal)
 
 const { highlightedSentenceIndex, playWord, playSentence, playTtsWithGuide } = usePracticeWordAudioV2({
   word: toRef(props, 'word'),
@@ -172,24 +153,23 @@ function onVolumeIconClick(handle: boolean) {
 }
 
 function showWord() {
-  console.log('showWord')
-  if (settingStore.allowWordTip) {
-    //如果不是跟写模式，查看单词一律标记为错词
-    if (settingStore.wordPracticeType !== WordPracticeType.FollowWrite || effective.value.showWordMask) {
-      // 原版 typo() 无条件调用
-      if (!showWordResult.value) {
-        emit('wrong')
-      }
+  if (!settingStore.allowWordTip || !effective.value.allowWordTip) return
+
+  // 如果不是跟写模式，查看单词一律标记为错词
+  if (settingStore.wordPracticeType !== WordPracticeType.FollowWrite || effective.value.showWordMask) {
+    // 原版 typo() 无条件调用
+    if (!showWordResult.value) {
+      emit('wrong')
     }
-    if (
-      settingStore.wordPracticeType === WordPracticeType.Identify &&
-      settingStore.identifyMethod === IdentifyMethod.WordTest
-    ) {
-      if (identifyPanelRef) identifyPanelRef.showAllCandidates = true
-      return
-    }
-    showFullWord = true
   }
+  if (
+    settingStore.wordPracticeType === WordPracticeType.Identify &&
+    settingStore.identifyMethod === IdentifyMethod.WordTest &&
+    identifyPanelRef
+  ) {
+    identifyPanelRef.showAllCandidates = true
+  }
+  showFullWord = true
 }
 
 function hideWord() {
@@ -387,15 +367,15 @@ defineExpose({
       <div class="flex gap-1 mt-10 md:mt-30">
         <div
           class="phonetic"
-          :class="effective.showPhoneticShadow && !showFullWord && !showWordResult && 'word-shadow'"
-          v-if="settingStore.soundType === 'uk' && word.phonetic0"
+          :class="effective.showPhoneticShadow && 'word-shadow'"
+          v-if="effective.showPhonetic !== false && settingStore.soundType === 'uk' && word.phonetic0"
         >
           / {{ word.phonetic0 }} /
         </div>
         <div
           class="phonetic"
-          :class="effective.showPhoneticShadow && !showFullWord && !showWordResult && 'word-shadow'"
-          v-if="settingStore.soundType === 'us' && word.phonetic1"
+          :class="effective.showPhoneticShadow && 'word-shadow'"
+          v-if="effective.showPhonetic !== false && settingStore.soundType === 'us' && word.phonetic1"
         >
           / {{ word.phonetic1 }} /
         </div>
@@ -426,6 +406,7 @@ defineExpose({
             v-model:wrongTimes="wrongTimesModel"
             :showFullWord="showFullWord"
             :showWordMask="effective.showWordMask"
+            :autoNextWord="settingStore.autoNextWord && effective.autoNextWord"
             :wordFontSize="settingStore.fontSize.wordForeignFontSize"
             :volumeIconRef="volumeIconRef"
             :playWord="playWord"
@@ -521,8 +502,6 @@ defineExpose({
         :word="word"
         @complete="onSentencePracticeComplete"
         :effective="effective"
-        :showFullWord="showFullWord"
-        :showWordResult="showWordResult"
         :highlightedSentenceIndex="highlightedSentenceIndex"
         :playSentence="playSentence"
         :playTtsWithGuide="playTtsWithGuide"

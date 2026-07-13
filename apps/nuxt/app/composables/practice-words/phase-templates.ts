@@ -5,17 +5,13 @@
  * 不含 stage / wordsFrom / wordLoop / shuffle 等——这些全部在 flow step 配置中声明。
  */
 import { WordPracticeType } from '@typewords/core/types/enum.ts'
-import type {
-  PracticeDisplayPolicy,
-  PracticeStepTemplate,
-  PracticeStepTemplateId,
-} from './registry-types.ts'
+import type { PracticeDisplayPolicy, PracticeStepTemplate, PracticeStepTemplateId } from './registry-types.ts'
 
 /** 跟写分组大小，与 v1 groupSize 一致，不可用户编排 */
 export const GROUP_SIZE = 7
 
 /** 内部：拼一条默认显隐策略 */
-export function phaseDisplay(overrides: Partial<PracticeDisplayPolicy>): PracticeDisplayPolicy {
+export function phaseDisplay(overrides: Partial<PracticeDisplayPolicy> = {}): PracticeDisplayPolicy {
   return {
     source: 'phase',
     wordMask: 'none',

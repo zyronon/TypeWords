@@ -19,6 +19,11 @@ export const PRACTICE_DISPLAY_ACTIONS_KEY: InjectionKey<{
   toggleTranslate: () => void
 }> = Symbol('practiceDisplayActions')
 
+export interface PracticeLocalReveal {
+  showFullWord: boolean
+  showWordResult: boolean
+}
+
 /** Registry applyPhase 写入的「本阶段系统显隐」 */
 export const sessionDisplay = ref<PracticeDisplayPolicy | null>(null)
 
@@ -34,30 +39,42 @@ function mergeDisplay(base: PracticeDisplayPolicy, override: PracticeDisplayOver
   return { ...base, ...override }
 }
 
-/**
- * Policy → 模板用的 EffectiveDisplay（含 showWordMask / translate / isDictationInput、局部 reveal 展开）。
- */
-function toEffective(
-  policy: PracticeDisplayPolicy,
-  localReveal?: { showFullWord?: boolean; showWordResult?: boolean }
-): EffectiveDisplay {
-  const showFullWord = localReveal?.showFullWord ?? false
-  const showWordResult = localReveal?.showWordResult ?? false
-  const reveal = showFullWord || showWordResult
-
+/** Policy → 模板使用的基础 EffectiveDisplay。 */
+function toEffective(policy: PracticeDisplayPolicy): EffectiveDisplay {
   return {
-    source: 'phase',
-    showSentences: policy.showSentences || reveal,
-    showSentenceTranslation: policy.showSentenceTranslation || reveal,
-    showWordTranslation: policy.showWordTranslation || reveal,
-    showPhrases: policy.showPhrases || reveal,
-    showEtymology: policy.showEtymology || reveal,
-    showRelWords: policy.showRelWords || reveal,
-    wordMask: showWordResult ? 'none' : policy.wordMask,
-    showWordMask: (showWordResult ? 'none' : policy.wordMask) !== 'none',
-    translate: policy.showWordTranslation || reveal,
+    ...policy,
+    showWordMask: policy.wordMask !== 'none',
+    translate: policy.showWordTranslation,
     showPhoneticShadow: policy.showPhonetic === 'shadow' || policy.wordMask !== 'none',
     isDictationInput: policy.inputMode === 'dictation',
+  }
+}
+
+/** TypeWordV2 的临时揭示层，只影响当前单词，不影响 Footer / WordList。 */
+function applyLocalReveal(display: EffectiveDisplay, localReveal: PracticeLocalReveal): EffectiveDisplay {
+  if (!localReveal.showFullWord && !localReveal.showWordResult) return display
+
+  return {
+    ...display,
+    wordMask: 'none',
+    showWordMask: false,
+    showPhonetic: true,
+    showPhoneticShadow: false,
+    showWordTranslation: true,
+    showSentences: true,
+    showSentenceTranslation: true,
+    showPhrases: true,
+    showSynos: true,
+    showEtymology: true,
+    showRelWords: true,
+    translate: true,
+  }
+}
+
+export function patchDisplayOverride(override: PracticeDisplayOverride) {
+  displayOverride.value = {
+    ...displayOverride.value,
+    ...override,
   }
 }
 
@@ -75,57 +92,54 @@ export function applyPhaseDefinition(phase: PracticePhaseDefinition, cursorKey?:
   }
 }
 
-/** 构造 effective 的 computed */
-export function createEffectiveDisplay(
-  localReveal?: Ref<{ showFullWord: boolean; showWordResult: boolean }>
-): ComputedRef<EffectiveDisplay> {
+/** 构造页面级 effective，不包含 TypeWordV2 的局部揭示状态。 */
+export function createEffectiveDisplay(): ComputedRef<EffectiveDisplay> {
   return computed(() => {
-    const reveal = localReveal?.value
     const base = sessionDisplay.value
       ? mergeDisplay(sessionDisplay.value, displayOverride.value)
       : mergeDisplay(phaseDisplay(), displayOverride.value)
-    return toEffective(base, reveal)
+    return toEffective(base)
   })
 }
 
 /** 页面级 composable：provide effective + Footer Toggle 方法 */
-export function usePracticeDisplayPolicy(localReveal?: Ref<{ showFullWord: boolean; showWordResult: boolean }>) {
-  const effective = createEffectiveDisplay(localReveal)
+export function usePracticeDisplayPolicy() {
+  const effective = createEffectiveDisplay()
 
   /** 切换默写显隐：只写 displayOverride，不写 settingStore */
   function toggleDictation() {
     const current = effective.value
     const nextMask = current.wordMask === 'none' ? 'underscore' : 'none'
-    displayOverride.value = {
-      ...displayOverride.value,
+    patchDisplayOverride({
       wordMask: nextMask,
-    }
+    })
   }
 
   /** 切换翻译显隐 */
   function toggleTranslate() {
     const current = effective.value
     const next = !current.translate
-    displayOverride.value = {
-      ...displayOverride.value,
+    patchDisplayOverride({
       showWordTranslation: next,
       showSentenceTranslation: next,
-    }
+    })
   }
 
-  console.log('usePracticeDisplayPolicy-effective', JSON.stringify(effective.value))
   provide(PRACTICE_DISPLAY_POLICY_KEY, effective)
   provide(PRACTICE_DISPLAY_ACTIONS_KEY, { toggleDictation, toggleTranslate })
 
-  return { effective, toggleDictation, toggleTranslate, sessionDisplay, displayOverride }
+  return { effective, toggleDictation, toggleTranslate, patchDisplayOverride, sessionDisplay, displayOverride }
 }
 
-export function useInjectedDisplayPolicy() {
-  return inject(PRACTICE_DISPLAY_POLICY_KEY)!
+export function useInjectedDisplayPolicy(localReveal?: Ref<PracticeLocalReveal>): ComputedRef<EffectiveDisplay> {
+  const baseDisplay = inject(PRACTICE_DISPLAY_POLICY_KEY)!
+  if (!localReveal) return baseDisplay
+
+  return computed(() => applyLocalReveal(baseDisplay.value, localReveal.value))
 }
 
 export function useInjectedDisplayActions() {
   return inject(PRACTICE_DISPLAY_ACTIONS_KEY)!
 }
 
-export { mergeDisplay, toEffective }
+export { applyLocalReveal, mergeDisplay, toEffective }

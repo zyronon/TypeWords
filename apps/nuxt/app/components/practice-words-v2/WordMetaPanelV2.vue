@@ -20,6 +20,7 @@ import { Toast, VolumeIcon } from '@typewords/base'
 import { useI18n } from 'vue-i18n'
 import TranslationList from '@typewords/core/components/word/TranslationList.vue'
 import TypingSentence from '~/components/practice-sentences/TypingSentence.vue'
+import type { EffectiveDisplay } from '~/composables/practice-words/registry-types.ts'
 
 const SENTENCE_PLAY_SHORTCUT_KEYS = [
   ShortcutKey.PlaySentence1,
@@ -35,24 +36,9 @@ const SENTENCE_PLAY_SHORTCUT_KEYS = [
 
 const { t: $t } = useI18n()
 
-interface DisplayPolicy {
-  showSentences: boolean
-  showSentenceTranslation: boolean
-  showWordTranslation: boolean
-  showPhrases: boolean
-  showSynos: boolean
-  showEtymology: boolean
-  showRelWords: boolean
-  showPhoneticShadow: boolean
-  showWordMask: boolean
-  translate: boolean
-}
-
 interface IProps {
   word: Word
-  effective: DisplayPolicy
-  showFullWord: boolean
-  showWordResult: boolean
+  effective: EffectiveDisplay
   /** 当前例句高亮索引 */
   highlightedSentenceIndex: number
   /** 外部注入的 playSentence 函数 */
@@ -63,19 +49,7 @@ interface IProps {
 
 const props = withDefaults(defineProps<IProps>(), {
   word: () => getDefaultWord(),
-  showFullWord: false,
-  showWordResult: false,
   highlightedSentenceIndex: -1,
-  effective: () => ({
-    showSentences: true,
-    showSentenceTranslation: true,
-    showWordTranslation: true,
-    showPhrases: true,
-    showEtymology: true,
-    showRelWords: true,
-    showPhoneticShadow: false,
-    showWordMask: false,
-  }),
   playSentence: () => {},
   playTtsWithGuide: () => {},
 })
@@ -173,10 +147,10 @@ defineExpose({ startPracticeSentence })
           <div class="flex" v-for="item in word.synos">
             <div class="pos line-height-1.4rem!">{{ item.pos }}</div>
             <div>
-              <div class="cn anim" v-opacity="effective.showSentenceTranslation || showFullWord || showWordResult">
+              <div class="cn anim" v-opacity="effective.showSentenceTranslation">
                 {{ item.cn }}
               </div>
-              <div class="anim" v-opacity="!effective.showWordMask || showFullWord || showWordResult">
+              <div class="anim" v-opacity="!effective.showWordMask">
                 <template v-for="(i, j) in item.ws" :key="j">
                   <ClickableWord :word="i" />
                   <span v-if="j !== item.ws.length - 1"> / </span>

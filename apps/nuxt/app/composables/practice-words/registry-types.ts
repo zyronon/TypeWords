@@ -1,10 +1,6 @@
 import type { PracticeData, TaskWords, Word } from '@typewords/core/types/types.ts'
 import type { PracticeState } from '@typewords/core/stores/practice.ts'
-import {
-  IdentifyMethod,
-  WordPracticeMode,
-  WordPracticeType,
-} from '@typewords/core/types/enum.ts'
+import { IdentifyMethod, WordPracticeMode, WordPracticeType } from '@typewords/core/types/enum.ts'
 
 // ─── 显隐策略 ──────────────────────────────────────────────────────────────────
 
@@ -25,34 +21,20 @@ export interface PracticeDisplayPolicy {
 }
 
 export type PracticeDisplayOverride = Partial<
-  Pick<PracticeDisplayPolicy, 'wordMask' | 'showWordTranslation' | 'showSentenceTranslation'>
+  Pick<PracticeDisplayPolicy, 'wordMask' | 'showWordTranslation' | 'showSentences' | 'showSentenceTranslation'>
 >
 
-export interface EffectiveDisplay {
-  showSentences: boolean
-  showSentenceTranslation: boolean
-  showWordTranslation: boolean
-  showPhrases: boolean
-  showSynos: boolean
-  showEtymology: boolean
-  showRelWords: boolean
-  wordMask: 'none' | 'underscore' | 'hidden'
+export interface EffectiveDisplay extends PracticeDisplayPolicy {
   showWordMask: boolean
   translate: boolean
   showPhoneticShadow: boolean
   isDictationInput: boolean
-  source: 'phase'
 }
 
 // ─── 三层模型 ──────────────────────────────────────────────────────────────────
 
 /** Step Template 的 id — 只描述"怎么练"，不关心词源 */
-export type PracticeStepTemplateId =
-  | 'followWrite'
-  | 'spell'
-  | 'listen'
-  | 'dictation'
-  | 'identify'
+export type PracticeStepTemplateId = 'followWrite' | 'spell' | 'listen' | 'dictation' | 'identify'
 
 /** Step Template — 纯动作描述（展示策略 + 练习类型） */
 export interface PracticeStepTemplate {

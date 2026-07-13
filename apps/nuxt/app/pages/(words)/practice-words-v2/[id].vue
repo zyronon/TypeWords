@@ -6,7 +6,7 @@ import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { useRuntimeStore } from '@typewords/core/stores/runtime.ts'
 import type { Dict, PracticeData, TaskWords, Word } from '@typewords/core/types/types.ts'
 import { useStartKeyboardEventListener } from '@typewords/core/hooks/event.ts'
-import { usePracticeDisplayPolicy, displayOverride } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
+import { usePracticeDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
 import {
   activeCursor,
   buildSessionSnapshot,
@@ -50,12 +50,7 @@ import { usePracticeWordPersistenceV2 } from '~/composables/practice-words/usePr
 import { getDefaultPracticeData } from '~/composables/practice-words/types.ts'
 import { flushStatToStore } from '@typewords/core/composables/usePracticePersistence.ts'
 import { useDataSyncPersistence } from '@typewords/core/composables/useDataSyncPersistence.ts'
-import {
-  IdentifyMethod,
-  ShortcutKey,
-  WordPracticeMode,
-  WordPracticeType,
-} from '@typewords/core/types/enum.ts'
+import { IdentifyMethod, ShortcutKey, WordPracticeMode, WordPracticeType } from '@typewords/core/types/enum.ts'
 import { createEmptyCard, Rating } from 'ts-fsrs'
 import { useGetGradeByWrongTimes, useNextCard } from '@typewords/core/hooks/fsrs.ts'
 import WordMarkPickList, { type WordMarkPickResult } from '@typewords/core/components/word/WordMarkPickList.vue'
@@ -73,7 +68,7 @@ const store = useBaseStore()
 const statStore = usePracticeStore()
 const dataSync = useDataSyncPersistence()
 const wordPersistence = usePracticeWordPersistenceV2()
-const { effective, toggleDictation, toggleTranslate } = usePracticeDisplayPolicy()
+const { effective, toggleDictation, toggleTranslate, patchDisplayOverride } = usePracticeDisplayPolicy()
 let { getGradeByWrongTimes } = useGetGradeByWrongTimes()
 let { nextCard } = useNextCard()
 const typingRef: any = $ref()
@@ -526,11 +521,9 @@ function show(e: KeyboardEvent) {
 
 function collect(e: KeyboardEvent) {
   const anchor = typingRef?.getCollectAnchor?.() as HTMLElement | null | undefined
-  openWordCollectPicker(
-    word,
-    anchor ?? { x: window.innerWidth / 2, y: window.innerHeight / 3 },
-    { excludeDictId: store.sdict.id ? String(store.sdict.id) : undefined }
-  )
+  openWordCollectPicker(word, anchor ?? { x: window.innerWidth / 2, y: window.innerHeight / 3 }, {
+    excludeDictId: store.sdict.id ? String(store.sdict.id) : undefined,
+  })
 }
 
 function play() {
@@ -619,12 +612,12 @@ function randomWrite() {
   console.log('随机默写')
   data.words = shuffle(data.words)
   data.index = 0
-  displayOverride.value = {
+  patchDisplayOverride({
     wordMask: 'underscore',
     showSentences: false,
     showWordTranslation: true,
     showSentenceTranslation: true,
-  }
+  })
 }
 
 useStartKeyboardEventListener()
@@ -819,7 +812,11 @@ useEvents([
     </template>
   </PracticeLayout>
   <StatisticsV2 v-model="isComplete" :loading="settling" />
-  <PracticeOnboardingHostV2 ref="onboardingHostRef" :ready="data.words.length > 0" :dict-id="String(route.params.id ?? '')" />
+  <PracticeOnboardingHostV2
+    ref="onboardingHostRef"
+    :ready="data.words.length > 0"
+    :dict-id="String(route.params.id ?? '')"
+  />
 </template>
 
 <style scoped lang="scss">

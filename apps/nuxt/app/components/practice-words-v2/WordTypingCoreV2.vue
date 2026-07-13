@@ -38,6 +38,8 @@ interface IProps {
   showFullWord: boolean
   /** 当前是否为听写模式（仅用于字母遮罩） */
   showWordMask: boolean
+  /** 当前阶段与用户设置共同决定是否自动切换单词 */
+  autoNextWord: boolean
   /** 当前单词字体大小 */
   wordFontSize: number
   /** 发音图标的 DOM ref，用于音量动画定位 */
@@ -57,6 +59,7 @@ const props = withDefaults(defineProps<IProps>(), {
   active: true,
   showFullWord: false,
   showWordMask: false,
+  autoNextWord: true,
   wordFontSize: 48,
   volumeIconRef: undefined,
   playWord: () => {},
@@ -211,9 +214,7 @@ async function onTyping(e: KeyboardEvent) {
         clearJumpTimer()
         // 如果单词刚完成（300ms内），忽略空格键，避免同时按下最后一个字母和空格键时跳过
         // 手动模式使用独立的空格冷却时间设置
-        const spaceCooldown = settingStore.autoNextWord
-          ? settingStore.waitTimeForChangeWord
-          : settingStore.spaceCooldownTime
+        const spaceCooldown = props.autoNextWord ? settingStore.waitTimeForChangeWord : settingStore.spaceCooldownTime
         if (wordCompletedTime && Date.now() - wordCompletedTime < spaceCooldown) {
           return
         }
@@ -365,7 +366,7 @@ async function onTyping(e: KeyboardEvent) {
         emitShowWordResult(true)
       }
       if ([WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(settingStore.wordPracticeType)) {
-        if (settingStore.autoNextWord) {
+        if (props.autoNextWord) {
           completeTypeWord(true)
         }
       }
