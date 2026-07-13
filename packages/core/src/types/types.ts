@@ -1,4 +1,4 @@
-import { DictType, Frequency, PracticeArticleWordType } from './enum'
+import { DictType, Frequency, PracticeArticleWordType, WordPracticeType } from './enum'
 import type { Rating } from 'ts-fsrs'
 import { PRACTICE_ARTICLE_CACHE, PRACTICE_WORD_CACHE } from '../utils/cache'
 import { APP_VERSION } from '../config/env'
@@ -47,6 +47,8 @@ export interface ArticleWord extends Word {
   input: string
   type: PracticeArticleWordType
 }
+
+
 
 export interface Sentence {
   text: string

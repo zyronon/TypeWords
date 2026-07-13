@@ -98,6 +98,15 @@ export enum WordPracticeType {
   Dictation,
 }
 
+//练习类型
+export enum PracticeType {
+  FollowWrite, //跟写
+  Spell,
+  Identify,
+  Listen,
+  Dictation,
+}
+
 export enum CodeType {
   Login = 0,
   Register = 1,

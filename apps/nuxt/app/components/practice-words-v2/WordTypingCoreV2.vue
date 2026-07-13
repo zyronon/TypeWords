@@ -42,6 +42,8 @@ interface IProps {
   wordFontSize: number
   /** 发音图标的 DOM ref，用于音量动画定位 */
   volumeIconRef: any
+  /** 是否激活键盘监听 */
+  active?: boolean
   /** 外部注入的 playWord 函数 */
   playWord: (trigger: WordPlayTrigger, opts?: { volumeRef?: any; resetIcon?: boolean }) => void
   /** 是否正在编辑笔记（隐藏光标） */
@@ -52,6 +54,7 @@ const props = withDefaults(defineProps<IProps>(), {
   word: () => getDefaultWord(),
   showWordResult: false,
   wrongTimes: 0,
+  active: true,
   showFullWord: false,
   showWordMask: false,
   wordFontSize: 48,
@@ -83,7 +86,6 @@ let wordRepeatCount = 0
 let wordCompletedTime = 0
 let jumpTimer: ReturnType<typeof setTimeout> | null = null
 let pressNumber = 0
-let showNotice = false
 let cursor = $ref({
   top: 0,
   left: 0,
@@ -105,7 +107,7 @@ let displayWord = $computed(() => {
   return props.word.word.slice(input.length + wrong.length)
 })
 
-const right = $computed(() => {
+const isWordRight = $computed(() => {
   let a = input
   let b = props.word.word
 
@@ -121,10 +123,6 @@ const right = $computed(() => {
 })
 
 // ============ 辅助函数 ============
-
-function isTypingSentence() {
-  return false
-}
 
 function clearJumpTimer() {
   if (!jumpTimer) {
@@ -196,33 +194,20 @@ function del() {
   }
 }
 
+const isSpace = (e: KeyboardEvent) => e.code === 'Space'
+
 async function onTyping(e: KeyboardEvent) {
   if (e.code === 'Backspace') return del()
-  if (waitClear) {
-    return
-  }
+  if (waitClear) return
 
-  // if (isWordTest) {
-  //   if (e.code === 'Space') {
-  //     if (completeSelect) {
-  //       completeTypeWord(false)
-  //     } else {
-  //       select(e, -1)
-  //     }
-  //   }
-  //   return
-  // }
-
-  // debugger
   const target = props.word.word
   const targetVolumeIcon = props.volumeIconRef
-
   // 输入完成会锁死不能再输入
   if (inputLock) {
     //判断是否是空格键以便切换到下一个
-    if (e.code === 'Space') {
+    if (isSpace(e)) {
       //正确时就切换到下一个
-      if (right) {
+      if (isWordRight) {
         clearJumpTimer()
         // 如果单词刚完成（300ms内），忽略空格键，避免同时按下最后一个字母和空格键时跳过
         // 手动模式使用独立的空格冷却时间设置
@@ -247,7 +232,7 @@ async function onTyping(e: KeyboardEvent) {
       }
     } else {
       //当正确时，提醒用户按空格键切下一个
-      if (right) {
+      if (isWordRight) {
         pressNumber++
         if (pressNumber >= 3) {
           pressNumber = 0
@@ -262,15 +247,16 @@ async function onTyping(e: KeyboardEvent) {
     }
     return
   }
+
   inputLock = true
   let letter = e.key
   //默写特殊逻辑
   if (settingStore.wordPracticeType === WordPracticeType.Dictation) {
-    if (e.code === 'Space') {
+    if (isSpace(e)) {
       //如果输入长度大于单词长度/单词不包含空格，并且输入不为空（开始直接输入空格不行），则显示单词；
       if (input.length && (input.length >= target.length || !target.includes(' '))) {
         //比对是否一致
-        if (right) {
+        if (isWordRight) {
           //如果已显示单词，则发射完成事件，并 return
           if (props.showWordResult) {
             return emit('wordComplete')
@@ -303,18 +289,17 @@ async function onTyping(e: KeyboardEvent) {
     //当自测模式下，按其他键则自动默认为不认识
     emitShowWordResult(true)
     typo()
-    console.log('???')
     if (settingStore.wordSound) {
       props.playWord(WordPlayTrigger.IdentifyWrongKey, { volumeRef: targetVolumeIcon })
     }
     inputLock = false
     onTyping(e)
   } else {
-    let isRight = false
+    let isKeyRight = false
     if (settingStore.ignoreCase) {
-      isRight = letter.toLowerCase() === target[input.length]?.toLowerCase()
+      isKeyRight = letter.toLowerCase() === target[input.length]?.toLowerCase()
     } else {
-      isRight = letter === target[input.length]
+      isKeyRight = letter === target[input.length]
     }
     //针对中文的特殊判断
     if (
@@ -332,7 +317,7 @@ async function onTyping(e: KeyboardEvent) {
         ('：' === target[input.length] && e.code === 'Semicolon') ||
         ('）' === target[input.length] && e.code === 'Digit0'))
     ) {
-      isRight = true
+      isKeyRight = true
       letter = target[input.length]
     }
     if (
@@ -346,11 +331,11 @@ async function onTyping(e: KeyboardEvent) {
         ('【' === target[input.length] && e.code === 'BracketLeft') ||
         ('】' === target[input.length] && e.code === 'BracketRight'))
     ) {
-      isRight = true
+      isKeyRight = true
       letter = target[input.length]
     }
 
-    if (isRight) {
+    if (isKeyRight) {
       input += letter
       wrong = ''
       playKeyboardAudio()
@@ -368,9 +353,9 @@ async function onTyping(e: KeyboardEvent) {
         waitClear = false
       }, 500)
     }
-    // 更新当前单词信息
+
     //不需要把inputLock设为false，输入完成不能再输入了，只能删除，删除会打开锁
-    if (input.toLowerCase() === target.toLowerCase()) {
+    if (isWordRight) {
       wordCompletedTime = Date.now() // 记录单词完成的时间戳
       playCorrect()
       if (
@@ -422,7 +407,7 @@ function checkCursorPosition() {
     const inputList = typingWordRef?.querySelectorAll(`.l`) ?? []
     if (!typingWordRef) return
     const typingWordRect = typingWordRef.getBoundingClientRect()
-    const cursorHeight = isTypingSentence() ? 20 : props.wordFontSize
+    const cursorHeight = props.wordFontSize
 
     if (inputList.length) {
       let inputRect = last(Array.from(inputList)).getBoundingClientRect()
@@ -465,28 +450,30 @@ watch(
   () => resetTypingCore(WordPlayTrigger.NewWord)
 )
 
-watch(
-  () => input,
-  () => {
-    checkCursorPosition()
-  }
-)
-
 watch([() => input, () => props.showFullWord, () => props.showWordMask], () => {
   checkCursorPosition()
 })
 
-onMounted(() => {
-  emitter.on(EventKey.resetWord, onResetWord)
-  emitter.on(EventKey.onTyping, onTyping)
-  checkCursorPosition()
-})
-
-onUnmounted(() => {
+function unmounted() {
   clearJumpTimer()
   emitter.off(EventKey.resetWord, onResetWord)
   emitter.off(EventKey.onTyping, onTyping)
-})
+}
+
+watch(
+  () => props.active,
+  active => {
+    unmounted()
+    if (active) {
+      emitter.on(EventKey.resetWord, onResetWord)
+      emitter.on(EventKey.onTyping, onTyping)
+      checkCursorPosition()
+    }
+  },
+  { immediate: true }
+)
+
+onUnmounted(unmounted)
 
 // ============ 暴露给父组件 ============
 
@@ -513,9 +500,8 @@ defineExpose({
   wrong,
   showWordResult: () => props.showWordResult,
   wrongTimes: () => props.wrongTimes,
-  right,
+  right: isWordRight,
   displayWord,
-  isTypingSentence,
   resetTypingCore,
   del,
   checkCursorPosition,
@@ -525,7 +511,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="typing-core" ref="typingWordRef" :class="wrong && !isTypingSentence() ? 'is-wrong' : ''">
+  <div class="typing-core" ref="typingWordRef" :class="wrong ? 'is-wrong' : ''">
     <!-- 默写模式 -->
     <div v-if="settingStore.wordPracticeType === WordPracticeType.Dictation">
       <div
@@ -537,11 +523,11 @@ defineExpose({
       <div
         class="mt-2 w-120 dictation"
         :style="{ minHeight: wordFontSize + 'px' }"
-        :class="showWordResult ? (right ? 'right' : 'wrong') : ''"
+        :class="showWordResult ? (isWordRight ? 'right' : 'wrong') : ''"
       >
         <template v-for="i in input">
           <span class="l" v-if="i !== ' '">{{ i }}</span>
-          <Space class="l" v-else :is-wrong="showWordResult ? !right : false" :is-wait="!showWordResult" />
+          <Space class="l" v-else :is-wrong="showWordResult ? !isWordRight : false" :is-wait="!showWordResult" />
         </template>
       </div>
     </div>
@@ -562,12 +548,12 @@ defineExpose({
     </template>
 
     <div
-      v-if="!editingNote"
+      v-if="!editingNote && active"
       class="cursor"
       :style="{
         top: cursor.top + 'px',
         left: cursor.left + 'px',
-        height: isTypingSentence() ? '20px' : wordFontSize + 'px',
+        height: wordFontSize + 'px',
       }"
     ></div>
   </div>

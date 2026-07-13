@@ -80,9 +80,7 @@ const props = withDefaults(defineProps<IProps>(), {
   playTtsWithGuide: () => {},
 })
 
-const emit = defineEmits<{
-  volumeIconClick: []
-}>()
+const emit = defineEmit('complete')
 
 const settingStore = useSettingStore()
 
@@ -91,26 +89,23 @@ function getSentenceShortcut(index: number) {
   return key ? settingStore.shortcutKeyMap[key] : ''
 }
 
-defineExpose({
-  // 由父组件通过 template ref 获取 VolumeIcon 的 DOM ref
-})
-
 let sentenceIndex = $ref(-1)
-
-// function playCurrentSentence({ sentence }: { sentence: Sentence; handle: boolean }) {
-//   ttsPlayAudio(sentence.text, {
-//     volume: settingStore.sentenceSoundVolume / 100,
-//     rate: settingStore.sentenceSoundSpeed,
-//   })
-// }
 
 function onCompleteSentence() {
   if (sentenceIndex < props.word.sentences.length - 1) {
     sentenceIndex++
   } else {
-    Toast.success('句子练习完成')
+    sentenceIndex = -1
+    emit('complete')
+    // Toast.success('句子练习完成')
   }
 }
+
+function startPracticeSentence() {
+  sentenceIndex = 0
+}
+
+defineExpose({ startPracticeSentence })
 </script>
 
 <template>
@@ -132,13 +127,13 @@ function onCompleteSentence() {
       <div
         class="sentence-typing"
         :class="{
-          'sentence-highlight': highlightedSentenceIndex === j,
+          'sentence-highlight': highlightedSentenceIndex === j || sentenceIndex === j,
         }"
         v-for="(i, j) in word.sentences"
-        :key="j"
+        :key="i.c"
       >
         <TypingSentence
-          :key="j"
+          :key="i.c"
           :index="j"
           :sentence="i"
           :active="sentenceIndex === j"

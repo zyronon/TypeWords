@@ -9,11 +9,12 @@
  */
 import { nextTick, onUnmounted, watch } from 'vue'
 import Space from '@typewords/core/components/article/Space.vue'
-import TypingWord from '@typewords/core/components/article/TypingWord.vue'
+import TypingArticleWord from './TypingArticleWord.vue'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { usePlayBeep, usePlayKeyboardAudio } from '@typewords/core/hooks/sound.ts'
 import { emitter, EventKey } from '@typewords/core/utils/eventBus.ts'
-import { PracticeArticleWordType } from '@typewords/core/types/enum.ts'
+import { _nextTick } from '@typewords/core/utils/index.ts'
+import { PracticeArticleWordType, PracticeType } from '@typewords/core/types/enum.ts'
 import type { ArticleWord, Sentence } from '@typewords/core/types/types.ts'
 
 interface IProps {
@@ -26,12 +27,14 @@ interface IProps {
   nameList?: string[]
   /** 默写模式（控制 border-bottom 显隐） */
   dictation?: boolean
+  mode?: PracticeType
 }
 
 const props = withDefaults(defineProps<IProps>(), {
   active: true,
   highlightWords: () => [],
   dictation: false,
+  mode: PracticeType.FollowWrite,
 })
 
 const emit = defineEmits<{
@@ -256,7 +259,7 @@ function del() {
 // ============ 光标定位 ============
 
 function checkCursorPosition() {
-  nextTick(() => {
+  _nextTick(() => {
     if (!rootRef || isEnd) return
     const currentWordEl = rootRef.querySelector('.word.is-current')
     if (!currentWordEl) return
@@ -272,7 +275,7 @@ function checkCursorPosition() {
   })
 }
 
-watch([() => wordIndex, () => stringIndex, () => isEnd], () => checkCursorPosition())
+watch([() => wordIndex, () => stringIndex, () => isEnd, () => props.active], () => checkCursorPosition())
 
 // ============ 悬停高亮 ============
 
@@ -328,6 +331,7 @@ watch(
     emitter.off(EventKey.onTyping, handleTyping)
     emitter.off(EventKey.resetWord)
     if (active) {
+      emit('play')
       emitter.on(EventKey.onTyping, handleTyping)
       emitter.on(EventKey.resetWord, () => {
         input = ''
@@ -360,7 +364,7 @@ function onWordClick(e: MouseEvent, word: ArticleWord) {
 
 <template>
   <div ref="rootRef" class="typingsentence-item">
-    <span class="sentence">
+    <span class="sentence" :class="{ active }">
       <span
         v-for="(word, w) in words"
         :key="w"
@@ -378,9 +382,20 @@ function onWordClick(e: MouseEvent, word: ArticleWord) {
           @mouseleave="hideSentence"
           @click.stop="onWordClick($event, word)"
         >
-          <TypingWord :word="word" :is-typing="true" v-if="isCurrent(w) && !isSpace" />
-          <TypingWord :word="word" :is-typing="false" v-else :isHighLight="highlightWords.includes(word.word)" />
-          <span class="border-bottom" v-if="props.dictation"></span>
+          <TypingArticleWord
+            :is-dictation="mode === PracticeType.Dictation"
+            :word="word"
+            :is-typing="true"
+            v-if="isCurrent(w) && !isSpace"
+          />
+          <TypingArticleWord
+            :is-dictation="mode === PracticeType.Dictation"
+            :word="word"
+            :is-typing="false"
+            v-else
+            :isHighLight="highlightWords.includes(word.word)"
+          />
+          <span class="border-bottom" v-if="mode === PracticeType.Dictation"></span>
         </span>
         <Space v-if="word.nextSpace" class="word-end" :is-wrong="false" :is-wait="isCurrent(w) && isSpace" />
       </span>
@@ -396,14 +411,25 @@ function onWordClick(e: MouseEvent, word: ArticleWord) {
 .typingsentence-item {
   position: relative;
   color: var(--color-font-2);
-  line-height: 2;
-  font-size: 1.6rem;
+  font-size: 1.3rem;
 
   .sentence {
-    font-family: var(--en-article-family);
     word-break: keep-all;
     word-wrap: break-word;
     white-space: pre-wrap;
+    transition: all 0.3s;
+    :deep(.word-space.wait) {
+      width: 0;
+    }
+
+    &.active {
+      font-family: var(--en-article-family);
+      line-height: 2;
+      font-size: 1.6rem;
+      :deep(.word-space.wait) {
+        width: 0.6rem;
+      }
+    }
   }
 
   .wrote,
@@ -431,10 +457,6 @@ function onWordClick(e: MouseEvent, word: ArticleWord) {
 
   .word {
     display: inline-block;
-
-    &.is-current {
-      // 不额外加背景，保持简洁
-    }
   }
 
   .word-wrap {
@@ -450,7 +472,7 @@ function onWordClick(e: MouseEvent, word: ArticleWord) {
     left: 0;
     top: 0;
     border-bottom: 2px solid var(--color-article);
-    display: none;
+    //display: none;
     transform: translateY(-0.2rem);
   }
 }

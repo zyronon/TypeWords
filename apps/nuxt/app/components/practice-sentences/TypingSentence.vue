@@ -173,12 +173,12 @@ defineExpose({
         :highlight-words="highlightWords"
         :dictation="settingStore.dictation"
         @complete="emit('complete')"
-        @play="play($event.handle)"
+        @play="play(false)"
         @context-menu="e => onContextMenu(e.event, e.word, e.wordIndex)"
       />
       <VolumeIcon class="ml-1" title="发音" :cb="() => play(true)" />
     </div>
-    <div v-if="data.translate" class="sentence-translate">
+    <div v-if="data.translate" class="translate" :class="{ active }">
       {{ data.translate }}
     </div>
   </div>
@@ -188,13 +188,18 @@ defineExpose({
 .typing-sentence {
   position: relative;
 
-  .sentence-translate {
-    margin-top: -0.5rem;
-    font-size: 1.2rem;
-    letter-spacing: 0.2rem;
-    font-family: var(--zh-article-family);
-    font-weight: bold;
+  .translate {
     //color: #818181;
+    margin-bottom: .5rem;
+    transition: all .3s;
+
+    &.active {
+      margin-top: -0.5rem;
+      font-size: 1.2rem;
+      letter-spacing: 0.2rem;
+      font-weight: bold;
+      font-family: var(--zh-article-family);
+    }
   }
 }
 </style>

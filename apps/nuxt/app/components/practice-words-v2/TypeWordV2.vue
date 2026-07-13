@@ -78,6 +78,7 @@ const playCorrect = usePlayCorrect()
 
 const volumeIconRef: any = $ref()
 const sentenceVolumeIconsRefs: any = $ref([])
+let isTypingWord = $ref(true)
 
 const baseDisplay = useInjectedDisplayPolicy()
 
@@ -118,18 +119,17 @@ const {
   completeCurrent: completeSentencePracticeCurrent,
 } = usePracticeWordSentencePractice(toRef(props, 'word'))
 
-function getSentenceShortcut(index: number) {
-  const key = SENTENCE_PLAY_SHORTCUT_KEYS[index]
-  return key ? settingStore.shortcutKeyMap[key] : ''
-}
-
 // ============ 子组件 refs ============
 
 const typingCoreRef = $ref<InstanceType<typeof WordTypingCoreV2>>()
 const identifyPanelRef = $ref<InstanceType<typeof WordIdentifyPanelV2>>()
+const wordMetaPanelRef = $ref<InstanceType<typeof WordMetaPanelV2>>()
 
 function onTypingCoreComplete() {
-  if (startSentencePractice()) return
+  if (settingStore.practiceSentence && props.word.sentences.length) {
+    isTypingWord = false
+    return wordMetaPanelRef.startPracticeSentence()
+  }
   emit('complete')
 }
 
@@ -138,9 +138,8 @@ function onTypingCoreWrong() {
 }
 
 function onSentencePracticeComplete() {
-  if (completeSentencePracticeCurrent()) {
-    emit('complete')
-  }
+  isTypingWord = false
+  emit('complete')
 }
 
 function onSentencePracticeWrong() {
@@ -417,6 +416,7 @@ defineExpose({
         >
           <WordTypingCoreV2
             ref="typingCoreRef"
+            :active="isTypingWord"
             :word="word"
             v-model:showWordResult="showWordResult"
             v-model:wrongTimes="wrongTimesModel"
@@ -432,16 +432,6 @@ defineExpose({
           />
         </div>
       </Tooltip>
-
-      <TypingSentenceItem
-        v-if="sentencePracticeActive && sentencePracticeItem"
-        class="mt-6"
-        :sentence="sentencePracticeItem.sentence"
-        :active="sentencePracticeActive"
-        @complete="onSentencePracticeComplete"
-        @wrong="onSentencePracticeWrong"
-        @play="onSentencePracticePlay"
-      />
 
       <!-- 操作按钮行 -->
       <div class="mt-2 flex gap-4">
@@ -523,8 +513,10 @@ defineExpose({
 
       <!-- WordMetaPanelV2: 翻译 + 例句 + 短语 + 词源 等只读展示 -->
       <WordMetaPanelV2
+        ref="wordMetaPanelRef"
         v-if="!sentencePracticeActive"
         :word="word"
+        @complete="onSentencePracticeComplete"
         :effective="effective"
         :showFullWord="showFullWord"
         :showWordResult="showWordResult"
