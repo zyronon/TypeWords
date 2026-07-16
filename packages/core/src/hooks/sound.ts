@@ -82,34 +82,45 @@ export function useSound(audioSrcList?: string[], audioFileLength?: number) {
   return { play, setAudio }
 }
 
+let keyboardPlayFn: ((volume: number) => void) | null = null
 export function usePlayKeyboardAudio() {
   const settingStore = useSettingStore()
-  const { play, setAudio } = useSound()
 
-  watchEffect(() => {
-    if (!SoundFileOptions.find(v => v.label === settingStore.keyboardSoundFile)) {
-      settingStore.keyboardSoundFile = '机械键盘2'
-    }
-    let urlList = getAudioFileUrl(settingStore.keyboardSoundFile)
-    setAudio(urlList, urlList.length === 1 ? 4 : 1)
-  })
+  if (!keyboardPlayFn) {
+    const { play, setAudio } = useSound()
+
+    watchEffect(() => {
+      if (!settingStore.keyboardSound) return
+      if (!SoundFileOptions.find(v => v.label === settingStore.keyboardSoundFile)) {
+        settingStore.keyboardSoundFile = '机械键盘2'
+      }
+      let urlList = getAudioFileUrl(settingStore.keyboardSoundFile)
+      setAudio(urlList, urlList.length === 1 ? 4 : 1)
+    })
+
+    keyboardPlayFn = play
+  }
 
   function playAudio() {
     if (settingStore.keyboardSound) {
-      play(settingStore.keyboardSoundVolume)
+      keyboardPlayFn!(settingStore.keyboardSoundVolume)
     }
   }
 
   return playAudio
 }
 
+let playBeep = null
 export function usePlayBeep() {
   const settingStore = useSettingStore()
-  const { play } = useSound([`/sound/beep.wav`], 1)
+  if (!playBeep) {
+    const { play } = useSound([`/sound/beep.wav`], 1)
+    playBeep = play
+  }
 
   function playAudio() {
     if (settingStore.effectSound) {
-      play(settingStore.effectSoundVolume)
+      playBeep(settingStore.effectSoundVolume)
     }
   }
 
@@ -155,16 +166,21 @@ export function cancelWordPracticeAudio() {
   isPlaying = false
 }
 
+let cachedWordAudio: HTMLAudioElement | null = null
+
 export function usePlayWordAudio() {
   const settingStore = useSettingStore()
-  let audio = ref<HTMLAudioElement>(null)
 
   onMounted(() => {
-    audio.value = new Audio()
+    // @ts-ignore SSR guard
+    if (import.meta.server) return
+    if (!cachedWordAudio) {
+      cachedWordAudio = new Audio()
+    }
   })
 
   function playAudio(word: string, handle: boolean = true, onEnd?: () => void) {
-    if (!word || isPlaying) return
+    if (!word || isPlaying || !cachedWordAudio) return
     isPlaying = true
     speechSynthesis.pause()
     speechSynthesis.cancel()
@@ -187,13 +203,13 @@ export function usePlayWordAudio() {
       isPlaying = false
       onEnd?.()
     }
-    activeWordAudio = audio.value
-    audio.value.onended = onended
-    audio.value.src = url
-    audio.value.volume = settingStore.wordSoundVolume / 100
-    audio.value.playbackRate = playbackRate
-    audio.value.play()
-    audio.value.onerror = () => {
+    activeWordAudio = cachedWordAudio
+    cachedWordAudio.onended = onended
+    cachedWordAudio.src = url
+    cachedWordAudio.volume = settingStore.wordSoundVolume / 100
+    cachedWordAudio.playbackRate = playbackRate
+    cachedWordAudio.play()
+    cachedWordAudio.onerror = () => {
       const ttsPlay = useTTsPlayAudio()
       ttsPlay(word, { rate: playbackRate, onEnd: onended })
     }

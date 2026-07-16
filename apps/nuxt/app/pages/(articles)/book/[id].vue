@@ -2,7 +2,7 @@
 import Empty from '@typewords/core/components/Empty.vue'
 import ArticleList from '@typewords/core/components/list/ArticleList.vue'
 import { useBaseStore } from '@typewords/core/stores/base.ts'
-import type { Article, Dict, Statistics } from '@typewords/core/types/types.ts'
+import type { Article, Dict, Sentence, Statistics } from '@typewords/core/types/types.ts'
 import { useRuntimeStore } from '@typewords/core/stores/runtime.ts'
 import { BackIcon, BaseButton, BaseIcon, Switch, Toast, VolumeIcon } from '@typewords/base'
 import { useRoute, useRouter } from 'vue-router'
@@ -26,13 +26,14 @@ import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { useFetch } from '@vueuse/core'
 import { DICT_LIST } from '@typewords/core/config/env.ts'
 import { useGetDict } from '@typewords/core/hooks/dict.ts'
-import { DictType } from '@typewords/core/types/enum.ts'
+import { DictType, PracticeArticleWordType } from '@typewords/core/types/enum.ts'
 import { usePracticeWordPersistence } from '@typewords/core/composables/usePracticePersistence.ts'
 import { getPracticeArticleCacheLocal } from '@typewords/core/utils/cache.ts'
-import { usePlayArticleTextAudio } from '@typewords/core/hooks/article.ts'
+import { genArticleSectionData, usePlayArticleTextAudio, usePlaySentenceAudio } from '@typewords/core/hooks/article.ts'
 import ClickableEnglishText from '@typewords/core/components/word/ClickableEnglishText.vue'
 import ClickableWord from '@typewords/core/components/word/ClickableWord.vue'
 import WordLookupPopover from '@typewords/core/components/word/WordLookupPopover.vue'
+import TypingSentence from '~/components/practice-sentences/TypingSentence.vue'
 
 const { t } = useI18n()
 
@@ -58,8 +59,16 @@ let audioRef = $ref<HTMLAudioElement>()
 let selectArticle: Article = $ref(getDefaultArticle({ id: -1 }))
 
 function handleCheckedChange(val) {
-  selectArticle = val.item
+  selectArticle = getDefaultArticle(val.item)
+  if (selectArticle?.sections?.length) {
+    setArticle(article)
+  } else {
+    genArticleSectionData(selectArticle)
+    setArticle(selectArticle)
+  }
 }
+
+function setArticle(val: Article) {}
 
 async function startPractice() {
   let sbook = runtimeStore.editDict
@@ -320,6 +329,12 @@ watch(
     })
   }
 )
+
+const { playSentenceAudio } = usePlaySentenceAudio()
+
+function play(sentence: Sentence, onEnd: () => void) {
+  playSentenceAudio(sentence, audioRef, onEnd)
+}
 </script>
 
 <template>
@@ -337,13 +352,22 @@ watch(
             <BaseButton v-if="runtimeStore.editDict.custom && runtimeStore.editDict.url" type="info" @click="reset">
               {{ $t('restore_default') }}
             </BaseButton>
-            <BaseButton v-if="!runtimeStore.editDict.custom" type="info" @click="createCopy">{{ $t('create_copy') }}</BaseButton>
-             <BaseButton v-if="runtimeStore.editDict.custom" :loading="studyLoading || loading" type="info" @click="isEdit = true">{{
-                $t('edit')
-              }}</BaseButton>
-            <BaseButton v-if="runtimeStore.editDict.custom || runtimeStore.editDict.system" type="info" @click="router.push('/batch-edit-article')">{{
-              $t('article_management')
+            <BaseButton v-if="!runtimeStore.editDict.custom" type="info" @click="createCopy">{{
+              $t('create_copy')
             }}</BaseButton>
+            <BaseButton
+              v-if="runtimeStore.editDict.custom"
+              :loading="studyLoading || loading"
+              type="info"
+              @click="isEdit = true"
+              >{{ $t('edit') }}</BaseButton
+            >
+            <BaseButton
+              v-if="runtimeStore.editDict.custom || runtimeStore.editDict.system"
+              type="info"
+              @click="router.push('/batch-edit-article')"
+              >{{ $t('article_management') }}</BaseButton
+            >
             <BaseButton :loading="studyLoading || loading" @click="startPractice">{{ $t('learn') }}</BaseButton>
           </div>
         </div>
@@ -443,36 +467,34 @@ watch(
                     ref="articleWrapperRef"
                   >
                     <article>
-                      <template v-for="(t, i) in selectArticle.text.split('\n\n')" :key="`para-${i}`">
-                        <div class="article-row w-full mb-10">
-                          <span
-                            :class="displayMode === 'line' && 'block'"
-                            v-for="(w, j) in t.split('\n')"
-                            :key="`${i}-${j}`"
-                          >
-                            <span
-                              v-for="(s, n) in w.split(' ').filter(Boolean)"
-                              :class="`inline-block word-${i}-${j}-${n}`"
-                              :key="`${i}-${j}-${n}`"
-                            >
-                              <ClickableWord :word="s" />
-                              <span class="space"></span>
-                            </span>
-                          </span>
-                        </div>
+                      <div class="mb-10" v-for="(sections, i) in selectArticle.sections">
+                        <TypingSentenceItem
+                          :class="displayMode === 'line' && 'block'"
+                          v-for="(sentence, j) in sections"
+                          :key="`${i}-${j}`"
+                          :index="`${i}-${j}`"
+                          :sentence="sentence"
+                          :active="false"
+                          :play="play"
+                          :show-play-button="true"
+                        />
 
                         <!-- 当 card 模式且段落数 > 1 时，在每个段落下显示对应译文 -->
                         <div
                           v-if="shouldShowInlineTranslation && showTranslate && selectArticle.textTranslate"
-                          class="trans-row text-xl color-translate-second -mt-7 mb-10"
+                          class="trans-row text-xl color-translate-second mt-2 mb-10"
                         >
                           <div v-if="selectArticle.textTranslate.split('\n\n')[i]">
                             {{ selectArticle.textTranslate.split('\n\n')[i] }}
                           </div>
                         </div>
-                      </template>
+                      </div>
+
                       <div class="text-right italic">
-                        <div class="inline-flex items-center gap-1 justify-end flex-wrap" v-if="selectArticle?.quote?.text">
+                        <div
+                          class="inline-flex items-center gap-1 justify-end flex-wrap"
+                          v-if="selectArticle?.quote?.text"
+                        >
                           <ClickableEnglishText
                             class="text-2xl"
                             :text="selectArticle.quote.text"
@@ -564,13 +586,19 @@ watch(
       </div>
       <div class="" v-else>
         <div class="dict-header flex justify-between items-center relative">
-<BackIcon class="dict-back z-2" @click="formClose" />
-<div class="dict-title absolute text-2xl text-align-center w-full">
-  {{ isAdd ? $t('create_book') : $t('edit_book') }}
+          <BackIcon class="dict-back z-2" @click="formClose" />
+          <div class="dict-title absolute text-2xl text-align-center w-full">
+            {{ isAdd ? $t('create_book') : $t('edit_book') }}
           </div>
         </div>
         <div class="center">
-          <EditBook :is-add="isAdd" :is-book="true" :initial-data="_copyData"  @close="formClose" @submit="handleSubmit" />
+          <EditBook
+            :is-add="isAdd"
+            :is-book="true"
+            :initial-data="_copyData"
+            @close="formClose"
+            @submit="handleSubmit"
+          />
         </div>
       </div>
     </div>
@@ -598,12 +626,11 @@ $article-lh: 2.4;
 .article-content {
   position: relative;
   font-size: 1.6rem;
+  line-height: 1;
 
   &.tall {
-    article {
-      line-height: $article-lh;
-      color: var(--color-article);
-    }
+    line-height: $article-lh;
+    color: var(--color-article);
   }
 
   .article-row {
@@ -645,93 +672,4 @@ $article-lh: 2.4;
   word-break: break-word;
 }
 
-@media (max-width: 768px) {
-  .dict-detail-card {
-    height: calc(100vh - 2rem);
-  }
-
-  .dict-header {
-    width: 100%;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    gap: 0.75rem;
-  }
-
-  .dict-header .dict-back {
-    align-self: flex-start;
-  }
-
-  .dict-header .dict-title {
-    position: static !important;
-    width: 100%;
-  }
-
-  .dict-header .dict-actions {
-    width: 100%;
-    justify-content: center;
-    gap: 0.75rem;
-
-    .base-button {
-      flex: 1 0 45%;
-      min-width: 8rem;
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .dict-header .dict-actions {
-    flex-direction: column;
-
-    .base-button {
-      width: 100%;
-      min-width: auto;
-    }
-  }
-}
-
-// 移动端适配 - 打字式显示模式
-@media (max-width: 768px) {
-  .article-content {
-    article {
-      .section {
-        margin-bottom: 1rem;
-
-        .sentence {
-          font-size: 1rem;
-          line-height: 1.6;
-          word-break: break-word;
-          margin-bottom: 0.5rem;
-        }
-      }
-    }
-
-    .translate {
-      display: none;
-    }
-  }
-
-  .sentence-translate-mobile {
-    display: block;
-  }
-}
-
-@media (max-width: 480px) {
-  .article-content {
-    article {
-      .section {
-        .sentence {
-          font-size: 0.9rem;
-          line-height: 1.5;
-        }
-      }
-    }
-  }
-
-  .sentence-translate-mobile {
-    font-size: 0.85rem;
-    line-height: 1.35;
-  }
-}
 </style>

@@ -213,7 +213,7 @@ useStartKeyboardEventListener()
             :sentence="i"
             :active="sentenceIndex === j"
             :show-play-button="true"
-            :highlight-words="['Hello','is']"
+            :highlight-words="[word.word]"
             @complete="onCompleteSentence"
             @play="playCurrentSentence"
           />

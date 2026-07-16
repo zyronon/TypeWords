@@ -17,6 +17,7 @@ import { _nextTick } from '@typewords/core/utils/index.ts'
 import { PracticeArticleWordType, PracticeType } from '@typewords/core/types/enum.ts'
 import type { ArticleWord, Sentence } from '@typewords/core/types/types.ts'
 import { lookupWord } from '@typewords/core/hooks/useWordLookup.ts'
+import { VolumeIcon } from '@typewords/base'
 
 interface IProps {
   /** 要练习的句子 */
@@ -29,12 +30,18 @@ interface IProps {
   isHighlightWordsMask?: boolean
   nameList?: string[]
   mode?: PracticeType
+  showPlayButton?: boolean
+  isPractice?: boolean
+  play?: Function<any, any>
+  index?: string
 }
 
 const props = withDefaults(defineProps<IProps>(), {
   active: true,
   highlightWords: () => [],
   isHighlightWordsMask: false,
+  showPlayButton: false,
+  isPractice: false,
   mode: PracticeType.FollowWrite,
 })
 
@@ -43,8 +50,6 @@ const emit = defineEmits<{
   complete: []
   /** 输入错误 */
   wrong: [word: ArticleWord]
-  /** 请求播放当前句子 */
-  play: [{ handle: boolean }]
   /** 词点击 */
   wordClick: [{ wordText: string; event: MouseEvent }]
   /** 右键菜单 */
@@ -367,16 +372,24 @@ function getWordIsDictation(word: ArticleWord, index: number) {
   }
   return props.mode === PracticeType.Dictation
 }
+
+let isPlaying = $ref(false)
+function play() {
+  isPlaying = true
+  props.play(props.sentence, () => {
+    isPlaying = false
+  })
+}
 </script>
 
 <template>
-  <div ref="rootRef" class="typingsentence-item">
-    <span class="sentence" :class="{ active }">
+  <span ref="rootRef" class="sentence-item" :class="{ isPractice, isPlaying }">
+    <span class="sentence">
       <span
         v-for="(word, w) in words"
         :key="w"
         class="word"
-        :class="[isWrote(w) && 'wrote', isCurrent(w) && 'is-current']"
+        :class="[isWrote(w) && 'wrote', isCurrent(w) && 'is-current', `word-${index}-${w}`]"
         @contextmenu.prevent="emit('contextMenu', { event: $event, word, wordIndex: w })"
       >
         <span
@@ -401,36 +414,42 @@ function getWordIsDictation(word: ArticleWord, index: number) {
         <Space v-if="word.nextSpace" class="word-end" :is-wrong="false" :is-wait="isCurrent(w) && isSpace" />
       </span>
     </span>
+    <VolumeIcon v-if="showPlayButton" class="mr-2" title="发音" :cb="play" />
     <div v-if="!isEnd && active" class="cursor" :style="{ top: cursor.top + 'px', left: cursor.left + 'px' }"></div>
-  </div>
+  </span>
 </template>
 
 <style scoped lang="scss">
 .wrote {
   color: grey;
 }
-.typingsentence-item {
+.sentence-item {
   position: relative;
-  color: var(--color-font-2);
-  font-size: 1.3rem;
+  font-size: 1.6rem;
+  color: var(--color-article);
+  font-family: var(--en-article-family);
+  //line-height: 2;
 
+  :deep(.word-space.wait) {
+    width: 0.25rem;
+  }
+
+  &.isPlaying {
+    border-radius: 5px;
+    background: rgba(34, 197, 94, 0.7) !important;
+    //background: rgba(124, 58, 237, 0.1) !important;
+  }
+
+  &.isPractice {
+    :deep(.word-space.wait) {
+      width: 0.6rem;
+    }
+  }
   .sentence {
     word-break: keep-all;
     word-wrap: break-word;
     white-space: pre-wrap;
     transition: all 0.3s;
-    :deep(.word-space.wait) {
-      width: 0;
-    }
-
-    &.active {
-      font-family: var(--en-article-family);
-      line-height: 2;
-      font-size: 1.6rem;
-      :deep(.word-space.wait) {
-        width: 0.6rem;
-      }
-    }
   }
 
   .wrote,

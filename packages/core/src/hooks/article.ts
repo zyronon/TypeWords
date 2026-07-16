@@ -345,9 +345,11 @@ export function usePlaySentenceAudio() {
   const playWordAudio = usePlayWordAudio()
   let timer = $ref<any>(0)
 
-  function playSentenceAudio(sentence: Sentence, ref?: HTMLAudioElement) {
+  function playSentenceAudio(sentence: Sentence, ref?: HTMLAudioElement, onEnd?: () => void) {
     if (sentence.audioPosition?.length && ref && ref.src) {
       clearTimeout(timer)
+      let onended = () => onEnd?.()
+      ref.onerror = onended
       if (ref.played) {
         ref.pause()
       }
@@ -361,20 +363,20 @@ export function usePlaySentenceAudio() {
       if (end && end !== -1) {
         timer = setTimeout(
           () => {
-            console.log('停')
             ref.pause()
+            onended()
           },
           ((end - start) / ref.playbackRate) * 1000
         )
+      } else {
+        ref.onended = onended
       }
     } else {
-      playWordAudio(sentence.text, false)
+      playWordAudio(sentence.text, false, onEnd)
     }
   }
 
-  return {
-    playSentenceAudio,
-  }
+  return { playSentenceAudio }
 }
 
 export interface ArticleTextAudio {
@@ -410,9 +412,12 @@ export function usePlayArticleTextAudio() {
 
       let end = Number(target.end)
       if (Number.isFinite(end) && end !== -1) {
-        timer = setTimeout(() => {
-          ref.pause()
-        }, ((end - start) / ref.playbackRate) * 1000)
+        timer = setTimeout(
+          () => {
+            ref.pause()
+          },
+          ((end - start) / ref.playbackRate) * 1000
+        )
       }
       return
     }
