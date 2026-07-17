@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 # Install pnpm and git
 RUN apk add --no-cache git && corepack enable && corepack prepare pnpm@latest --activate
