@@ -60,15 +60,11 @@ let selectArticle: Article = $ref(getDefaultArticle({ id: -1 }))
 
 function handleCheckedChange(val) {
   selectArticle = getDefaultArticle(val.item)
-  if (selectArticle?.sections?.length) {
-    setArticle(article)
-  } else {
+  if (!selectArticle?.sections?.length) {
     genArticleSectionData(selectArticle)
-    setArticle(selectArticle)
   }
 }
 
-function setArticle(val: Article) {}
 
 async function startPractice() {
   let sbook = runtimeStore.editDict
@@ -372,7 +368,7 @@ function play(sentence: Sentence, onEnd: () => void) {
           </div>
         </div>
         <div class="flex flex-1 overflow-hidden mt-3">
-          <div class="3xl:w-80 2xl:w-60 xl:w-55 lg:w-50 overflow-auto">
+          <div class="3xl:w-80 2xl:w-60 xl:w-55 lg:w-50 flex">
             <ArticleList
               :show-desc="true"
               v-if="list.length"
@@ -420,7 +416,6 @@ function play(sentence: Sentence, onEnd: () => void) {
                           <IconFluentTranslateOff16Regular v-else />
                         </BaseIcon>
                         <BaseIcon
-                          :disabled="!showTranslate"
                           :title="$t('switch_display_mode')"
                           @click="showDisplayMode = !showDisplayMode"
                         >
@@ -471,7 +466,7 @@ function play(sentence: Sentence, onEnd: () => void) {
                         <TypingSentenceItem
                           :class="displayMode === 'line' && 'block'"
                           v-for="(sentence, j) in sections"
-                          :key="`${i}-${j}`"
+                          :key="`${selectArticle.id}-${i}-${j}`"
                           :index="`${i}-${j}`"
                           :sentence="sentence"
                           :active="false"
@@ -671,5 +666,4 @@ $article-lh: 2.4;
   font-family: var(--zh-article-family);
   word-break: break-word;
 }
-
 </style>

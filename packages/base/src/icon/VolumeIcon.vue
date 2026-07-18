@@ -48,13 +48,16 @@ function play(handle: boolean = false) {
 function animateOnly(reset = false) {
   runAnimation(reset)
 }
+function animate(reset = false) {
+  runAnimation(reset)
+}
 
 function click(event: MouseEvent) {
   emit('click', event)
   play(true)
 }
 
-defineExpose({ play, animateOnly })
+defineExpose({ play, animateOnly, animate })
 </script>
 
 <template>

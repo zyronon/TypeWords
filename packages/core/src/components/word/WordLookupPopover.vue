@@ -107,15 +107,15 @@ watch(
           </div>
         </template>
         <template v-else-if="wordLookupState.data">
-          <div class="flex items-center gap-2 flex-wrap pr-5">
+          <div class="flex items-center gap-1 flex-wrap pr-7">
             <span class="text-lg font-medium">{{ wordLookupState.data.word }}</span>
             <span v-if="settingStore.soundType === 'uk' && wordLookupState.data.phonetic0" class="text-sm color-gray">
-              [{{ wordLookupState.data.phonetic0 }}]
+              /{{ wordLookupState.data.phonetic0 }}/
             </span>
             <span v-if="settingStore.soundType === 'us' && wordLookupState.data.phonetic1" class="text-sm color-gray">
-              [{{ wordLookupState.data.phonetic1 }}]
+              /{{ wordLookupState.data.phonetic1 }}/
             </span>
-            <VolumeIcon :simple="true" :cb="() => playWordAudio(wordLookupState.data!.word)" />
+            <VolumeIcon :cb="() => playWordAudio(wordLookupState.data!.word)" />
             <BaseIcon @click="openCollect" :title="$t('collect_to_dict')">
               <IconFluentStarAdd16Regular />
             </BaseIcon>

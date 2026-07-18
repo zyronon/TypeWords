@@ -1,10 +1,16 @@
 import { createApp } from 'vue'
 import { Loading } from '@typewords/base'
 
-export default defineNuxtPlugin((nuxtApp) => {
+export default defineNuxtPlugin(nuxtApp => {
   // v-opacity: 根据布尔值控制透明度
-  nuxtApp.vueApp.directive('opacity', (el: HTMLElement, binding: any) => {
-    el.style.opacity = binding?.value ? '1' : '0'
+  nuxtApp.vueApp.directive('opacity', {
+    mounted(el: HTMLElement, binding: any) {
+      el.classList.add('anim')
+      el.style.opacity = binding?.value ? '1' : '0'
+    },
+    updated(el: HTMLElement, binding: any) {
+      el.style.opacity = binding?.value ? '1' : '0'
+    },
   })
 
   // v-loading: 为元素添加/移除遮罩层（使用 Vue 组件）

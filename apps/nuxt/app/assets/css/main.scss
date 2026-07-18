@@ -193,6 +193,15 @@ html.dark {
   opacity var(--anim-time);
 }
 
+.en {
+  font-size: 1.1em;
+}
+
+.pos {
+  @apply min-w-10 pr-2 box-border;
+  color: var(--color-select-bg);
+}
+
 .en-article-family {
   font-family: var(--en-article-family);
 }

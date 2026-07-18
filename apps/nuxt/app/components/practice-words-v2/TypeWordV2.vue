@@ -22,7 +22,7 @@ import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { usePlayBeep, usePlayCorrect } from '@typewords/core/hooks/sound.ts'
 import { usePracticeWordAudioV2, WordPlayTrigger } from '~/composables/practice-words/usePracticeWordAudioV2.ts'
 import { useInjectedDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
-import { emitter, EventKey, useEventsByWatch } from '@typewords/core/utils/eventBus.ts'
+import { emitter, EventKey } from '@typewords/core/utils/eventBus.ts'
 import { computed, onMounted, onUnmounted, ref, toRef, watch } from 'vue'
 import WordLookupPopover from '@typewords/core/components/word/WordLookupPopover.vue'
 import { BaseButton, BaseIcon, Textarea, ToastComponent, Tooltip, VolumeIcon } from '@typewords/base'
@@ -33,20 +33,6 @@ import WordTypingCoreV2 from './WordTypingCoreV2.vue'
 import WordIdentifyPanelV2 from './WordIdentifyPanelV2.vue'
 import WordMetaPanelV2 from './WordMetaPanelV2.vue'
 import { useOnKeyboardEventListener } from '@typewords/core/hooks/event.ts'
-import TypingSentenceItem from '~/components/practice-sentences/TypingSentenceItem.vue'
-import { usePracticeWordSentencePractice } from '~/composables/practice-words/usePracticeWordSentencePractice.ts'
-
-const SENTENCE_PLAY_SHORTCUT_KEYS = [
-  ShortcutKey.PlaySentence1,
-  ShortcutKey.PlaySentence2,
-  ShortcutKey.PlaySentence3,
-  ShortcutKey.PlaySentence4,
-  ShortcutKey.PlaySentence5,
-  ShortcutKey.PlaySentence6,
-  ShortcutKey.PlaySentence7,
-  ShortcutKey.PlaySentence8,
-  ShortcutKey.PlaySentence9,
-] as const
 
 const { t: $t } = useI18n()
 
@@ -91,20 +77,10 @@ const localReveal = computed(() => ({
 }))
 const effective = useInjectedDisplayPolicy(localReveal)
 
-const { highlightedSentenceIndex, playWord, playSentence, playTtsWithGuide } = usePracticeWordAudioV2({
+const { playWord } = usePracticeWordAudioV2({
   word: toRef(props, 'word'),
   shouldShowSentences: () => effective.value.showSentences,
 })
-
-const {
-  active: sentencePracticeActive,
-  currentItem: sentencePracticeItem,
-  mode: sentencePracticeMode,
-  start: startSentencePractice,
-  completeCurrent: completeSentencePracticeCurrent,
-} = usePracticeWordSentencePractice(toRef(props, 'word'))
-
-// ============ 子组件 refs ============
 
 const typingCoreRef = $ref<InstanceType<typeof WordTypingCoreV2>>()
 const identifyPanelRef = $ref<InstanceType<typeof WordIdentifyPanelV2>>()
@@ -131,15 +107,9 @@ function onSentencePracticeWrong() {
   emit('wrong')
 }
 
-function onSentencePracticePlay() {
-  if (!sentencePracticeItem.value?.source.text) return
-  playTtsWithGuide(sentencePracticeItem.value.source.text)
-}
-
 // ============ 单词操作 ============
 
 function checkIsWrong() {
-  if (sentencePracticeActive.value) return
   if (effective.value.isDictationInput || effective.value.showWordMask) {
     if (!showWordResult.value && !typingCoreRef?.right) {
       emit('wrong')
@@ -286,13 +256,6 @@ function onIdentifyMastered() {
   emit('mastered')
 }
 
-// ============ 快捷键：例句播放 ============
-
-useEventsByWatch(
-  SENTENCE_PLAY_SHORTCUT_KEYS.map((key, index) => [key, () => playSentence(index, { highlight: true })]),
-  () => (props.word.sentences?.length ?? 0) > 0
-)
-
 // ============ 提示 Toast ============
 
 const notice = $computed(() => {
@@ -388,7 +351,6 @@ defineExpose({
 
       <!-- 单词键入区 -->
       <Tooltip
-        v-if="!sentencePracticeActive"
         :title="effective.showWordMask ? `快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示单词` : ''"
       >
         <div
@@ -448,7 +410,6 @@ defineExpose({
 
       <!-- 自测 / WordTest UI -->
       <WordIdentifyPanelV2
-        v-if="!sentencePracticeActive"
         ref="identifyPanelRef"
         :word="word"
         :question="question"
@@ -484,7 +445,7 @@ defineExpose({
       </template>
 
       <!-- 提示 Toast -->
-      <div class="center mt-3" v-if="!sentencePracticeActive && notice.show && settingStore.showUsageTips">
+      <div class="center mt-3" v-if="notice.show && settingStore.showUsageTips">
         <ToastComponent
           :duration="0"
           confirm
@@ -497,14 +458,12 @@ defineExpose({
 
       <!-- WordMetaPanelV2: 翻译 + 例句 + 短语 + 词源 等只读展示 -->
       <WordMetaPanelV2
+        :key="word.word"
         ref="wordMetaPanelRef"
-        v-if="!sentencePracticeActive"
         :word="word"
         @complete="onSentencePracticeComplete"
         :effective="effective"
-        :highlightedSentenceIndex="highlightedSentenceIndex"
-        :playSentence="playSentence"
-        :playTtsWithGuide="playTtsWithGuide"
+        @wrong="emit('wrong')"
       />
     </div>
     <WordLookupPopover />

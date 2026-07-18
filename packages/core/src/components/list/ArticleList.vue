@@ -33,10 +33,14 @@ let localList = $computed(() => {
     })
     try {
       let d = Number(t)
-      //如果是纯数字，把那一条加进去
+      //如果是纯数字，把那一条加进去，下标要判断showDesc
       if (!isNaN(d)) {
-        if (d - 1 < props.list.length) {
-          res.push(props.list[d - 1])
+        const idx = d + (props.showDesc ? 0 : -1)
+        if (idx >= 0 && idx < props.list.length) {
+          const item = props.list[idx]
+          if (!res.includes(item)) {
+            res.push(item)
+          }
         }
       }
     } catch (err) {}
@@ -48,7 +52,10 @@ let localList = $computed(() => {
       if (aMatch && !bMatch) return -1 // a 靠前
       if (!aMatch && bMatch) return 1 // b 靠前
       return 0 // 都匹配或都不匹配，保持原顺序
-    })
+    }).map((item: Article) => ({
+      ...item,
+      _origIndex: props.list.findIndex((v: Article) => v.id === item.id),
+    }))
   } else {
     return props.list
   }
@@ -71,7 +78,7 @@ defineExpose({ scrollToBottom, scrollToItem })
 <template>
   <div class="list">
     <div class="search">
-      <BaseInput clearable v-model="searchKey">
+      <BaseInput clearable v-model="searchKey" placeholder="标题/序号">
         <template #subfix>
           <IconFluentSearch24Regular class="text-lg text-gray" />
         </template>
@@ -84,8 +91,8 @@ defineExpose({ scrollToBottom, scrollToItem })
             <div class="title-wrapper">
               <div class="item-title">
                 <div class="name">
-                  <span class="text-sm text-gray-500" v-if="index != undefined && !searchKey">
-                    {{ item.id == -1 ? '' : index - (props.showDesc ? 1 : 0) + '.' }}
+                  <span class="text-sm text-gray-500" v-if="index != undefined">
+                    {{ item.id == -1 ? '' : (searchKey ? (item._origIndex! + (showDesc ? 0 : 1)) : index - (showDesc ? 1 : 0)) + '.' }}
                   </span>
                   {{ item.title }}
                 </div>

@@ -47,7 +47,7 @@ const props = withDefaults(defineProps<IProps>(), {
 
 const emit = defineEmits<{
   /** 句子输入完成 */
-  complete: []
+  complete: [text:string]
   /** 输入错误 */
   wrong: [word: ArticleWord]
   /** 词点击 */
@@ -160,7 +160,7 @@ function finish() {
   //用于将最后一个单词标记为wrote，因为最后一个单词可能是数字或符号，会被直接跳过
   stringIndex = words.at(-1).word.length
   isEnd = true
-  emit('complete')
+  emit('complete', words.map(v => v.input).join(' '))
 }
 
 // ============ 键盘输入 ============
@@ -335,7 +335,7 @@ watch(
     emitter.off(EventKey.onTyping, handleTyping)
     emitter.off(EventKey.resetWord)
     if (active) {
-      emit('play', { handle: false })
+      props?.play?.(props.sentence, null)
       emitter.on(EventKey.onTyping, handleTyping)
       emitter.on(EventKey.resetWord, () => {
         input = ''
@@ -376,14 +376,14 @@ function getWordIsDictation(word: ArticleWord, index: number) {
 let isPlaying = $ref(false)
 function play() {
   isPlaying = true
-  props.play(props.sentence, () => {
+  props?.play?.(props.sentence, () => {
     isPlaying = false
   })
 }
 </script>
 
 <template>
-  <span ref="rootRef" class="sentence-item" :class="{ isPractice, isPlaying }">
+  <span ref="rootRef" class="sentence-item en" :class="{ isPractice, isPlaying }">
     <span class="sentence">
       <span
         v-for="(word, w) in words"
@@ -414,7 +414,7 @@ function play() {
         <Space v-if="word.nextSpace" class="word-end" :is-wrong="false" :is-wait="isCurrent(w) && isSpace" />
       </span>
     </span>
-    <VolumeIcon v-if="showPlayButton" class="mr-2" title="发音" :cb="play" />
+    <VolumeIcon :simple="true" v-if="showPlayButton" class="mr-2" title="发音" :cb="play" />
     <div v-if="!isEnd && active" class="cursor" :style="{ top: cursor.top + 'px', left: cursor.left + 'px' }"></div>
   </span>
 </template>
@@ -425,9 +425,9 @@ function play() {
 }
 .sentence-item {
   position: relative;
-  font-size: 1.6rem;
-  color: var(--color-article);
+  //color: var(--color-article);
   font-family: var(--en-article-family);
+  //font-size: 1.6rem;
   //line-height: 2;
 
   :deep(.word-space.wait) {

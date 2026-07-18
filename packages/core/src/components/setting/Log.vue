@@ -1,6 +1,10 @@
 <script setup lang="ts">
 let logList = [
   {
+    date: '2026/07/19',
+    content: '优化文章列表搜索逻辑，优化文章详情页',
+  },
+  {
     date: '2026/06/27',
     content: '单词可收藏到其他词典',
   },

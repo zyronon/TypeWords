@@ -1,3 +1,5 @@
+import { useEventsByWatch } from '@/utils/eventBus.ts'
+
 export enum CompareResult {
   RemoteNewer = 0,
   LocalNewer = 1,
@@ -60,6 +62,18 @@ export enum ShortcutKey {
   PlaySentence8 = 'PlaySentence8',
   PlaySentence9 = 'PlaySentence9',
 }
+
+export const SENTENCE_PLAY_SHORTCUT_KEYS = [
+  ShortcutKey.PlaySentence1,
+  ShortcutKey.PlaySentence2,
+  ShortcutKey.PlaySentence3,
+  ShortcutKey.PlaySentence4,
+  ShortcutKey.PlaySentence5,
+  ShortcutKey.PlaySentence6,
+  ShortcutKey.PlaySentence7,
+  ShortcutKey.PlaySentence8,
+  ShortcutKey.PlaySentence9,
+] as const
 
 export enum TranslateEngine {
   Baidu = 0,

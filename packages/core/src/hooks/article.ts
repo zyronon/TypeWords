@@ -343,13 +343,18 @@ export function splitCNArticle2(text: string): string {
 
 export function usePlaySentenceAudio() {
   const playWordAudio = usePlayWordAudio()
-  let timer = $ref<any>(0)
+  let timer = 0
+  let onEndCb = null
 
   function playSentenceAudio(sentence: Sentence, ref?: HTMLAudioElement, onEnd?: () => void) {
     if (sentence.audioPosition?.length && ref && ref.src) {
+      if (onEndCb) {
+        onEndCb()
+        onEndCb = null
+      }
       clearTimeout(timer)
-      let onended = () => onEnd?.()
-      ref.onerror = onended
+      onEndCb = () => onEnd?.()
+      ref.onerror = onEndCb
       if (ref.played) {
         ref.pause()
       }
@@ -364,12 +369,12 @@ export function usePlaySentenceAudio() {
         timer = setTimeout(
           () => {
             ref.pause()
-            onended()
+            onEndCb()
           },
           ((end - start) / ref.playbackRate) * 1000
         )
       } else {
-        ref.onended = onended
+        ref.onended = onEndCb
       }
     } else {
       playWordAudio(sentence.text, false, onEnd)

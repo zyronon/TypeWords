@@ -9,11 +9,9 @@
  * - 短语列表
  * - 近义词 / 词源 / 关联词
  */
-import type { Sentence, Word } from '@typewords/core/types/types.ts'
+import type { Word } from '@typewords/core/types/types.ts'
 import { getDefaultWord } from '@typewords/core/types/func.ts'
-import { ShortcutKey, WordPracticeType } from '@typewords/core/types/enum.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
-import SentenceHightLightWord from '@typewords/core/components/word/SentenceHightLightWord.vue'
 import ClickableEnglishText from '@typewords/core/components/word/ClickableEnglishText.vue'
 import ClickableWord from '@typewords/core/components/word/ClickableWord.vue'
 import { Toast, VolumeIcon } from '@typewords/base'
@@ -21,62 +19,96 @@ import { useI18n } from 'vue-i18n'
 import TranslationList from '@typewords/core/components/word/TranslationList.vue'
 import TypingSentence from '~/components/practice-sentences/TypingSentence.vue'
 import type { EffectiveDisplay } from '~/composables/practice-words/registry-types.ts'
-
-const SENTENCE_PLAY_SHORTCUT_KEYS = [
-  ShortcutKey.PlaySentence1,
-  ShortcutKey.PlaySentence2,
-  ShortcutKey.PlaySentence3,
-  ShortcutKey.PlaySentence4,
-  ShortcutKey.PlaySentence5,
-  ShortcutKey.PlaySentence6,
-  ShortcutKey.PlaySentence7,
-  ShortcutKey.PlaySentence8,
-  ShortcutKey.PlaySentence9,
-] as const
+import { useEventsByWatch } from '@typewords/core/utils/eventBus.ts'
+import { SENTENCE_PLAY_SHORTCUT_KEYS, ShortcutKey } from '@typewords/core'
+import { getBrowserKey, useTTsPlayAudio } from '@typewords/core/hooks/sound.ts'
+import { useRouter } from 'vue-router'
 
 const { t: $t } = useI18n()
 
 interface IProps {
   word: Word
   effective: EffectiveDisplay
-  /** 当前例句高亮索引 */
-  highlightedSentenceIndex: number
-  /** 外部注入的 playSentence 函数 */
-  playSentence: (index: number, opts?: { highlight?: boolean }) => void
-  /** 外部注入的 playTtsWithGuide 函数 */
-  playTtsWithGuide: (text: string) => void
 }
 
 const props = withDefaults(defineProps<IProps>(), {
   word: () => getDefaultWord(),
-  highlightedSentenceIndex: -1,
-  playSentence: () => {},
-  playTtsWithGuide: () => {},
 })
 
-const emit = defineEmit('complete')
+const emit = defineEmits<{
+  complete: []
+  wrong: []
+}>()
 
+const router = useRouter()
+const ttsPlayAudio = useTTsPlayAudio()
 const settingStore = useSettingStore()
+let activeSentenceIndex = $ref(-1)
+let highlightedSentenceIndex = $ref(-1)
+const sentenceRef = useTemplateRef('sentences')
 
-function getSentenceShortcut(index: number) {
-  const key = SENTENCE_PLAY_SHORTCUT_KEYS[index]
-  return key ? settingStore.shortcutKeyMap[key] : ''
+useEventsByWatch(
+  SENTENCE_PLAY_SHORTCUT_KEYS.map((key, index) => [key, () => noticePlaySentence(index)]),
+  () => (props.word.sentences?.length ?? 0) > 0
+)
+
+let ttsVoiceHintShown = false
+function playTtsWithGuide(text: string, onEnd?: () => void) {
+  if (!ttsVoiceHintShown) {
+    const browserKey = getBrowserKey()
+    const hasVoice = settingStore.ttsVoiceMap?.some(v => v.key === browserKey && v.voice)
+    if (!hasVoice) {
+      ttsVoiceHintShown = true
+      const ins = Toast.warning(
+        '例句默认使用浏览器内置 TTS 发音，若无声请前往「设置 → 音效设置 → TTS 声色」选择可用声色',
+        {
+          duration: 15000000,
+          action: {
+            text: '设置',
+            onClick: () => {
+              router.push('/setting?index=4')
+              ins.close()
+            },
+          },
+        }
+      )
+    }
+  }
+  ttsPlayAudio(text, {
+    onEnd,
+    volume: settingStore.sentenceSoundVolume / 100,
+    rate: settingStore.sentenceSoundSpeed,
+  })
 }
 
-let sentenceIndex = $ref(-1)
+function noticePlaySentence(index) {
+  if (props.word.sentences.length < index) return
+  sentenceRef.value[index].play()
+}
 
-function onCompleteSentence() {
-  if (sentenceIndex < props.word.sentences.length - 1) {
-    sentenceIndex++
+function playSentence(index: number, text: string) {
+  highlightedSentenceIndex = index
+  playTtsWithGuide(text, () => {
+    if (highlightedSentenceIndex === index) {
+      highlightedSentenceIndex = -1
+    }
+  })
+}
+
+function onCompleteSentence(text: string) {
+  //简单比对，句子里面是否有当前单词，没有则为错
+  if (!text.includes(props.word.word)) emit('wrong')
+  if (activeSentenceIndex < props.word.sentences.length - 1) {
+    activeSentenceIndex++
   } else {
-    sentenceIndex = -1
+    activeSentenceIndex = -1
     emit('complete')
     // Toast.success('句子练习完成')
   }
 }
 
 function startPracticeSentence() {
-  sentenceIndex = 0
+  activeSentenceIndex = 0
 }
 
 defineExpose({ startPracticeSentence })
@@ -85,13 +117,7 @@ defineExpose({ startPracticeSentence })
 <template>
   <div class="word-meta">
     <!-- 翻译区 -->
-    <div
-      class="translate flex flex-col items-center gap-2 my-3"
-      v-if="effective.showWordTranslation"
-      :style="{
-        fontSize: settingStore.fontSize.wordTranslateFontSize + 'px',
-      }"
-    >
+    <div class="translate flex flex-col items-center gap-2 my-3" v-opacity="effective.showWordTranslation">
       <TranslationList :word="word" :showFull="!effective.showWordMask" />
     </div>
 
@@ -101,20 +127,22 @@ defineExpose({ startPracticeSentence })
       <div
         class="sentence-typing"
         :class="{
-          'sentence-highlight': highlightedSentenceIndex === j || sentenceIndex === j,
+          'sentence-highlight': highlightedSentenceIndex === j || activeSentenceIndex === j,
         }"
         v-for="(i, j) in word.sentences"
         :key="i.c"
       >
         <TypingSentence
+          ref="sentences"
           :key="i.c"
           :index="j"
           :sentence="i"
           :isHighlightWordsMask="effective.showWordMask"
-          :active="sentenceIndex === j"
+          :showSentenceTranslation="effective.showSentenceTranslation"
+          :active="activeSentenceIndex === j"
           :highlight-words="[word.word]"
           @complete="onCompleteSentence"
-          @play="playSentence(j)"
+          @play="playSentence(j, i.c)"
         />
       </div>
     </template>
@@ -130,7 +158,7 @@ defineExpose({ startPracticeSentence })
               <ClickableEnglishText class="en" :text="item.c" :word="word.word" :dictation="effective.showWordMask" />
               <VolumeIcon :simple="false" title="发音" @click.stop="() => playTtsWithGuide(item.c)" />
             </div>
-            <div class="cn anim" v-opacity="effective.showSentenceTranslation">
+            <div class="anim" v-opacity="effective.showSentenceTranslation">
               {{ item.cn }}
             </div>
           </div>
@@ -145,14 +173,14 @@ defineExpose({ startPracticeSentence })
         <div class="label">{{ $t('synonyms') }}</div>
         <div class="flex flex-col gap-3">
           <div class="flex" v-for="item in word.synos">
-            <div class="pos line-height-1.4rem!">{{ item.pos }}</div>
+            <div class="pos en">{{ item.pos }}</div>
             <div>
-              <div class="cn anim" v-opacity="effective.showSentenceTranslation">
+              <div class="anim" v-opacity="effective.showSentenceTranslation">
                 {{ item.cn }}
               </div>
               <div class="anim" v-opacity="!effective.showWordMask">
                 <template v-for="(i, j) in item.ws" :key="j">
-                  <ClickableWord :word="i" />
+                  <ClickableWord class="en" :word="i" />
                   <span v-if="j !== item.ws.length - 1"> / </span>
                 </template>
               </div>
@@ -168,7 +196,7 @@ defineExpose({ startPracticeSentence })
         <div class="line-white my-3"></div>
         <div class="flex">
           <div class="label">{{ $t('etymology') }}</div>
-          <div class="text-base">
+          <div class="">
             <div class="mb-2" v-for="item in word.etymology">
               <div class="">{{ item.t }}</div>
               <div class="">{{ item.d }}</div>
@@ -211,7 +239,6 @@ defineExpose({ startPracticeSentence })
   }
 
   .translate {
-    font-size: 1.2rem;
   }
 
   .label {
@@ -220,25 +247,13 @@ defineExpose({ startPracticeSentence })
     flex-shrink: 0;
   }
 
-  .cn {
-    @apply text-base;
-  }
-
-  .en {
-    @apply text-lg;
-  }
-
-  .pos {
-    @apply min-w-10;
-  }
-
   .sentence {
     @apply rounded-lg px-3 py-2 -mx-3;
     background: transparent;
     transition: all 0.3s;
   }
   .sentence-typing {
-    @apply rounded-lg px-3 pb-1 -mx-3;
+    @apply rounded-lg px-3 py-1 -mx-3;
     background: transparent;
     transition: all 0.3s;
   }

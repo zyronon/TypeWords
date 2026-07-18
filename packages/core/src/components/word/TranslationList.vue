@@ -3,16 +3,10 @@ import { Word } from '../../types'
 import { onMounted, watch } from 'vue'
 import SentenceHightLightWord from './SentenceHightLightWord.vue'
 
-const props = withDefaults(
-  defineProps<{
-    word: Word
-    showFull: boolean
-    posSpace?: boolean // 词性是否需要固定占位
-  }>(),
-  {
-    posSpace: true,
-  }
-)
+const props = defineProps<{
+  word: Word
+  showFull: boolean
+}>()
 
 watch(
   () => props.word.trans,
@@ -75,7 +69,7 @@ onMounted(() => {
       </span>
     </div>
     <div class="flex" v-for="pos in posList">
-      <div class="shrink-0 pos" :class="posSpace && 'min-w-12'">{{ pos.pos }}&nbsp;</div>
+      <div class="shrink-0 pos">{{ pos.pos }}&nbsp;</div>
       <div class="flex gap-3 flex-wrap items-end">
         <span v-for="tran in pos.trans">
           <span v-if="tran.frequency != undefined" :class="['rare', 'uncommon', 'common'][tran.frequency]">
@@ -107,9 +101,5 @@ onMounted(() => {
 .common {
   opacity: 1;
   font-weight: 500;
-}
-
-.pos {
-  color: var(--color-select-bg);
 }
 </style>

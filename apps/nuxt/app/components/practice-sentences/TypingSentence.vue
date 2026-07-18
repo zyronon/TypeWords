@@ -1,24 +1,17 @@
 <script setup lang="ts">
 /**
  * TypingSentence — 句子练习包装组件
- *
- * 基于 TypingSentenceItem，增加：
- * - 发音按钮（可选）
- * - 句子翻译显示（默写模式）
- * - 右键菜单（收藏/复制/翻译/语法/从此处开始）
  */
 import { Toast, VolumeIcon } from '@typewords/base'
-import { openWordCollectPicker } from '@typewords/core/hooks/useWordCollectPicker.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import type { ArticleWord, Sentence, WordSubContent } from '@typewords/core/types/types.ts'
-import { getDefaultSentence, getDefaultWord } from '@typewords/core/types/func.ts'
+import { getDefaultSentence } from '@typewords/core/types/func.ts'
 import ContextMenu from '@imengyu/vue3-context-menu'
 import '@imengyu/vue3-context-menu/lib/vue3-context-menu.css'
-import nlp from 'compromise/three'
-import { nanoid } from 'nanoid'
 import { useI18n } from 'vue-i18n'
 import TypingSentenceItem from './TypingSentenceItem.vue'
 import { parseSentence } from '@typewords/core/hooks/article.ts'
+import { SENTENCE_PLAY_SHORTCUT_KEYS } from '@typewords/core'
 
 const { t: $t } = useI18n()
 
@@ -27,23 +20,21 @@ interface IProps {
   sentence: WordSubContent
   /** 是否激活键盘监听 */
   active?: boolean
+  showSentenceTranslation?: boolean
+  index: number
   /** 需要高亮标注的词列表 */
   highlightWords?: string[]
 }
 
 const props = withDefaults(defineProps<IProps>(), {
+  showSentenceTranslation: true,
   active: false,
   highlightWords: () => [],
 })
 
 const emit = defineEmits<{
-  complete: []
-  play: [
-    val: {
-      sentence: Sentence
-      handle: boolean
-    },
-  ]
+  complete: [text: string]
+  play: []
 }>()
 
 const settingStore = useSettingStore()
@@ -104,9 +95,7 @@ function onContextMenu(e: MouseEvent, word: ArticleWord, wordIndex: number) {
       },
       {
         label: $t('play_sentence'),
-        onClick: () => {
-          emit('play', { sentence: data, handle: true })
-        },
+        onClick: play,
       },
       {
         label: $t('grammar_analysis'),
@@ -141,9 +130,10 @@ function onContextMenu(e: MouseEvent, word: ArticleWord, wordIndex: number) {
 }
 
 // ============ 播放 ============
-
-function play(handle: boolean = true) {
-  emit('play', { sentence: data, handle })
+let volumeIconRef = useTemplateRef('volumeIcon')
+function play() {
+  volumeIconRef.value.animate()
+  emit('play')
 }
 
 function init() {
@@ -158,6 +148,11 @@ function init() {
   })
 }
 
+function getSentenceShortcut(index: number) {
+  const key = SENTENCE_PLAY_SHORTCUT_KEYS[index]
+  return key ? settingStore.shortcutKeyMap[key] : ''
+}
+
 onMounted(init)
 defineExpose({
   play,
@@ -168,22 +163,28 @@ defineExpose({
 </script>
 
 <template>
-  <div class="typing-sentence">
+  <div class="typing-sentence" :class="[active ? 'active' : 'display']">
     <div class="flex items-start gap-2">
       <TypingSentenceItem
         ref="itemRef"
         :sentence="data"
         :active="active"
+        :isPractice="active"
+        :play="play"
         :isHighlightWordsMask="$attrs.isHighlightWordsMask"
         :highlight-words="highlightWords"
         :dictation="settingStore.dictation"
-        @complete="emit('complete')"
-        @play="play(false)"
+        @complete="e => emit('complete', e)"
         @context-menu="e => onContextMenu(e.event, e.word, e.wordIndex)"
       />
-      <VolumeIcon class="ml-1" title="发音" :cb="() => play(true)" />
+      <VolumeIcon
+        ref="volumeIcon"
+        class="ml-1"
+        :title="getSentenceShortcut(index) ? `发音(${getSentenceShortcut(index)})` : '发音'"
+        @click="emit('play')"
+      />
     </div>
-    <div v-if="data.translate" class="translate" :class="{ active }">
+    <div v-if="data.translate" v-opacity="showSentenceTranslation" class="mb-1">
       {{ data.translate }}
     </div>
   </div>
@@ -193,18 +194,16 @@ defineExpose({
 .typing-sentence {
   position: relative;
 
-  .translate {
-    //color: #818181;
-    margin-top: 0.2rem;
-    margin-bottom: 0.5rem;
-    transition: all 0.3s;
+  &.display {
+    :deep(.sentence-item) {
+      color: unset;
+      font-family: unset;
+    }
+  }
 
-    &.active {
-      margin-top: -0.5rem;
-      font-size: 1.2rem;
-      letter-spacing: 0.2rem;
-      font-weight: bold;
-      font-family: var(--zh-article-family);
+  &.active {
+    :deep(.sentence-item) {
+      font-size: 1.3em;
     }
   }
 }

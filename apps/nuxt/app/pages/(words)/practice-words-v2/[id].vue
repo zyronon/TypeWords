@@ -695,7 +695,12 @@ useEvents([
 <template>
   <PracticeLayout v-loading="loading" panelLeft="var(--word-panel-margin-left)">
     <template v-slot:practice>
-      <div class="practice-word">
+      <div
+        class="practice-word"
+        :style="{
+          fontSize: settingStore.fontSize.wordTranslateFontSize + 'px',
+        }"
+      >
         <div class="fixed z-99999 center mt-3" v-if="statStore.timerPaused">
           <ToastComponent
             :duration="0"
@@ -825,7 +830,7 @@ useEvents([
 }
 
 .practice-word {
-  @apply h-full flex flex-col justify-between items-center relative;
+  @apply h-full flex flex-col justify-between items-center relative text-2xl;
   width: var(--toolbar-width);
 }
 
