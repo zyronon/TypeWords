@@ -114,7 +114,7 @@ watch(
 
       <div class="flex mb-4 gap-space">
         <span class="shrink-0 w-20">{{ $t('daily_learning') }}</span>
-        <Slider show-text class="mt-1" :max="200" v-model="tempPerDayStudyNumber" />
+        <Slider show-text class="mt-1" :max="500" v-model="tempPerDayStudyNumber" />
       </div>
       <div class="flex gap-space">
         <span class="shrink-0 w-20">{{ $t('learning_progress') }}</span>
