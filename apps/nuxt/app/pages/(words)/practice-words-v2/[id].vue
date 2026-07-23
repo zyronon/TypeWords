@@ -4,19 +4,16 @@ import StatisticsV2 from '~/components/practice-words-v2/StatisticsV2.vue'
 import { emitter, EventKey, useEvents } from '@typewords/core/utils/eventBus.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { useRuntimeStore } from '@typewords/core/stores/runtime.ts'
-import type { Dict, PracticeData, TaskWords, Word } from '@typewords/core/types/types.ts'
+import type { Dict, TaskWords, Word } from '@typewords/core/types/types.ts'
 import { useStartKeyboardEventListener } from '@typewords/core/hooks/event.ts'
 import { usePracticeDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
 import {
   activeCursor,
   buildSessionSnapshot,
   createPracticeWordNavigator,
-  resetCursor,
   restoreSessionFromLegacy,
   restoreSessionSnapshot,
 } from '~/composables/practice-words/usePracticeWordNavigator.ts'
-import { loadPracticeFlow } from '~/composables/practice-words/practice-phase-registry.ts'
-import { getFlowIdForMode } from '~/composables/practice-words/builtin-flows.ts'
 import { resolveFlowStart } from '~/composables/practice-words/usePracticeWordInit.ts'
 import useTheme from '@typewords/core/hooks/theme.ts'
 import { getCurrentStudyWord, useWordOptions } from '@typewords/core/hooks/dict.ts'
@@ -47,7 +44,7 @@ import { addStat, setUserDictProp } from '@typewords/core/apis'
 import GroupList from '@typewords/core/components/word/GroupList.vue'
 import { getPracticeWordCacheV2Local } from '~/composables/practice-words/practice-word-cache-v2.ts'
 import { usePracticeWordPersistenceV2 } from '~/composables/practice-words/usePracticeWordPersistenceV2.ts'
-import { getDefaultPracticeData } from '~/composables/practice-words/types.ts'
+import { getDefaultPracticeData, type PracticeDataV2 } from '~/composables/practice-words/types.ts'
 import { flushStatToStore } from '@typewords/core/composables/usePracticePersistence.ts'
 import { useDataSyncPersistence } from '@typewords/core/composables/useDataSyncPersistence.ts'
 import { IdentifyMethod, ShortcutKey, WordPracticeMode, WordPracticeType } from '@typewords/core/types/enum.ts'
@@ -57,6 +54,7 @@ import WordMarkPickList, { type WordMarkPickResult } from '@typewords/core/compo
 import { buildQuestion } from '@typewords/core/utils/word-test.ts'
 import type { PracticeSessionSnapshot } from '~/composables/practice-words/registry-types.ts'
 import { usePracticeIdleTimer } from '~/composables/practice-words/usePracticeIdleTimer.ts'
+import { resolvePhaseByCtxCursor } from '~/composables/practice-words/practice-phase-registry.ts'
 
 const { isWordSimple, toggleWordSimple } = useWordOptions()
 const settingStore = useSettingStore()
@@ -85,7 +83,7 @@ let taskWords = $ref<TaskWords>({
 
 //watch 实例列表，用于本地代码修改hrm后，导致重复watch
 let watchRefList = []
-let data = $ref<PracticeData>(getDefaultPracticeData({}))
+let data = $ref<PracticeDataV2>(getDefaultPracticeData({}))
 
 const navigator = createPracticeWordNavigator({
   getPracticeData: () => data,
@@ -99,42 +97,35 @@ const navigator = createPracticeWordNavigator({
   complete,
 })
 
+/** 当前 Cursor 解析出的真实练习类型；settingStore.wordPracticeType 仅保留为兼容镜像。 */
+const currentPracticeType = $computed<WordPracticeType>(() => {
+  return resolvePhaseByCtxCursor(activeCursor.value).practiceType
+})
+
 function next(isTyping: boolean = true, ignoreLoop = false) {
   navigator.next(isTyping, ignoreLoop)
 }
 
 function skipStep() {
-  debugger
   navigator.skipStep()
 }
 
 function syncSessionPhase() {
-  loadPracticeFlow(getFlowIdForMode(settingStore.wordPracticeMode))
   navigator.syncPhase()
 }
 
 function restorePracticeSession(cache: { sessionSnapshot?: PracticeSessionSnapshot }) {
   if (cache.sessionSnapshot) {
-    restoreSessionSnapshot(cache.sessionSnapshot, data, taskWords)
+    restoreSessionSnapshot(cache.sessionSnapshot)
   } else {
-    restoreSessionFromLegacy(data, taskWords)
+    restoreSessionFromLegacy()
   }
 }
 
-watch(
-  () => data.words,
-  () => {
-    updateQuestion()
-    handleResumeTimer()
-  }
-)
-watch(
-  () => data.index,
-  () => {
-    updateQuestion()
-    handleResumeTimer()
-  }
-)
+watch([() => data.words, () => data.index], () => {
+  updateQuestion()
+  handleResumeTimer()
+})
 
 function updateQuestion() {
   if (data.words?.[data.index]) {
@@ -284,8 +275,8 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
       statStore.total = start.total
       statStore.newWordNumber = start.newWordNumber
       statStore.reviewWordNumber = start.reviewWordNumber
-      // 重置 cursor 到 flow 起始位置
-      resetCursor()
+      // resolveFlowStart 会跳过没有可练单词的 node，必须使用它返回的真实起点。
+      activeCursor.value = { ...start.cursor }
     } catch {
       Toast.warning('没有可学习的单词！')
       router.push('/words')
@@ -316,15 +307,14 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
 const word = $computed<Word>(() => {
   return data.words[data.index] ?? getDefaultWord()
 })
-const prevWord: Word = $computed(() => {
-  return data.words?.[data.index - 1] ?? undefined
+const prevWord: Word | null = $computed(() => {
+  return data.words?.[data.index - 1] ?? null
 })
-const nextWord: Word = $computed(() => {
-  return data.words?.[data.index + 1] ?? undefined
+const nextWord: Word | null = $computed(() => {
+  return data.words?.[data.index + 1] ?? null
 })
 
 // 显隐与阶段同步由 Registry applyPhase 负责（Phase 2）
-
 async function complete() {
   if (!isComplete) {
     let start = Date.now()
@@ -476,7 +466,7 @@ async function savePracticeDataIns(where?) {
     taskWords,
     practiceData: data,
     statStoreData: statStore.$state,
-    sessionSnapshot: buildSessionSnapshot(data),
+    sessionSnapshot: buildSessionSnapshot(),
   })
   runtimeStore.globalLoading = false
 }
@@ -649,21 +639,18 @@ function onWordMarkPickComplete(result: WordMarkPickResult) {
   })
   console.log(result)
   if (result.unknown.length > 0) {
-    data.isTypingWrongWord = true
     console.log('当前学完了，但还有错词')
-    data.words = shuffle(cloneDeep(result.unknown))
-    data.index = 0
-    data.wrongWords = []
-    syncSessionPhase()
+    // 交给当前 Phase 的 onEnd → wrongWordClear action 进入标准错词清空子步骤。
+    data.wrongWords = cloneDeep(result.unknown)
 
     data.allWrongWords = data.allWrongWords.concat(result.unknown.map(v => v.word.toLowerCase()))
     result.unknown.forEach(v => {
       data.wrongTimesMap[v.word.toLowerCase()] = 1
     })
   } else {
-    data.words = []
-    next(false)
+    data.wrongWords = []
   }
+  navigator.completeCurrentList()
 }
 
 useEvents([
@@ -714,7 +701,7 @@ useEvents([
 
         <WordMarkPickList
           v-if="
-            settingStore.wordPracticeType === WordPracticeType.Identify &&
+            currentPracticeType === WordPracticeType.Identify &&
             data.wrongWords.length === 0 &&
             settingStore.identifyMethod === IdentifyMethod.QuickIdentify
           "
@@ -758,6 +745,7 @@ useEvents([
             ref="typingRef"
             :word="word"
             :question="data.question"
+            :practiceType="currentPracticeType"
             @wrong="onTypeWrong"
             @complete="next"
             @mastered="toggleWordSimpleWrapper"

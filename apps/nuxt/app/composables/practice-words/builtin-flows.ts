@@ -12,26 +12,22 @@ import { WordPracticeMode } from '@typewords/core/types/enum.ts'
 import type { PracticeFlowConfig, PracticeEndAction, PracticeWordAdvanceConfig } from './registry-types.ts'
 import { GROUP_SIZE } from './phase-templates.ts'
 
-/** 标准错词清空 action：FollowWrite + wordLoop(Spell)，与 v1 行为对齐 */
-const WRONG_WORD_CLEAR_ACTION: PracticeEndAction = {
-  type: 'wrongWordClear',
-  templateId: 'followWrite',
-  wordAdvance: {
-    type: 'wordLoop',
-    groupSize: GROUP_SIZE,
-    subSteps: [{ templateId: 'spell' }],
-  },
-}
-
-/** 标准错词清空 onEnd 队列（单个动作） */
-const DEFAULT_ON_END: PracticeEndAction[] = [WRONG_WORD_CLEAR_ACTION]
-
 /** 跟写 + 7 词 wordLoop + Spell 子步骤 */
 const WORD_LOOP_WITH_SPELL: PracticeWordAdvanceConfig = {
   type: 'wordLoop',
   groupSize: GROUP_SIZE,
   subSteps: [{ templateId: 'spell' }],
 }
+
+/** 标准错词清空 action：FollowWrite + wordLoop(Spell)，与 v1 行为对齐 */
+const WRONG_WORD_CLEAR_ACTION: PracticeEndAction = {
+  type: 'wrongWordClear',
+  templateId: 'followWrite',
+  wordAdvance: WORD_LOOP_WITH_SPELL,
+}
+
+/** 标准错词清空 onEnd 队列（单个动作） */
+const DEFAULT_ON_END: PracticeEndAction[] = [WRONG_WORD_CLEAR_ACTION]
 
 /** 内置流程字典：key 为 flowId，存入 sessionSnapshot.flowId */
 export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
@@ -88,7 +84,6 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
       },
     ],
   },
-
   /**
    * Free 模式：单阶段跟写，无 wordLoop，用户控显隐
    */
@@ -113,7 +108,6 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
       },
     ],
   },
-
   /**
    * Review 模式：仅复习（自测→听写→默写）
    */
@@ -145,7 +139,6 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
       },
     ],
   },
-
   /**
    * IdentifyOnly：新词自测 + 复习自测（2 个 node）
    */
@@ -179,7 +172,6 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
       },
     ],
   },
-
   /**
    * DictationOnly：新词默写 + 复习默写
    */
@@ -213,7 +205,6 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
       },
     ],
   },
-
   /**
    * ListenOnly：新词听写 + 复习听写
    */
@@ -249,7 +240,6 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
       },
     ],
   },
-
   /**
    * Shuffle：单阶段默写洗牌（使用 taskReview 词表）
    */

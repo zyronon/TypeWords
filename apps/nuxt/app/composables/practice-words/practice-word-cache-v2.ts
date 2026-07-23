@@ -3,6 +3,9 @@ import type { PracticeState } from '@typewords/core/stores/practice.ts'
 import type { PracticeSessionSnapshot } from './registry-types.ts'
 import { get, set } from 'idb-keyval'
 
+/** V2 的流程位置由 activeCursor 表达，不再保留 V1 的 isTypingWrongWord 镜像字段。 */
+export type PracticeDataV2 = Omit<PracticeData, 'isTypingWrongWord'>
+
 type CacheConfig = { key: string; version: number }
 
 /** v2 专用练习缓存，与 v1 `PracticeSaveWord` 完全隔离 */
@@ -13,7 +16,7 @@ export const PRACTICE_WORD_CACHE_V2: CacheConfig = {
 
 export type PracticeWordCacheV2 = {
   taskWords: TaskWords
-  practiceData?: PracticeData
+  practiceData?: PracticeDataV2
   statStoreData?: PracticeState
   sessionSnapshot?: PracticeSessionSnapshot
 }
@@ -23,7 +26,7 @@ export type PracticeWordTaskWordsStrV2 = {
   review: string[]
 }
 
-export type PracticeWordDataCompactV2 = Omit<PracticeData, 'words' | 'wrongWords'> & {
+export type PracticeWordDataCompactV2 = Omit<PracticeDataV2, 'words' | 'wrongWords'> & {
   wordsStr: string[]
   wrongWordsStr: string[]
 }

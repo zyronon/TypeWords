@@ -33,6 +33,8 @@ import { useOnKeyboardEventListener } from '@typewords/core/hooks/event.ts'
 
 interface IProps {
   word: Word
+  /** 当前 Cursor 解析出的真实练习类型。 */
+  practiceType: WordPracticeType
   showWordResult: boolean
   wrongTimes: number
   showFullWord: boolean
@@ -104,8 +106,6 @@ function emitWrongTimes(val: number) {
   emit('update:wrongTimes', val)
 }
 
-// ============ 计算属性 ============
-
 let displayWord = $computed(() => {
   return props.word.word.slice(input.length + wrong.length)
 })
@@ -113,19 +113,12 @@ let displayWord = $computed(() => {
 const isWordRight = $computed(() => {
   let a = input
   let b = props.word.word
-
-  if (settingStore.wordPracticeType === WordPracticeType.Dictation) {
+  if (props.practiceType === WordPracticeType.Dictation) {
     a = normalizeWord(a)
     b = normalizeWord(b)
   }
-  if (settingStore.ignoreCase) {
-    return a.toLowerCase() === b.toLowerCase()
-  } else {
-    return a === b
-  }
+  return settingStore.ignoreCase ? a.toLowerCase() === b.toLowerCase() : a === b
 })
-
-// ============ 辅助函数 ============
 
 function clearJumpTimer() {
   if (!jumpTimer) {
@@ -141,7 +134,7 @@ function typo() {
 }
 
 function shouldRepeat() {
-  if (settingStore.wordPracticeType === WordPracticeType.FollowWrite) {
+  if (props.practiceType === WordPracticeType.FollowWrite) {
     if (settingStore.repeatCount == 100) {
       return settingStore.repeatCustomCount > wordRepeatCount + 1
     } else {
@@ -184,7 +177,7 @@ function del() {
     input = ''
     emitShowWordResult(false)
     //如果是自测阶段，按删除键代码弄错了，需要标记为错词，同时从excludeWords里排除
-    if (settingStore.wordPracticeType === WordPracticeType.Identify) {
+    if (props.practiceType === WordPracticeType.Identify) {
       typo()
       if (settingStore.wordSound) props.playWord(WordPlayTrigger.DelRetry)
     }
@@ -252,7 +245,7 @@ async function onTyping(e: KeyboardEvent) {
   inputLock = true
   let letter = e.key
   //默写特殊逻辑
-  if (settingStore.wordPracticeType === WordPracticeType.Dictation) {
+  if (props.practiceType === WordPracticeType.Dictation) {
     if (isSpace(e)) {
       //如果输入长度大于单词长度/单词不包含空格，并且输入不为空（开始直接输入空格不行），则显示单词；
       if (input.length && (input.length >= target.length || !target.includes(' '))) {
@@ -286,7 +279,7 @@ async function onTyping(e: KeyboardEvent) {
     wrong = ''
     playKeyboardAudio()
     inputLock = false
-  } else if (settingStore.wordPracticeType === WordPracticeType.Identify && !props.showWordResult) {
+  } else if (props.practiceType === WordPracticeType.Identify && !props.showWordResult) {
     //当自测模式下，按其他键则自动默认为不认识
     emitShowWordResult(true)
     typo()
@@ -360,12 +353,12 @@ async function onTyping(e: KeyboardEvent) {
       wordCompletedTime = Date.now() // 记录单词完成的时间戳
       playCorrect()
       if (
-        [WordPracticeType.Listen, WordPracticeType.Identify].includes(settingStore.wordPracticeType) &&
+        [WordPracticeType.Listen, WordPracticeType.Identify].includes(props.practiceType) &&
         !props.showWordResult
       ) {
         emitShowWordResult(true)
       }
-      if ([WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(settingStore.wordPracticeType)) {
+      if ([WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(props.practiceType)) {
         if (props.autoNextWord) {
           completeTypeWord(true)
         }
@@ -388,7 +381,7 @@ function resetTypingCore(trigger: WordPlayTrigger) {
   wordCompletedTime = 0
   emitWrongTimes(0)
   resetActiveWordPlayCount(props.word.word)
-  if (settingStore.wordSound && settingStore.wordPracticeType !== WordPracticeType.Dictation) {
+  if (settingStore.wordSound && props.practiceType !== WordPracticeType.Dictation) {
     props.playWord(trigger, { resetIcon: trigger === WordPlayTrigger.NewWord })
   }
   checkCursorPosition()
@@ -514,7 +507,7 @@ defineExpose({
 <template>
   <div class="typing-core" ref="typingWordRef" :class="wrong ? 'is-wrong' : ''">
     <!-- 默写模式 -->
-    <div v-if="settingStore.wordPracticeType === WordPracticeType.Dictation">
+    <div v-if="practiceType === WordPracticeType.Dictation">
       <div
         class="letter text-align-center w-full inline-block"
         v-opacity="!showWordMask || showWordResult || showFullWord"

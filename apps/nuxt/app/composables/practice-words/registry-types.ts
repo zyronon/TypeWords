@@ -1,5 +1,4 @@
-import type { PracticeData, TaskWords, Word } from '@typewords/core/types/types.ts'
-import type { PracticeState } from '@typewords/core/stores/practice.ts'
+import type { Word } from '@typewords/core/types/types.ts'
 import { IdentifyMethod, WordPracticeMode, WordPracticeType } from '@typewords/core/types/enum.ts'
 
 // ─── 显隐策略 ──────────────────────────────────────────────────────────────────
@@ -213,20 +212,10 @@ export interface FlowStartResult {
 export interface PracticeSessionSnapshot {
   wordPracticeType: WordPracticeType
   identifyMethod: IdentifyMethod
-  isTypingWrongWord: boolean
   wordPracticeMode: WordPracticeMode
   flowId: string
   flowVersion?: number
   cursor?: PracticeFlowCursor
   sessionDisplay?: PracticeDisplayPolicy
   displayOverride?: PracticeDisplayOverride | null
-}
-
-// ─── cache 类型（供 practice-word-cache-v2.ts 引用） ─────────────────────────────
-
-export type PracticeWordCacheV2WithSnapshot = {
-  taskWords: TaskWords
-  practiceData?: PracticeData
-  statStoreData?: PracticeState
-  sessionSnapshot?: PracticeSessionSnapshot
 }

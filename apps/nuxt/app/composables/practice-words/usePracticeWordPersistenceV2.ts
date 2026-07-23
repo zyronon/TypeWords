@@ -7,6 +7,7 @@ import {
   type PracticeWordCacheCompactV2,
   type PracticeWordCacheStoredV2,
   type PracticeWordCacheV2,
+  type PracticeDataV2,
 } from './practice-word-cache-v2.ts'
 
 function isCompactPracticeWordCache(data: PracticeWordCacheStoredV2 | null): data is PracticeWordCacheCompactV2 {
@@ -44,7 +45,10 @@ function restorePracticeWordCache(data: PracticeWordCacheStoredV2 | null): Pract
   if (!data) return null
   if (!isCompactPracticeWordCache(data)) {
     if (!data.taskWords?.new.length && !data.taskWords?.review.length) return null
-    return data
+    if (!data.practiceData) return data
+    const { isTypingWrongWord: _legacyWrongWordState, ...practiceData } = data.practiceData as PracticeDataV2 &
+      Partial<Pick<PracticeData, 'isTypingWrongWord'>>
+    return { ...data, practiceData }
   }
   if (!data.taskWordsStr?.new.length && !data.taskWordsStr?.review.length) return null
   const wordMap = createWordMap()
@@ -57,8 +61,10 @@ function restorePracticeWordCache(data: PracticeWordCacheStoredV2 | null): Pract
   const wrongWords = restoreWords(data.practiceData?.wrongWordsStr ?? [], wordMap)
   const index = words.length ? Math.min(data.practiceData.index, words.length - 1) : 0
 
-  const practiceData: PracticeData = {
-    ...data.practiceData,
+  const { isTypingWrongWord: _legacyWrongWordState, ...practiceDataRest } = data.practiceData as typeof data.practiceData &
+    Partial<Pick<PracticeData, 'isTypingWrongWord'>>
+  const practiceData: PracticeDataV2 = {
+    ...practiceDataRest,
     index,
     words,
     wrongWords,

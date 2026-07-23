@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { usePracticeStore } from '@typewords/core/stores/practice.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
-import type { PracticeData } from '@typewords/core/types/types.ts'
+import type { PracticeDataV2 } from '~/composables/practice-words/types.ts'
 import { ShortcutKey } from '@typewords/core/types/enum.ts'
 import { getActiveRegistry } from '~/composables/practice-words/practice-phase-registry.ts'
 import { activeCursor } from '~/composables/practice-words/usePracticeWordNavigator.ts'
@@ -28,7 +28,7 @@ const emit = defineEmits<{
   skipStep: []
 }>()
 
-let practiceData = inject<PracticeData>('practiceData')
+let practiceData = inject<PracticeDataV2>('practiceData')
 const bumpPracticeTimerActivity = inject<(() => void) | undefined>('bumpPracticeTimerActivity', undefined)
 
 function onTimerRowClick() {
@@ -50,7 +50,7 @@ function format(val: number, suffix: string = '', check: number = -1) {
  * 单节点单步骤流程（Free/Shuffle 等价）直接显示 flow 名。
  */
 const status = computed(() => {
-  if (practiceData.isTypingWrongWord) return $t('review_wrong_words')
+  if (activeCursor.value.inWrongWordClear) return $t('review_wrong_words')
   const registry = getActiveRegistry()
   const nodes = registry.config.nodes
   const cursor = activeCursor.value

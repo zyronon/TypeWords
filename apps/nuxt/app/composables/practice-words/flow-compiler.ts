@@ -30,11 +30,7 @@ import { cursorKey } from './registry-types.ts'
  * - 跨 node → nextSource = 下一 node.source，shuffle 取下一 node 第一 step.shuffleOnEnter
  * - 最后一步 → complete = true
  */
-function computeStepAdvance(
-  allNodes: PracticeFlowNode[],
-  nodeIndex: number,
-  stepIndex: number
-): StepAdvanceRule {
+function computeStepAdvance(allNodes: PracticeFlowNode[], nodeIndex: number, stepIndex: number): StepAdvanceRule {
   const currentNode = allNodes[nodeIndex]
   const isLastStepInNode = stepIndex === currentNode.steps.length - 1
   const isLastNode = nodeIndex === allNodes.length - 1
@@ -63,11 +59,7 @@ function computeStepAdvance(
 }
 
 /** 编译单个 (nodeIndex, stepIndex) → PracticePhaseDefinition */
-function compileStep(
-  allNodes: PracticeFlowNode[],
-  nodeIndex: number,
-  stepIndex: number
-): PracticePhaseDefinition {
+function compileStep(allNodes: PracticeFlowNode[], nodeIndex: number, stepIndex: number): PracticePhaseDefinition {
   const node = allNodes[nodeIndex]
   const step = node.steps[stepIndex]
   const template = STEP_TEMPLATE_META[step.templateId]
@@ -82,19 +74,14 @@ function compileStep(
         }
       : { type: 'increment' }
 
-  const display = step.displayOverride
-    ? { ...template.display, ...step.displayOverride }
-    : template.display
-
-  // onEnd：优先取 step.onEnd，兜底为空数组（Phase 2.6 前旧缓存不含 onEnd）
-  const onEnd: PracticeEndAction[] = step.onEnd ?? []
+  const display = step.displayOverride ? { ...template.display, ...step.displayOverride } : template.display
 
   return {
     practiceType: template.practiceType,
     display,
     wordAdvance,
     stepAdvance: computeStepAdvance(allNodes, nodeIndex, stepIndex),
-    onEnd,
+    onEnd: step.onEnd ?? [],
   }
 }
 
@@ -106,7 +93,7 @@ export function compileFlowConfig(config: PracticeFlowConfig): ActiveFlowRegistr
   const phasesByCursor = new Map<string, PracticePhaseDefinition>()
   const cursorSteps: Array<{ nodeIndex: number; stepIndex: number }> = []
 
-  let firstPhase: PracticePhaseDefinition | undefined
+  let firstPhase: PracticePhaseDefinition
 
   for (let ni = 0; ni < config.nodes.length; ni++) {
     const node = config.nodes[ni]
@@ -131,7 +118,7 @@ export function compileFlowConfig(config: PracticeFlowConfig): ActiveFlowRegistr
   return {
     config,
     phasesByCursor,
-    firstPhase: firstPhase!,
+    firstPhase,
     initialCursor,
     cursorSteps,
   }

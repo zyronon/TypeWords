@@ -23,6 +23,8 @@ interface IProps {
   word: Word
   question?: Question
   showWordResult: boolean
+  /** 当前 Cursor 解析出的真实练习类型。 */
+  practiceType: WordPracticeType
   /** 外部注入的 playWord 函数 */
   playWord?: (trigger: WordPlayTrigger, opts?: { volumeRef?: any }) => void
   /** 音频回调：手动发音 */
@@ -50,14 +52,14 @@ let showNotice = false
 
 const isSelfAssessment = $computed(() => {
   return (
-    settingStore.wordPracticeType === WordPracticeType.Identify &&
+    props.practiceType === WordPracticeType.Identify &&
     settingStore.identifyMethod === IdentifyMethod.SelfAssessment
   )
 })
 
 const isWordTest = $computed(() => {
   return (
-    settingStore.wordPracticeType === WordPracticeType.Identify &&
+    props.practiceType === WordPracticeType.Identify &&
     settingStore.identifyMethod === IdentifyMethod.WordTest
   )
 })

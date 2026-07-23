@@ -14,15 +14,16 @@ import type { FlowStartResult, PracticeFlowConfig, PracticeFlowCursor, PracticeW
 import { cursorKey } from './registry-types.ts'
 
 /** 把 PracticeWordsSource 枚举映射到 taskWords 里的具体数组 */
-function resolveWordsForSource(
-  source: PracticeWordsSource,
-  taskWords: TaskWords
-): Word[] {
+function resolveWordsForSource(source: PracticeWordsSource, taskWords: TaskWords): Word[] {
   switch (source) {
-    case 'taskNew':    return taskWords.new
-    case 'taskReview': return taskWords.review
-    case 'current':    return [...taskWords.new, ...taskWords.review]
-    case 'wrongWords': return [] // 练习开始时无错词
+    case 'taskNew':
+      return taskWords.new
+    case 'taskReview':
+      return taskWords.review
+    case 'current':
+      return [...taskWords.new, ...taskWords.review]
+    case 'wrongWords':
+      return [] // 练习开始时无错词
   }
 }
 
@@ -35,7 +36,7 @@ function findFirstNodeWithWords(
 ): { nodeIndex: number; words: Word[] } | null {
   for (let ni = 0; ni < config.nodes.length; ni++) {
     const node = config.nodes[ni]
-    const words = resolveWordsForSource(node.source as PracticeWordsSource, taskWords)
+    const words = resolveWordsForSource(node.source, taskWords)
     if (words.length > 0) {
       return { nodeIndex: ni, words }
     }
@@ -53,11 +54,7 @@ function findFirstNodeWithWords(
  *
  * @throws 'NO_WORDS' 无词可练时，页面应 toast 并跳回词书列表
  */
-export function resolveFlowStart(
-  mode: WordPracticeMode,
-  taskWords: TaskWords,
-  flowId?: string
-): FlowStartResult {
+export function resolveFlowStart(mode: WordPracticeMode, taskWords: TaskWords, flowId?: string): FlowStartResult {
   const total = taskWords.new.length + taskWords.review.length
   if (total === 0) throw new Error('NO_WORDS')
 
@@ -65,7 +62,7 @@ export function resolveFlowStart(
   const registry = getActiveRegistry()
   const config = registry.config
   const firstNode = config.nodes[0]
-  const firstWords = resolveWordsForSource(firstNode.source as PracticeWordsSource, taskWords)
+  const firstWords = resolveWordsForSource(firstNode.source, taskWords)
 
   let startNodeIndex = 0
   let startWords = firstWords

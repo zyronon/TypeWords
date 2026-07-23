@@ -39,6 +39,8 @@ const { t: $t } = useI18n()
 interface IProps {
   word: Word
   question?: Question
+  /** 当前 Cursor 解析出的真实练习类型。 */
+  practiceType: WordPracticeType
 }
 
 const props = withDefaults(defineProps<IProps>(), {
@@ -126,14 +128,14 @@ function showWord() {
   if (!settingStore.allowWordTip || !effective.value.allowWordTip) return
 
   // 如果不是跟写模式，查看单词一律标记为错词
-  if (settingStore.wordPracticeType !== WordPracticeType.FollowWrite || effective.value.showWordMask) {
+  if (props.practiceType !== WordPracticeType.FollowWrite || effective.value.showWordMask) {
     // 原版 typo() 无条件调用
     if (!showWordResult.value) {
       emit('wrong')
     }
   }
   if (
-    settingStore.wordPracticeType === WordPracticeType.Identify &&
+    props.practiceType === WordPracticeType.Identify &&
     settingStore.identifyMethod === IdentifyMethod.WordTest &&
     identifyPanelRef
   ) {
@@ -210,7 +212,7 @@ const isSimple = $computed(() => isWordSimple(props.word))
 
 const isWordTestVal = computed(() => {
   return (
-    settingStore.wordPracticeType === WordPracticeType.Identify &&
+    props.practiceType === WordPracticeType.Identify &&
     settingStore.identifyMethod === IdentifyMethod.WordTest
   )
 })
@@ -260,9 +262,9 @@ function onIdentifyMastered() {
 
 const notice = $computed(() => {
   let text =
-    settingStore.wordPracticeType === WordPracticeType.Identify
+    props.practiceType === WordPracticeType.Identify
       ? '选择后/输入后，按空格键切换下一个'
-      : settingStore.wordPracticeType === WordPracticeType.Listen
+      : props.practiceType === WordPracticeType.Listen
         ? '输入完成后按空格键切换下一个'
         : showWordResult.value
           ? typingCoreRef?.right
@@ -271,7 +273,7 @@ const notice = $computed(() => {
           : '按空格键完成输入'
   return {
     show: [WordPracticeType.Listen, WordPracticeType.Identify, WordPracticeType.Dictation].includes(
-      settingStore.wordPracticeType
+      props.practiceType
     ),
     text,
   }
@@ -364,6 +366,7 @@ defineExpose({
             ref="typingCoreRef"
             :active="isTypingWord"
             :word="word"
+            :practiceType="practiceType"
             v-model:showWordResult="showWordResult"
             v-model:wrongTimes="wrongTimesModel"
             :showFullWord="showFullWord"
@@ -413,6 +416,7 @@ defineExpose({
         ref="identifyPanelRef"
         :word="word"
         :question="question"
+        :practiceType="practiceType"
         :showWordResult="showWordResult"
         @know="onIdentifyKnow"
         @unknown="onIdentifyUnknown"

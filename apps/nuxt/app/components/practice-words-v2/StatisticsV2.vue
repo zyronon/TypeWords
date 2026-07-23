@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useBaseStore } from '@typewords/core/stores/base.ts'
 import { BaseButton, Loading, Progress } from '@typewords/base'
-import type { PracticeData } from '@typewords/core/types/types.ts'
+import type { PracticeDataV2 } from '~/composables/practice-words/types.ts'
 import { ShortcutKey, WordPracticeMode } from '@typewords/core/types/enum.ts'
 import { emitter, EventKey, useEvents } from '@typewords/core/utils/eventBus.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
@@ -27,7 +27,7 @@ const settingStore = useSettingStore()
 const statStore = usePracticeStore()
 const model = defineModel({ default: false })
 let list = $ref([])
-let practiceData = inject<PracticeData>('practiceData')
+let practiceData = inject<PracticeDataV2>('practiceData')
 
 function calcWeekList() {
   // 获取本周的起止时间

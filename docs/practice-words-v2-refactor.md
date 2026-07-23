@@ -1,5 +1,7 @@
 # 单词练习页 v2 重构计划
 
+> **当前实现请优先阅读**：本文包含历史计划、审计与阶段演进，部分目标已被用户后续手写实现和产品决策覆盖。Agent 冷启动时应先阅读 [`practice-words-v2-current-context.md`](./practice-words-v2-current-context.md)；若两份文档冲突，以当前实现上下文为准。
+
 > **给 Agent 的执行说明**：执行前必读「〇、Agent 冷启动执行手册」与「零侵入原则」。严格按 Phase 1 → Phase 2 → Phase 2.5 → Phase 2.6 → Phase 3 顺序；**禁止修改** v1 页面与 `packages/core` 现有练习文件。开发命令：在 `Typewords/` 目录执行 `pnpm -F @typewords/nuxt dev`，访问 `/practice-words-v2/{词典id}`；流程编排页 `/practice-flow-editor`（Phase 3）。
 
 **范围**：`../apps/nuxt` 仅新增 v2 路由与副本代码
@@ -12,7 +14,7 @@
 - [x] Phase 2.6 Type System Refinement：wordLoop subSteps、onEnd 串行动作、cursor 通用化（✅ 完成）
 - [x] Phase 3：用户自定义练习流程 UI（档位 A：阶段块拖拽编排）（✅ 完成）
 - [x] Phase 4：v2 组件拆分（✅ 完成）
-- [ ] Phase 5–6：例句练习线（可选）
+- [x] Phase 5–6：例句练习线（✅ 完成）
 - [ ] Phase 7：合并 v1（远期，本次不做）
 
 ***
@@ -43,9 +45,7 @@
 | P0  | 修复刷新后显隐错乱：`sessionSnapshot` + `applyPhase()` + 显隐二分                                   |
 | P0  | `effective.showSentences` 统一 UI 显隐与例句自动播放条件                                           |
 | P1  | Phase 3：可视化流程编排页，用户从预设阶段块拖拽排序、配置词源/shuffle/拼写子相位                                      |
-| P1  | 去掉 v2 中 `__CURRENT_WORD_INFO__`，新建 `usePracticeWordKeyboard`                          |
-| P1  | v2 内拆分 TypeWordV2，例句区只读（不在 v2 做例句输入）                                                  |
-| P2  | Phase 5–6：例句独立练习 `/practice-sentences/[id]`（与 v2 单词页解耦）                               |
+| P1  | v2 内拆分 TypeWordV2，例句重构                                                                |
 
 ### 非目标（Non-Goals）— 本次不做
 
@@ -61,7 +61,7 @@
 
 1. **复制再改**：凡 v1 有的组件/逻辑，在 `apps/nuxt/app/components/practice-words-v2/` 或 `apps/nuxt/app/composables/practice-words/` 新建副本
 2. **独立缓存**：新 localStorage key `PracticeSaveWordV2`（**不要**复用 v1 的 `PracticeSaveWord` / `PRACTICE_WORD_CACHE`）
-3. **显隐策略**：所有模式统一走 `sessionDisplay` + `displayOverride`；**禁止**用 settingStore.dictation / translate 字段做显隐
+3. **显隐策略**：所有模式统一走 `sessionDisplay` + `displayOverride`； settingStore.dictation / translate 字段只做暂时显隐
 4. **例句自动播放**：`autoPlayFirstSentence && effective.showSentences`（与模板同一数据源）
 5. **`groupSize = 7`**：跟写分组循环，从 v1 原样保留
 6. **无用户明确要求不 git commit**
@@ -1918,6 +1918,8 @@ TypeWordV2 行数从 **1209 → 568**，减少 53%。
 
 `usePracticeWordActions` 和 `usePracticeComplete` 因与页面 `data`/`statStore`/`store` 等状态紧密耦合（需传 8-10 个参数），提取为 composable 的收益不足以抵消接口复杂度，**本次延后**，页面内联代码保持不变。
 
+### Phase 5-6 ✅ 完成
+
 ## 六、明确不建议
 
 - 继续用 `watchPracticeType` 写 `settingStore.dictation/translate`（结构化模式显隐必须走 sessionDisplay）
@@ -1929,4 +1931,3 @@ TypeWordV2 行数从 **1209 → 568**，减少 53%。
 - 首轮做档位 C 全功能节点流程编辑器（任意条件分支）
 - 把错词复习 / FSRS hook / 跳词逻辑开放给用户编排
 - 把 800 行逻辑搬进一个新的 800 行 Vue 文件（只搬家）
-
