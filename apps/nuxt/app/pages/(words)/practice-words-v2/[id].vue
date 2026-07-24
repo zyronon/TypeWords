@@ -42,9 +42,12 @@ import PracticeOnboardingHostV2 from '~/components/practice-words-v2/PracticeOnb
 import { AppEnv, DICT_LIST } from '@typewords/core/config/env.ts'
 import { addStat, setUserDictProp } from '@typewords/core/apis'
 import GroupList from '@typewords/core/components/word/GroupList.vue'
-import { getPracticeWordCacheV2Local } from '~/composables/practice-words/practice-word-cache-v2.ts'
 import { usePracticeWordPersistenceV2 } from '~/composables/practice-words/usePracticeWordPersistenceV2.ts'
-import { getDefaultPracticeData, type PracticeDataV2 } from '~/composables/practice-words/types.ts'
+import {
+  getDefaultPracticeData,
+  type PracticeDataV2,
+  type PracticeWordCacheV2,
+} from '~/composables/practice-words/types.ts'
 import { flushStatToStore } from '@typewords/core/composables/usePracticePersistence.ts'
 import { useDataSyncPersistence } from '@typewords/core/composables/useDataSyncPersistence.ts'
 import { IdentifyMethod, ShortcutKey, WordPracticeMode, WordPracticeType } from '@typewords/core/types/enum.ts'
@@ -110,16 +113,27 @@ function skipStep() {
   navigator.skipStep()
 }
 
-function syncSessionPhase() {
-  navigator.syncPhase()
-}
-
 function restorePracticeSession(cache: { sessionSnapshot?: PracticeSessionSnapshot }) {
   if (cache.sessionSnapshot) {
     restoreSessionSnapshot(cache.sessionSnapshot)
   } else {
     restoreSessionFromLegacy()
   }
+}
+
+/** 将完整缓存恢复到当前响应式会话对象。 */
+function applyPracticeCache(cache: PracticeWordCacheV2): boolean {
+  if (!cache.practiceData || !cache.statStoreData) return false
+
+  Object.assign(taskWords, cache.taskWords)
+  data = getDefaultPracticeData(data, cache.practiceData)
+  statStore.$patch(cache.statStoreData)
+  restorePracticeSession(cache)
+  if (!statStore.timerPaused) {
+    const now = Date.now()
+    statStore.segments.push([now, now])
+  }
+  return true
 }
 
 watch([() => data.words, () => data.index], () => {
@@ -166,17 +180,8 @@ const onvisibilitychange = async () => {
     runtimeStore.globalLoading = true
     try {
       //todo 这里如果另一台机器学完了，这里的d可能为空
-      const d = await wordPersistence.fetch()
-      if (d) {
-        taskWords = Object.assign(taskWords, d.taskWords)
-        data = Object.assign(data, d.practiceData)
-        statStore.$patch(d.statStoreData)
-        restorePracticeSession(d)
-        if (!statStore.timerPaused) {
-          const now = Date.now()
-          statStore.segments.push([now, now])
-        }
-      }
+      const cache = await wordPersistence.load()
+      if (cache) applyPracticeCache(cache)
     } finally {
       runtimeStore.globalLoading = false
     }
@@ -198,10 +203,7 @@ onMounted(async () => {
 
 onUnmounted(async () => {
   document.removeEventListener('visibilitychange', onvisibilitychange)
-  const cache = await getPracticeWordCacheV2Local()
-  if (cache) {
-    await savePracticeDataIns('onUnmounted')
-  }
+  await savePracticeDataIns()
   stopTimer()
   watchRefList.map(v => v?.stop())
 })
@@ -210,7 +212,6 @@ let allWords: Word[] = []
 let isIniting = ref(true)
 
 async function loadDict() {
-  // console.log('load好了开始加载')
   let dict = getDefaultDict()
   let dictId = route.params.id
   if (dictId) {
@@ -249,28 +250,17 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
       initData(getCurrentStudyWord())
       return
     }
-    if (!(d.practiceData && d.statStoreData)) {
+    if (!applyPracticeCache(d)) {
       initData(d.taskWords)
       return
     }
     console.log('initData')
-    taskWords = Object.assign(taskWords, d.taskWords)
-    //这里直接赋值的话，provide后的inject获取不到最新值
-    data = getDefaultPracticeData(data, d.practiceData)
-    statStore.$patch(d.statStoreData)
-    restorePracticeSession(d)
-    if (!statStore.timerPaused) {
-      const now = Date.now()
-      statStore.segments.push([now, now])
-    }
   } else {
     console.log('initData')
-    // taskWords = initVal
     //不能直接赋值，会导致 inject 的数据为默认值
     taskWords = Object.assign(taskWords, initVal)
     try {
       const start = resolveFlowStart(settingStore.wordPracticeMode, taskWords)
-      settingStore.wordPracticeType = start.practiceType
       data = getDefaultPracticeData(data, { words: start.words })
       statStore.total = start.total
       statStore.newWordNumber = start.newWordNumber
@@ -288,7 +278,7 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
     statStore.spend = 0
     statStore.segments = []
     statStore.resumeTimer() // 同时 push 第一条片段 [now, now]
-    syncSessionPhase()
+    navigator.syncPhase()
   }
 
   // 初始化 Question
@@ -425,7 +415,7 @@ function onTypeWrong() {
   if (rIndex > -1) {
     data.excludeWords.splice(rIndex, 1)
   }
-  savePracticeData('wrong')
+  savePracticeData()
 }
 
 //设置单词卡片
@@ -436,14 +426,9 @@ function setWordCard(rating: number, wordStr = word.word, times?: number) {
   }
   card = nextCard(card, rating)
   store.fsrsData[wordStr] = card
-  // console.log(
-  //   `更新卡片: 单词：${wordStr}, 模式：${WordPracticeType[settingStore.wordPracticeType]}, 评分: ${Rating[rating]}, 次数：${times}, 卡片: `,
-  //   card,
-  //   cloneDeep(store.fsrsData)
-  // )
 }
 
-async function savePracticeDataIns(where?) {
+async function savePracticeDataIns() {
   // cursor 在初始位置且 index=0 且还是跟写 → 尚未开始练习
   if (
     data.index === 0 &&
@@ -455,7 +440,6 @@ async function savePracticeDataIns(where?) {
     return
   }
   if (isComplete) return
-  // console.log('savePracticeData', where)
   if (runtimeStore.globalLoading) return
   runtimeStore.globalLoading = true
   // 若计时未暂停，将最后一条片段的 end 更新为当前时刻，确保保存内容最新
@@ -505,11 +489,11 @@ function skip() {
   next(false)
 }
 
-function show(e: KeyboardEvent) {
+function show() {
   typingRef.showWord()
 }
 
-function collect(e: KeyboardEvent) {
+function collect() {
   const anchor = typingRef?.getCollectAnchor?.() as HTMLElement | null | undefined
   openWordCollectPicker(word, anchor ?? { x: window.innerWidth / 2, y: window.innerHeight / 3 }, {
     excludeDictId: store.sdict.id ? String(store.sdict.id) : undefined,
@@ -621,7 +605,7 @@ watch(isIniting, n => {
         () => statStore.spend,
         curr => {
           if (curr % (30 * 1000) === 0 && curr !== 0) {
-            savePracticeData('spend')
+            savePracticeData()
           }
         }
       ),

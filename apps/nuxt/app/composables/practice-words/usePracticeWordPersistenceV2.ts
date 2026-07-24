@@ -85,14 +85,6 @@ export function usePracticeWordPersistenceV2() {
     return restorePracticeWordCache(await getPracticeWordCacheV2Local())
   }
 
-  async function fetch(): Promise<PracticeWordCacheV2 | null> {
-    return load()
-  }
-
-  async function getLocalDataCompact(): Promise<PracticeWordCacheStoredV2 | null> {
-    return await getPracticeWordCacheV2Local()
-  }
-
   async function save(data: PracticeWordCacheV2 | null) {
     const compactData = serializePracticeWordCache(data)
     await setPracticeWordCacheV2Local(compactData)
@@ -102,5 +94,5 @@ export function usePracticeWordPersistenceV2() {
     await setPracticeWordCacheV2Local(null)
   }
 
-  return { load, save, clear, fetch, getLocalDataCompact }
+  return { load, save, clear }
 }

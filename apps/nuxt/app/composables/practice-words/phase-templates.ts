@@ -5,7 +5,13 @@
  * 不含 stage / wordsFrom / wordLoop / shuffle 等——这些全部在 flow step 配置中声明。
  */
 import { WordPracticeType } from '@typewords/core/types/enum.ts'
-import type { PracticeDisplayPolicy, PracticeStepTemplate, PracticeStepTemplateId } from './registry-types.ts'
+import type {
+  PracticeDisplayPolicy,
+  PracticeStepTemplate,
+  PracticeStepTemplateId,
+  PracticeWordAdvanceConfig,
+  WordAdvanceRule,
+} from './registry-types.ts'
 
 /** 跟写分组大小，与 v1 groupSize 一致，不可用户编排 */
 export const GROUP_SIZE = 7
@@ -30,15 +36,15 @@ export function phaseDisplay(overrides: Partial<PracticeDisplayPolicy> = {}): Pr
   }
 }
 
-export const DISPLAY_FOLLOW_WRITE = phaseDisplay()
+const DISPLAY_FOLLOW_WRITE = phaseDisplay()
 
-export const DISPLAY_SPELL = phaseDisplay({
+const DISPLAY_SPELL = phaseDisplay({
   wordMask: 'underscore',
   showPhonetic: 'shadow',
   inputMode: 'typing',
 })
 
-export const DISPLAY_LISTEN = phaseDisplay({
+const DISPLAY_LISTEN = phaseDisplay({
   wordMask: 'underscore',
   showPhonetic: 'shadow',
   showWordTranslation: false,
@@ -53,7 +59,7 @@ export const DISPLAY_LISTEN = phaseDisplay({
   autoNextWord: false,
 })
 
-export const DISPLAY_DICTATION = phaseDisplay({
+const DISPLAY_DICTATION = phaseDisplay({
   wordMask: 'hidden',
   showPhonetic: 'shadow',
   showSentences: false,
@@ -61,7 +67,7 @@ export const DISPLAY_DICTATION = phaseDisplay({
   inputMode: 'dictation',
 })
 
-export const DISPLAY_IDENTIFY = phaseDisplay({
+const DISPLAY_IDENTIFY = phaseDisplay({
   wordMask: 'none',
   showPhonetic: false,
   showWordTranslation: false,
@@ -105,4 +111,27 @@ export const STEP_TEMPLATE_META: Record<PracticeStepTemplateId, PracticeStepTemp
     practiceType: WordPracticeType.Identify,
     display: DISPLAY_IDENTIFY,
   },
+}
+
+/** 将模板与局部显隐覆盖物化为运行时 Phase 的动作部分。 */
+export function materializeStepTemplate(
+  templateId: PracticeStepTemplateId,
+  displayOverride?: Partial<PracticeDisplayPolicy>
+): Pick<PracticeStepTemplate, 'practiceType' | 'display'> {
+  const template = STEP_TEMPLATE_META[templateId]
+  return {
+    practiceType: template.practiceType,
+    display: displayOverride ? { ...template.display, ...displayOverride } : template.display,
+  }
+}
+
+/** 将可序列化的词内推进配置归一化为运行时规则。 */
+export function compileWordAdvance(config?: PracticeWordAdvanceConfig): WordAdvanceRule {
+  return config?.type === 'wordLoop'
+    ? {
+        type: 'wordLoop',
+        groupSize: config.groupSize ?? GROUP_SIZE,
+        subSteps: config.subSteps ?? [],
+      }
+    : { type: 'increment' }
 }

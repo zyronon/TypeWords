@@ -2,7 +2,7 @@
  * 把「可序列化的流程配置」编译成「运行时注册表」。
  *
  * 输入：PracticeFlowConfig（nodes[] 树状结构）
- * 输出：ActiveFlowRegistry（phasesByCursor、cursorSteps）
+ * 输出：ActiveFlowRegistry（phasesByCursor + 初始相位/Cursor）
  *
  * Phase 2.6 升级：
  * - 移除 spellInGroup 全局单例（wordLoop 子步骤由 step 配置的 subSteps[] 直接提供）
@@ -11,7 +11,7 @@
  *
  * 完全 cursor-native：无 WordPracticeStage、无 phasesByStage、无 stageSequence。
  */
-import { STEP_TEMPLATE_META, GROUP_SIZE } from './phase-templates.ts'
+import { compileWordAdvance, materializeStepTemplate } from './phase-templates.ts'
 import type {
   ActiveFlowRegistry,
   PracticeEndAction,
@@ -62,24 +62,11 @@ function computeStepAdvance(allNodes: PracticeFlowNode[], nodeIndex: number, ste
 function compileStep(allNodes: PracticeFlowNode[], nodeIndex: number, stepIndex: number): PracticePhaseDefinition {
   const node = allNodes[nodeIndex]
   const step = node.steps[stepIndex]
-  const template = STEP_TEMPLATE_META[step.templateId]
-
-  const wordAdvanceCfg = step.wordAdvance
-  const wordAdvance: PracticePhaseDefinition['wordAdvance'] =
-    wordAdvanceCfg?.type === 'wordLoop'
-      ? {
-          type: 'wordLoop',
-          groupSize: wordAdvanceCfg.groupSize ?? GROUP_SIZE,
-          subSteps: wordAdvanceCfg.subSteps ?? [],
-        }
-      : { type: 'increment' }
-
-  const display = step.displayOverride ? { ...template.display, ...step.displayOverride } : template.display
+  const templatePhase = materializeStepTemplate(step.templateId, step.displayOverride)
 
   return {
-    practiceType: template.practiceType,
-    display,
-    wordAdvance,
+    ...templatePhase,
+    wordAdvance: compileWordAdvance(step.wordAdvance),
     stepAdvance: computeStepAdvance(allNodes, nodeIndex, stepIndex),
     onEnd: step.onEnd ?? [],
   }
@@ -91,8 +78,6 @@ function compileStep(allNodes: PracticeFlowNode[], nodeIndex: number, stepIndex:
  */
 export function compileFlowConfig(config: PracticeFlowConfig): ActiveFlowRegistry {
   const phasesByCursor = new Map<string, PracticePhaseDefinition>()
-  const cursorSteps: Array<{ nodeIndex: number; stepIndex: number }> = []
-
   let firstPhase: PracticePhaseDefinition
 
   for (let ni = 0; ni < config.nodes.length; ni++) {
@@ -101,8 +86,6 @@ export function compileFlowConfig(config: PracticeFlowConfig): ActiveFlowRegistr
       const phase = compileStep(config.nodes, ni, si)
 
       phasesByCursor.set(cursorKey(ni, si), phase)
-      cursorSteps.push({ nodeIndex: ni, stepIndex: si })
-
       if (!firstPhase) firstPhase = phase
     }
   }
@@ -120,6 +103,5 @@ export function compileFlowConfig(config: PracticeFlowConfig): ActiveFlowRegistr
     phasesByCursor,
     firstPhase,
     initialCursor,
-    cursorSteps,
   }
 }

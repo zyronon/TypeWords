@@ -11,7 +11,6 @@ import { WordPracticeMode } from '@typewords/core/types/enum.ts'
 import { getFlowIdForMode } from './builtin-flows.ts'
 import { getActiveRegistry, loadPracticeFlow } from './practice-phase-registry.ts'
 import type { FlowStartResult, PracticeFlowConfig, PracticeFlowCursor, PracticeWordsSource } from './registry-types.ts'
-import { cursorKey } from './registry-types.ts'
 
 /** 把 PracticeWordsSource 枚举映射到 taskWords 里的具体数组 */
 function resolveWordsForSource(source: PracticeWordsSource, taskWords: TaskWords): Word[] {
@@ -82,10 +81,7 @@ export function resolveFlowStart(mode: WordPracticeMode, taskWords: TaskWords, f
     endActionIndex: null,
   }
 
-  const startPhase = registry.phasesByCursor.get(cursorKey(startNodeIndex, 0)) ?? registry.firstPhase
-
   return {
-    practiceType: startPhase.practiceType,
     words: startWords,
     total,
     newWordNumber: taskWords.new.length,

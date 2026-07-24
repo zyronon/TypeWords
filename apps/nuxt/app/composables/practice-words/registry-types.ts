@@ -162,7 +162,7 @@ export interface WordAdvanceRule {
   subSteps?: PracticeLoopSubStep[]
 }
 
-/** 词表练完后的推进规则（纯 cursor 语义，nextCursor 由 advanceCursor() 计算，无需存 nextStage） */
+/** 词表练完后的推进规则（静态 step/node 位置由 advanceStepCursor() 计算） */
 export interface StepAdvanceRule {
   /** 进入下一 step/node 时是否打乱词表 */
   shuffle?: boolean
@@ -192,14 +192,11 @@ export interface ActiveFlowRegistry {
   phasesByCursor: Map<string, PracticePhaseDefinition>
   firstPhase: PracticePhaseDefinition
   initialCursor: PracticeFlowCursor
-  /** 所有静态 cursor 坐标（不含 loop/inWrongWordClear），供 Footer 进度条用 */
-  cursorSteps: Array<{ nodeIndex: number; stepIndex: number }>
 }
 
 // ─── 流程启动结果 ────────────────────────────────────────────────────────────────
 
 export interface FlowStartResult {
-  practiceType: WordPracticeType
   words: Word[]
   total: number
   newWordNumber: number
@@ -210,12 +207,8 @@ export interface FlowStartResult {
 // ─── 持久化快照 ─────────────────────────────────────────────────────────────────
 
 export interface PracticeSessionSnapshot {
-  wordPracticeType: WordPracticeType
   identifyMethod: IdentifyMethod
-  wordPracticeMode: WordPracticeMode
   flowId: string
-  flowVersion?: number
   cursor?: PracticeFlowCursor
-  sessionDisplay?: PracticeDisplayPolicy
   displayOverride?: PracticeDisplayOverride | null
 }

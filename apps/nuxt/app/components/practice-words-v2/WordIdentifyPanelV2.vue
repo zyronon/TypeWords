@@ -11,7 +11,6 @@ import type { Question, Word } from '@typewords/core/types/types.ts'
 import { getDefaultWord } from '@typewords/core/types/func.ts'
 import { IdentifyMethod, ShortcutKey, WordPracticeType } from '@typewords/core/types/enum.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
-import { WordPlayTrigger } from '~/composables/practice-words/usePracticeWordAudioV2.ts'
 import { useEventsByWatch } from '@typewords/core/utils/eventBus.ts'
 import { BaseButton } from '@typewords/base'
 import TranslationList from '@typewords/core/components/word/TranslationList.vue'
@@ -25,10 +24,6 @@ interface IProps {
   showWordResult: boolean
   /** 当前 Cursor 解析出的真实练习类型。 */
   practiceType: WordPracticeType
-  /** 外部注入的 playWord 函数 */
-  playWord?: (trigger: WordPlayTrigger, opts?: { volumeRef?: any }) => void
-  /** 音频回调：手动发音 */
-  onPlayWord?: () => void
 }
 
 const props = withDefaults(defineProps<IProps>(), {
@@ -48,7 +43,6 @@ const settingStore = useSettingStore()
 let showAllCandidates = $ref(false)
 let completeSelect = false
 let selectIndex = $ref(-1)
-let showNotice = false
 
 const isSelfAssessment = $computed(() => {
   return (
@@ -64,7 +58,7 @@ const isWordTest = $computed(() => {
   )
 })
 
-function know(e?: KeyboardEvent) {
+function know() {
   if (isSelfAssessment) {
     if (!props.showWordResult) {
       emit('know')
@@ -73,14 +67,14 @@ function know(e?: KeyboardEvent) {
   }
 }
 
-function mastered(e?: KeyboardEvent) {
+function mastered() {
   if (isSelfAssessment) {
     emit('mastered')
     return
   }
 }
 
-function unknown(e?: KeyboardEvent) {
+function unknown() {
   if (isSelfAssessment) {
     if (!props.showWordResult) {
       emit('unknown')
@@ -107,7 +101,6 @@ function resetIdentifyState() {
   showAllCandidates = false
   completeSelect = false
   selectIndex = -1
-  showNotice = false
 }
 
 // 快捷键绑定
@@ -132,8 +125,6 @@ useEventsByWatch(
 
 defineExpose({
   showAllCandidates,
-  completeSelect,
-  selectIndex,
   resetIdentifyState,
 })
 </script>

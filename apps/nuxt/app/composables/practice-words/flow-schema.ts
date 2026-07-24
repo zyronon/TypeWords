@@ -67,13 +67,6 @@ export function validateFlowConfig(
     }
   }
 
-  // 尝试编译（编译失败即为非法配置）
-  try {
-    compileFlowConfig(config)
-  } catch {
-    return BUILTIN_FLOWS.system
-  }
-
   return config
 }
 
@@ -83,16 +76,4 @@ export function validateFlowConfig(
  */
 export function buildRegistryFromConfig(config: PracticeFlowConfig): ActiveFlowRegistry {
   return compileFlowConfig(validateFlowConfig(config))
-}
-
-/**
- * 从 localStorage / 编辑器读出的 JSON 字符串解析为安全可用的流程配置。
- * 【Phase 3 usePracticeFlowStorage 会用】
- */
-export function parseFlowConfigJson(json: string): PracticeFlowConfig {
-  try {
-    return validateFlowConfig(JSON.parse(json) as PracticeFlowConfig)
-  } catch {
-    return BUILTIN_FLOWS.system
-  }
 }

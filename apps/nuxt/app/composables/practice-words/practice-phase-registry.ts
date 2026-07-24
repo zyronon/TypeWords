@@ -5,12 +5,12 @@
  *
  * Phase 2.6 升级：
  * - resolvePhaseByCtxCursor 优先级重构：inWrongWordClear(含loop) → loop → phasesByCursor → firstPhase
- * - advanceCursor 纯 cursor 状态推进（onEnd 入口由 Navigator.processNextEndAction 负责，不重复处理）
+ * - advanceStepCursor 只负责静态 step/node 推进，loop/onEnd 由 Navigator 负责
  * - 移除对 spellInGroup / wrongRetry / spellSubStep / advanceEndActions 的引用
  */
 import { getFlowConfig } from './builtin-flows.ts'
-import { STEP_TEMPLATE_META, GROUP_SIZE } from './phase-templates.ts'
-import { buildRegistryFromConfig, validateFlowConfig } from './flow-schema.ts'
+import { compileWordAdvance, materializeStepTemplate } from './phase-templates.ts'
+import { buildRegistryFromConfig } from './flow-schema.ts'
 import { getUserFlow, loadCustomFlow } from './usePracticeFlowStorage.ts'
 import type {
   ActiveFlowRegistry,
@@ -18,7 +18,6 @@ import type {
   PracticeFlowCursor,
   PracticePhaseDefinition,
   PracticeWrongWordClearAction,
-  WordAdvanceRule,
 } from './registry-types.ts'
 import { cursorKey } from './registry-types.ts'
 
@@ -30,15 +29,13 @@ let activeRegistry: ActiveFlowRegistry | null = null
  * 校验 → 编译。必须在 resolvePhaseByCtxCursor / resolveFlowStart / 恢复缓存之前调用。
  */
 export function loadPracticeFlow(flowIdOrConfig: string | PracticeFlowConfig) {
-  const config =
+  const rawConfig =
     typeof flowIdOrConfig === 'string'
-      ? validateFlowConfig(
-          flowIdOrConfig === 'custom'
-            ? loadCustomFlow()
-            : (getUserFlow(flowIdOrConfig) ?? getFlowConfig(flowIdOrConfig))
-        )
-      : validateFlowConfig(flowIdOrConfig)
-  activeRegistry = buildRegistryFromConfig(config)
+      ? flowIdOrConfig === 'custom'
+        ? loadCustomFlow()
+        : (getUserFlow(flowIdOrConfig) ?? getFlowConfig(flowIdOrConfig))
+      : flowIdOrConfig
+  activeRegistry = buildRegistryFromConfig(rawConfig ?? getFlowConfig('system'))
 }
 
 /** 当前 flow 的 id，存入 sessionSnapshot.flowId */
@@ -59,27 +56,9 @@ function deriveWrongWordClearPhase(
   action: PracticeWrongWordClearAction,
   fallbackPhase: PracticePhaseDefinition
 ): PracticePhaseDefinition {
-  const templateId = action.templateId
-  const template = STEP_TEMPLATE_META[templateId]
-
-  const wordAdvanceCfg = action.wordAdvance
-  const wordAdvance: WordAdvanceRule =
-    wordAdvanceCfg?.type === 'wordLoop'
-      ? {
-          type: 'wordLoop',
-          groupSize: wordAdvanceCfg.groupSize ?? GROUP_SIZE,
-          subSteps: wordAdvanceCfg.subSteps ?? [],
-        }
-      : { type: 'increment' }
-
-  const display = action.displayOverride
-    ? { ...template.display, ...action.displayOverride }
-    : template.display
-
   return {
-    practiceType: template.practiceType,
-    display,
-    wordAdvance,
+    ...materializeStepTemplate(action.templateId, action.displayOverride),
+    wordAdvance: compileWordAdvance(action.wordAdvance),
     stepAdvance: fallbackPhase.stepAdvance,
     onEnd: [],
   }
@@ -98,15 +77,8 @@ function deriveLoopSubStepPhase(
   if (!subSteps || subStepIndex >= subSteps.length) return null
 
   const subStep = subSteps[subStepIndex]
-  const template = STEP_TEMPLATE_META[subStep.templateId]
-
-  const display = subStep.displayOverride
-    ? { ...template.display, ...subStep.displayOverride }
-    : template.display
-
   return {
-    practiceType: template.practiceType,
-    display,
+    ...materializeStepTemplate(subStep.templateId, subStep.displayOverride),
     wordAdvance: mainPhase.wordAdvance,
     stepAdvance: mainPhase.stepAdvance,
     onEnd: [],
@@ -126,11 +98,9 @@ export function resolvePhaseByCtxCursor(cursor: PracticeFlowCursor): PracticePha
   const registry = getActiveRegistry()
   const mainPhase =
     registry.phasesByCursor.get(cursorKey(cursor.nodeIndex, cursor.stepIndex)) ?? registry.firstPhase
-
   if (cursor.inWrongWordClear) {
     // 从 onEnd 中找到 wrongWordClear action（endActionIndex 指向它）
-    const endActionIdx = cursor.endActionIndex ?? 0
-    const action = mainPhase.onEnd[endActionIdx]
+    const action = mainPhase.onEnd[cursor.endActionIndex ?? 0]
     // 错词清空主相位：由 wrongWordClear action 配置派生
     const wcPhase = action?.type === 'wrongWordClear'
       ? deriveWrongWordClearPhase(action, mainPhase)
@@ -153,14 +123,9 @@ export function resolvePhaseByCtxCursor(cursor: PracticeFlowCursor): PracticePha
 }
 
 /**
- * cursor 推进：下一个 subStep / loop结束回主步骤 / onEnd action 索引 / step / node / complete。
- *
- * 注意：onEnd 队列的实际执行（wrongWordClear 挂起、即时型动作执行）由 Navigator.processNextEndAction 负责，
- * 此处仅做 cursor 状态推进，不重复处理 onEnd 动作内容。
- *
- * 调用者（Navigator.runStepAdvance）根据 complete 决定是否触发结算。
+ * 推进到下一个静态 step/node。loop 与 onEnd 状态由 Navigator 统一处理。
  */
-export function advanceCursor(
+export function advanceStepCursor(
   cursor: PracticeFlowCursor
 ): { cursor: PracticeFlowCursor; complete: boolean } {
   const registry = getActiveRegistry()
@@ -168,41 +133,6 @@ export function advanceCursor(
   const mainPhase =
     registry.phasesByCursor.get(cursorKey(nodeIndex, stepIndex)) ?? registry.firstPhase
 
-  // ── 情形 1：错词清空完毕 → 推进 onEnd action 索引 ──
-  if (cursor.inWrongWordClear) {
-    const nextEndIdx = (cursor.endActionIndex ?? 0) + 1
-    if (nextEndIdx >= mainPhase.onEnd.length) {
-      // onEnd 队列耗尽 → 进入 stepAdvance
-      return advanceToNextStep(cursor, mainPhase)
-    }
-    return {
-      cursor: { ...cursor, inWrongWordClear: false, endActionIndex: nextEndIdx },
-      complete: false,
-    }
-  }
-
-  // ── 情形 2：loop 子步骤推进 → 下一个 subStep 或退出 loop ──
-  if (cursor.loop !== null) {
-    const { startIndex, endIndex, subStepIndex } = cursor.loop
-    const subSteps = mainPhase.wordAdvance.subSteps ?? []
-    const isLastSubStep = subStepIndex >= subSteps.length - 1
-
-    if (!isLastSubStep) {
-      return {
-        cursor: {
-          ...cursor,
-          loop: { startIndex, endIndex, subStepIndex: subStepIndex + 1 },
-        },
-        complete: false,
-      }
-    }
-    return {
-      cursor: { ...cursor, loop: null },
-      complete: false,
-    }
-  }
-
-  // ── 情形 3：普通状态 → step/node 推进（onEnd 入口由 Navigator 处理，不在此处重复） ──
   return advanceToNextStep(cursor, mainPhase)
 }
 

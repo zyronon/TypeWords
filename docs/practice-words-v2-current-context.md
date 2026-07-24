@@ -130,7 +130,7 @@ apps/nuxt/app/composables/practice-words/
 | `phase-templates.ts`          | 5 种纯练习动作模板和默认显隐策略                                         |
 | `builtin-flows.ts`            | System、Free、Review 等内置可序列化流程                                  |
 | `flow-schema.ts`              | 对用户/内置流程做基础校验，非法配置回退 System                           |
-| `flow-compiler.ts`            | 将 nodes/steps 编译为 `phasesByCursor` 和 `stepAdvance`                  |
+| `flow-compiler.ts`            | 将 nodes/steps 单次编译为 `phasesByCursor` 和 `stepAdvance`              |
 | `practice-phase-registry.ts`  | 保存当前 ActiveFlowRegistry，按 Cursor 解析主相位、loop 子相位和错词相位 |
 | `usePracticeWordInit.ts`      | 新会话选取首个有词 Node，并返回真实起始 Cursor                           |
 | `usePracticeWordNavigator.ts` | 单词推进、wordLoop、onEnd、错词清空、阶段切换、快照恢复                  |
@@ -385,16 +385,17 @@ interface PracticeFlowStorageData {
 
 1. 按 `snapshot.flowId` 加载相同流程。
 2. 从加载后的 Registry 恢复 `settingStore.wordPracticeMode`。
-3. 恢复 `wordPracticeType`、`identifyMethod`、错词状态和 Cursor。
-4. 恢复 `sessionDisplay/displayOverride`。
+3. 恢复 `identifyMethod` 和 Cursor。
+4. 从当前 Phase 重新派生 `wordPracticeType/sessionDisplay`。
+5. 恢复用户的 `displayOverride`。
 
-页面的 `syncSessionPhase()` 只同步当前相位，不应再次根据 settingStore 重新加载流程，否则可能把刚恢复的自定义流程替换成另一份当前激活流程。
+恢复过程不应再次根据 settingStore 重新加载流程，否则可能把刚恢复的自定义流程替换成另一份当前激活流程。
 
 当前限制：
 
-- 快照保存 `flowVersion`，但还没有做版本差异处理。
 - 尚未实现旧计划中的 `customFlowHash`。
-- 用户在未完成会话期间修改同一流程的结构，旧 Cursor 与新配置可能不完全匹配。
+- 恢复时会校验 Cursor 的 node/step、错词 action 和 loop 子步骤；坐标失效会回退流程起点。
+- 用户在未完成会话期间修改同一坐标的具体语义时，仍可能得到与保存时不同的阶段定义。
 
 ---
 
@@ -410,13 +411,9 @@ IndexedDB key：`PracticeSaveWordV2`。
   practiceData,
   statStoreData,
   sessionSnapshot: {
-    wordPracticeType,
     identifyMethod,
-    wordPracticeMode,
     flowId,
-    flowVersion,
     cursor,
-    sessionDisplay,
     displayOverride,
   },
 }
@@ -510,7 +507,7 @@ apps/nuxt/app/pages/(words)/practice-sentences/
 | `statStore`                     | core practice store                      | 统计、计时、结算数据；仍与其他练习共用              |
 | `settingStore.wordPracticeMode` | core setting store                       | 当前模式；恢复时以加载后的 Registry mode 为准       |
 | `currentPracticeType`           | 页面按 `activeCursor` 解析当前 Phase     | V2 页面和组件判断当前实际动作类型的唯一来源         |
-| `settingStore.wordPracticeType` | Navigator syncPhase                      | 兼容旧逻辑、快照持久化使用的同步镜像                |
+| `settingStore.wordPracticeType` | Navigator syncPhase                      | 兼容旧逻辑使用的同步镜像                            |
 | `activeRegistry`                | `practice-phase-registry.ts` 模块级状态  | 当前编译流程                                        |
 | `activeCursor`                  | `usePracticeWordNavigator.ts` 模块级 ref | 当前流程位置；`inWrongWordClear` 是错词清空唯一状态 |
 | `sessionDisplay`                | `usePracticeDisplayPolicy.ts` 模块级 ref | 当前相位显隐                                        |
@@ -524,7 +521,6 @@ apps/nuxt/app/pages/(words)/practice-sentences/
 
 ### 已知遗留
 
-- `usePracticeWordTimer.ts` 当前无引用，实际页面使用 `usePracticeIdleTimer.ts` 和 statStore 计时。
 - 页面仍保留较多 v1 时代的结算、统计、快捷键和数据同步逻辑。
 - TypeWordV2 和页面行数仍较大，但用户已确认这不是当前阻塞项。
 - 自定义流程快照尚无 hash/迁移策略。

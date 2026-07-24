@@ -71,7 +71,6 @@ const props = withDefaults(defineProps<IProps>(), {
 const emit = defineEmits<{
   'update:showWordResult': [value: boolean]
   'update:wrongTimes': [value: number]
-  complete: []
   wordComplete: []
   wrong: []
 }>()
@@ -490,15 +489,7 @@ function setWordTestResult(isCorrect: boolean, wordStr: string) {
 }
 
 defineExpose({
-  input,
-  wrong,
-  showWordResult: () => props.showWordResult,
-  wrongTimes: () => props.wrongTimes,
   right: isWordRight,
-  displayWord,
-  resetTypingCore,
-  del,
-  checkCursorPosition,
   revealWord,
   setWordTestResult,
 })

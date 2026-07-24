@@ -315,12 +315,8 @@ function onResetWord() {
 // ============ defineExpose ============
 
 defineExpose({
-  del: () => typingCoreRef?.del(),
   showWord,
-  hideWord,
   play,
-  showWordResult,
-  wrongTimes: wrongTimesModel,
   getCollectAnchor: () => collectAnchorRef.value,
 })
 </script>

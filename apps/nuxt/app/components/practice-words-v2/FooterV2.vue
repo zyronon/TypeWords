@@ -19,12 +19,7 @@ const { t: $t } = useI18n()
 const displayActions = useInjectedDisplayActions()
 const effective = useInjectedDisplayPolicy()
 
-defineProps<{
-  showEdit?: boolean
-}>()
-
 const emit = defineEmits<{
-  edit: []
   skipStep: []
 }>()
 
@@ -99,9 +94,7 @@ const stages = computed(() => {
     const isCurrentNode = ni === nodeIndex
     const isCompleted = ni < nodeIndex
 
-    const nodeRatio = isSingleNode
-      ? 100
-      : isCurrentNode ? 70 : isCompleted ? 30 : 30
+    const nodeRatio = isSingleNode ? 100 : isCurrentNode ? 70 : 30
 
     // 子步骤（仅当前 node 展开）
     const children = isCurrentNode && node.steps.length > 1

@@ -13,13 +13,13 @@ import type {
 } from './registry-types.ts'
 import { phaseDisplay } from './phase-templates.ts'
 
-export const PRACTICE_DISPLAY_POLICY_KEY: InjectionKey<ComputedRef<EffectiveDisplay>> = Symbol('practiceDisplayPolicy')
-export const PRACTICE_DISPLAY_ACTIONS_KEY: InjectionKey<{
+const PRACTICE_DISPLAY_POLICY_KEY: InjectionKey<ComputedRef<EffectiveDisplay>> = Symbol('practiceDisplayPolicy')
+const PRACTICE_DISPLAY_ACTIONS_KEY: InjectionKey<{
   toggleDictation: () => void
   toggleTranslate: () => void
 }> = Symbol('practiceDisplayActions')
 
-export interface PracticeLocalReveal {
+interface PracticeLocalReveal {
   showFullWord: boolean
   showWordResult: boolean
 }
@@ -71,7 +71,7 @@ function applyLocalReveal(display: EffectiveDisplay, localReveal: PracticeLocalR
   }
 }
 
-export function patchDisplayOverride(override: PracticeDisplayOverride) {
+function patchDisplayOverride(override: PracticeDisplayOverride) {
   displayOverride.value = {
     ...displayOverride.value,
     ...override,
@@ -93,7 +93,7 @@ export function applyPhaseDefinition(phase: PracticePhaseDefinition, cursorKey?:
 }
 
 /** 构造页面级 effective，不包含 TypeWordV2 的局部揭示状态。 */
-export function createEffectiveDisplay(): ComputedRef<EffectiveDisplay> {
+function createEffectiveDisplay(): ComputedRef<EffectiveDisplay> {
   return computed(() => {
     const base = sessionDisplay.value
       ? mergeDisplay(sessionDisplay.value, displayOverride.value)
@@ -128,7 +128,7 @@ export function usePracticeDisplayPolicy() {
   provide(PRACTICE_DISPLAY_POLICY_KEY, effective)
   provide(PRACTICE_DISPLAY_ACTIONS_KEY, { toggleDictation, toggleTranslate })
 
-  return { effective, toggleDictation, toggleTranslate, patchDisplayOverride, sessionDisplay, displayOverride }
+  return { effective, toggleDictation, toggleTranslate, patchDisplayOverride }
 }
 
 export function useInjectedDisplayPolicy(localReveal?: Ref<PracticeLocalReveal>): ComputedRef<EffectiveDisplay> {
@@ -141,5 +141,3 @@ export function useInjectedDisplayPolicy(localReveal?: Ref<PracticeLocalReveal>)
 export function useInjectedDisplayActions() {
   return inject(PRACTICE_DISPLAY_ACTIONS_KEY)!
 }
-
-export { applyLocalReveal, mergeDisplay, toEffective }
