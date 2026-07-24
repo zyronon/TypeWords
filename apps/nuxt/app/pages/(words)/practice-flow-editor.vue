@@ -44,7 +44,7 @@ function cloneConfig(value: PracticeFlowConfig): PracticeFlowConfig {
 function createBlankConfig(): PracticeFlowConfig {
   return {
     id: nowId('custom'),
-    version: 3,
+    version: 4,
     mode: WordPracticeMode.Custom,
     label: '自由学习',
     nodes: [],
@@ -159,7 +159,7 @@ function normalizeBeforeSave(): PracticeFlowConfig | null {
   return {
     ...config,
     id: config.id || nowId('custom'),
-    version: 3,
+    version: 4,
     mode: WordPracticeMode.Custom,
     label: name,
     nodes: config.nodes.map((node, nodeIndex) => ({

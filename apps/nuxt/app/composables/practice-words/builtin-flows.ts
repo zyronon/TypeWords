@@ -36,7 +36,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   system: {
     id: 'system',
-    version: 3,
+    version: 4,
     mode: WordPracticeMode.System,
     label: '学习',
     nodes: [
@@ -89,7 +89,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   free: {
     id: 'free',
-    version: 3,
+    version: 4,
     mode: WordPracticeMode.Free,
     label: '自由练习',
     nodes: [
@@ -113,7 +113,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   review: {
     id: 'review',
-    version: 3,
+    version: 4,
     mode: WordPracticeMode.Review,
     label: '复习',
     nodes: [
@@ -144,7 +144,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   identifyOnly: {
     id: 'identifyOnly',
-    version: 3,
+    version: 4,
     mode: WordPracticeMode.IdentifyOnly,
     label: '自测',
     nodes: [
@@ -177,7 +177,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   dictationOnly: {
     id: 'dictationOnly',
-    version: 3,
+    version: 4,
     mode: WordPracticeMode.DictationOnly,
     label: '默写',
     nodes: [
@@ -210,7 +210,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   listenOnly: {
     id: 'listenOnly',
-    version: 3,
+    version: 4,
     mode: WordPracticeMode.ListenOnly,
     label: '听写',
     nodes: [
@@ -245,7 +245,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   shuffle: {
     id: 'shuffle',
-    version: 3,
+    version: 4,
     mode: WordPracticeMode.Shuffle,
     label: '随机复习',
     nodes: [

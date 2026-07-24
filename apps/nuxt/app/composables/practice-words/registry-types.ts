@@ -149,7 +149,7 @@ export interface PracticeFlowCursor {
   endActionIndex: number | null
 }
 
-/** cursor 序列化 key，用于 phasesByCursor Map */
+/** cursor 序列化 key，用于显隐策略的 Phase 标识。 */
 export function cursorKey(nodeIndex: number, stepIndex: number): string {
   return `${nodeIndex}:${stepIndex}`
 }
@@ -162,36 +162,13 @@ export interface WordAdvanceRule {
   subSteps?: PracticeLoopSubStep[]
 }
 
-/** 词表练完后的推进规则（静态 step/node 位置由 advanceStepCursor() 计算） */
-export interface StepAdvanceRule {
-  /** 进入下一 step/node 时是否打乱词表 */
-  shuffle?: boolean
-  /** toast 提示文字 */
-  toast?: string
-  /** 最后一步 → 结束 */
-  complete?: boolean
-  /** 下一步词表来源（compiler 填入，Navigator 读取） */
-  nextSource: PracticeWordsSource
-}
-
 export interface PracticePhaseDefinition {
   /** 练习类型（FollowWrite / Listen / Dictation / Identify / Spell） */
   practiceType: WordPracticeType
   display: PracticeDisplayPolicy
   wordAdvance: WordAdvanceRule
-  stepAdvance: StepAdvanceRule
   /** 词表练完后执行的动作队列（替代 requireWrongWordClear） */
   onEnd: PracticeEndAction[]
-}
-
-// ─── 运行时注册表 ────────────────────────────────────────────────────────────────
-
-export interface ActiveFlowRegistry {
-  config: PracticeFlowConfig
-  /** cursor key → 已编译阶段定义 */
-  phasesByCursor: Map<string, PracticePhaseDefinition>
-  firstPhase: PracticePhaseDefinition
-  initialCursor: PracticeFlowCursor
 }
 
 // ─── 流程启动结果 ────────────────────────────────────────────────────────────────
@@ -210,5 +187,7 @@ export interface PracticeSessionSnapshot {
   identifyMethod: IdentifyMethod
   flowId: string
   cursor?: PracticeFlowCursor
+  /** 当前 Node 经前序 Step 处理后的工作词表；下一 Step 以它为输入。 */
+  nodeWorkingWordKeys?: string[]
   displayOverride?: PracticeDisplayOverride | null
 }

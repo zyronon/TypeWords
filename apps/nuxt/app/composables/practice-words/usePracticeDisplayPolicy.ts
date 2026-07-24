@@ -1,7 +1,7 @@
 /**
  * 练习页显隐策略：TypeWordV2 / FooterV2 的唯一数据源。
  *
- * v2 统一走 sessionDisplay（Registry 按阶段写入）+ displayOverride（用户 Footer 临时 Toggle）。
+ * v2 统一走 sessionDisplay（当前 Phase 写入）+ displayOverride（用户 Footer 临时 Toggle）。
  * 不再读 settingStore.dictation / translate（该二字段仍保留在 core 供 v1 使用）。
  */
 import { computed, inject, provide, ref, type ComputedRef, type InjectionKey, type Ref } from 'vue'
@@ -24,7 +24,7 @@ interface PracticeLocalReveal {
   showWordResult: boolean
 }
 
-/** Registry applyPhase 写入的「本阶段系统显隐」 */
+/** applyPhaseDefinition 写入的「本阶段系统显隐」 */
 export const sessionDisplay = ref<PracticeDisplayPolicy | null>(null)
 
 /** 用户 Footer 临时 Toggle 的覆盖层（仅当前相位有效，进下一阶段由 applyPhase 清空） */

@@ -1,6 +1,6 @@
 # 单词练习 v2 当前实现上下文
 
-> 更新时间：2026-07-24  
+> 更新时间：2026-07-25
 > 适用范围：`Typewords/apps/nuxt` 的单词练习 v2、流程编排和相关例句组件  
 > 文档定位：这是后续 Agent 冷启动时应优先阅读的“当前事实文档”。
 
@@ -15,9 +15,8 @@ TypeWords 的单词练习 v2 是一条与 v1 并行的实验/演进线路，核�
 ```text
 FlowConfig
   → validateFlowConfig
-  → compileFlowConfig
-  → ActiveFlowRegistry
-  → Cursor + Navigator
+  → activeFlowConfig
+  → Cursor + Navigator + nodeWorkingWords
   → 当前练习类型 / 词表 / 显隐策略
   → PracticeSaveWordV2
 ```
@@ -34,6 +33,7 @@ FlowConfig
 8. `/practice-sentences/:id` 当前主要是验证 `TypingSentence` 可独立使用的实验页面，不是已正式交付的完整例句会话。
 9. `collectWrongWords`、`generateReport` 和通用字符串 `navigate` 是预留 action；当前未完整实现是已知状态。
 10. Phase 4 以职责拆分完成为准，文件行数目标不是当前阻塞项。
+11. `node.source` 只在进入 Node 时解析；Node 内后续 Step 默认消费 `nodeWorkingWords`，不会再次读取原始 taskWords。
 
 ---
 
@@ -118,22 +118,20 @@ apps/nuxt/app/composables/practice-words/
   phase-templates.ts
   builtin-flows.ts
   flow-schema.ts
-  flow-compiler.ts
   practice-phase-registry.ts
   usePracticeWordInit.ts
   usePracticeWordNavigator.ts
 ```
 
-| 文件                          | 实际职责                                                                 |
-| ----------------------------- | ------------------------------------------------------------------------ |
-| `registry-types.ts`           | Flow、Node、Step、Cursor、Display、Snapshot 的类型定义                   |
-| `phase-templates.ts`          | 5 种纯练习动作模板和默认显隐策略                                         |
-| `builtin-flows.ts`            | System、Free、Review 等内置可序列化流程                                  |
-| `flow-schema.ts`              | 对用户/内置流程做基础校验，非法配置回退 System                           |
-| `flow-compiler.ts`            | 将 nodes/steps 单次编译为 `phasesByCursor` 和 `stepAdvance`              |
-| `practice-phase-registry.ts`  | 保存当前 ActiveFlowRegistry，按 Cursor 解析主相位、loop 子相位和错词相位 |
-| `usePracticeWordInit.ts`      | 新会话选取首个有词 Node，并返回真实起始 Cursor                           |
-| `usePracticeWordNavigator.ts` | 单词推进、wordLoop、onEnd、错词清空、阶段切换、快照恢复                  |
+| 文件                          | 实际职责                                                             |
+| ----------------------------- | -------------------------------------------------------------------- |
+| `registry-types.ts`           | Flow、Node、Step、Cursor、Display、Snapshot 的类型定义               |
+| `phase-templates.ts`          | 5 种纯练习动作模板和默认显隐策略                                     |
+| `builtin-flows.ts`            | System、Free、Review 等内置可序列化流程                              |
+| `flow-schema.ts`              | 对用户/内置流程做基础校验，非法配置回退 System                       |
+| `practice-phase-registry.ts`  | 保存当前 FlowConfig，按 Cursor 即时解析主相位、loop 子相位和错词相位 |
+| `usePracticeWordInit.ts`      | 新会话选取首个有词 Node，并返回真实起始 Cursor                       |
+| `usePracticeWordNavigator.ts` | 单词推进、wordLoop、onEnd、错词清空、阶段切换、快照恢复              |
 
 ### 4.2 显隐、缓存与计时
 
@@ -173,7 +171,7 @@ apps/nuxt/app/components/practice-words-v2/
 - `WordTypingCoreV2.vue`：单词逐字符输入、错误、重复、完成、光标。
 - `WordIdentifyPanelV2.vue`：自测和单词测试交互。
 - `WordMetaPanelV2.vue`：翻译、音标、例句、短语、词源，同时承载用户确认保留的例句输入。
-- `FooterV2.vue`：从 Registry + Cursor 推导进度。
+- `FooterV2.vue`：从 FlowConfig + Cursor 推导进度。
 - `StatisticsV2.vue`：结算展示。
 - `PracticeOnboardingHostV2.vue`：输入法冲突、收藏提示、引导。
 
@@ -188,8 +186,8 @@ apps/nuxt/app/components/practice-words-v2/
 ```text
 PracticeFlowConfig
   └─ nodes[]                 一批词及其练习阶段
-       ├─ source             taskNew/taskReview/current/wrongWords
-       └─ steps[]            对这批词依次怎么练
+       ├─ source             进入 Node 时的初始词源
+       └─ steps[]            对 nodeWorkingWords 依次怎么练
             ├─ templateId    followWrite/spell/listen/dictation/identify
             ├─ wordAdvance   increment 或 wordLoop
             ├─ shuffleOnEnter
@@ -207,7 +205,19 @@ Step Template 只描述“怎么练”，不决定词从哪里来：
 | `dictation`   | Dictation    | 隐藏单词，执行默写                 |
 | `identify`    | Identify     | 自测/选择式识别                    |
 
-### 5.2 Cursor
+### 5.2 Node 工作词表
+
+每个 Node 运行时有一份独立的 `nodeWorkingWords`：
+
+1. 进入 Node 时，才根据 `node.source` 从 `taskNew/taskReview/current/wrongWords` 初始化。
+2. 主 Step 结束时，移除已掌握和主动跳过的单词。
+3. Identify Step 中，“认识/已掌握”同样进入排除集合，因此输出只剩“不认识/答错”的单词。
+4. 标准错词清空可以临时替换 `data.words`，但不能改写 `nodeWorkingWords`。
+5. 同一 Node 的下一 Step 使用 `nodeWorkingWords`；跨 Node 后才重新解析新 Node 的 source。
+
+因此 `data.words` 是当前界面正在练的列表，`nodeWorkingWords` 才是 Step 之间传递的数据。
+
+### 5.3 Cursor
 
 当前运行位置只认 `PracticeFlowCursor`：
 
@@ -280,14 +290,13 @@ wordAdvance: {
 执行顺序：
 
 1. 根据 mode 得到内置 flowId；Custom 得到 `'custom'`。
-2. `loadPracticeFlow()` 校验并编译流程。
+2. `loadPracticeFlow()` 加载并校验流程，不再生成中间 Registry。
 3. 查看第一个 Node 的词源是否有词。
 4. 如果第一个 Node 没词，向后寻找第一个有词的 Node。
 5. 返回：
 
    ```ts
    {
-     practiceType,
      words,
      total,
      newWordNumber,
@@ -311,6 +320,12 @@ wordAdvance: {
 ### 8.1 普通 increment
 
 单词完成后 `data.index++`。词表结束后执行当前 Step 的 `onEnd`，然后进入下一 Step/Node 或结算。
+
+主 Step 结束时会先更新 `nodeWorkingWords`：
+
+- 普通输入阶段只过滤已掌握、主动跳过的单词；输错后完成的单词仍保留到下一阶段。
+- Identify 阶段中，认识和已掌握的单词已经进入排除集合，所以工作词表最终只剩不认识/答错的单词。
+- 同 Node 下一 Step 使用这份输出；跨 Node 才加载下一 Node 的 source。
 
 ### 8.2 wordLoop
 
@@ -341,7 +356,7 @@ Step 结束时：
 1. 过滤已经需要跳过/掌握的错词。
 2. 有错词则把 Cursor 标记为 `inWrongWordClear`。
 3. 使用 action 的 `templateId/displayOverride/wordAdvance` 派生临时相位。
-4. 清空 `data.wrongWords`，对本轮错词进行练习。
+4. 清空 `data.wrongWords`，对本轮错词进行练习；此过程不覆盖 `nodeWorkingWords`。
 5. 如果仍有错词，继续下一轮清空。
 6. 错词归零后继续下一个 onEnd action；队列结束后推进主 Step。
 
@@ -377,17 +392,18 @@ interface PracticeFlowStorageData {
 - 自定义流程真实 ID，例如 `custom_...`；
 - 直接传入 `PracticeFlowConfig`。
 
-当恢复缓存时，快照中的 `flowId` 是 Active Registry 的真实 config ID。加载器必须先尝试 `getUserFlow(flowId)`，找不到时才回退内置配置。
+当恢复缓存时，快照中的 `flowId` 是当前 FlowConfig 的真实 ID。加载器必须先尝试 `getUserFlow(flowId)`，找不到时才回退内置配置。
 
 ### 9.3 当前快照恢复行为
 
 恢复顺序：
 
 1. 按 `snapshot.flowId` 加载相同流程。
-2. 从加载后的 Registry 恢复 `settingStore.wordPracticeMode`。
+2. 从加载后的 FlowConfig 恢复 `settingStore.wordPracticeMode`。
 3. 恢复 `identifyMethod` 和 Cursor。
-4. 从当前 Phase 重新派生 `wordPracticeType/sessionDisplay`。
-5. 恢复用户的 `displayOverride`。
+4. 按 `nodeWorkingWordKeys` 恢复当前 Node 工作词表；旧快照则根据 source 和排除状态重建。
+5. 从当前 Phase 重新派生 `wordPracticeType/sessionDisplay`。
+6. 恢复用户的 `displayOverride`。
 
 恢复过程不应再次根据 settingStore 重新加载流程，否则可能把刚恢复的自定义流程替换成另一份当前激活流程。
 
@@ -414,6 +430,7 @@ IndexedDB key：`PracticeSaveWordV2`。
     identifyMethod,
     flowId,
     cursor,
+    nodeWorkingWordKeys,
     displayOverride,
   },
 }
@@ -445,7 +462,7 @@ phase.display
 
 职责：
 
-- `sessionDisplay`：Registry 当前相位的基础显隐。
+- `sessionDisplay`：当前 Flow Phase 的基础显隐。
 - `displayOverride`：用户在当前相位临时切换单词遮罩或翻译。
 - `localReveal`：只影响当前单词，不写缓存策略本身。
 - `effective.showSentences`：同时驱动例句 UI 与首句自动播放判断。
@@ -504,16 +521,17 @@ apps/nuxt/app/pages/(words)/practice-sentences/
 | ------------------------------- | ---------------------------------------- | --------------------------------------------------- |
 | `taskWords`                     | v2 页面                                  | 当次任务的新词/复习词全集                           |
 | `data.words/index/wrongWords`   | v2 页面 `PracticeData`                   | 当前 Step 实际词表和位置                            |
+| `nodeWorkingWords`              | Navigator 实例                           | 当前 Node 经前序 Step 处理后的稳定词表              |
 | `statStore`                     | core practice store                      | 统计、计时、结算数据；仍与其他练习共用              |
-| `settingStore.wordPracticeMode` | core setting store                       | 当前模式；恢复时以加载后的 Registry mode 为准       |
+| `settingStore.wordPracticeMode` | core setting store                       | 当前模式；恢复时以加载后的 FlowConfig mode 为准     |
 | `currentPracticeType`           | 页面按 `activeCursor` 解析当前 Phase     | V2 页面和组件判断当前实际动作类型的唯一来源         |
 | `settingStore.wordPracticeType` | Navigator syncPhase                      | 兼容旧逻辑使用的同步镜像                            |
-| `activeRegistry`                | `practice-phase-registry.ts` 模块级状态  | 当前编译流程                                        |
-| `activeCursor`                  | `usePracticeWordNavigator.ts` 模块级 ref | 当前流程位置；`inWrongWordClear` 是错词清空唯一状态 |
+| `activeFlowConfig`              | `practice-phase-registry.ts` 模块级状态  | 当前已校验流程配置                                  |
+| `activeCursor`                  | Navigator 实例                           | 当前流程位置；`inWrongWordClear` 是错词清空唯一状态 |
 | `sessionDisplay`                | `usePracticeDisplayPolicy.ts` 模块级 ref | 当前相位显隐                                        |
 | `displayOverride`               | `usePracticeDisplayPolicy.ts` 模块级 ref | 当前相位用户覆盖                                    |
 
-注意：Registry、Cursor 和 Display 目前是模块级状态，不适合同时挂载两个独立 v2 练习实例。改成实例级状态属于后续架构任务，不要在普通 bugfix 中顺手重写。
+注意：Cursor 和 `nodeWorkingWords` 已收进 Navigator 实例；FlowConfig 和 Display 仍是模块级状态，同时挂载两个独立 v2 练习实例前还需要继续实例化。
 
 ---
 
@@ -537,7 +555,7 @@ apps/nuxt/app/pages/(words)/practice-sentences/
 
 ---
 
-## 15. 本轮已修复的三个关键问题
+## 15. 已修复的关键问题
 
 ### 15.1 空 Node 起始 Cursor
 
@@ -549,13 +567,25 @@ apps/nuxt/app/pages/(words)/practice-sentences/
 
 修复前：快照保存真实自定义 ID，但加载器只识别字面量 `custom`，刷新后回退 System。
 
-修复后：加载器支持按真实 ID 调用 `getUserFlow()`；恢复时从 Active Registry 恢复 mode，页面同步相位时不重复加载流程。
+修复后：加载器支持按真实 ID 调用 `getUserFlow()`；恢复时从 FlowConfig 恢复 mode，页面同步相位时不重复加载流程。
 
 ### 15.3 错词 wordLoop 子步骤
 
 修复前：`runWordLoop()` 重新读取静态主 Step，丢失 `wrongWordClear` 派生相位的 Spell subSteps。
 
 修复后：`runWordLoop()` 使用当前解析出的 phase，主 Step、普通 loop、错词 loop 共享同一数据来源。
+
+### 15.4 Step 词表数据流
+
+修复前：进入同一 Node 的每个 Step 都重新读取 `node.source`，只能依靠共享排除状态间接模拟上一 Step 的输出。
+
+修复后：Node 入口初始化 `nodeWorkingWords`，同 Node Step 直接继承前一步的处理结果；Identify 输出仅保留错误词，错词清空不会污染主数据流。
+
+### 15.5 重复编译层
+
+修复前：FlowConfig 被编译成 `phasesByCursor + stepAdvance + nextSource`，但 Navigator 又根据 Cursor 和 Node 重算相同拓扑，`nextSource` 实际未被读取。
+
+修复后：删除 `flow-compiler.ts`、`ActiveFlowRegistry`、`StepAdvanceRule`，当前 Phase 和下一 Cursor 直接从已校验 FlowConfig 推导。
 
 ---
 
@@ -583,6 +613,14 @@ apps/nuxt/app/pages/(words)/practice-sentences/
 - [ ] Listen 后有错词：仍进入 action 配置的 FollowWrite + Spell，而不是沿用 Listen 主 Step。
 - [ ] Dictation/Identify 后有错词：行为同上。
 - [ ] 错词再次输错：继续下一轮，直到错词归零。
+- [ ] 错词清空完成后，普通 Step 的下一阶段仍使用完整工作词表，而不是仅使用刚清空的错词。
+
+### Step 词表传递
+
+- [ ] 普通 Step → 下一 Step：只排除已掌握和主动跳过词，输错后完成的词仍保留。
+- [ ] Identify → 下一 Step：只保留不认识/答错词。
+- [ ] 同 Node 切换 Step 不重新读取 taskWords。
+- [ ] 跨 Node 后按新 Node 的 source 初始化新工作词表。
 
 ### 缓存恢复
 
@@ -591,6 +629,7 @@ apps/nuxt/app/pages/(words)/practice-sentences/
 - [ ] 自定义流程刷新后不会退回 System。
 - [ ] loop 子步骤中刷新，范围和 subStepIndex 正确恢复。
 - [ ] 错词清空中刷新，endActionIndex 和临时相位正确恢复。
+- [ ] 刷新后 `nodeWorkingWordKeys` 恢复，后续 Step 词表与刷新前一致。
 - [ ] 同一相位刷新后，displayOverride 不应在下一词被意外清空。
 
 ---
@@ -621,7 +660,7 @@ apps/nuxt/app/pages/(words)/practice-sentences/
 
 除非用户另有优先级，后续工作建议：
 
-1. 为 Flow compiler、Cursor、wordLoop、wrongWordClear 建立最小单元测试。
+1. 为 Cursor、Node 工作词表、wordLoop、wrongWordClear 建立最小单元测试。
 2. 补自定义 Flow 的 hash/version 迁移策略。
 3. 修复并验证 displayOverride 刷新后的 phase key 恢复。
 4. 决定独立例句页是继续产品化还是只保留组件实验用途。

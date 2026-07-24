@@ -7,13 +7,7 @@ import { useRuntimeStore } from '@typewords/core/stores/runtime.ts'
 import type { Dict, TaskWords, Word } from '@typewords/core/types/types.ts'
 import { useStartKeyboardEventListener } from '@typewords/core/hooks/event.ts'
 import { usePracticeDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
-import {
-  activeCursor,
-  buildSessionSnapshot,
-  createPracticeWordNavigator,
-  restoreSessionFromLegacy,
-  restoreSessionSnapshot,
-} from '~/composables/practice-words/usePracticeWordNavigator.ts'
+import { createPracticeWordNavigator } from '~/composables/practice-words/usePracticeWordNavigator.ts'
 import { resolveFlowStart } from '~/composables/practice-words/usePracticeWordInit.ts'
 import useTheme from '@typewords/core/hooks/theme.ts'
 import { getCurrentStudyWord, useWordOptions } from '@typewords/core/hooks/dict.ts'
@@ -99,6 +93,7 @@ const navigator = createPracticeWordNavigator({
   },
   complete,
 })
+const { activeCursor } = navigator
 
 /** 当前 Cursor 解析出的真实练习类型；settingStore.wordPracticeType 仅保留为兼容镜像。 */
 const currentPracticeType = $computed<WordPracticeType>(() => {
@@ -115,9 +110,9 @@ function skipStep() {
 
 function restorePracticeSession(cache: { sessionSnapshot?: PracticeSessionSnapshot }) {
   if (cache.sessionSnapshot) {
-    restoreSessionSnapshot(cache.sessionSnapshot)
+    navigator.restoreSessionSnapshot(cache.sessionSnapshot)
   } else {
-    restoreSessionFromLegacy()
+    navigator.restoreSessionFromLegacy()
   }
 }
 
@@ -149,6 +144,7 @@ function updateQuestion() {
 
 provide('practiceData', data)
 provide('practiceTaskWords', taskWords)
+provide('practiceFlowCursor', activeCursor)
 
 const { bumpActivity, handleResumeTimer, startTimer, stopTimer } = usePracticeIdleTimer({
   isFocus,
@@ -267,6 +263,7 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
       statStore.reviewWordNumber = start.reviewWordNumber
       // resolveFlowStart 会跳过没有可练单词的 node，必须使用它返回的真实起点。
       activeCursor.value = { ...start.cursor }
+      navigator.initializeNodeWords(start.words)
     } catch {
       Toast.warning('没有可学习的单词！')
       router.push('/words')
@@ -450,7 +447,7 @@ async function savePracticeDataIns() {
     taskWords,
     practiceData: data,
     statStoreData: statStore.$state,
-    sessionSnapshot: buildSessionSnapshot(),
+    sessionSnapshot: navigator.buildSessionSnapshot(),
   })
   runtimeStore.globalLoading = false
 }

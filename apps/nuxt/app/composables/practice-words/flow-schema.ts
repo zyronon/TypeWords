@@ -1,14 +1,13 @@
 /**
- * 流程配置的校验与解析。
+ * 流程配置校验。
  * 非法配置一律回退 system，避免带着坏 JSON 进练习页。
  *
  * Phase 2.6 升级：
  * - VALID_TEMPLATE_IDS 新增 'spell'
  * - 校验逻辑适配 subSteps[] 和 onEnd[]
  */
-import { compileFlowConfig } from './flow-compiler.ts'
 import { BUILTIN_FLOWS } from './builtin-flows.ts'
-import type { ActiveFlowRegistry, PracticeFlowConfig, PracticeStepTemplateId } from './registry-types.ts'
+import type { PracticeFlowConfig, PracticeStepTemplateId } from './registry-types.ts'
 
 const VALID_SOURCES = new Set(['taskNew', 'taskReview', 'current', 'wrongWords'])
 const VALID_TEMPLATE_IDS: PracticeStepTemplateId[] = ['followWrite', 'spell', 'listen', 'dictation', 'identify']
@@ -16,7 +15,7 @@ const VALID_TEMPLATE_IDS_SET = new Set<string>(VALID_TEMPLATE_IDS)
 const VALID_END_ACTION_TYPES = new Set(['wrongWordClear', 'collectWrongWords', 'generateReport', 'navigate'])
 
 /**
- * 校验流程配置是否可编译；失败则返回 system 默认。
+ * 校验流程配置是否可执行；失败则返回 system 默认。
  * loadPracticeFlow、Phase 3 保存用户流程前都应走这里。
  */
 export function validateFlowConfig(
@@ -68,12 +67,4 @@ export function validateFlowConfig(
   }
 
   return config
-}
-
-/**
- * 校验 + 编译一条龙。
- * 【薄封装】= validateFlowConfig + compileFlowConfig，保留是为了 loadPracticeFlow 语义清晰。
- */
-export function buildRegistryFromConfig(config: PracticeFlowConfig): ActiveFlowRegistry {
-  return compileFlowConfig(validateFlowConfig(config))
 }

@@ -126,7 +126,7 @@ export function materializeStepTemplate(
 }
 
 /** 将可序列化的词内推进配置归一化为运行时规则。 */
-export function compileWordAdvance(config?: PracticeWordAdvanceConfig): WordAdvanceRule {
+export function materializeWordAdvance(config?: PracticeWordAdvanceConfig): WordAdvanceRule {
   return config?.type === 'wordLoop'
     ? {
         type: 'wordLoop',

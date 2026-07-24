@@ -9,7 +9,7 @@
 import type { TaskWords, Word } from '@typewords/core/types/types.ts'
 import { WordPracticeMode } from '@typewords/core/types/enum.ts'
 import { getFlowIdForMode } from './builtin-flows.ts'
-import { getActiveRegistry, loadPracticeFlow } from './practice-phase-registry.ts'
+import { getActiveFlowConfig, loadPracticeFlow } from './practice-phase-registry.ts'
 import type { FlowStartResult, PracticeFlowConfig, PracticeFlowCursor, PracticeWordsSource } from './registry-types.ts'
 
 /** 把 PracticeWordsSource 枚举映射到 taskWords 里的具体数组 */
@@ -58,8 +58,7 @@ export function resolveFlowStart(mode: WordPracticeMode, taskWords: TaskWords, f
   if (total === 0) throw new Error('NO_WORDS')
 
   loadPracticeFlow(flowId ?? getFlowIdForMode(mode))
-  const registry = getActiveRegistry()
-  const config = registry.config
+  const config = getActiveFlowConfig()
   const firstNode = config.nodes[0]
   const firstWords = resolveWordsForSource(firstNode.source, taskWords)
 

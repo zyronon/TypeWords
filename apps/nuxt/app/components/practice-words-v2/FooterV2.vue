@@ -3,15 +3,15 @@ import { usePracticeStore } from '@typewords/core/stores/practice.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import type { PracticeDataV2 } from '~/composables/practice-words/types.ts'
 import { ShortcutKey } from '@typewords/core/types/enum.ts'
-import { getActiveRegistry } from '~/composables/practice-words/practice-phase-registry.ts'
-import { activeCursor } from '~/composables/practice-words/usePracticeWordNavigator.ts'
+import { getActiveFlowConfig } from '~/composables/practice-words/practice-phase-registry.ts'
+import type { PracticeFlowCursor } from '~/composables/practice-words/registry-types.ts'
 import { BaseIcon, Tooltip } from '@typewords/base'
 import SettingDialog from '@typewords/core/components/setting/SettingDialog.vue'
 import VolumeSettingMiniDialog from '@typewords/core/components/word/VolumeSettingMiniDialog.vue'
 import StageProgress from '@typewords/core/components/StageProgress.vue'
 import { useI18n } from 'vue-i18n'
 import { useInjectedDisplayActions, useInjectedDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
-import { computed } from 'vue'
+import { computed, type Ref } from 'vue'
 
 const statStore = usePracticeStore()
 const settingStore = useSettingStore()
@@ -24,6 +24,7 @@ const emit = defineEmits<{
 }>()
 
 let practiceData = inject<PracticeDataV2>('practiceData')
+const activeCursor = inject<Ref<PracticeFlowCursor>>('practiceFlowCursor')!
 const bumpPracticeTimerActivity = inject<(() => void) | undefined>('bumpPracticeTimerActivity', undefined)
 
 function onTimerRowClick() {
@@ -46,14 +47,14 @@ function format(val: number, suffix: string = '', check: number = -1) {
  */
 const status = computed(() => {
   if (activeCursor.value.inWrongWordClear) return $t('review_wrong_words')
-  const registry = getActiveRegistry()
-  const nodes = registry.config.nodes
+  const config = getActiveFlowConfig()
+  const nodes = config.nodes
   const cursor = activeCursor.value
   const node = nodes[cursor.nodeIndex]
-  if (!node) return registry.config.label
+  if (!node) return config.label
   const step = node.steps[cursor.stepIndex]
   const stepLabel = step?.label ?? step?.templateId ?? ''
-  if (nodes.length === 1 && nodes[0].steps.length === 1) return registry.config.label
+  if (nodes.length === 1 && nodes[0].steps.length === 1) return config.label
   return node.label + (stepLabel ? ' · ' + stepLabel : '')
 })
 
@@ -70,8 +71,7 @@ const status = computed(() => {
  * - 当前 node 的子步骤也做进度条
  */
 const stages = computed(() => {
-  const registry = getActiveRegistry()
-  const nodes = registry.config.nodes
+  const nodes = getActiveFlowConfig().nodes
   const cursor = activeCursor.value
   const { nodeIndex, stepIndex } = cursor
   const currentProgress = practiceData.words.length
@@ -122,8 +122,7 @@ const stages = computed(() => {
 
 /** 是否显示「跳过当前阶段」按钮（多 step 或多 node 流程才显示） */
 const showSkipStep = computed(() => {
-  const registry = getActiveRegistry()
-  const nodes = registry.config.nodes
+  const nodes = getActiveFlowConfig().nodes
   if (nodes.length === 0) return false
   return nodes.length > 1 || nodes[0].steps.length > 1
 })
