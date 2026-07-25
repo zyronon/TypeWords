@@ -1,16 +1,104 @@
-/**
- * 内置练习流程的「可序列化配置表」。
- *
- * Phase 2.6 升级：
- * - requireWrongWordClear → onEnd: [{ type: 'wrongWordClear', ... }]
- * - wordLoop step 补全 subSteps: [{ templateId: 'spell' }]
- * - spell 作为独立 templateId，与其他 4 个平级
- *
- * 与 v1 WordPracticeModeStageMap + next() 行为对齐（由测试验收）。
- */
-import { WordPracticeMode } from '@typewords/core/types/enum.ts'
-import type { PracticeFlowConfig, PracticeEndAction, PracticeWordAdvanceConfig } from './registry-types.ts'
-import { GROUP_SIZE } from './phase-templates.ts'
+/** Step 模板、默认显隐和内置可序列化流程。 */
+import { WordPracticeMode, WordPracticeType } from '@typewords/core/types/enum.ts'
+import type {
+  PracticeDisplayPolicy,
+  PracticeEndAction,
+  PracticeFlowConfig,
+  PracticeStepTemplate,
+  PracticeStepTemplateId,
+  PracticeWordAdvanceConfig,
+  WordAdvanceRule,
+} from './practice-flow-types.ts'
+
+/** 跟写分组大小，与 v1 groupSize 一致。 */
+export const GROUP_SIZE = 7
+
+export function phaseDisplay(overrides: Partial<PracticeDisplayPolicy> = {}): PracticeDisplayPolicy {
+  return {
+    source: 'phase',
+    wordMask: 'none',
+    showPhonetic: true,
+    showWordTranslation: true,
+    showSentences: true,
+    showSentenceTranslation: true,
+    showPhrases: true,
+    showSynos: true,
+    showEtymology: true,
+    showRelWords: true,
+    inputMode: 'typing',
+    allowWordTip: true,
+    autoNextWord: true,
+    ...overrides,
+  }
+}
+
+const DISPLAY_FOLLOW_WRITE = phaseDisplay()
+const DISPLAY_SPELL = phaseDisplay({
+  wordMask: 'underscore',
+  showPhonetic: 'shadow',
+  inputMode: 'typing',
+})
+const DISPLAY_LISTEN = phaseDisplay({
+  wordMask: 'underscore',
+  showPhonetic: 'shadow',
+  showWordTranslation: false,
+  showSentences: false,
+  showSentenceTranslation: false,
+  showPhrases: false,
+  showSynos: false,
+  showEtymology: false,
+  showRelWords: false,
+  inputMode: 'listen',
+  allowWordTip: false,
+  autoNextWord: false,
+})
+const DISPLAY_DICTATION = phaseDisplay({
+  wordMask: 'hidden',
+  showPhonetic: 'shadow',
+  showSentences: false,
+  showSentenceTranslation: false,
+  inputMode: 'dictation',
+})
+const DISPLAY_IDENTIFY = phaseDisplay({
+  wordMask: 'none',
+  showPhonetic: false,
+  showWordTranslation: false,
+  showSentences: false,
+  showSentenceTranslation: false,
+  showPhrases: false,
+  showEtymology: false,
+  showRelWords: false,
+  inputMode: 'identify-self',
+})
+
+export const STEP_TEMPLATE_META: Record<PracticeStepTemplateId, PracticeStepTemplate> = {
+  followWrite: { id: 'followWrite', label: '跟写', practiceType: WordPracticeType.FollowWrite, display: DISPLAY_FOLLOW_WRITE, },
+  spell: { id: 'spell', label: '拼写', practiceType: WordPracticeType.Spell, display: DISPLAY_SPELL },
+  listen: { id: 'listen', label: '听写', practiceType: WordPracticeType.Listen, display: DISPLAY_LISTEN },
+  dictation: { id: 'dictation', label: '默写', practiceType: WordPracticeType.Dictation, display: DISPLAY_DICTATION },
+  identify: { id: 'identify', label: '自测', practiceType: WordPracticeType.Identify, display: DISPLAY_IDENTIFY },
+}
+
+export function materializeStepTemplate(
+  templateId: PracticeStepTemplateId,
+  displayOverride?: Partial<PracticeDisplayPolicy>
+): Pick<PracticeStepTemplate, 'practiceType' | 'display'> {
+  const template = STEP_TEMPLATE_META[templateId]
+  return {
+    practiceType: template.practiceType,
+    display: displayOverride ? { ...template.display, ...displayOverride } : template.display,
+  }
+}
+
+export function materializeWordAdvance(config?: PracticeWordAdvanceConfig): WordAdvanceRule {
+  return config?.type === 'wordLoop'
+    ? {
+        type: 'wordLoop',
+        groupSize: config.groupSize ?? GROUP_SIZE,
+        subSteps: config.subSteps ?? [],
+      }
+    : { type: 'increment' }
+}
 
 /** 跟写 + 7 词 wordLoop + Spell 子步骤 */
 const WORD_LOOP_WITH_SPELL: PracticeWordAdvanceConfig = {

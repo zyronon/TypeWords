@@ -1,17 +1,16 @@
 /**
  * 练习页显隐策略：TypeWordV2 / FooterV2 的唯一数据源。
  *
- * v2 统一走 sessionDisplay（当前 Phase 写入）+ displayOverride（用户 Footer 临时 Toggle）。
+ * v2 统一走 currentPhase.display + displayOverride（用户 Footer 临时 Toggle）。
  * 不再读 settingStore.dictation / translate（该二字段仍保留在 core 供 v1 使用）。
  */
-import { computed, inject, provide, ref, type ComputedRef, type InjectionKey, type Ref } from 'vue'
+import { computed, inject, provide, ref, watch, type ComputedRef, type InjectionKey, type Ref } from 'vue'
 import type {
   EffectiveDisplay,
   PracticeDisplayOverride,
   PracticeDisplayPolicy,
   PracticePhaseDefinition,
-} from './registry-types.ts'
-import { phaseDisplay } from './phase-templates.ts'
+} from './practice-flow-types.ts'
 
 const PRACTICE_DISPLAY_POLICY_KEY: InjectionKey<ComputedRef<EffectiveDisplay>> = Symbol('practiceDisplayPolicy')
 const PRACTICE_DISPLAY_ACTIONS_KEY: InjectionKey<{
@@ -24,16 +23,7 @@ interface PracticeLocalReveal {
   showWordResult: boolean
 }
 
-/** applyPhaseDefinition 写入的「本阶段系统显隐」 */
-export const sessionDisplay = ref<PracticeDisplayPolicy | null>(null)
-
-/** 用户 Footer 临时 Toggle 的覆盖层（仅当前相位有效，进下一阶段由 applyPhase 清空） */
-export const displayOverride = ref<PracticeDisplayOverride | null>(null)
-
-/** 上一次 applyPhase 的 phase key，用于判断 phase 是否真正变化 */
-let lastPhaseKey: string | null = null
-
-/** 合并 sessionDisplay 与用户临时 override */
+/** 合并当前 Phase 显隐与用户临时 override。 */
 function mergeDisplay(base: PracticeDisplayPolicy, override: PracticeDisplayOverride | null): PracticeDisplayPolicy {
   if (!override) return base
   return { ...base, ...override }
@@ -71,40 +61,43 @@ function applyLocalReveal(display: EffectiveDisplay, localReveal: PracticeLocalR
   }
 }
 
-function patchDisplayOverride(override: PracticeDisplayOverride) {
-  displayOverride.value = {
-    ...displayOverride.value,
-    ...override,
-  }
-}
-
-/**
- * 阶段变化时调用（Navigator.syncPhase 内）：写入 phase.display。
- * 仅当 phase key 与上次不同时才清空 displayOverride，避免同阶段内每词推进都重置用户覆盖。
- */
-export function applyPhaseDefinition(phase: PracticePhaseDefinition, cursorKey?: string) {
-  sessionDisplay.value = { ...phase.display }
-  // 用 cursorKey + practiceType 标识唯一相位（跨阶段切换时清空用户 override）
-  const key = cursorKey ? `${cursorKey}_${String(phase.practiceType)}` : String(phase.practiceType)
-  if (key !== lastPhaseKey) {
-    displayOverride.value = null
-    lastPhaseKey = key
-  }
-}
-
 /** 构造页面级 effective，不包含 TypeWordV2 的局部揭示状态。 */
-function createEffectiveDisplay(): ComputedRef<EffectiveDisplay> {
+function createEffectiveDisplay(
+  currentPhase: ComputedRef<PracticePhaseDefinition>,
+  displayOverride: Ref<PracticeDisplayOverride | null>
+): ComputedRef<EffectiveDisplay> {
   return computed(() => {
-    const base = sessionDisplay.value
-      ? mergeDisplay(sessionDisplay.value, displayOverride.value)
-      : mergeDisplay(phaseDisplay(), displayOverride.value)
+    const base = mergeDisplay(currentPhase.value.display, displayOverride.value)
     return toEffective(base)
   })
 }
 
 /** 页面级 composable：provide effective + Footer Toggle 方法 */
-export function usePracticeDisplayPolicy() {
-  const effective = createEffectiveDisplay()
+export function usePracticeDisplayPolicy(
+  currentPhase: ComputedRef<PracticePhaseDefinition>,
+  phaseKey: ComputedRef<string>
+) {
+  const displayOverride = ref<PracticeDisplayOverride | null>(null)
+  const effective = createEffectiveDisplay(currentPhase, displayOverride)
+
+  watch(
+    phaseKey,
+    (key, previousKey) => {
+      if (previousKey !== undefined && key !== previousKey) displayOverride.value = null
+    },
+    { flush: 'sync' }
+  )
+
+  function patchDisplayOverride(override: PracticeDisplayOverride) {
+    displayOverride.value = {
+      ...displayOverride.value,
+      ...override,
+    }
+  }
+
+  function restoreDisplayOverride(override?: PracticeDisplayOverride | null) {
+    displayOverride.value = override ? { ...override } : null
+  }
 
   /** 切换默写显隐：只写 displayOverride，不写 settingStore */
   function toggleDictation() {
@@ -128,7 +121,14 @@ export function usePracticeDisplayPolicy() {
   provide(PRACTICE_DISPLAY_POLICY_KEY, effective)
   provide(PRACTICE_DISPLAY_ACTIONS_KEY, { toggleDictation, toggleTranslate })
 
-  return { effective, toggleDictation, toggleTranslate, patchDisplayOverride }
+  return {
+    effective,
+    displayOverride,
+    toggleDictation,
+    toggleTranslate,
+    patchDisplayOverride,
+    restoreDisplayOverride,
+  }
 }
 
 export function useInjectedDisplayPolicy(localReveal?: Ref<PracticeLocalReveal>): ComputedRef<EffectiveDisplay> {

@@ -8,7 +8,7 @@ import type { Dict, TaskWords, Word } from '@typewords/core/types/types.ts'
 import { useStartKeyboardEventListener } from '@typewords/core/hooks/event.ts'
 import { usePracticeDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
 import { createPracticeWordNavigator } from '~/composables/practice-words/usePracticeWordNavigator.ts'
-import { resolveFlowStart } from '~/composables/practice-words/usePracticeWordInit.ts'
+import { resolveFlowStart } from '~/composables/practice-words/practice-flow-runtime.ts'
 import useTheme from '@typewords/core/hooks/theme.ts'
 import { getCurrentStudyWord, useWordOptions } from '@typewords/core/hooks/dict.ts'
 import { openWordCollectPicker } from '@typewords/core/hooks/useWordCollectPicker.ts'
@@ -49,9 +49,8 @@ import { createEmptyCard, Rating } from 'ts-fsrs'
 import { useGetGradeByWrongTimes, useNextCard } from '@typewords/core/hooks/fsrs.ts'
 import WordMarkPickList, { type WordMarkPickResult } from '@typewords/core/components/word/WordMarkPickList.vue'
 import { buildQuestion } from '@typewords/core/utils/word-test.ts'
-import type { PracticeSessionSnapshot } from '~/composables/practice-words/registry-types.ts'
+import type { PracticeSessionSnapshot } from '~/composables/practice-words/practice-flow-types.ts'
 import { usePracticeIdleTimer } from '~/composables/practice-words/usePracticeIdleTimer.ts'
-import { resolvePhaseByCtxCursor } from '~/composables/practice-words/practice-phase-registry.ts'
 
 const { isWordSimple, toggleWordSimple } = useWordOptions()
 const settingStore = useSettingStore()
@@ -63,7 +62,6 @@ const store = useBaseStore()
 const statStore = usePracticeStore()
 const dataSync = useDataSyncPersistence()
 const wordPersistence = usePracticeWordPersistenceV2()
-const { effective, toggleDictation, toggleTranslate, patchDisplayOverride } = usePracticeDisplayPolicy()
 let { getGradeByWrongTimes } = useGetGradeByWrongTimes()
 let { nextCard } = useNextCard()
 const typingRef: any = $ref()
@@ -93,12 +91,15 @@ const navigator = createPracticeWordNavigator({
   },
   complete,
 })
-const { activeCursor } = navigator
-
-/** 当前 Cursor 解析出的真实练习类型；settingStore.wordPracticeType 仅保留为兼容镜像。 */
-const currentPracticeType = $computed<WordPracticeType>(() => {
-  return resolvePhaseByCtxCursor(activeCursor.value).practiceType
-})
+const { activeCursor, currentPhase, currentPracticeType, currentPhaseKey } = navigator
+const {
+  effective,
+  displayOverride,
+  toggleDictation,
+  toggleTranslate,
+  patchDisplayOverride,
+  restoreDisplayOverride,
+} = usePracticeDisplayPolicy(currentPhase, currentPhaseKey)
 
 function next(isTyping: boolean = true, ignoreLoop = false) {
   navigator.next(isTyping, ignoreLoop)
@@ -111,8 +112,10 @@ function skipStep() {
 function restorePracticeSession(cache: { sessionSnapshot?: PracticeSessionSnapshot }) {
   if (cache.sessionSnapshot) {
     navigator.restoreSessionSnapshot(cache.sessionSnapshot)
+    restoreDisplayOverride(cache.sessionSnapshot.displayOverride)
   } else {
     navigator.restoreSessionFromLegacy()
+    restoreDisplayOverride(null)
   }
 }
 
@@ -275,7 +278,6 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
     statStore.spend = 0
     statStore.segments = []
     statStore.resumeTimer() // 同时 push 第一条片段 [now, now]
-    navigator.syncPhase()
   }
 
   // 初始化 Question
@@ -447,7 +449,10 @@ async function savePracticeDataIns() {
     taskWords,
     practiceData: data,
     statStoreData: statStore.$state,
-    sessionSnapshot: navigator.buildSessionSnapshot(),
+    sessionSnapshot: {
+      ...navigator.buildSessionSnapshot(),
+      displayOverride: displayOverride.value ? { ...displayOverride.value } : null,
+    },
   })
   runtimeStore.globalLoading = false
 }

@@ -30,7 +30,7 @@ export interface EffectiveDisplay extends PracticeDisplayPolicy {
   isDictationInput: boolean
 }
 
-// ─── 三层模型 ──────────────────────────────────────────────────────────────────
+// ─── 流程模型 ──────────────────────────────────────────────────────────────────
 
 /** Step Template 的 id — 只描述"怎么练"，不关心词源 */
 export type PracticeStepTemplateId = 'followWrite' | 'spell' | 'listen' | 'dictation' | 'identify'
@@ -133,7 +133,7 @@ export interface PracticeFlowConfig {
 export interface PracticeFlowCursor {
   nodeIndex: number
   stepIndex: number
-  /** 当前是否处于错词清空阶段；替代旧 wrongRetry */
+  /** 当前是否处于错词清空阶段 */
   inWrongWordClear: boolean
   /**
    * 当前是否处于 wordLoop 子步骤。

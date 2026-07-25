@@ -114,24 +114,22 @@ apps/nuxt/app/pages/(words)/practice-sentences/[id].vue
 
 ```text
 apps/nuxt/app/composables/practice-words/
-  registry-types.ts
-  phase-templates.ts
-  builtin-flows.ts
-  flow-schema.ts
-  practice-phase-registry.ts
-  usePracticeWordInit.ts
+  practice-flow-types.ts
+  practice-flow-config.ts
+  practice-flow-runtime.ts
+  practice-flow-storage.ts
   usePracticeWordNavigator.ts
 ```
 
-| 文件                          | 实际职责                                                             |
-| ----------------------------- | -------------------------------------------------------------------- |
-| `registry-types.ts`           | Flow、Node、Step、Cursor、Display、Snapshot 的类型定义               |
-| `phase-templates.ts`          | 5 种纯练习动作模板和默认显隐策略                                     |
-| `builtin-flows.ts`            | System、Free、Review 等内置可序列化流程                              |
-| `flow-schema.ts`              | 对用户/内置流程做基础校验，非法配置回退 System                       |
-| `practice-phase-registry.ts`  | 保存当前 FlowConfig，按 Cursor 即时解析主相位、loop 子相位和错词相位 |
-| `usePracticeWordInit.ts`      | 新会话选取首个有词 Node，并返回真实起始 Cursor                       |
-| `usePracticeWordNavigator.ts` | 单词推进、wordLoop、onEnd、错词清空、阶段切换、快照恢复              |
+| 文件                          | 实际职责                                                               |
+| ----------------------------- | ---------------------------------------------------------------------- |
+| `practice-flow-types.ts`      | Flow、Node、Step、Cursor、Display、Snapshot 的类型定义                 |
+| `practice-flow-config.ts`     | 5 种动作模板、默认显隐、内置流程和 mode/flowId 映射                    |
+| `practice-flow-runtime.ts`    | 配置校验/加载、新会话起点、Phase 解析和静态 Cursor 推进                |
+| `practice-flow-storage.ts`    | 用户自定义流程的本地存储                                               |
+| `usePracticeWordNavigator.ts` | Node 工作词表、单词推进、wordLoop、onEnd、错词清空、阶段切换和会话快照 |
+
+流程核心固定为以上 5 个入口，不再为模板、校验、初始化分别建立单文件。
 
 ### 4.2 显隐、缓存与计时
 
@@ -144,13 +142,13 @@ apps/nuxt/app/composables/practice-words/
   usePracticeWordAudioV2.ts
 ```
 
-| 文件                              | 实际职责                                           |
-| --------------------------------- | -------------------------------------------------- |
-| `usePracticeDisplayPolicy.ts`     | `sessionDisplay + displayOverride + localReveal`   |
-| `practice-word-cache-v2.ts`       | IndexedDB key、缓存结构与基础读写                  |
-| `usePracticeWordPersistenceV2.ts` | 单词对象压缩为单词字符串，恢复时从当前词书映射回来 |
-| `usePracticeIdleTimer.ts`         | 三分钟无输入暂停、恢复计时                         |
-| `usePracticeWordAudioV2.ts`       | 单词音频、例句链式播放、可见性判断                 |
+| 文件                              | 实际职责                                               |
+| --------------------------------- | ------------------------------------------------------ |
+| `usePracticeDisplayPolicy.ts`     | `currentPhase.display + displayOverride + localReveal` |
+| `practice-word-cache-v2.ts`       | IndexedDB key、缓存结构与基础读写                      |
+| `usePracticeWordPersistenceV2.ts` | 单词对象压缩为单词字符串，恢复时从当前词书映射回来     |
+| `usePracticeIdleTimer.ts`         | 三分钟无输入暂停、恢复计时                             |
+| `usePracticeWordAudioV2.ts`       | 单词音频、例句链式播放、可见性判断                     |
 
 ### 4.3 v2 组件
 
@@ -402,7 +400,7 @@ interface PracticeFlowStorageData {
 2. 从加载后的 FlowConfig 恢复 `settingStore.wordPracticeMode`。
 3. 恢复 `identifyMethod` 和 Cursor。
 4. 按 `nodeWorkingWordKeys` 恢复当前 Node 工作词表；旧快照则根据 source 和排除状态重建。
-5. 从当前 Phase 重新派生 `wordPracticeType/sessionDisplay`。
+5. `currentPhase/currentPracticeType/effectiveDisplay` 随 Cursor 自动重新派生。
 6. 恢复用户的 `displayOverride`。
 
 恢复过程不应再次根据 settingStore 重新加载流程，否则可能把刚恢复的自定义流程替换成另一份当前激活流程。
@@ -444,7 +442,7 @@ IndexedDB key：`PracticeSaveWordV2`。
 
 - 当前词书中已经不存在的单词会在恢复时被过滤。
 - 恢复后 index 会被限制在恢复出的 words 范围内。
-- display override 的跨刷新持续性依赖 `lastPhaseKey`，调整显隐恢复逻辑时需专门验证“同一阶段下一词不清空 override”。
+- `displayOverride` 按 Navigator 的 `currentPhaseKey` 自动清空；恢复快照时在 Cursor 恢复后显式写回。
 
 ---
 
@@ -454,7 +452,6 @@ IndexedDB key：`PracticeSaveWordV2`。
 
 ```text
 phase.display
-  → sessionDisplay
   → displayOverride（Footer 临时开关）
   → localReveal（当前单词显示答案/结果）
   → EffectiveDisplay
@@ -462,14 +459,14 @@ phase.display
 
 职责：
 
-- `sessionDisplay`：当前 Flow Phase 的基础显隐。
+- `currentPhase.display`：由 Cursor 自动派生的基础显隐。
 - `displayOverride`：用户在当前相位临时切换单词遮罩或翻译。
 - `localReveal`：只影响当前单词，不写缓存策略本身。
 - `effective.showSentences`：同时驱动例句 UI 与首句自动播放判断。
 
 不要重新在 v2 模板中按 `WordPracticeMode`/`WordPracticeType` 复制一套显隐判断。
 
-用户已确认：`settingStore.dictation/translate` 可以在例句等手写逻辑中作为临时状态使用；结构化流程的主显隐仍以 `sessionDisplay + displayOverride` 为准。
+用户已确认：`settingStore.dictation/translate` 可以在例句等手写逻辑中作为临时状态使用；结构化流程的主显隐仍以 `currentPhase.display + displayOverride` 为准。
 
 ---
 
@@ -517,21 +514,20 @@ apps/nuxt/app/pages/(words)/practice-sentences/
 
 ## 13. 状态所有权
 
-| 状态                            | 所有者                                   | 说明                                                |
-| ------------------------------- | ---------------------------------------- | --------------------------------------------------- |
-| `taskWords`                     | v2 页面                                  | 当次任务的新词/复习词全集                           |
-| `data.words/index/wrongWords`   | v2 页面 `PracticeData`                   | 当前 Step 实际词表和位置                            |
-| `nodeWorkingWords`              | Navigator 实例                           | 当前 Node 经前序 Step 处理后的稳定词表              |
-| `statStore`                     | core practice store                      | 统计、计时、结算数据；仍与其他练习共用              |
-| `settingStore.wordPracticeMode` | core setting store                       | 当前模式；恢复时以加载后的 FlowConfig mode 为准     |
-| `currentPracticeType`           | 页面按 `activeCursor` 解析当前 Phase     | V2 页面和组件判断当前实际动作类型的唯一来源         |
-| `settingStore.wordPracticeType` | Navigator syncPhase                      | 兼容旧逻辑使用的同步镜像                            |
-| `activeFlowConfig`              | `practice-phase-registry.ts` 模块级状态  | 当前已校验流程配置                                  |
-| `activeCursor`                  | Navigator 实例                           | 当前流程位置；`inWrongWordClear` 是错词清空唯一状态 |
-| `sessionDisplay`                | `usePracticeDisplayPolicy.ts` 模块级 ref | 当前相位显隐                                        |
-| `displayOverride`               | `usePracticeDisplayPolicy.ts` 模块级 ref | 当前相位用户覆盖                                    |
+| 状态                               | 所有者                                | 说明                                                |
+| ---------------------------------- | ------------------------------------- | --------------------------------------------------- |
+| `taskWords`                        | v2 页面                               | 当次任务的新词/复习词全集                           |
+| `data.words/index/wrongWords`      | v2 页面 `PracticeData`                | 当前 Step 实际词表和位置                            |
+| `nodeWorkingWords`                 | Navigator 实例                        | 当前 Node 经前序 Step 处理后的稳定词表              |
+| `statStore`                        | core practice store                   | 统计、计时、结算数据；仍与其他练习共用              |
+| `settingStore.wordPracticeMode`    | core setting store                    | 当前模式；恢复时以加载后的 FlowConfig mode 为准     |
+| `currentPhase/currentPracticeType` | Navigator computed                    | Cursor 自动派生的当前 Phase 和真实动作类型          |
+| `settingStore.wordPracticeType`    | Navigator watch                       | 兼容旧逻辑使用的只读镜像                            |
+| `activeFlowConfig`                 | `practice-flow-runtime.ts` 模块级状态 | 当前已校验流程配置                                  |
+| `activeCursor`                     | Navigator 实例                        | 当前流程位置；`inWrongWordClear` 是错词清空唯一状态 |
+| `displayOverride`                  | DisplayPolicy 实例                    | 当前相位用户覆盖                                    |
 
-注意：Cursor 和 `nodeWorkingWords` 已收进 Navigator 实例；FlowConfig 和 Display 仍是模块级状态，同时挂载两个独立 v2 练习实例前还需要继续实例化。
+注意：Cursor、工作词表和 Display 已实例化；`activeFlowConfig` 仍是模块级状态，同时挂载两个独立 v2 练习实例前还需要继续实例化。
 
 ---
 
@@ -586,6 +582,18 @@ apps/nuxt/app/pages/(words)/practice-sentences/
 修复前：FlowConfig 被编译成 `phasesByCursor + stepAdvance + nextSource`，但 Navigator 又根据 Cursor 和 Node 重算相同拓扑，`nextSource` 实际未被读取。
 
 修复后：删除 `flow-compiler.ts`、`ActiveFlowRegistry`、`StepAdvanceRule`，当前 Phase 和下一 Cursor 直接从已校验 FlowConfig 推导。
+
+### 15.6 流程文件过度拆分
+
+修复前：类型、模板、内置流程、校验、运行时和新会话初始化分别占用独立文件，阅读一次推进流程需要跨越多个薄封装。
+
+修复后：流程核心收敛为 `types/config/runtime/storage/Navigator` 5 个入口；模板与内置配置合并，校验、加载、初始化和 Phase/Cursor 解析合并。
+
+### 15.7 Phase 命令式同步
+
+修复前：每次修改 Cursor 后必须手动调用 `syncPhase()`，再写入 `wordPracticeType/sessionDisplay`；进入 loop 的逻辑也分散在完整组和尾组两个分支。
+
+修复后：Navigator 暴露 `currentPhase/currentPracticeType/currentPhaseKey` computed，DisplayPolicy 直接消费当前 Phase；完整组和尾组统一通过 `enterLoop()` 修改 Cursor，不再手动同步 Phase。
 
 ---
 

@@ -7,8 +7,8 @@ import type {
   PracticeFlowStep,
   PracticeStepTemplateId,
   PracticeWordsSource,
-} from '~/composables/practice-words/registry-types.ts'
-import { STEP_TEMPLATE_META } from '~/composables/practice-words/phase-templates.ts'
+} from '~/composables/practice-words/practice-flow-types.ts'
+import { STEP_TEMPLATE_META } from '~/composables/practice-words/practice-flow-config.ts'
 
 const props = defineProps<{
   config: PracticeFlowConfig

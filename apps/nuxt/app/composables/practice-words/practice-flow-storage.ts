@@ -1,5 +1,5 @@
 /**
- * 用户自定义练习流程存储层。
+ * 用户自定义练习流程存储。
  *
  * 独立 key `PracticeFlowV2` 存储用户创建的多份流程预设。
  * 与系统内置 BUILTIN_FLOWS 隔离，互不影响。
@@ -15,7 +15,7 @@
  *   }>
  * }
  */
-import type { PracticeFlowConfig } from './registry-types.ts'
+import type { PracticeFlowConfig } from './practice-flow-types.ts'
 
 const STORAGE_KEY = 'PracticeFlowV2'
 

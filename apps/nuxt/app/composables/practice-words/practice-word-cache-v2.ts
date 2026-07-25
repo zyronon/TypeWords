@@ -1,6 +1,6 @@
 import type { PracticeData, TaskWords } from '@typewords/core/types/types.ts'
 import type { PracticeState } from '@typewords/core/stores/practice.ts'
-import type { PracticeSessionSnapshot } from './registry-types.ts'
+import type { PracticeSessionSnapshot } from './practice-flow-types.ts'
 import { get, set } from 'idb-keyval'
 
 /** V2 的流程位置由 Navigator Cursor 表达，不再保留 V1 的 isTypingWrongWord 镜像字段。 */
