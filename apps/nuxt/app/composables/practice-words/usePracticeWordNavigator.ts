@@ -140,7 +140,6 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
   }
 
   // ─── wordLoop 子步骤推进 ──────────────────────────────────────────────────────
-
   function enterLoop(startIndex: number, endIndex: number, subStepIndex = 0) {
     activeCursor.value = {
       ...activeCursor.value,
@@ -256,7 +255,6 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
   }
 
   // ─── 错词清空（由 onEnd wrongWordClear action 驱动） ────────────────────────
-
   function runWrongWordRetry(action: PracticeWrongWordClearAction) {
     const data = deps.getPracticeData()
     // 实际 practiceType 由 resolvePhaseByCtxCursor 从 action.templateId 派生，无需在此设置
@@ -267,7 +265,6 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
   }
 
   // ─── 即时型 action 执行 ───────────────────────────────────────────────────────
-
   function executeInstantAction(action: PracticeEndAction): void {
     if (action.type === 'collectWrongWords') {
       console.log(`[Nav] 收藏错词 → ${action.target}`)
@@ -428,7 +425,6 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
 
     if (atListEnd(data)) {
       handleListEnd(phase, ignoreLoop)
-      return
     } else {
       runWordAdvance(phase)
     }
