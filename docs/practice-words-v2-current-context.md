@@ -117,7 +117,6 @@ apps/nuxt/app/composables/practice-words/
   practice-flow-types.ts
   practice-flow-config.ts
   practice-flow-runtime.ts
-  practice-flow-storage.ts
   usePracticeWordNavigator.ts
 ```
 
@@ -125,19 +124,17 @@ apps/nuxt/app/composables/practice-words/
 | ----------------------------- | ---------------------------------------------------------------------- |
 | `practice-flow-types.ts`      | Flow、Node、Step、Cursor、Display、Snapshot 的类型定义                 |
 | `practice-flow-config.ts`     | 5 种动作模板、默认显隐、内置流程和 mode/flowId 映射                    |
-| `practice-flow-runtime.ts`    | 配置校验/加载、新会话起点、Phase 解析和静态 Cursor 推进                |
-| `practice-flow-storage.ts`    | 用户自定义流程的本地存储                                               |
+| `practice-flow-runtime.ts`    | 配置校验/加载、自定义流程存储、新会话起点、Phase 解析和静态 Cursor 推进 |
 | `usePracticeWordNavigator.ts` | Node 工作词表、单词推进、wordLoop、onEnd、错词清空、阶段切换和会话快照 |
 
-流程核心固定为以上 5 个入口，不再为模板、校验、初始化分别建立单文件。
+流程核心固定为以上 4 个入口，不再为模板、校验、存储和初始化分别建立薄文件。
 
 ### 4.2 显隐、缓存与计时
 
 ```text
 apps/nuxt/app/composables/practice-words/
   usePracticeDisplayPolicy.ts
-  practice-word-cache-v2.ts
-  usePracticeWordPersistenceV2.ts
+  practice-word-session.ts
   usePracticeIdleTimer.ts
   usePracticeWordAudioV2.ts
 ```
@@ -145,8 +142,7 @@ apps/nuxt/app/composables/practice-words/
 | 文件                              | 实际职责                                               |
 | --------------------------------- | ------------------------------------------------------ |
 | `usePracticeDisplayPolicy.ts`     | `currentPhase.display + displayOverride + localReveal` |
-| `practice-word-cache-v2.ts`       | IndexedDB key、缓存结构与基础读写                      |
-| `usePracticeWordPersistenceV2.ts` | 单词对象压缩为单词字符串，恢复时从当前词书映射回来     |
+| `practice-word-session.ts`        | 会话数据类型、默认值、缓存压缩/恢复与 IndexedDB 读写   |
 | `usePracticeIdleTimer.ts`         | 三分钟无输入暂停、恢复计时                             |
 | `usePracticeWordAudioV2.ts`       | 单词音频、例句链式播放、可见性判断                     |
 
@@ -202,6 +198,9 @@ Step Template 只描述“怎么练”，不决定词从哪里来：
 | `listen`      | Listen       | 隐藏文字信息，以听音输入为主       |
 | `dictation`   | Dictation    | 隐藏单词，执行默写                 |
 | `identify`    | Identify     | 自测/选择式识别                    |
+
+`data.question` 只在当前模板为 `identify` 且 `settingStore.identifyMethod === WordTest` 时生成；
+自我评估、快速自测及其他练习类型会将其清空为 `null`。
 
 ### 5.2 Node 工作词表
 
@@ -461,8 +460,9 @@ phase.display
 
 - `currentPhase.display`：由 Cursor 自动派生的基础显隐。
 - `displayOverride`：用户在当前相位临时切换单词遮罩或翻译。
-- `localReveal`：只影响当前单词，不写缓存策略本身。
+- `localReveal`：Esc 或鼠标 hover 临时显示当前单词的答案及全部元信息，不写缓存策略本身。
 - `effective.showSentences`：同时驱动例句 UI 与首句自动播放判断。
+- 是否允许 Esc/hover 提示只读取用户设置 `settingStore.allowWordTip`，Phase 不再重复控制该权限。
 
 不要重新在 v2 模板中按 `WordPracticeMode`/`WordPracticeType` 复制一套显隐判断。
 

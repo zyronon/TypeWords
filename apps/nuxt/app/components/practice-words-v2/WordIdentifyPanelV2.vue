@@ -20,7 +20,7 @@ const { t: $t } = useI18n()
 
 interface IProps {
   word: Word
-  question?: Question
+  question?: Question | null
   showWordResult: boolean
   /** 当前 Cursor 解析出的真实练习类型。 */
   practiceType: WordPracticeType

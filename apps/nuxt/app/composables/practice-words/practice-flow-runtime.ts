@@ -13,7 +13,6 @@ import {
   materializeStepTemplate,
   materializeWordAdvance,
 } from './practice-flow-config.ts'
-import { getUserFlow, loadCustomFlow } from './practice-flow-storage.ts'
 import type {
   FlowStartResult,
   PracticeFlowConfig,
@@ -22,13 +21,87 @@ import type {
   PracticePhaseDefinition,
   PracticeStepTemplateId,
   PracticeWordsSource,
-  PracticeWrongWordClearAction,
 } from './practice-flow-types.ts'
 
 const VALID_SOURCES = new Set(['taskNew', 'taskReview', 'current', 'wrongWords'])
 const VALID_TEMPLATE_IDS: PracticeStepTemplateId[] = ['followWrite', 'spell', 'listen', 'dictation', 'identify']
 const VALID_TEMPLATE_IDS_SET = new Set<string>(VALID_TEMPLATE_IDS)
 const VALID_END_ACTION_TYPES = new Set(['wrongWordClear', 'collectWrongWords', 'generateReport', 'navigate'])
+const FLOW_STORAGE_KEY = 'PracticeFlowV2'
+
+interface UserFlowEntry {
+  config: PracticeFlowConfig
+  name: string
+  createdAt: number
+  updatedAt: number
+}
+
+interface PracticeFlowStorageData {
+  activeId: string
+  flows: Record<string, UserFlowEntry>
+}
+
+function getFlowStorage(): PracticeFlowStorageData {
+  try {
+    const raw = localStorage.getItem(FLOW_STORAGE_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch {
+    // 存储损坏时回退为空配置。
+  }
+  return { activeId: '', flows: {} }
+}
+
+function setFlowStorage(data: PracticeFlowStorageData) {
+  localStorage.setItem(FLOW_STORAGE_KEY, JSON.stringify(data))
+}
+
+export function listUserFlows(): { id: string; name: string; updatedAt: number }[] {
+  const { flows } = getFlowStorage()
+  return Object.entries(flows)
+    .map(([id, entry]) => ({ id, name: entry.name, updatedAt: entry.updatedAt }))
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+}
+
+export function getUserFlow(flowId: string): PracticeFlowConfig | null {
+  return getFlowStorage().flows[flowId]?.config ?? null
+}
+
+export function getActiveCustomFlowId(): string {
+  return getFlowStorage().activeId
+}
+
+export function setActiveCustomFlowId(id: string) {
+  const data = getFlowStorage()
+  data.activeId = id
+  setFlowStorage(data)
+}
+
+export function saveUserFlow(id: string, config: PracticeFlowConfig, name: string) {
+  const data = getFlowStorage()
+  const now = Date.now()
+  const existing = data.flows[id]
+  data.flows[id] = {
+    config,
+    name,
+    createdAt: existing?.createdAt ?? now,
+    updatedAt: now,
+  }
+  if (!data.activeId) data.activeId = id
+  setFlowStorage(data)
+}
+
+export function deleteUserFlow(id: string) {
+  const data = getFlowStorage()
+  delete data.flows[id]
+  if (data.activeId === id) data.activeId = Object.keys(data.flows)[0] ?? ''
+  setFlowStorage(data)
+}
+
+function loadCustomFlow(): PracticeFlowConfig | null {
+  const { activeId, flows } = getFlowStorage()
+  if (!activeId) return null
+  return flows[activeId]?.config ?? null
+}
 
 /** 非法配置统一回退 System，避免坏 JSON 进入练习页。 */
 export function validateFlowConfig(config: PracticeFlowConfig | null | undefined): PracticeFlowConfig {

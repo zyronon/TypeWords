@@ -9,9 +9,9 @@
  * - runWrongWordRetry 接收来自 wrongWordClear action 的 templateId + wordAdvance 配置
  * - Cursor 与工作词表均属于 Navigator 实例，不再是模块级共享状态
  */
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import type { TaskWords, Word } from '@typewords/core/types/types.ts'
-import type { PracticeDataV2 } from './practice-word-cache-v2.ts'
+import type { PracticeDataV2 } from './practice-word-session.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { usePracticeStore } from '@typewords/core/stores/practice.ts'
 import { WordPracticeType } from '@typewords/core/types/enum.ts'
@@ -32,8 +32,8 @@ import type {
   PracticeFlowCursor,
   PracticePhaseDefinition,
   PracticeSessionSnapshot,
-  PracticeWrongWordClearAction,
   PracticeWordsSource,
+  PracticeWrongWordClearAction,
 } from './practice-flow-types.ts'
 
 export type NavigatorDeps = {
@@ -505,5 +505,3 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     restoreSessionFromLegacy,
   }
 }
-
-export type { TaskWords }

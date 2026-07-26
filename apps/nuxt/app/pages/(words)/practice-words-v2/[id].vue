@@ -36,12 +36,12 @@ import PracticeOnboardingHostV2 from '~/components/practice-words-v2/PracticeOnb
 import { AppEnv, DICT_LIST } from '@typewords/core/config/env.ts'
 import { addStat, setUserDictProp } from '@typewords/core/apis'
 import GroupList from '@typewords/core/components/word/GroupList.vue'
-import { usePracticeWordPersistenceV2 } from '~/composables/practice-words/usePracticeWordPersistenceV2.ts'
 import {
   getDefaultPracticeData,
   type PracticeDataV2,
   type PracticeWordCacheV2,
-} from '~/composables/practice-words/types.ts'
+  usePracticeWordPersistenceV2,
+} from '~/composables/practice-words/practice-word-session.ts'
 import { flushStatToStore } from '@typewords/core/composables/usePracticePersistence.ts'
 import { useDataSyncPersistence } from '@typewords/core/composables/useDataSyncPersistence.ts'
 import { IdentifyMethod, ShortcutKey, WordPracticeMode, WordPracticeType } from '@typewords/core/types/enum.ts'
@@ -92,14 +92,8 @@ const navigator = createPracticeWordNavigator({
   complete,
 })
 const { activeCursor, currentPhase, currentPracticeType, currentPhaseKey } = navigator
-const {
-  effective,
-  displayOverride,
-  toggleDictation,
-  toggleTranslate,
-  patchDisplayOverride,
-  restoreDisplayOverride,
-} = usePracticeDisplayPolicy(currentPhase, currentPhaseKey)
+const { effective, displayOverride, toggleDictation, toggleTranslate, patchDisplayOverride, restoreDisplayOverride } =
+  usePracticeDisplayPolicy(currentPhase, currentPhaseKey)
 
 function next(isTyping: boolean = true, ignoreLoop = false) {
   navigator.next(isTyping, ignoreLoop)
@@ -134,15 +128,21 @@ function applyPracticeCache(cache: PracticeWordCacheV2): boolean {
   return true
 }
 
-watch([() => data.words, () => data.index], () => {
-  updateQuestion()
-  handleResumeTimer()
-})
+watch(
+  [() => data.words, () => data.index, currentPracticeType, () => settingStore.identifyMethod],
+  () => {
+    updateQuestion()
+    handleResumeTimer()
+  }
+)
 
 function updateQuestion() {
-  if (data.words?.[data.index]) {
-    data.question = buildQuestion(data.words[data.index], allWords)
-  }
+  const word = data.words?.[data.index]
+  const shouldBuildQuestion =
+    currentPracticeType.value === WordPracticeType.Identify &&
+    settingStore.identifyMethod === IdentifyMethod.WordTest
+
+  data.question = shouldBuildQuestion && word ? buildQuestion(word, allWords) : null
 }
 
 provide('practiceData', data)
@@ -628,10 +628,9 @@ function onWordMarkPickComplete(result: WordMarkPickResult) {
     console.log('当前学完了，但还有错词')
     // 交给当前 Phase 的 onEnd → wrongWordClear action 进入标准错词清空子步骤。
     data.wrongWords = cloneDeep(result.unknown)
-
     data.allWrongWords = data.allWrongWords.concat(result.unknown.map(v => v.word.toLowerCase()))
     result.unknown.forEach(v => {
-      data.wrongTimesMap[v.word.toLowerCase()] = 1
+      data.wrongTimesMap[v.word.toLowerCase()] = Rating.Good
     })
   } else {
     data.wrongWords = []

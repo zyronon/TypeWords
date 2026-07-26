@@ -57,8 +57,10 @@ import { deleteDict } from '@typewords/core/apis/dict.ts'
 import { flushStatToStore } from '@typewords/core/composables/usePracticePersistence'
 import { useDataSyncPersistence } from '@typewords/core/composables/useDataSyncPersistence'
 import { WordPracticeMode } from '@typewords/core/types/enum.ts'
-import { usePracticeWordPersistenceV2 } from '~/composables/practice-words/usePracticeWordPersistenceV2.ts'
-import type { PracticeWordCacheV2 } from '~/composables/practice-words/practice-word-cache-v2.ts'
+import {
+  usePracticeWordPersistenceV2,
+  type PracticeWordCacheV2,
+} from '~/composables/practice-words/practice-word-session.ts'
 import dayjs from 'dayjs'
 
 const store = useBaseStore()

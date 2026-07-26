@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useBaseStore } from '@typewords/core/stores/base.ts'
-import { BaseButton, Loading, Progress } from '@typewords/base'
-import type { PracticeDataV2 } from '~/composables/practice-words/types.ts'
+import { BaseButton, Progress } from '@typewords/base'
+import type { PracticeDataV2 } from '~/composables/practice-words/practice-word-session.ts'
 import { ShortcutKey, WordPracticeMode } from '@typewords/core/types/enum.ts'
 import { emitter, EventKey, useEvents } from '@typewords/core/utils/eventBus.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'

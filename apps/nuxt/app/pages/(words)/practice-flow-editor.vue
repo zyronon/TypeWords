@@ -3,7 +3,6 @@ import { BackIcon, BaseButton, BaseIcon, BaseInput, BasePage, Dialog, Toast } fr
 import { APP_NAME } from '@typewords/core/config/env.ts'
 import { WordPracticeMode } from '@typewords/core/types/enum.ts'
 import type { PracticeFlowConfig } from '~/composables/practice-words/practice-flow-types.ts'
-import { validateFlowConfig } from '~/composables/practice-words/practice-flow-runtime.ts'
 import { getAllBuiltinFlowIds, getFlowConfig } from '~/composables/practice-words/practice-flow-config.ts'
 import {
   deleteUserFlow,
@@ -12,7 +11,8 @@ import {
   listUserFlows,
   saveUserFlow,
   setActiveCustomFlowId,
-} from '~/composables/practice-words/practice-flow-storage.ts'
+  validateFlowConfig,
+} from '~/composables/practice-words/practice-flow-runtime.ts'
 
 useHead({ title: APP_NAME + ' 流程编排' })
 

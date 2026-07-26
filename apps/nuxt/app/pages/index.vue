@@ -273,17 +273,17 @@ useHead({
           >
           <NuxtLink
             to="/articles"
-            class="text-[.88rem] font-medium text-[var(--hw-text-2)] no-underline hover:text-[var(--hw-text)] transition-colors duration-150"
+            class="font-medium text-[var(--hw-text-2)] no-underline hover:text-[var(--hw-text)] transition-colors duration-150"
             >{{ $t('nav_articles') }}</NuxtLink
           >
           <NuxtLink
             to="/doc"
-            class="text-[.88rem] font-medium text-[var(--hw-text-2)] no-underline hover:text-[var(--hw-text)] transition-colors duration-150"
+            class="font-medium text-[var(--hw-text-2)] no-underline hover:text-[var(--hw-text)] transition-colors duration-150"
             >{{ $t('nav_resources') }}</NuxtLink
           >
           <NuxtLink
             to="/help"
-            class="text-[.88rem] font-medium text-[var(--hw-text-2)] no-underline hover:text-[var(--hw-text)] transition-colors duration-150"
+            class="font-medium text-[var(--hw-text-2)] no-underline hover:text-[var(--hw-text)] transition-colors duration-150"
             >{{ $t('nav_help') }}</NuxtLink
           >
         </nav>
@@ -304,7 +304,7 @@ useHead({
                   v-for="loc in locales"
                   :key="loc.code"
                   @click="setLocale(loc.code)"
-                  class="px-3 py-1.5 rounded text-[.88rem] text-[var(--hw-text-2)] cursor-pointer whitespace-nowrap hover:bg-[var(--hw-bg)] hover:text-[var(--hw-text)] transition-colors duration-100"
+                  class="px-3 py-1.5 rounded text-[var(--hw-text-2)] cursor-pointer whitespace-nowrap hover:bg-[var(--hw-bg)] hover:text-[var(--hw-text)] transition-colors duration-100"
                 >
                   {{ loc.name }}
                 </div>

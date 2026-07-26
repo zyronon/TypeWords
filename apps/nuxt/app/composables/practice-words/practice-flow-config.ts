@@ -26,7 +26,6 @@ export function phaseDisplay(overrides: Partial<PracticeDisplayPolicy> = {}): Pr
     showEtymology: true,
     showRelWords: true,
     inputMode: 'typing',
-    allowWordTip: true,
     autoNextWord: true,
     ...overrides,
   }
@@ -49,7 +48,6 @@ const DISPLAY_LISTEN = phaseDisplay({
   showEtymology: false,
   showRelWords: false,
   inputMode: 'listen',
-  allowWordTip: false,
   autoNextWord: false,
 })
 const DISPLAY_DICTATION = phaseDisplay({

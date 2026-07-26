@@ -38,7 +38,7 @@ const { t: $t } = useI18n()
 
 interface IProps {
   word: Word
-  question?: Question
+  question?: Question | null
   /** 当前 Cursor 解析出的真实练习类型。 */
   practiceType: WordPracticeType
 }
@@ -125,7 +125,7 @@ function onVolumeIconClick(handle: boolean) {
 }
 
 function showWord() {
-  if (!settingStore.allowWordTip || !effective.value.allowWordTip) return
+  if (!settingStore.allowWordTip) return
 
   // 如果不是跟写模式，查看单词一律标记为错词
   if (props.practiceType !== WordPracticeType.FollowWrite || effective.value.showWordMask) {

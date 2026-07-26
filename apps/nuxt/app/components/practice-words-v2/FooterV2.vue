@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { usePracticeStore } from '@typewords/core/stores/practice.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
-import type { PracticeDataV2 } from '~/composables/practice-words/types.ts'
+import type { PracticeDataV2 } from '~/composables/practice-words/practice-word-session.ts'
 import { ShortcutKey } from '@typewords/core/types/enum.ts'
 import { getActiveFlowConfig } from '~/composables/practice-words/practice-flow-runtime.ts'
 import type { PracticeFlowCursor } from '~/composables/practice-words/practice-flow-types.ts'
@@ -10,7 +10,10 @@ import SettingDialog from '@typewords/core/components/setting/SettingDialog.vue'
 import VolumeSettingMiniDialog from '@typewords/core/components/word/VolumeSettingMiniDialog.vue'
 import StageProgress from '@typewords/core/components/StageProgress.vue'
 import { useI18n } from 'vue-i18n'
-import { useInjectedDisplayActions, useInjectedDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
+import {
+  useInjectedDisplayActions,
+  useInjectedDisplayPolicy,
+} from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
 import { computed, type Ref } from 'vue'
 
 const statStore = usePracticeStore()
@@ -74,18 +77,18 @@ const stages = computed(() => {
   const nodes = getActiveFlowConfig().nodes
   const cursor = activeCursor.value
   const { nodeIndex, stepIndex } = cursor
-  const currentProgress = practiceData.words.length
-    ? (practiceData.index / practiceData.words.length) * 100
-    : 0
+  const currentProgress = practiceData.words.length ? (practiceData.index / practiceData.words.length) * 100 : 0
 
   // 单 node 单 step → 单进度条
   if (nodes.length === 1 && nodes[0].steps.length === 1) {
-    return [{
-      name: '',
-      ratio: 100,
-      percentage: currentProgress,
-      active: true,
-    }]
+    return [
+      {
+        name: '',
+        ratio: 100,
+        percentage: currentProgress,
+        active: true,
+      },
+    ]
   }
 
   // 多 node 进度条；单 node 多 step 时 nodeRatio = 100，不切分
@@ -97,18 +100,19 @@ const stages = computed(() => {
     const nodeRatio = isSingleNode ? 100 : isCurrentNode ? 70 : 30
 
     // 子步骤（仅当前 node 展开）
-    const children = isCurrentNode && node.steps.length > 1
-      ? node.steps.map((step, si) => {
-          const isCurrentStep = si === stepIndex
-          const isCompletedStep = si < stepIndex
-          return {
-            name: step.label ?? step.templateId,
-            ratio: Math.floor(100 / node.steps.length),
-            percentage: isCompletedStep ? 100 : isCurrentStep ? currentProgress : 0,
-            active: isCurrentStep,
-          }
-        })
-      : undefined
+    const children =
+      isCurrentNode && node.steps.length > 1
+        ? node.steps.map((step, si) => {
+            const isCurrentStep = si === stepIndex
+            const isCompletedStep = si < stepIndex
+            return {
+              name: step.label ?? step.templateId,
+              ratio: Math.floor(100 / node.steps.length),
+              percentage: isCompletedStep ? 100 : isCurrentStep ? currentProgress : 0,
+              active: isCurrentStep,
+            }
+          })
+        : undefined
 
     return {
       name: node.label,
@@ -159,9 +163,7 @@ const showSkipStep = computed(() => {
                 <template v-if="statStore.timerPaused">
                   <IconFluentPause20Regular width="18" height="18" class="inline-block align-middle" />
                 </template>
-                <template v-else>
-                  {{ Math.floor(statStore.spend / 1000 / 60) }}{{ $t('minutes') }}
-                </template>
+                <template v-else> {{ Math.floor(statStore.spend / 1000 / 60) }}{{ $t('minutes') }} </template>
               </div>
             </Tooltip>
             <div class="line"></div>

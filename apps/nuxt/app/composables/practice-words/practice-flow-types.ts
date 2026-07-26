@@ -15,7 +15,6 @@ export interface PracticeDisplayPolicy {
   showEtymology: boolean
   showRelWords: boolean
   inputMode: 'typing' | 'dictation' | 'listen' | 'identify-self' | 'identify-test' | 'identify-quick'
-  allowWordTip: boolean
   autoNextWord: boolean
 }
 
@@ -147,11 +146,6 @@ export interface PracticeFlowCursor {
   }
   /** 当前正在执行的 onEnd action 索引；null 表示尚未进入 onEnd */
   endActionIndex: number | null
-}
-
-/** cursor 序列化 key，用于显隐策略的 Phase 标识。 */
-export function cursorKey(nodeIndex: number, stepIndex: number): string {
-  return `${nodeIndex}:${stepIndex}`
 }
 
 // ─── 阶段定义（cursor-native，不含 stage 字段） ──────────────────────────────────
