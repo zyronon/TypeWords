@@ -464,6 +464,18 @@ phase.display
 - `effective.showSentences`：同时驱动例句 UI 与首句自动播放判断。
 - 是否允许 Esc/hover 提示只读取用户设置 `settingStore.allowWordTip`，Phase 不再重复控制该权限。
 
+`PracticeDisplayPolicy` 只描述界面表现，不包含无消费者的 `source`，也不重复保存用户级
+`autoNextWord`。关键字段语义如下：
+
+- `showPhoneticMask: boolean`：为 `true` 时使用 `word-shadow` 遮住音标；临时揭示时变为 `false`。
+- `inputMode: 'display' | 'followWrite' | 'spell' | 'dictation'`：直接控制输入区布局和输入监听。
+- `display`：仅用于 Identify + WordTest；显示单词，不显示光标，也不接收键盘输入。
+- `followWrite`：跟写输入；Identify 自我评估同样保留可输入能力。
+- `spell`：拼写式输入，Spell 和 Listen 模板使用该模式。
+- `dictation`：默写专用的独立输入行。
+
+自动切换单词仍直接读取用户设置 `settingStore.autoNextWord`，不属于 Phase 显隐配置。
+
 不要重新在 v2 模板中按 `WordPracticeMode`/`WordPracticeType` 复制一套显隐判断。
 
 用户已确认：`settingStore.dictation/translate` 可以在例句等手写逻辑中作为临时状态使用；结构化流程的主显隐仍以 `currentPhase.display + displayOverride` 为准。

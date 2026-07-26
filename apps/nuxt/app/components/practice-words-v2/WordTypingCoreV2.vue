@@ -30,18 +30,17 @@ import { onMounted, onUnmounted, watch } from 'vue'
 import Space from '@typewords/core/components/article/Space.vue'
 import { _nextTick, last, normalizeWord } from '@typewords/core/utils'
 import { useOnKeyboardEventListener } from '@typewords/core/hooks/event.ts'
+import type { PracticeInputMode } from '~/composables/practice-words/practice-flow-types.ts'
 
 interface IProps {
   word: Word
   /** 当前 Cursor 解析出的真实练习类型。 */
   practiceType: WordPracticeType
+  /** 输入区的渲染及交互模式。 */
+  inputMode: PracticeInputMode
   showWordResult: boolean
   wrongTimes: number
   showFullWord: boolean
-  /** 当前是否为听写模式（仅用于字母遮罩） */
-  showWordMask: boolean
-  /** 当前阶段与用户设置共同决定是否自动切换单词 */
-  autoNextWord: boolean
   /** 当前单词字体大小 */
   wordFontSize: number
   /** 发音图标的 DOM ref，用于音量动画定位 */
@@ -60,8 +59,7 @@ const props = withDefaults(defineProps<IProps>(), {
   wrongTimes: 0,
   active: true,
   showFullWord: false,
-  showWordMask: false,
-  autoNextWord: true,
+  inputMode: 'followWrite',
   wordFontSize: 48,
   volumeIconRef: undefined,
   playWord: () => {},
@@ -96,6 +94,7 @@ let cursor = $ref({
 })
 
 const typingWordRef = $ref<HTMLDivElement>()
+const isWordMasked = $computed(() => ['spell', 'dictation'].includes(props.inputMode))
 
 function emitShowWordResult(val: boolean) {
   emit('update:showWordResult', val)
@@ -112,7 +111,7 @@ let displayWord = $computed(() => {
 const isWordRight = $computed(() => {
   let a = input
   let b = props.word.word
-  if (props.practiceType === WordPracticeType.Dictation) {
+  if (props.inputMode === 'dictation') {
     a = normalizeWord(a)
     b = normalizeWord(b)
   }
@@ -206,7 +205,9 @@ async function onTyping(e: KeyboardEvent) {
         clearJumpTimer()
         // 如果单词刚完成（300ms内），忽略空格键，避免同时按下最后一个字母和空格键时跳过
         // 手动模式使用独立的空格冷却时间设置
-        const spaceCooldown = props.autoNextWord ? settingStore.waitTimeForChangeWord : settingStore.spaceCooldownTime
+        const spaceCooldown = settingStore.autoNextWord
+          ? settingStore.waitTimeForChangeWord
+          : settingStore.spaceCooldownTime
         if (wordCompletedTime && Date.now() - wordCompletedTime < spaceCooldown) {
           return
         }
@@ -358,7 +359,7 @@ async function onTyping(e: KeyboardEvent) {
         emitShowWordResult(true)
       }
       if ([WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(props.practiceType)) {
-        if (props.autoNextWord) {
+        if (settingStore.autoNextWord) {
           completeTypeWord(true)
         }
       }
@@ -443,7 +444,7 @@ watch(
   () => resetTypingCore(WordPlayTrigger.NewWord)
 )
 
-watch([() => input, () => props.showFullWord, () => props.showWordMask], () => {
+watch([() => input, () => props.showFullWord, () => props.inputMode], () => {
   checkCursorPosition()
 })
 
@@ -498,10 +499,10 @@ defineExpose({
 <template>
   <div class="typing-core" ref="typingWordRef" :class="wrong ? 'is-wrong' : ''">
     <!-- 默写模式 -->
-    <div v-if="practiceType === WordPracticeType.Dictation">
+    <div v-if="inputMode === 'dictation'">
       <div
         class="letter text-align-center w-full inline-block"
-        v-opacity="!showWordMask || showWordResult || showFullWord"
+        v-opacity="showWordResult || showFullWord"
       >
         {{ word.word }}
       </div>
@@ -521,7 +522,7 @@ defineExpose({
     <template v-else>
       <span class="input" v-if="input">{{ input }}</span>
       <span class="wrong" v-if="wrong">{{ wrong }}</span>
-      <span class="letter" v-if="showWordMask && !showFullWord">
+      <span class="letter" v-if="isWordMasked && !showFullWord">
         {{
           displayWord
             .split('')

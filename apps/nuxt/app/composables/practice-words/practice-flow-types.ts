@@ -4,9 +4,7 @@ import { IdentifyMethod, WordPracticeMode, WordPracticeType } from '@typewords/c
 // ─── 显隐策略 ──────────────────────────────────────────────────────────────────
 
 export interface PracticeDisplayPolicy {
-  source: 'phase'
-  wordMask: 'none' | 'underscore' | 'hidden'
-  showPhonetic: boolean | 'shadow'
+  showPhoneticMask: boolean
   showWordTranslation: boolean
   showSentences: boolean
   showSentenceTranslation: boolean
@@ -14,19 +12,17 @@ export interface PracticeDisplayPolicy {
   showSynos: boolean
   showEtymology: boolean
   showRelWords: boolean
-  inputMode: 'typing' | 'dictation' | 'listen' | 'identify-self' | 'identify-test' | 'identify-quick'
-  autoNextWord: boolean
+  inputMode: PracticeInputMode
 }
 
+export type PracticeInputMode = 'display' | 'followWrite' | 'spell' | 'dictation'
+
 export type PracticeDisplayOverride = Partial<
-  Pick<PracticeDisplayPolicy, 'wordMask' | 'showWordTranslation' | 'showSentences' | 'showSentenceTranslation'>
+  Pick<PracticeDisplayPolicy, 'inputMode' | 'showWordTranslation' | 'showSentences' | 'showSentenceTranslation'>
 >
 
 export interface EffectiveDisplay extends PracticeDisplayPolicy {
-  showWordMask: boolean
   translate: boolean
-  showPhoneticShadow: boolean
-  isDictationInput: boolean
 }
 
 // ─── 流程模型 ──────────────────────────────────────────────────────────────────

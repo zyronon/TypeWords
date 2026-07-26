@@ -21,6 +21,7 @@ const settingStore = useSettingStore()
 const { t: $t } = useI18n()
 const displayActions = useInjectedDisplayActions()
 const effective = useInjectedDisplayPolicy()
+const isWordMasked = $computed(() => ['spell', 'dictation'].includes(effective.value.inputMode))
 
 const emit = defineEmits<{
   skipStep: []
@@ -201,7 +202,7 @@ const showSkipStep = computed(() => {
             @click="displayActions.toggleDictation()"
             :title="`${$t('toggle_dictation_mode')}(${settingStore.shortcutKeyMap[ShortcutKey.ToggleDictation]})`"
           >
-            <IconFluentEyeOff16Regular v-if="effective.showWordMask" />
+            <IconFluentEyeOff16Regular v-if="isWordMasked" />
             <IconFluentEye16Regular v-else />
           </BaseIcon>
 

@@ -33,23 +33,16 @@ function mergeDisplay(base: PracticeDisplayPolicy, override: PracticeDisplayOver
 function toEffective(policy: PracticeDisplayPolicy): EffectiveDisplay {
   return {
     ...policy,
-    showWordMask: policy.wordMask !== 'none',
     translate: policy.showWordTranslation,
-    showPhoneticShadow: policy.showPhonetic === 'shadow' || policy.wordMask !== 'none',
-    isDictationInput: policy.inputMode === 'dictation',
   }
 }
 
 /** TypeWordV2 的临时揭示层，只影响当前单词，不影响 Footer / WordList。 */
 function applyLocalReveal(display: EffectiveDisplay, localReveal: PracticeLocalReveal): EffectiveDisplay {
   if (!localReveal.showFullWord && !localReveal.showWordResult) return display
-
   return {
     ...display,
-    wordMask: 'none',
-    showWordMask: false,
-    showPhonetic: true,
-    showPhoneticShadow: false,
+    showPhoneticMask: false,
     showWordTranslation: true,
     showSentences: true,
     showSentenceTranslation: true,
@@ -67,8 +60,7 @@ function createEffectiveDisplay(
   displayOverride: Ref<PracticeDisplayOverride | null>
 ): ComputedRef<EffectiveDisplay> {
   return computed(() => {
-    const base = mergeDisplay(currentPhase.value.display, displayOverride.value)
-    return toEffective(base)
+    return toEffective(mergeDisplay(currentPhase.value.display, displayOverride.value))
   })
 }
 
@@ -101,17 +93,21 @@ export function usePracticeDisplayPolicy(
 
   /** 切换默写显隐：只写 displayOverride，不写 settingStore */
   function toggleDictation() {
-    const current = effective.value
-    const nextMask = current.wordMask === 'none' ? 'underscore' : 'none'
+    if (displayOverride.value?.inputMode !== undefined) {
+      const { inputMode, ...rest } = displayOverride.value
+      displayOverride.value = Object.keys(rest).length ? rest : null
+      return
+    }
+
+    const baseMode = currentPhase.value.display.inputMode
     patchDisplayOverride({
-      wordMask: nextMask,
+      inputMode: ['spell', 'dictation'].includes(baseMode) ? 'followWrite' : 'spell',
     })
   }
 
   /** 切换翻译显隐 */
   function toggleTranslate() {
-    const current = effective.value
-    const next = !current.translate
+    const next = !effective.value.translate
     patchDisplayOverride({
       showWordTranslation: next,
       showSentenceTranslation: next,

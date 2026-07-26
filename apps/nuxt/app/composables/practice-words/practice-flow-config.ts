@@ -15,9 +15,7 @@ export const GROUP_SIZE = 7
 
 export function phaseDisplay(overrides: Partial<PracticeDisplayPolicy> = {}): PracticeDisplayPolicy {
   return {
-    source: 'phase',
-    wordMask: 'none',
-    showPhonetic: true,
+    showPhoneticMask: false,
     showWordTranslation: true,
     showSentences: true,
     showSentenceTranslation: true,
@@ -25,21 +23,18 @@ export function phaseDisplay(overrides: Partial<PracticeDisplayPolicy> = {}): Pr
     showSynos: true,
     showEtymology: true,
     showRelWords: true,
-    inputMode: 'typing',
-    autoNextWord: true,
+    inputMode: 'followWrite',
     ...overrides,
   }
 }
 
 const DISPLAY_FOLLOW_WRITE = phaseDisplay()
 const DISPLAY_SPELL = phaseDisplay({
-  wordMask: 'underscore',
-  showPhonetic: 'shadow',
-  inputMode: 'typing',
+  showPhoneticMask: true,
+  inputMode: 'spell',
 })
 const DISPLAY_LISTEN = phaseDisplay({
-  wordMask: 'underscore',
-  showPhonetic: 'shadow',
+  showPhoneticMask: true,
   showWordTranslation: false,
   showSentences: false,
   showSentenceTranslation: false,
@@ -47,26 +42,23 @@ const DISPLAY_LISTEN = phaseDisplay({
   showSynos: false,
   showEtymology: false,
   showRelWords: false,
-  inputMode: 'listen',
-  autoNextWord: false,
+  inputMode: 'spell',
 })
 const DISPLAY_DICTATION = phaseDisplay({
-  wordMask: 'hidden',
-  showPhonetic: 'shadow',
+  showPhoneticMask: true,
   showSentences: false,
   showSentenceTranslation: false,
   inputMode: 'dictation',
 })
 const DISPLAY_IDENTIFY = phaseDisplay({
-  wordMask: 'none',
-  showPhonetic: false,
+  showPhoneticMask: false,
   showWordTranslation: false,
   showSentences: false,
   showSentenceTranslation: false,
   showPhrases: false,
   showEtymology: false,
   showRelWords: false,
-  inputMode: 'identify-self',
+  inputMode: 'followWrite',
 })
 
 export const STEP_TEMPLATE_META: Record<PracticeStepTemplateId, PracticeStepTemplate> = {

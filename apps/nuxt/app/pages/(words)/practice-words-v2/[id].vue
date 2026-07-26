@@ -94,6 +94,7 @@ const navigator = createPracticeWordNavigator({
 const { activeCursor, currentPhase, currentPracticeType, currentPhaseKey } = navigator
 const { effective, displayOverride, toggleDictation, toggleTranslate, patchDisplayOverride, restoreDisplayOverride } =
   usePracticeDisplayPolicy(currentPhase, currentPhaseKey)
+const isWordMasked = $computed(() => ['spell', 'dictation'].includes(effective.value.inputMode))
 
 function next(isTyping: boolean = true, ignoreLoop = false) {
   navigator.next(isTyping, ignoreLoop)
@@ -589,7 +590,7 @@ function randomWrite() {
   data.words = shuffle(data.words)
   data.index = 0
   patchDisplayOverride({
-    wordMask: 'underscore',
+    inputMode: 'spell',
     showSentences: false,
     showWordTranslation: true,
     showSentenceTranslation: true,
@@ -719,7 +720,7 @@ useEvents([
 
             <Tooltip :title="`下一个(${settingStore.shortcutKeyMap[ShortcutKey.Next]})`">
               <div class="relative center gap-2 cp float-right mr-3" @click="next(false)" v-if="nextWord">
-                <div class="word" :class="effective.showWordMask && 'word-shadow'">
+                <div class="word" :class="isWordMasked && 'word-shadow'">
                   {{ nextWord.word }}
                 </div>
                 <IconFluentArrowRight16Regular class="arrow" width="22" />
@@ -772,7 +773,7 @@ useEvents([
             v-if="data.words.length"
             :is-active="settingStore.showPanel"
             :static="false"
-            :show-word="!effective.showWordMask"
+            :show-word="!isWordMasked"
             :show-translate="effective.translate"
             :list="data.words"
             :activeIndex="data.index"

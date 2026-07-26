@@ -77,7 +77,16 @@ const localReveal = computed(() => ({
   showFullWord,
   showWordResult: showWordResult.value,
 }))
-const effective = useInjectedDisplayPolicy(localReveal)
+const injectedEffective = useInjectedDisplayPolicy(localReveal)
+const effective = computed(() => ({
+  ...injectedEffective.value,
+  inputMode:
+    props.practiceType === WordPracticeType.Identify &&
+    settingStore.identifyMethod === IdentifyMethod.WordTest
+      ? 'display' as const
+      : injectedEffective.value.inputMode,
+}))
+const isWordMasked = computed(() => ['spell', 'dictation'].includes(effective.value.inputMode))
 
 const { playWord } = usePracticeWordAudioV2({
   word: toRef(props, 'word'),
@@ -112,7 +121,7 @@ function onSentencePracticeWrong() {
 // ============ 单词操作 ============
 
 function checkIsWrong() {
-  if (effective.value.isDictationInput || effective.value.showWordMask) {
+  if (isWordMasked.value) {
     if (!showWordResult.value && !typingCoreRef?.right) {
       emit('wrong')
     }
@@ -128,7 +137,7 @@ function showWord() {
   if (!settingStore.allowWordTip) return
 
   // 如果不是跟写模式，查看单词一律标记为错词
-  if (props.practiceType !== WordPracticeType.FollowWrite || effective.value.showWordMask) {
+  if (props.practiceType !== WordPracticeType.FollowWrite || isWordMasked.value) {
     // 原版 typo() 无条件调用
     if (!showWordResult.value) {
       emit('wrong')
@@ -328,15 +337,15 @@ defineExpose({
       <div class="flex gap-1 mt-10 md:mt-30">
         <div
           class="phonetic"
-          :class="effective.showPhoneticShadow && 'word-shadow'"
-          v-if="effective.showPhonetic !== false && settingStore.soundType === 'uk' && word.phonetic0"
+          :class="effective.showPhoneticMask && 'word-shadow'"
+          v-if="settingStore.soundType === 'uk' && word.phonetic0"
         >
           / {{ word.phonetic0 }} /
         </div>
         <div
           class="phonetic"
-          :class="effective.showPhoneticShadow && 'word-shadow'"
-          v-if="effective.showPhonetic !== false && settingStore.soundType === 'us' && word.phonetic1"
+          :class="effective.showPhoneticMask && 'word-shadow'"
+          v-if="settingStore.soundType === 'us' && word.phonetic1"
         >
           / {{ word.phonetic1 }} /
         </div>
@@ -349,7 +358,7 @@ defineExpose({
 
       <!-- 单词键入区 -->
       <Tooltip
-        :title="effective.showWordMask ? `快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示单词` : ''"
+        :title="isWordMasked ? `快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示单词` : ''"
       >
         <div
           id="word"
@@ -360,14 +369,13 @@ defineExpose({
         >
           <WordTypingCoreV2
             ref="typingCoreRef"
-            :active="isTypingWord"
+            :active="isTypingWord && effective.inputMode !== 'display'"
             :word="word"
             :practiceType="practiceType"
+            :inputMode="effective.inputMode"
             v-model:showWordResult="showWordResult"
             v-model:wrongTimes="wrongTimesModel"
             :showFullWord="showFullWord"
-            :showWordMask="effective.showWordMask"
-            :autoNextWord="settingStore.autoNextWord && effective.autoNextWord"
             :wordFontSize="settingStore.fontSize.wordForeignFontSize"
             :volumeIconRef="volumeIconRef"
             :playWord="playWord"
@@ -411,6 +419,7 @@ defineExpose({
       <WordIdentifyPanelV2
         ref="identifyPanelRef"
         :word="word"
+        :revealWord="showFullWord || showWordResult"
         :question="question"
         :practiceType="practiceType"
         :showWordResult="showWordResult"
