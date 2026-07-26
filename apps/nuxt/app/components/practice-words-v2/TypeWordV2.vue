@@ -70,12 +70,12 @@ let isTypingWord = $ref(true)
 // ============ 共享状态 ============
 
 let showFullWord = $ref(false)
-const showWordResult = ref(false)
+let showWordResult = $ref(false)
 const wrongTimesModel = ref(0)
 
 const localReveal = computed(() => ({
   showFullWord,
-  showWordResult: showWordResult.value,
+  showWordResult,
 }))
 const effective = useInjectedDisplayPolicy(localReveal)
 
@@ -113,7 +113,7 @@ function onSentencePracticeWrong() {
 
 function checkIsWrong() {
   if (effective.value.isDictation) {
-    if (!showWordResult.value && !typingCoreRef?.right) {
+    if (!showWordResult && !typingCoreRef?.right) {
       emit('wrong')
     }
   }
@@ -130,7 +130,7 @@ function showWord() {
   // 如果不是跟写模式，查看单词一律标记为错词
   if (props.practiceType !== WordPracticeType.FollowWrite || effective.value.isDictation) {
     // 原版 typo() 无条件调用
-    if (!showWordResult.value) {
+    if (!showWordResult) {
       emit('wrong')
     }
   }
@@ -211,10 +211,7 @@ const isSimple = $computed(() => isWordSimple(props.word))
 // ============ 自测/WordTest 事件处理 ============
 
 const isWordTestVal = computed(() => {
-  return (
-    props.practiceType === WordPracticeType.Identify &&
-    settingStore.identifyMethod === IdentifyMethod.WordTest
-  )
+  return props.practiceType === WordPracticeType.Identify && settingStore.identifyMethod === IdentifyMethod.WordTest
 })
 
 function onIdentifyKnow() {
@@ -226,8 +223,8 @@ function onIdentifyKnow() {
     return
   }
   // SelfAssessment "认识"
-  if (!showWordResult.value) {
-    showWordResult.value = true
+  if (!showWordResult) {
+    showWordResult = true
     typingCoreRef?.revealWord?.(props.word.word)
     emit('know')
   }
@@ -247,8 +244,8 @@ function onIdentifyWrong() {
 }
 
 function onIdentifyUnknown() {
-  if (!showWordResult.value) {
-    showWordResult.value = true
+  if (!showWordResult) {
+    showWordResult = true
     emit('wrong')
     if (settingStore.wordSound) playWord(WordPlayTrigger.RevealUnknown)
   }
@@ -266,15 +263,13 @@ const notice = $computed(() => {
       ? '选择后/输入后，按空格键切换下一个'
       : props.practiceType === WordPracticeType.Listen
         ? '输入完成后按空格键切换下一个'
-        : showWordResult.value
+        : showWordResult
           ? typingCoreRef?.right
             ? '按空格键切换下一个'
             : $t('press_delete_reinput')
           : '按空格键完成输入'
   return {
-    show: [WordPracticeType.Listen, WordPracticeType.Identify, WordPracticeType.Dictation].includes(
-      props.practiceType
-    ),
+    show: [WordPracticeType.Listen, WordPracticeType.Identify, WordPracticeType.Dictation].includes(props.practiceType),
     text,
   }
 })

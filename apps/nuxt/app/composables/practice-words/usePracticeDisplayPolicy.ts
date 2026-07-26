@@ -11,6 +11,7 @@ import type {
   PracticeDisplayPolicy,
   PracticePhaseDefinition,
 } from './practice-flow-types.ts'
+import { phaseDisplay } from '~/composables/practice-words/practice-flow-config.ts'
 
 const PRACTICE_DISPLAY_POLICY_KEY: InjectionKey<ComputedRef<EffectiveDisplay>> = Symbol('practiceDisplayPolicy')
 const PRACTICE_DISPLAY_ACTIONS_KEY: InjectionKey<{
@@ -42,17 +43,10 @@ function toEffective(policy: PracticeDisplayPolicy): EffectiveDisplay {
 function applyLocalReveal(display: EffectiveDisplay, localReveal: PracticeLocalReveal): EffectiveDisplay {
   if (!localReveal.showFullWord && !localReveal.showWordResult) return display
   return {
-    ...display,
-    showPhoneticMask: false,
-    showWordTranslation: true,
-    showSentences: true,
-    showSentenceTranslation: true,
-    showPhrases: true,
-    showSynos: true,
-    showEtymology: true,
-    showRelWords: true,
+    ...phaseDisplay(),
     isDictation: false,
     isShowTranslate: true,
+    inputMode: display.inputMode,
   }
 }
 
@@ -62,9 +56,7 @@ export function usePracticeDisplayPolicy(
   phaseKey: ComputedRef<string>
 ) {
   const displayOverride = ref<PracticeDisplayOverride | null>(null)
-  const effective = computed(() =>
-    toEffective(mergeDisplay(currentPhase.value.display, displayOverride.value))
-  )
+  const effective = computed(() => toEffective(mergeDisplay(currentPhase.value.display, displayOverride.value)))
 
   watch(
     phaseKey,

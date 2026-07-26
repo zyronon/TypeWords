@@ -32,6 +32,8 @@ const DISPLAY_FOLLOW_WRITE = phaseDisplay()
 const DISPLAY_SPELL = phaseDisplay({
   showPhoneticMask: true,
   inputMode: 'spell',
+  showEtymology: false,
+  showRelWords: false,
 })
 const DISPLAY_LISTEN = phaseDisplay({
   showPhoneticMask: true,
@@ -46,16 +48,21 @@ const DISPLAY_LISTEN = phaseDisplay({
 })
 const DISPLAY_DICTATION = phaseDisplay({
   showPhoneticMask: true,
+  showWordTranslation: true,
   showSentences: false,
   showSentenceTranslation: false,
+  showPhrases: false,
+  showSynos: false,
+  showEtymology: false,
+  showRelWords: false,
   inputMode: 'dictation',
 })
 const DISPLAY_IDENTIFY = phaseDisplay({
-  showPhoneticMask: false,
   showWordTranslation: false,
   showSentences: false,
   showSentenceTranslation: false,
   showPhrases: false,
+  showSynos: false,
   showEtymology: false,
   showRelWords: false,
   inputMode: 'followWrite',

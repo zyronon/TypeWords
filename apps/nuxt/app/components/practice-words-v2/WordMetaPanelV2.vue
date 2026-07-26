@@ -117,49 +117,42 @@ defineExpose({ startPracticeSentence })
 <template>
   <div class="word-meta">
     <!-- 翻译区 -->
-    <div class="translate flex flex-col items-center gap-2 my-3" v-opacity="effective.showWordTranslation">
-      <TranslationList :word="word" :showFull="!effective.isDictation" />
-    </div>
+    <template v-if="word?.trans?.length">
+      <div class="translate flex flex-col items-center gap-2 my-3" v-opacity="effective.showWordTranslation">
+        <TranslationList :word="word" :showFull="!effective.isDictation" />
+      </div>
+    </template>
 
     <!-- 例句列表 -->
-    <template v-if="word?.sentences?.length && effective.showSentences">
-      <div class="line-white my-3"></div>
-      <div
-        class="sentence-typing"
-        :class="{
+    <template v-if="word?.sentences?.length">
+      <div v-opacity="effective.showSentences">
+        <div class="line-white my-3"></div>
+        <div class="sentence-typing" :class="{
           'sentence-highlight': highlightedSentenceIndex === j || activeSentenceIndex === j,
-        }"
-        v-for="(i, j) in word.sentences"
-        :key="i.c"
-      >
-        <TypingSentence
-          ref="sentences"
-          :key="i.c"
-          :index="j"
-          :sentence="i"
-          :isHighlightWordsMask="effective.isDictation"
-          :showSentenceTranslation="effective.showSentenceTranslation"
-          :active="activeSentenceIndex === j"
-          :highlight-words="[word.word]"
-          @complete="onCompleteSentence"
-          @play="playSentence(j, i.c)"
-        />
+        }" v-for="(i, j) in word.sentences" :key="i.c">
+          <TypingSentence ref="sentences" :key="i.c" :index="j" :sentence="i"
+            :isHighlightWordsMask="effective.isDictation" :showSentenceTranslation="effective.showSentenceTranslation"
+            :active="activeSentenceIndex === j" :highlight-words="[word.word]" @complete="onCompleteSentence"
+            @play="playSentence(j, i.c)" />
+        </div>
       </div>
     </template>
 
     <!-- 短语列表 -->
-    <template v-if="word?.phrases?.length && effective.showPhrases">
-      <div class="line-white my-3"></div>
-      <div class="flex">
-        <div class="label">{{ $t('phrases') }}</div>
-        <div class="flex flex-col">
-          <div class="flex items-center gap-4" v-for="(item, index) in word.phrases" :key="index">
-            <div class="flex gap-space items-center">
-              <ClickableEnglishText class="en" :text="item.c" :word="word.word" :dictation="effective.isDictation" />
-              <VolumeIcon :simple="false" title="发音" @click.stop="() => playTtsWithGuide(item.c)" />
-            </div>
-            <div class="anim" v-opacity="effective.showSentenceTranslation">
-              {{ item.cn }}
+    <template v-if="word?.phrases?.length">
+      <div v-opacity="effective.showPhrases">
+        <div class="line-white my-3"></div>
+        <div class="flex">
+          <div class="label">{{ $t('phrases') }}</div>
+          <div class="flex flex-col">
+            <div class="flex items-center gap-4" v-for="(item, index) in word.phrases" :key="index">
+              <div class="flex gap-space items-center">
+                <ClickableEnglishText class="en" :text="item.c" :word="word.word" :dictation="effective.isDictation" />
+                <VolumeIcon :simple="false" title="发音" @click.stop="() => playTtsWithGuide(item.c)" />
+              </div>
+              <div class="anim" v-opacity="effective.showSentenceTranslation">
+                {{ item.cn }}
+              </div>
             </div>
           </div>
         </div>
@@ -167,22 +160,24 @@ defineExpose({ startPracticeSentence })
     </template>
 
     <!-- 近义词 -->
-    <template v-if="effective.showSynos && word?.synos?.length">
-      <div class="line-white my-3"></div>
-      <div class="flex">
-        <div class="label">{{ $t('synonyms') }}</div>
-        <div class="flex flex-col gap-3">
-          <div class="flex" v-for="item in word.synos">
-            <div class="pos en">{{ item.pos }}</div>
-            <div>
-              <div class="anim" v-opacity="effective.showSentenceTranslation">
-                {{ item.cn }}
-              </div>
-              <div class="anim" v-opacity="!effective.isDictation">
-                <template v-for="(i, j) in item.ws" :key="j">
-                  <ClickableWord class="en" :word="i" />
-                  <span v-if="j !== item.ws.length - 1"> / </span>
-                </template>
+    <template v-if="word?.synos?.length">
+      <div v-opacity="effective.showSynos">
+        <div class="line-white my-3"></div>
+        <div class="flex">
+          <div class="label">{{ $t('synonyms') }}</div>
+          <div class="flex flex-col gap-3">
+            <div class="flex" v-for="item in word.synos">
+              <div class="pos en">{{ item.pos }}</div>
+              <div>
+                <div class="anim" v-opacity="effective.showSentenceTranslation">
+                  {{ item.cn }}
+                </div>
+                <div class="anim" v-opacity="!effective.isDictation">
+                  <template v-for="(i, j) in item.ws" :key="j">
+                    <ClickableWord class="en" :word="i" />
+                    <span v-if="j !== item.ws.length - 1"> / </span>
+                  </template>
+                </div>
               </div>
             </div>
           </div>
@@ -191,34 +186,40 @@ defineExpose({ startPracticeSentence })
     </template>
 
     <!-- 词源 / 关联词 -->
-    <template class="anim" v-if="settingStore.showEtymologyAndRelWords">
-      <template v-if="word?.etymology?.length && effective.showEtymology">
-        <div class="line-white my-3"></div>
-        <div class="flex">
-          <div class="label">{{ $t('etymology') }}</div>
-          <div class="">
-            <div class="mb-2" v-for="item in word.etymology">
-              <div class="">{{ item.t }}</div>
-              <div class="">{{ item.d }}</div>
+    <template v-if="settingStore.showEtymologyAndRelWords">
+      <template v-if="word?.etymology?.length">
+        <div v-opacity="effective.showEtymology">
+          <div class="line-white my-3"></div>
+          <div class="flex">
+            <div class="label">{{ $t('etymology') }}</div>
+            <div class="">
+              <div class="mb-2" v-for="item in word.etymology">
+                <div class="">{{ item.t }}</div>
+                <div class="">{{ item.d }}</div>
+              </div>
             </div>
           </div>
         </div>
+
       </template>
 
-      <template v-if="word?.relWords?.root && effective.showRelWords">
-        <div class="line-white my-3"></div>
-        <div class="flex">
-          <div class="label">{{ $t('related_words') }}</div>
-          <div class="flex flex-col gap-3">
-            <div v-if="word.relWords.root" class=" ">
-              {{ $t('word_root') }}：<ClickableWord class="en" :word="word.relWords.root" />
-            </div>
-            <div class="flex" v-for="item in word.relWords.rels">
-              <div class="pos">{{ item.pos }}</div>
-              <div>
-                <div class="flex items-center gap-4" v-for="itemj in item.words">
-                  <ClickableWord class="en" :word="itemj.c" />
-                  <div class="cn">{{ itemj.cn }}</div>
+      <template v-if="word?.relWords?.root">
+        <div v-opacity="effective.showRelWords">
+          <div class="line-white my-3"></div>
+          <div class="flex">
+            <div class="label">{{ $t('related_words') }}</div>
+            <div class="flex flex-col gap-3">
+              <div v-if="word.relWords.root" class=" ">
+                {{ $t('word_root') }}：
+                <ClickableWord class="en" :word="word.relWords.root" />
+              </div>
+              <div class="flex" v-for="item in word.relWords.rels">
+                <div class="pos">{{ item.pos }}</div>
+                <div>
+                  <div class="flex items-center gap-4" v-for="itemj in item.words">
+                    <ClickableWord class="en" :word="itemj.c" />
+                    <div class="cn">{{ itemj.cn }}</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -232,14 +233,14 @@ defineExpose({ startPracticeSentence })
 <style scoped lang="scss">
 .word-meta {
   width: 100%;
+
   .phonetic {
     color: var(--color-font-1);
     font-family: var(--word-font-family);
     font-size: 1.2rem;
   }
 
-  .translate {
-  }
+  .translate {}
 
   .label {
     width: 6rem;
@@ -252,6 +253,7 @@ defineExpose({ startPracticeSentence })
     background: transparent;
     transition: all 0.3s;
   }
+
   .sentence-typing {
     @apply rounded-lg px-3 py-1 -mx-3;
     background: transparent;
@@ -270,6 +272,7 @@ defineExpose({ startPracticeSentence })
     .label {
       @apply w-unset mr-2;
     }
+
     :deep(.pos) {
       @apply w-unset mr-2 min-w-unset;
     }
