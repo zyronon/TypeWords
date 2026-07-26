@@ -469,6 +469,8 @@ phase.display
 
 - `showPhoneticMask: boolean`：为 `true` 时使用 `word-shadow` 遮住音标；临时揭示时变为 `false`。
 - `inputMode: 'display' | 'followWrite' | 'spell' | 'dictation'`：直接控制输入区布局和输入监听。
+- `isDictation`：仅存在于 `EffectiveDisplay`，由 `inputMode === 'spell' || inputMode === 'dictation'` 派生。
+- `isShowTranslate`：仅存在于 `EffectiveDisplay`，由最终的 `showWordTranslation` 派生。
 - `display`：仅用于 Identify + WordTest；显示单词，不显示光标，也不接收键盘输入。
 - `followWrite`：跟写输入；Identify 自我评估同样保留可输入能力。
 - `spell`：拼写式输入，Spell 和 Listen 模板使用该模式。

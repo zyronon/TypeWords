@@ -29,16 +29,11 @@ const { t: $t } = useI18n()
 interface IProps {
   word: Word
   effective: EffectiveDisplay
-  revealWord?: boolean
 }
 
 const props = withDefaults(defineProps<IProps>(), {
   word: () => getDefaultWord(),
-  revealWord: false,
 })
-const isWordMasked = $computed(
-  () => ['spell', 'dictation'].includes(props.effective.inputMode) && !props.revealWord
-)
 
 const emit = defineEmits<{
   complete: []
@@ -123,7 +118,7 @@ defineExpose({ startPracticeSentence })
   <div class="word-meta">
     <!-- 翻译区 -->
     <div class="translate flex flex-col items-center gap-2 my-3" v-opacity="effective.showWordTranslation">
-      <TranslationList :word="word" :showFull="!isWordMasked" />
+      <TranslationList :word="word" :showFull="!effective.isDictation" />
     </div>
 
     <!-- 例句列表 -->
@@ -142,7 +137,7 @@ defineExpose({ startPracticeSentence })
           :key="i.c"
           :index="j"
           :sentence="i"
-          :isHighlightWordsMask="isWordMasked"
+          :isHighlightWordsMask="effective.isDictation"
           :showSentenceTranslation="effective.showSentenceTranslation"
           :active="activeSentenceIndex === j"
           :highlight-words="[word.word]"
@@ -160,7 +155,7 @@ defineExpose({ startPracticeSentence })
         <div class="flex flex-col">
           <div class="flex items-center gap-4" v-for="(item, index) in word.phrases" :key="index">
             <div class="flex gap-space items-center">
-              <ClickableEnglishText class="en" :text="item.c" :word="word.word" :dictation="isWordMasked" />
+              <ClickableEnglishText class="en" :text="item.c" :word="word.word" :dictation="effective.isDictation" />
               <VolumeIcon :simple="false" title="发音" @click.stop="() => playTtsWithGuide(item.c)" />
             </div>
             <div class="anim" v-opacity="effective.showSentenceTranslation">
@@ -183,7 +178,7 @@ defineExpose({ startPracticeSentence })
               <div class="anim" v-opacity="effective.showSentenceTranslation">
                 {{ item.cn }}
               </div>
-              <div class="anim" v-opacity="!isWordMasked">
+              <div class="anim" v-opacity="!effective.isDictation">
                 <template v-for="(i, j) in item.ws" :key="j">
                   <ClickableWord class="en" :word="i" />
                   <span v-if="j !== item.ws.length - 1"> / </span>

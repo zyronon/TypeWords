@@ -5,6 +5,8 @@
  * 不再读 settingStore.dictation / translate（该二字段仍保留在 core 供 v1 使用）。
  */
 import { computed, inject, provide, ref, watch, type ComputedRef, type InjectionKey, type Ref } from 'vue'
+import { IdentifyMethod, WordPracticeType } from '@typewords/core/types/enum.ts'
+import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import type {
   EffectiveDisplay,
   PracticeDisplayOverride,
@@ -33,7 +35,8 @@ function mergeDisplay(base: PracticeDisplayPolicy, override: PracticeDisplayOver
 function toEffective(policy: PracticeDisplayPolicy): EffectiveDisplay {
   return {
     ...policy,
-    translate: policy.showWordTranslation,
+    isDictation: ['spell', 'dictation'].includes(policy.inputMode),
+    isShowTranslate: policy.showWordTranslation,
   }
 }
 
@@ -50,18 +53,9 @@ function applyLocalReveal(display: EffectiveDisplay, localReveal: PracticeLocalR
     showSynos: true,
     showEtymology: true,
     showRelWords: true,
-    translate: true,
+    isDictation: false,
+    isShowTranslate: true,
   }
-}
-
-/** 构造页面级 effective，不包含 TypeWordV2 的局部揭示状态。 */
-function createEffectiveDisplay(
-  currentPhase: ComputedRef<PracticePhaseDefinition>,
-  displayOverride: Ref<PracticeDisplayOverride | null>
-): ComputedRef<EffectiveDisplay> {
-  return computed(() => {
-    return toEffective(mergeDisplay(currentPhase.value.display, displayOverride.value))
-  })
 }
 
 /** 页面级 composable：provide effective + Footer Toggle 方法 */
@@ -69,8 +63,18 @@ export function usePracticeDisplayPolicy(
   currentPhase: ComputedRef<PracticePhaseDefinition>,
   phaseKey: ComputedRef<string>
 ) {
+  const settingStore = useSettingStore()
   const displayOverride = ref<PracticeDisplayOverride | null>(null)
-  const effective = createEffectiveDisplay(currentPhase, displayOverride)
+  const effective = computed(() => {
+    const display = mergeDisplay(currentPhase.value.display, displayOverride.value)
+    if (
+      currentPhase.value.practiceType === WordPracticeType.Identify &&
+      settingStore.identifyMethod === IdentifyMethod.WordTest
+    ) {
+      return toEffective({ ...display, inputMode: 'display' })
+    }
+    return toEffective(display)
+  })
 
   watch(
     phaseKey,
@@ -107,7 +111,7 @@ export function usePracticeDisplayPolicy(
 
   /** 切换翻译显隐 */
   function toggleTranslate() {
-    const next = !effective.value.translate
+    const next = !effective.value.isShowTranslate
     patchDisplayOverride({
       showWordTranslation: next,
       showSentenceTranslation: next,

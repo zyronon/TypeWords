@@ -38,6 +38,8 @@ interface IProps {
   practiceType: WordPracticeType
   /** 输入区的渲染及交互模式。 */
   inputMode: PracticeInputMode
+  /** 当前单词及元信息是否处于遮罩状态。 */
+  isDictation: boolean
   showWordResult: boolean
   wrongTimes: number
   showFullWord: boolean
@@ -60,6 +62,7 @@ const props = withDefaults(defineProps<IProps>(), {
   active: true,
   showFullWord: false,
   inputMode: 'followWrite',
+  isDictation: false,
   wordFontSize: 48,
   volumeIconRef: undefined,
   playWord: () => {},
@@ -94,7 +97,6 @@ let cursor = $ref({
 })
 
 const typingWordRef = $ref<HTMLDivElement>()
-const isWordMasked = $computed(() => ['spell', 'dictation'].includes(props.inputMode))
 
 function emitShowWordResult(val: boolean) {
   emit('update:showWordResult', val)
@@ -502,7 +504,7 @@ defineExpose({
     <div v-if="inputMode === 'dictation'">
       <div
         class="letter text-align-center w-full inline-block"
-        v-opacity="showWordResult || showFullWord"
+        v-opacity="!isDictation || showWordResult || showFullWord"
       >
         {{ word.word }}
       </div>
@@ -522,7 +524,7 @@ defineExpose({
     <template v-else>
       <span class="input" v-if="input">{{ input }}</span>
       <span class="wrong" v-if="wrong">{{ wrong }}</span>
-      <span class="letter" v-if="isWordMasked && !showFullWord">
+      <span class="letter" v-if="isDictation && !showFullWord">
         {{
           displayWord
             .split('')

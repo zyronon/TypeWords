@@ -22,7 +22,8 @@ export type PracticeDisplayOverride = Partial<
 >
 
 export interface EffectiveDisplay extends PracticeDisplayPolicy {
-  translate: boolean
+  isDictation: boolean
+  isShowTranslate: boolean
 }
 
 // ─── 流程模型 ──────────────────────────────────────────────────────────────────

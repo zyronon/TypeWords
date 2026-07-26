@@ -77,16 +77,7 @@ const localReveal = computed(() => ({
   showFullWord,
   showWordResult: showWordResult.value,
 }))
-const injectedEffective = useInjectedDisplayPolicy(localReveal)
-const effective = computed(() => ({
-  ...injectedEffective.value,
-  inputMode:
-    props.practiceType === WordPracticeType.Identify &&
-    settingStore.identifyMethod === IdentifyMethod.WordTest
-      ? 'display' as const
-      : injectedEffective.value.inputMode,
-}))
-const isWordMasked = computed(() => ['spell', 'dictation'].includes(effective.value.inputMode))
+const effective = useInjectedDisplayPolicy(localReveal)
 
 const { playWord } = usePracticeWordAudioV2({
   word: toRef(props, 'word'),
@@ -121,7 +112,7 @@ function onSentencePracticeWrong() {
 // ============ 单词操作 ============
 
 function checkIsWrong() {
-  if (isWordMasked.value) {
+  if (effective.value.isDictation) {
     if (!showWordResult.value && !typingCoreRef?.right) {
       emit('wrong')
     }
@@ -137,7 +128,7 @@ function showWord() {
   if (!settingStore.allowWordTip) return
 
   // 如果不是跟写模式，查看单词一律标记为错词
-  if (props.practiceType !== WordPracticeType.FollowWrite || isWordMasked.value) {
+  if (props.practiceType !== WordPracticeType.FollowWrite || effective.value.isDictation) {
     // 原版 typo() 无条件调用
     if (!showWordResult.value) {
       emit('wrong')
@@ -358,7 +349,7 @@ defineExpose({
 
       <!-- 单词键入区 -->
       <Tooltip
-        :title="isWordMasked ? `快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示单词` : ''"
+        :title="effective.isDictation ? `快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示单词` : ''"
       >
         <div
           id="word"
@@ -373,6 +364,7 @@ defineExpose({
             :word="word"
             :practiceType="practiceType"
             :inputMode="effective.inputMode"
+            :isDictation="effective.isDictation"
             v-model:showWordResult="showWordResult"
             v-model:wrongTimes="wrongTimesModel"
             :showFullWord="showFullWord"
@@ -419,7 +411,6 @@ defineExpose({
       <WordIdentifyPanelV2
         ref="identifyPanelRef"
         :word="word"
-        :revealWord="showFullWord || showWordResult"
         :question="question"
         :practiceType="practiceType"
         :showWordResult="showWordResult"
