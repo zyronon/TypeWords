@@ -360,7 +360,7 @@ defineExpose({
         >
           <WordTypingCoreV2
             ref="typingCoreRef"
-            :active="isTypingWord && effective.inputMode !== 'display'"
+            :active="isTypingWord && !isWordTestVal"
             :word="word"
             :practiceType="practiceType"
             :inputMode="effective.inputMode"

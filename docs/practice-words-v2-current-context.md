@@ -468,10 +468,11 @@ phase.display
 `autoNextWord`。关键字段语义如下：
 
 - `showPhoneticMask: boolean`：为 `true` 时使用 `word-shadow` 遮住音标；临时揭示时变为 `false`。
-- `inputMode: 'display' | 'followWrite' | 'spell' | 'dictation'`：直接控制输入区布局和输入监听。
+- `inputMode: 'followWrite' | 'spell' | 'dictation'`：只控制输入核心的渲染和键入方式。
 - `isDictation`：仅存在于 `EffectiveDisplay`，由 `inputMode === 'spell' || inputMode === 'dictation'` 派生。
 - `isShowTranslate`：仅存在于 `EffectiveDisplay`，由最终的 `showWordTranslation` 派生。
-- `display`：仅用于 Identify + WordTest；显示单词，不显示光标，也不接收键盘输入。
+- Identify 模板固定使用 `followWrite`；当全局自测类型为 WordTest 时，`TypeWordV2` 通过
+  `active=false` 停用 `WordTypingCoreV2` 的光标和键盘监听，不再伪造一种输入模式。
 - `followWrite`：跟写输入；Identify 自我评估同样保留可输入能力。
 - `spell`：拼写式输入，Spell 和 Listen 模板使用该模式。
 - `dictation`：默写专用的独立输入行。

@@ -15,7 +15,8 @@ export interface PracticeDisplayPolicy {
   inputMode: PracticeInputMode
 }
 
-export type PracticeInputMode = 'display' | 'followWrite' | 'spell' | 'dictation'
+/** 输入核心的渲染与键入方式；是否激活输入由组件的 active 状态单独控制。 */
+export type PracticeInputMode = 'followWrite' | 'spell' | 'dictation'
 
 export type PracticeDisplayOverride = Partial<
   Pick<PracticeDisplayPolicy, 'inputMode' | 'showWordTranslation' | 'showSentences' | 'showSentenceTranslation'>

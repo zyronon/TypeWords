@@ -5,8 +5,6 @@
  * 不再读 settingStore.dictation / translate（该二字段仍保留在 core 供 v1 使用）。
  */
 import { computed, inject, provide, ref, watch, type ComputedRef, type InjectionKey, type Ref } from 'vue'
-import { IdentifyMethod, WordPracticeType } from '@typewords/core/types/enum.ts'
-import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import type {
   EffectiveDisplay,
   PracticeDisplayOverride,
@@ -63,18 +61,10 @@ export function usePracticeDisplayPolicy(
   currentPhase: ComputedRef<PracticePhaseDefinition>,
   phaseKey: ComputedRef<string>
 ) {
-  const settingStore = useSettingStore()
   const displayOverride = ref<PracticeDisplayOverride | null>(null)
-  const effective = computed(() => {
-    const display = mergeDisplay(currentPhase.value.display, displayOverride.value)
-    if (
-      currentPhase.value.practiceType === WordPracticeType.Identify &&
-      settingStore.identifyMethod === IdentifyMethod.WordTest
-    ) {
-      return toEffective({ ...display, inputMode: 'display' })
-    }
-    return toEffective(display)
-  })
+  const effective = computed(() =>
+    toEffective(mergeDisplay(currentPhase.value.display, displayOverride.value))
+  )
 
   watch(
     phaseKey,
