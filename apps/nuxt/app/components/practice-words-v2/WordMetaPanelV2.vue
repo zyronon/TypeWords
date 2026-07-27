@@ -127,13 +127,26 @@ defineExpose({ startPracticeSentence })
     <template v-if="word?.sentences?.length">
       <div v-opacity="effective.showSentences">
         <div class="line-white my-3"></div>
-        <div class="sentence-typing" :class="{
-          'sentence-highlight': highlightedSentenceIndex === j || activeSentenceIndex === j,
-        }" v-for="(i, j) in word.sentences" :key="i.c">
-          <TypingSentence ref="sentences" :key="i.c" :index="j" :sentence="i"
-            :isHighlightWordsMask="effective.isDictation" :showSentenceTranslation="effective.showSentenceTranslation"
-            :active="activeSentenceIndex === j" :highlight-words="[word.word]" @complete="onCompleteSentence"
-            @play="playSentence(j, i.c)" />
+        <div
+          class="sentence-typing"
+          :class="{
+            'sentence-highlight': highlightedSentenceIndex === j || activeSentenceIndex === j,
+          }"
+          v-for="(i, j) in word.sentences"
+          :key="i.c"
+        >
+          <TypingSentence
+            ref="sentences"
+            :key="i.c"
+            :index="j"
+            :sentence="i"
+            :isHighlightWordsMask="effective.isDictation"
+            :showSentenceTranslation="effective.showSentenceTranslation"
+            :active="activeSentenceIndex === j"
+            :highlight-words="[word.word]"
+            @complete="onCompleteSentence"
+            @play="playSentence(j, i.c)"
+          />
         </div>
       </div>
     </template>
@@ -188,7 +201,7 @@ defineExpose({ startPracticeSentence })
     <!-- 词源 / 关联词 -->
     <template v-if="settingStore.showEtymologyAndRelWords">
       <template v-if="word?.etymology?.length">
-        <div v-opacity="effective.showEtymology">
+        <div v-opacity="effective.showEtymology && !effective.isDictation">
           <div class="line-white my-3"></div>
           <div class="flex">
             <div class="label">{{ $t('etymology') }}</div>
@@ -200,11 +213,10 @@ defineExpose({ startPracticeSentence })
             </div>
           </div>
         </div>
-
       </template>
 
       <template v-if="word?.relWords?.root">
-        <div v-opacity="effective.showRelWords">
+        <div v-opacity="effective.showRelWords && !effective.isDictation">
           <div class="line-white my-3"></div>
           <div class="flex">
             <div class="label">{{ $t('related_words') }}</div>
@@ -240,7 +252,8 @@ defineExpose({ startPracticeSentence })
     font-size: 1.2rem;
   }
 
-  .translate {}
+  .translate {
+  }
 
   .label {
     width: 6rem;

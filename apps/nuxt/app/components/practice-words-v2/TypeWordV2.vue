@@ -323,14 +323,14 @@ defineExpose({
       <div class="flex gap-1 mt-10 md:mt-30">
         <div
           class="phonetic"
-          :class="effective.showPhoneticMask && 'word-shadow'"
+          :class="effective.isDictation && 'word-shadow'"
           v-if="settingStore.soundType === 'uk' && word.phonetic0"
         >
           / {{ word.phonetic0 }} /
         </div>
         <div
           class="phonetic"
-          :class="effective.showPhoneticMask && 'word-shadow'"
+          :class="effective.isDictation && 'word-shadow'"
           v-if="settingStore.soundType === 'us' && word.phonetic1"
         >
           / {{ word.phonetic1 }} /

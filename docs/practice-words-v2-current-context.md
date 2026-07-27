@@ -467,9 +467,8 @@ phase.display
 `PracticeDisplayPolicy` 只描述界面表现，不包含无消费者的 `source`，也不重复保存用户级
 `autoNextWord`。关键字段语义如下：
 
-- `showPhoneticMask: boolean`：为 `true` 时使用 `word-shadow` 遮住音标；临时揭示时变为 `false`。
 - `inputMode: 'followWrite' | 'spell' | 'dictation'`：只控制输入核心的渲染和键入方式。
-- `isDictation`：仅存在于 `EffectiveDisplay`，由 `inputMode === 'spell' || inputMode === 'dictation'` 派生。
+- `isDictation`：仅存在于 `EffectiveDisplay`，由 `inputMode === 'spell' || inputMode === 'dictation'` 派生；单词、音标和元信息统一使用它控制遮罩，临时揭示时变为 `false`。
 - `isShowTranslate`：仅存在于 `EffectiveDisplay`，由最终的 `showWordTranslation` 派生。
 - Identify 模板固定使用 `followWrite`；当全局自测类型为 WordTest 时，`TypeWordV2` 通过
   `active=false` 停用 `WordTypingCoreV2` 的光标和键盘监听，不再伪造一种输入模式。

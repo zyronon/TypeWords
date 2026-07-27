@@ -4,7 +4,6 @@ import { IdentifyMethod, WordPracticeMode, WordPracticeType } from '@typewords/c
 // ─── 显隐策略 ──────────────────────────────────────────────────────────────────
 
 export interface PracticeDisplayPolicy {
-  showPhoneticMask: boolean
   showWordTranslation: boolean
   showSentences: boolean
   showSentenceTranslation: boolean

@@ -15,7 +15,6 @@ export const GROUP_SIZE = 7
 
 export function phaseDisplay(overrides: Partial<PracticeDisplayPolicy> = {}): PracticeDisplayPolicy {
   return {
-    showPhoneticMask: false,
     showWordTranslation: true,
     showSentences: true,
     showSentenceTranslation: true,
@@ -30,13 +29,11 @@ export function phaseDisplay(overrides: Partial<PracticeDisplayPolicy> = {}): Pr
 
 const DISPLAY_FOLLOW_WRITE = phaseDisplay()
 const DISPLAY_SPELL = phaseDisplay({
-  showPhoneticMask: true,
   inputMode: 'spell',
   showEtymology: false,
   showRelWords: false,
 })
 const DISPLAY_LISTEN = phaseDisplay({
-  showPhoneticMask: true,
   showWordTranslation: false,
   showSentences: false,
   showSentenceTranslation: false,
@@ -47,7 +44,6 @@ const DISPLAY_LISTEN = phaseDisplay({
   inputMode: 'spell',
 })
 const DISPLAY_DICTATION = phaseDisplay({
-  showPhoneticMask: true,
   showWordTranslation: true,
   showSentences: false,
   showSentenceTranslation: false,
