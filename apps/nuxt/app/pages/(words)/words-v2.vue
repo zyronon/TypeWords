@@ -62,6 +62,10 @@ import {
   type PracticeWordCacheV2,
 } from '~/composables/practice-words/practice-word-session.ts'
 import dayjs from 'dayjs'
+import {
+  getActiveCustomFlowId,
+  getUserFlow,
+} from '~/composables/practice-words/practice-flow-runtime.ts'
 
 const store = useBaseStore()
 const settingStore = useSettingStore()
@@ -196,7 +200,15 @@ async function init() {
   loading = false
 }
 
-async function startPractice(practiceMode: WordPracticeMode, resetCache: boolean = false): void {
+async function startPractice(practiceMode: WordPracticeMode, resetCache: boolean = false): Promise<void> {
+  if (practiceMode === WordPracticeMode.Custom) {
+    const activeCustomFlowId = getActiveCustomFlowId()
+    if (!activeCustomFlowId || !getUserFlow(activeCustomFlowId)) {
+      Toast.warning('请先创建并激活一个自定义流程')
+      router.push('/practice-flow-editor')
+      return
+    }
+  }
   if (resetCache) await resetCacheData()
 
   if (shouldShowDialogPracticeMode.includes(practiceMode) && !isSaveData) {
@@ -236,11 +248,8 @@ function freePractice() {
 
 function systemPractice() {
   const currentMode = settingStore.wordPracticeMode
-  const isFreeOrCustom = currentMode === WordPracticeMode.Free || currentMode === WordPracticeMode.Custom
-  startPractice(
-    isFreeOrCustom ? WordPracticeMode.System : currentMode,
-    isFreeOrCustom
-  )
+  const isFree = currentMode === WordPracticeMode.Free
+  startPractice(isFree ? WordPracticeMode.System : currentMode, isFree)
 }
 
 let editingWordPracticeMode = $ref(0)

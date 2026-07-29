@@ -3,8 +3,7 @@ import { usePracticeStore } from '@typewords/core/stores/practice.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import type { PracticeDataV2 } from '~/composables/practice-words/practice-word-session.ts'
 import { ShortcutKey } from '@typewords/core/types/enum.ts'
-import { getActiveFlowConfig } from '~/composables/practice-words/practice-flow-runtime.ts'
-import type { PracticeFlowCursor } from '~/composables/practice-words/practice-flow-types.ts'
+import type { PracticeFlowConfig, PracticeFlowCursor } from '~/composables/practice-words/practice-flow-types.ts'
 import { BaseIcon, Tooltip } from '@typewords/base'
 import SettingDialog from '@typewords/core/components/setting/SettingDialog.vue'
 import VolumeSettingMiniDialog from '@typewords/core/components/word/VolumeSettingMiniDialog.vue'
@@ -28,6 +27,7 @@ const emit = defineEmits<{
 
 let practiceData = inject<PracticeDataV2>('practiceData')
 const activeCursor = inject<Ref<PracticeFlowCursor>>('practiceFlowCursor')!
+const activeFlowConfig = inject<Ref<PracticeFlowConfig>>('practiceFlowConfig')!
 const bumpPracticeTimerActivity = inject<(() => void) | undefined>('bumpPracticeTimerActivity', undefined)
 
 function onTimerRowClick() {
@@ -50,7 +50,7 @@ function format(val: number, suffix: string = '', check: number = -1) {
  */
 const status = computed(() => {
   if (activeCursor.value.inWrongWordClear) return $t('review_wrong_words')
-  const config = getActiveFlowConfig()
+  const config = activeFlowConfig.value
   const nodes = config.nodes
   const cursor = activeCursor.value
   const node = nodes[cursor.nodeIndex]
@@ -74,7 +74,7 @@ const status = computed(() => {
  * - 当前 node 的子步骤也做进度条
  */
 const stages = computed(() => {
-  const nodes = getActiveFlowConfig().nodes
+  const nodes = activeFlowConfig.value.nodes
   const cursor = activeCursor.value
   const { nodeIndex, stepIndex } = cursor
   const currentProgress = practiceData.words.length ? (practiceData.index / practiceData.words.length) * 100 : 0
@@ -126,7 +126,7 @@ const stages = computed(() => {
 
 /** 是否显示「跳过当前阶段」按钮（多 step 或多 node 流程才显示） */
 const showSkipStep = computed(() => {
-  const nodes = getActiveFlowConfig().nodes
+  const nodes = activeFlowConfig.value.nodes
   if (nodes.length === 0) return false
   return nodes.length > 1 || nodes[0].steps.length > 1
 })
@@ -273,7 +273,7 @@ const showSkipStep = computed(() => {
 
   .progress-wrap {
     width: var(--toolbar-width);
-    transition: all 0.3s;
+    transition: bottom 0.3s ease;
     padding: 0 0.6rem;
     box-sizing: border-box;
     position: fixed;
@@ -286,7 +286,7 @@ const showSkipStep = computed(() => {
     top: -40%;
     left: 50%;
     cursor: pointer;
-    transition: all 0.5s;
+    transition: top 0.5s ease, transform 0.5s ease;
     transform: rotate(-90deg);
     padding: 0.5rem;
     font-size: 1.2rem;
@@ -403,6 +403,13 @@ const showSkipStep = computed(() => {
       padding: 0 0.3rem;
       bottom: 0.3rem;
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer .progress-wrap,
+  .footer .arrow {
+    transition-duration: 0.01ms;
   }
 }
 </style>

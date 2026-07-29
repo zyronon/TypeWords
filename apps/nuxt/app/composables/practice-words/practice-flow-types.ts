@@ -49,6 +49,8 @@ export interface PracticeLoopSubStep {
   templateId: PracticeStepTemplateId
   label?: string
   displayOverride?: Partial<PracticeDisplayPolicy>
+  /** 本子步骤零错误完成当前词时，是否将其从本轮待复练错词中移除。 */
+  clearWrongOnSuccess?: boolean
 }
 
 /** 词内推进配置 */

@@ -2,8 +2,10 @@
 import { BackIcon, BaseButton, BaseIcon, BaseInput, BasePage, Dialog, Toast } from '@typewords/base'
 import { APP_NAME } from '@typewords/core/config/env.ts'
 import { WordPracticeMode } from '@typewords/core/types/enum.ts'
+import { onMounted, onUnmounted } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
 import type { PracticeFlowConfig } from '~/composables/practice-words/practice-flow-types.ts'
-import { getAllBuiltinFlowIds, getFlowConfig } from '~/composables/practice-words/practice-flow-config.ts'
+import { CURRENT_FLOW_VERSION, getAllBuiltinFlowIds, getFlowConfig } from '~/composables/practice-words/practice-flow-config.ts'
 import {
   deleteUserFlow,
   getActiveCustomFlowId,
@@ -29,6 +31,7 @@ let config = $ref<PracticeFlowConfig>(createBlankConfig())
 let flowName = $ref('自由学习')
 let flowListItems = $ref<FlowListItem[]>([])
 let activeFlowId = $ref('')
+let selectedFlowId = $ref('')
 let isBuiltinActive = $ref(false)
 let isDirty = $ref(false)
 let showDeleteDialog = $ref(false)
@@ -44,7 +47,7 @@ function cloneConfig(value: PracticeFlowConfig): PracticeFlowConfig {
 function createBlankConfig(): PracticeFlowConfig {
   return {
     id: nowId('custom'),
-    version: 4,
+    version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.Custom,
     label: '自由学习',
     nodes: [],
@@ -82,6 +85,7 @@ function buildFlowList() {
 
 // ─── Load flow ───
 function loadFlow(flowId: string, builtin: boolean) {
+  if (!confirmDiscardChanges()) return
   if (builtin) {
     // 系统内置 → 只读查看
     const cfg = getFlowConfig(flowId)
@@ -89,6 +93,7 @@ function loadFlow(flowId: string, builtin: boolean) {
     config = cloneConfig(cfg)
     flowName = cfg.label || flowId
     isBuiltinActive = true
+    selectedFlowId = flowId
     isDirty = false
     // 不修改 activeFlowId（保留用户激活的流程）
     return
@@ -102,14 +107,14 @@ function loadFlow(flowId: string, builtin: boolean) {
   }
   config = cloneConfig(saved)
   flowName = saved.label || '自由学习'
-  setActiveCustomFlowId(flowId)
-  activeFlowId = flowId
+  selectedFlowId = flowId
   isBuiltinActive = false
   isDirty = false
 }
 
 // ─── Duplicate builtin flow ───
 function duplicateBuiltin(flowId: string) {
+  if (!confirmDiscardChanges()) return
   const cfg = getFlowConfig(flowId)
   if (!cfg) return
   const newId = nowId('custom')
@@ -122,6 +127,7 @@ function duplicateBuiltin(flowId: string) {
   config = cloneConfig(dup)
   flowName = dup.label
   activeFlowId = newId
+  selectedFlowId = newId
   isBuiltinActive = false
   isDirty = false
   buildFlowList()
@@ -130,9 +136,10 @@ function duplicateBuiltin(flowId: string) {
 
 // ─── Create new (directly blank) ───
 function createNew() {
+  if (!confirmDiscardChanges()) return
   config = createBlankConfig()
   flowName = '自由学习'
-  activeFlowId = ''
+  selectedFlowId = config.id
   isBuiltinActive = false
   isDirty = true
 }
@@ -159,7 +166,7 @@ function normalizeBeforeSave(): PracticeFlowConfig | null {
   return {
     ...config,
     id: config.id || nowId('custom'),
-    version: 4,
+    version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.Custom,
     label: name,
     nodes: config.nodes.map((node, nodeIndex) => ({
@@ -173,7 +180,9 @@ function normalizeBeforeSave(): PracticeFlowConfig | null {
             ? {
                 type: 'wordLoop',
                 groupSize: Math.max(1, Number(step.wordAdvance.groupSize || 7)),
-                subSteps: step.wordAdvance.subSteps?.length ? step.wordAdvance.subSteps : [{ templateId: 'spell' }],
+                subSteps: step.wordAdvance.subSteps?.length
+                  ? step.wordAdvance.subSteps
+                  : [{ templateId: 'spell', clearWrongOnSuccess: true }],
               }
             : step.wordAdvance,
       })),
@@ -197,6 +206,7 @@ function handleSave() {
   config = cloneConfig(configToSave)
   flowName = configToSave.label
   activeFlowId = configToSave.id
+  selectedFlowId = configToSave.id
   isDirty = false
   buildFlowList()
   Toast.success('保存成功')
@@ -208,9 +218,10 @@ function requestDeleteCurrent() {
     Toast.warning('系统内置流程不可删除')
     return
   }
-  if (!activeFlowId && !listUserFlows().some(flow => flow.id === config.id)) {
+  if (!listUserFlows().some(flow => flow.id === selectedFlowId || flow.id === config.id)) {
     config = createBlankConfig()
     flowName = config.label
+    selectedFlowId = config.id
     isDirty = false
     return
   }
@@ -218,17 +229,17 @@ function requestDeleteCurrent() {
 }
 
 function handleDeleteCurrent() {
-  const targetId = activeFlowId || config.id
+  const targetId = selectedFlowId || config.id
   if (targetId) {
     deleteUserFlow(targetId)
   }
-  buildFlowList()
   config = createBlankConfig()
   flowName = config.label
-  activeFlowId = ''
+  selectedFlowId = config.id
   isBuiltinActive = false
   isDirty = false
   showDeleteDialog = false
+  buildFlowList()
   Toast.success('已删除')
 }
 
@@ -238,6 +249,38 @@ function formatTime(ts: number): string {
   return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
+function activateCurrentFlow() {
+  if (isBuiltinActive || isDirty) {
+    Toast.warning(isDirty ? '请先保存当前修改' : '内置流程不能设为自定义流程')
+    return
+  }
+  if (!selectedFlowId || !getUserFlow(selectedFlowId)) {
+    Toast.warning('请先保存当前流程')
+    return
+  }
+  setActiveCustomFlowId(selectedFlowId)
+  activeFlowId = selectedFlowId
+  Toast.success('已设为当前自定义流程')
+}
+
+function onFlowNameUpdate() {
+  if (!isBuiltinActive) isDirty = true
+}
+
+function confirmDiscardChanges(): boolean {
+  return !isDirty || window.confirm('当前流程有未保存修改，确定放弃吗？')
+}
+
+function onBeforeUnload(event: BeforeUnloadEvent) {
+  if (!isDirty) return
+  event.preventDefault()
+  event.returnValue = ''
+}
+
+onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
+onUnmounted(() => window.removeEventListener('beforeunload', onBeforeUnload))
+onBeforeRouteLeave(() => confirmDiscardChanges())
+
 // ─── Init ───
 buildFlowList()
 if (activeFlowId) {
@@ -246,6 +289,7 @@ if (activeFlowId) {
     config = cloneConfig(existing)
     flowName = existing.label || '自由学习'
     isBuiltinActive = false
+    selectedFlowId = activeFlowId
     isDirty = false
   }
 }
@@ -269,12 +313,21 @@ if (activeFlowId) {
             placeholder="流程名称"
             class="flow-name-input mr-4"
             :disabled="isBuiltinActive"
+            @update:model-value="onFlowNameUpdate"
           />
           <BaseButton type="primary" @click="handleSave" :disabled="isBuiltinActive || !isDirty">
             <div class="inline-center gap-1">
               <IconFluentSave20Regular />
               保存
             </div>
+          </BaseButton>
+          <BaseButton
+            v-if="!isBuiltinActive"
+            type="primary"
+            @click="activateCurrentFlow"
+            :disabled="isDirty || selectedFlowId === activeFlowId"
+          >
+            设为当前流程
           </BaseButton>
           <BaseButton v-if="!isBuiltinActive" type="primary" class="danger-button" @click="requestDeleteCurrent">
             <div class="inline-center gap-1">
@@ -299,12 +352,20 @@ if (activeFlowId) {
               v-for="item in flowListItems"
               :key="item.id"
               class="flow-list-item"
-              :class="{ active: item.id === activeFlowId && !isBuiltinActive }"
+              :class="{ active: item.id === selectedFlowId, activated: !item.builtin && item.id === activeFlowId }"
+              role="button"
+              tabindex="0"
               @click="loadFlow(item.id, item.builtin)"
+              @keydown.enter.space.prevent="loadFlow(item.id, item.builtin)"
             >
               <div class="flex items-center gap-1">
                 <span class="flow-list-name">{{ item.name }}</span>
                 <span v-if="item.builtin" class="builtin-badge">内置</span>
+                <IconFluentCheckmarkCircle16Filled
+                  v-else-if="item.id === activeFlowId"
+                  title="当前激活流程"
+                  class="active-flow-icon"
+                />
               </div>
             </div>
           </div>
@@ -386,11 +447,7 @@ if (activeFlowId) {
 }
 
 .danger-button {
-  background: #f43f5e !important;
-
-  &:hover {
-    background: #e11d48 !important;
-  }
+  color: var(--color-link);
 }
 
 .flow-workspace {
@@ -401,7 +458,7 @@ if (activeFlowId) {
 }
 
 .flow-list-panel {
-  border-right: 1px solid #ababab;
+  border-right: 1px solid var(--color-input-border);
   padding-right: 1.8rem;
 }
 
@@ -411,7 +468,7 @@ if (activeFlowId) {
   gap: 1rem;
 }
 
-.flow-list-item, {
+.flow-list-item {
   min-height: 2.5rem;
   border-radius: 0.45rem;
   background: var(--color-fourth);
@@ -420,7 +477,7 @@ if (activeFlowId) {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .flow-list-item {
@@ -429,9 +486,18 @@ if (activeFlowId) {
 
   &.active,
   &:hover {
-    color: #1677ff;
-    box-shadow: inset 0 0 0 1px #1677ff;
+    color: var(--color-link);
+    box-shadow: inset 0 0 0 1px var(--color-link);
     background: rgba(22, 119, 255, 0.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-link);
+    outline-offset: 2px;
+  }
+
+  &.activated:not(.active) {
+    box-shadow: inset 3px 0 0 var(--color-link);
   }
 }
 
@@ -452,8 +518,8 @@ if (activeFlowId) {
   font-size: 0.65rem;
   padding: 0 0.3rem;
   border-radius: 0.2rem;
-  background: #e6f4ff;
-  color: #1677ff;
+  background: color-mix(in srgb, var(--color-link) 12%, transparent);
+  color: var(--color-link);
   line-height: 1.4;
   flex-shrink: 0;
 }
@@ -473,13 +539,41 @@ if (activeFlowId) {
   padding: 0.4rem 1rem;
   margin-bottom: 1rem;
   border-radius: 0.4rem;
-  background: #fffbe6;
-  color: #ad6800;
+  background: var(--color-fifth);
+  color: var(--color-main-text);
   font-size: 0.9rem;
-  border: 1px solid #ffe58f;
+  border: 1px solid var(--color-input-border);
 }
 
 .builtin-dup-row {
   margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .flow-header {
+    flex-direction: column;
+  }
+
+  .flow-actions,
+  .flow-name-input {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .flow-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .flow-list-panel {
+    border-right: 0;
+    border-bottom: 1px solid var(--color-input-border);
+    padding: 0 0 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-list-item {
+    transition-duration: 0.01ms;
+  }
 }
 </style>

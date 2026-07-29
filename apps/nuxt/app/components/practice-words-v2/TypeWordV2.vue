@@ -79,7 +79,7 @@ const localReveal = computed(() => ({
 }))
 const effective = useInjectedDisplayPolicy(localReveal)
 
-const { playWord } = usePracticeWordAudioV2({
+const { highlightedSentenceIndex, playWord, playSentence, playTtsWithGuide } = usePracticeWordAudioV2({
   word: toRef(props, 'word'),
   shouldShowSentences: () => effective.value.showSentences,
 })
@@ -276,14 +276,7 @@ const notice = $computed(() => {
 
 // ============ 重置：单词切换时 reset identify / note 状态 ============
 
-watch(
-  () => props.word,
-  () => {
-    if (identifyPanelRef) identifyPanelRef.resetIdentifyState?.()
-    editingNote = false
-    noteInputValue = ''
-  }
-)
+watch(() => props.word, onResetWord)
 
 onMounted(() => {
   emitter.on(EventKey.resetWord, onResetWord)
@@ -302,6 +295,9 @@ useOnKeyboardEventListener(
 )
 
 function onResetWord() {
+  isTypingWord = true
+  showFullWord = false
+  showWordResult = false
   if (identifyPanelRef) identifyPanelRef.resetIdentifyState?.()
   editingNote = false
   noteInputValue = ''
@@ -458,6 +454,9 @@ defineExpose({
         :word="word"
         @complete="onSentencePracticeComplete"
         :effective="effective"
+        :highlightedSentenceIndex="highlightedSentenceIndex"
+        :playSentence="playSentence"
+        :playTtsWithGuide="playTtsWithGuide"
         @wrong="emit('wrong')"
       />
     </div>

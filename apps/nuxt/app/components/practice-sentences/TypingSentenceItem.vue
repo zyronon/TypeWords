@@ -329,17 +329,19 @@ function handleTyping(e: KeyboardEvent) {
   onTyping(e)
 }
 
+function handleResetWord() {
+  input = ''
+}
+
 watch(
   () => props.active,
   active => {
     emitter.off(EventKey.onTyping, handleTyping)
-    emitter.off(EventKey.resetWord)
+    emitter.off(EventKey.resetWord, handleResetWord)
     if (active) {
       props?.play?.(props.sentence, null)
       emitter.on(EventKey.onTyping, handleTyping)
-      emitter.on(EventKey.resetWord, () => {
-        input = ''
-      })
+      emitter.on(EventKey.resetWord, handleResetWord)
     }
   },
   { immediate: true }
@@ -347,7 +349,7 @@ watch(
 
 onUnmounted(() => {
   emitter.off(EventKey.onTyping, handleTyping)
-  emitter.off(EventKey.resetWord)
+  emitter.off(EventKey.resetWord, handleResetWord)
 })
 
 // ============ Expose ============
@@ -449,7 +451,7 @@ function play() {
     word-break: keep-all;
     word-wrap: break-word;
     white-space: pre-wrap;
-    transition: all 0.3s;
+    transition: color 0.3s ease, opacity 0.3s ease;
   }
 
   .wrote,
@@ -494,6 +496,13 @@ function play() {
     border-bottom: 2px solid var(--color-article);
     //display: none;
     transform: translateY(-0.2rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typing-sentence-item .sentence,
+  .typing-sentence-item .word-wrap {
+    transition-duration: 0.01ms;
   }
 }
 </style>

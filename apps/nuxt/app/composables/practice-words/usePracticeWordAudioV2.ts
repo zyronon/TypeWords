@@ -1,4 +1,4 @@
-import { ref, type Ref } from 'vue'
+import { ref, watch, type Ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Toast } from '@typewords/base'
 import type { Word } from '@typewords/core/types/types.ts'
@@ -69,16 +69,21 @@ export function usePracticeWordAudioV2({ word, shouldShowSentences }: PracticeWo
   function playSentence(index: number, options?: { highlight?: boolean }) {
     const text = word.value.sentences?.[index]?.c
     if (!text) return
+    const wordKey = word.value.word
     const highlight = options?.highlight ?? false
     if (highlight) highlightedSentenceIndex.value = index
     playTtsWithGuide(text, () => {
-      if (highlight && highlightedSentenceIndex.value === index) {
+      if (word.value.word === wordKey && highlight && highlightedSentenceIndex.value === index) {
         highlightedSentenceIndex.value = -1
       }
     })
   }
 
-  function playWord(trigger: WordPlayTrigger) {
+  watch(word, () => {
+    highlightedSentenceIndex.value = -1
+  })
+
+  function playWord(trigger: WordPlayTrigger, _options?: { volumeRef?: unknown; resetIcon?: boolean }) {
     cancelWordPracticeAudio()
 
     const handle =

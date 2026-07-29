@@ -14,21 +14,22 @@ import { getDefaultWord } from '@typewords/core/types/func.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import ClickableEnglishText from '@typewords/core/components/word/ClickableEnglishText.vue'
 import ClickableWord from '@typewords/core/components/word/ClickableWord.vue'
-import { Toast, VolumeIcon } from '@typewords/base'
+import { VolumeIcon } from '@typewords/base'
 import { useI18n } from 'vue-i18n'
 import TranslationList from '@typewords/core/components/word/TranslationList.vue'
 import TypingSentence from '~/components/practice-sentences/TypingSentence.vue'
 import type { EffectiveDisplay } from '~/composables/practice-words/practice-flow-types.ts'
 import { useEventsByWatch } from '@typewords/core/utils/eventBus.ts'
 import { SENTENCE_PLAY_SHORTCUT_KEYS, ShortcutKey } from '@typewords/core'
-import { getBrowserKey, useTTsPlayAudio } from '@typewords/core/hooks/sound.ts'
-import { useRouter } from 'vue-router'
 
 const { t: $t } = useI18n()
 
 interface IProps {
   word: Word
   effective: EffectiveDisplay
+  highlightedSentenceIndex: number
+  playSentence: (index: number, options?: { highlight?: boolean }) => void
+  playTtsWithGuide: (text: string, onEnd?: () => void) => void
 }
 
 const props = withDefaults(defineProps<IProps>(), {
@@ -40,11 +41,8 @@ const emit = defineEmits<{
   wrong: []
 }>()
 
-const router = useRouter()
-const ttsPlayAudio = useTTsPlayAudio()
 const settingStore = useSettingStore()
 let activeSentenceIndex = $ref(-1)
-let highlightedSentenceIndex = $ref(-1)
 const sentenceRef = useTemplateRef('sentences')
 
 useEventsByWatch(
@@ -52,47 +50,9 @@ useEventsByWatch(
   () => (props.word.sentences?.length ?? 0) > 0
 )
 
-let ttsVoiceHintShown = false
-function playTtsWithGuide(text: string, onEnd?: () => void) {
-  if (!ttsVoiceHintShown) {
-    const browserKey = getBrowserKey()
-    const hasVoice = settingStore.ttsVoiceMap?.some(v => v.key === browserKey && v.voice)
-    if (!hasVoice) {
-      ttsVoiceHintShown = true
-      const ins = Toast.warning(
-        '例句默认使用浏览器内置 TTS 发音，若无声请前往「设置 → 音效设置 → TTS 声色」选择可用声色',
-        {
-          duration: 15000000,
-          action: {
-            text: '设置',
-            onClick: () => {
-              router.push('/setting?index=4')
-              ins.close()
-            },
-          },
-        }
-      )
-    }
-  }
-  ttsPlayAudio(text, {
-    onEnd,
-    volume: settingStore.sentenceSoundVolume / 100,
-    rate: settingStore.sentenceSoundSpeed,
-  })
-}
-
-function noticePlaySentence(index) {
-  if (props.word.sentences.length < index) return
-  sentenceRef.value[index].play()
-}
-
-function playSentence(index: number, text: string) {
-  highlightedSentenceIndex = index
-  playTtsWithGuide(text, () => {
-    if (highlightedSentenceIndex === index) {
-      highlightedSentenceIndex = -1
-    }
-  })
+function noticePlaySentence(index: number) {
+  if (index < 0 || index >= props.word.sentences.length) return
+  sentenceRef.value?.[index]?.play?.()
 }
 
 function onCompleteSentence(text: string) {
@@ -145,7 +105,7 @@ defineExpose({ startPracticeSentence })
             :active="activeSentenceIndex === j"
             :highlight-words="[word.word]"
             @complete="onCompleteSentence"
-            @play="playSentence(j, i.c)"
+            @play="playSentence(j, { highlight: true })"
           />
         </div>
       </div>
@@ -264,18 +224,18 @@ defineExpose({ startPracticeSentence })
   .sentence {
     @apply rounded-lg px-3 py-2 -mx-3;
     background: transparent;
-    transition: all 0.3s;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
   }
 
   .sentence-typing {
     @apply rounded-lg px-3 py-1 -mx-3;
     background: transparent;
-    transition: all 0.3s;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
   }
 
   .sentence-highlight {
-    background: rgba(124, 58, 237, 0.1);
-    box-shadow: inset 0 0 0 1px rgba(124, 58, 237, 0.25);
+    background: color-mix(in srgb, var(--color-link) 10%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-link) 25%, transparent);
   }
 }
 
@@ -289,6 +249,13 @@ defineExpose({ startPracticeSentence })
     :deep(.pos) {
       @apply w-unset mr-2 min-w-unset;
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word-meta .sentence,
+  .word-meta .sentence-typing {
+    transition-duration: 0.01ms;
   }
 }
 </style>

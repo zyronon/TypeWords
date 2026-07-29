@@ -1,6 +1,6 @@
 # 单词练习 v2 当前实现上下文
 
-> 更新时间：2026-07-25
+> 更新时间：2026-07-27
 > 适用范围：`Typewords/apps/nuxt` 的单词练习 v2、流程编排和相关例句组件  
 > 文档定位：这是后续 Agent 冷启动时应优先阅读的“当前事实文档”。
 
@@ -15,7 +15,7 @@ TypeWords 的单词练习 v2 是一条与 v1 并行的实验/演进线路，核�
 ```text
 FlowConfig
   → validateFlowConfig
-  → activeFlowConfig
+  → createPracticeFlowRuntime() / activeFlowConfig
   → Cursor + Navigator + nodeWorkingWords
   → 当前练习类型 / 词表 / 显隐策略
   → PracticeSaveWordV2
@@ -28,12 +28,13 @@ FlowConfig
 3. v2 使用独立缓存 `PracticeSaveWordV2`，不与 v1 共用练习缓存。
 4. 流程由 `nodes → steps → wordLoop subSteps/onEnd` 描述，运行位置由 `PracticeFlowCursor` 唯一标识。
 5. 自定义流程保存在 `PracticeFlowV2`，支持多份配置和一个当前激活 ID。
-6. `WordMetaPanelV2` 中保留例句输入是用户确认过的布局决策，不要擅自改回纯只读。
-7. v2 继续复用 core 的 `event.ts` 键盘分发，这是用户确认过的决策。
-8. `/practice-sentences/:id` 当前主要是验证 `TypingSentence` 可独立使用的实验页面，不是已正式交付的完整例句会话。
-9. `collectWrongWords`、`generateReport` 和通用字符串 `navigate` 是预留 action；当前未完整实现是已知状态。
-10. Phase 4 以职责拆分完成为准，文件行数目标不是当前阻塞项。
-11. `node.source` 只在进入 Node 时解析；Node 内后续 Step 默认消费 `nodeWorkingWords`，不会再次读取原始 taskWords。
+6. Flow schema 当前版本为 v5；每个 Navigator 都持有独立 Runtime，不存在模块级活动 Flow。
+7. `WordMetaPanelV2` 中保留例句输入是用户确认过的布局决策，不要擅自改回纯只读。
+8. v2 继续复用 core 的 `event.ts` 键盘分发，这是用户确认过的决策。
+9. `/practice-sentences/:id` 当前主要是验证 `TypingSentence` 可独立使用的实验页面，不是已正式交付的完整例句会话。
+10. `collectWrongWords`、`generateReport` 和通用字符串 `navigate` 是预留 action；当前未完整实现是已知状态。
+11. Phase 4 以职责拆分完成为准，文件行数目标不是当前阻塞项。
+12. `node.source` 只在进入 Node 时解析；Node 内后续 Step 默认消费 `nodeWorkingWords`，不会再次读取原始 taskWords。
 
 ---
 
@@ -214,7 +215,24 @@ Step Template 只描述“怎么练”，不决定词从哪里来：
 
 因此 `data.words` 是当前界面正在练的列表，`nodeWorkingWords` 才是 Step 之间传递的数据。
 
-### 5.3 Cursor
+### 5.3 Flow v5 与错词验证开关
+
+`PracticeLoopSubStep` 在 v5 新增：
+
+```ts
+clearWrongOnSuccess?: boolean
+```
+
+- 只有 Cursor 正处于 loop、当前 subStep 显式开启该字段、当前词本次 `wrongTimes === 0` 时，才从本轮 `wrongWords` 移除。
+- 该字段不依赖 `practiceType`，因此 Spell、Listen、Dictation 都可以承担验证步骤。
+- `wrongTimesMap` 始终保留累计错误；从待复练错词移除不回退 FSRS 或统计。
+- 后续步骤再次输错时，单词会按正常错误处理重新加入 `wrongWords`。
+- v4 及更早配置迁移时，缺少该字段的 Spell subStep 写为 `true`，其他模板写为 `false`；迁移同时覆盖 `wrongWordClear.wordAdvance.subSteps`。
+- v5 新配置缺少该字段等价于未开启，不会自动消错。
+
+配置校验会拒绝非正有限整数 `groupSize`、未知 template、非法 action/subStep 及未来版本；失败时安全回退 System。迁移后的用户流程会写回本地，但不改变原 `createdAt/updatedAt`。
+
+### 5.4 Cursor
 
 当前运行位置只认 `PracticeFlowCursor`：
 
@@ -260,7 +278,7 @@ System 新词跟写使用：
 wordAdvance: {
   type: 'wordLoop',
   groupSize: 7,
-  subSteps: [{ templateId: 'spell' }],
+  subSteps: [{ templateId: 'spell', clearWrongOnSuccess: true }],
 }
 ```
 
@@ -273,7 +291,7 @@ wordAdvance: {
   wordAdvance: {
     type: 'wordLoop',
     groupSize: 7,
-    subSteps: [{ templateId: 'spell' }],
+    subSteps: [{ templateId: 'spell', clearWrongOnSuccess: true }],
   },
 }
 ```
@@ -537,11 +555,11 @@ apps/nuxt/app/pages/(words)/practice-sentences/
 | `settingStore.wordPracticeMode`    | core setting store                    | 当前模式；恢复时以加载后的 FlowConfig mode 为准     |
 | `currentPhase/currentPracticeType` | Navigator computed                    | Cursor 自动派生的当前 Phase 和真实动作类型          |
 | `settingStore.wordPracticeType`    | Navigator watch                       | 兼容旧逻辑使用的只读镜像                            |
-| `activeFlowConfig`                 | `practice-flow-runtime.ts` 模块级状态 | 当前已校验流程配置                                  |
+| `activeFlowConfig`                 | Navigator 的 Flow Runtime 实例       | 当前实例已校验流程配置；由页面 provide 给 Footer   |
 | `activeCursor`                     | Navigator 实例                        | 当前流程位置；`inWrongWordClear` 是错词清空唯一状态 |
 | `displayOverride`                  | DisplayPolicy 实例                    | 当前相位用户覆盖                                    |
 
-注意：Cursor、工作词表和 Display 已实例化；`activeFlowConfig` 仍是模块级状态，同时挂载两个独立 v2 练习实例前还需要继续实例化。
+注意：FlowConfig、Cursor、工作词表和 Display 均已实例化。缓存加载、旧缓存恢复和新会话初始化只能操作当前 Navigator 的 Runtime，两个实例或测试不会互相污染。
 
 ---
 
@@ -553,7 +571,7 @@ apps/nuxt/app/pages/(words)/practice-sentences/
 - TypeWordV2 和页面行数仍较大，但用户已确认这不是当前阻塞项。
 - 自定义流程快照尚无 hash/迁移策略。
 - 流程校验目前是基础结构校验，不是完整语义校验。
-- 当前相关模块没有自动化测试。
+- Flow/Runtime 与 Navigator 已有 Vitest 单元测试；组件交互仍需手工验收补充。
 
 ### 预留但未完整实现
 
@@ -636,6 +654,10 @@ apps/nuxt/app/pages/(words)/practice-sentences/
 - [ ] Dictation/Identify 后有错词：行为同上。
 - [ ] 错词再次输错：继续下一轮，直到错词归零。
 - [ ] 错词清空完成后，普通 Step 的下一阶段仍使用完整工作词表，而不是仅使用刚清空的错词。
+- [ ] 未开启 `clearWrongOnSuccess` 的 subStep 一次正确不会移除错词。
+- [ ] 开启开关的 Spell/Listen/Dictation 一次正确均可移除错词。
+- [ ] 验证步骤本次输错时保留错词；已移除后在后续步骤再次输错会重新加入。
+- [ ] 移除待复练错词后，`wrongTimesMap` 的累计错误保持不变。
 
 ### Step 词表传递
 
@@ -653,6 +675,17 @@ apps/nuxt/app/pages/(words)/practice-sentences/
 - [ ] 错词清空中刷新，endActionIndex 和临时相位正确恢复。
 - [ ] 刷新后 `nodeWorkingWordKeys` 恢复，后续 Step 词表与刷新前一致。
 - [ ] 同一相位刷新后，displayOverride 不应在下一词被意外清空。
+- [ ] 页面隐藏时立即暂停并保存；恢复可见时不从 IndexedDB 覆盖已挂载的内存进度。
+- [ ] 快速切换标签页不会把隐藏时间计入学习时间，旧恢复 timer 不会污染新状态。
+
+### Runtime、统计与组件状态
+
+- [ ] 两个 Runtime 分别加载不同 Flow 时，FlowConfig/Cursor/工作词表互不影响。
+- [ ] Review 或仅含 `taskReview` 的 Custom Flow：`newWordNumber === 0`，结算不推进 `lastLearnIndex`。
+- [ ] `current` 同时统计新词和复习词；重复 source 不重复计数。
+- [ ] Dictation Footer 显隐切换后，画面与键入算法都以 `inputMode` 为准。
+- [ ] 例句阶段通过快捷键切词后，新单词恢复可输入，旧答案和异步回调不泄漏。
+- [ ] FlowCanvas 可使用键盘新增、上移、下移、删除并保存。
 
 ---
 
@@ -669,6 +702,7 @@ apps/nuxt/app/pages/(words)/practice-sentences/
 9. 可执行的基础检查：
 
    ```bash
+   pnpm --filter @typewords/nuxt test:unit
    pnpm --filter @typewords/nuxt exec vue-tsc --noEmit
    git diff --check
    ```

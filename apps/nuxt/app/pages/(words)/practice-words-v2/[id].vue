@@ -8,7 +8,6 @@ import type { Dict, TaskWords, Word } from '@typewords/core/types/types.ts'
 import { useStartKeyboardEventListener } from '@typewords/core/hooks/event.ts'
 import { usePracticeDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
 import { createPracticeWordNavigator } from '~/composables/practice-words/usePracticeWordNavigator.ts'
-import { resolveFlowStart } from '~/composables/practice-words/practice-flow-runtime.ts'
 import useTheme from '@typewords/core/hooks/theme.ts'
 import { getCurrentStudyWord, useWordOptions } from '@typewords/core/hooks/dict.ts'
 import { openWordCollectPicker } from '@typewords/core/hooks/useWordCollectPicker.ts'
@@ -91,7 +90,7 @@ const navigator = createPracticeWordNavigator({
   },
   complete,
 })
-const { activeCursor, currentPhase, currentPracticeType, currentPhaseKey } = navigator
+const { activeFlowConfig, activeCursor, currentPhase, currentPracticeType, currentPhaseKey } = navigator
 const { effective, displayOverride, toggleDictation, toggleTranslate, patchDisplayOverride, restoreDisplayOverride } =
   usePracticeDisplayPolicy(currentPhase, currentPhaseKey)
 
@@ -128,19 +127,15 @@ function applyPracticeCache(cache: PracticeWordCacheV2): boolean {
   return true
 }
 
-watch(
-  [() => data.words, () => data.index, currentPracticeType, () => settingStore.identifyMethod],
-  () => {
-    updateQuestion()
-    handleResumeTimer()
-  }
-)
+watch([() => data.words, () => data.index, currentPracticeType, () => settingStore.identifyMethod], () => {
+  updateQuestion()
+  handleResumeTimer()
+})
 
 function updateQuestion() {
   const word = data.words?.[data.index]
   const shouldBuildQuestion =
-    currentPracticeType.value === WordPracticeType.Identify &&
-    settingStore.identifyMethod === IdentifyMethod.WordTest
+    currentPracticeType.value === WordPracticeType.Identify && settingStore.identifyMethod === IdentifyMethod.WordTest
 
   data.question = shouldBuildQuestion && word ? buildQuestion(word, allWords) : null
 }
@@ -148,6 +143,7 @@ function updateQuestion() {
 provide('practiceData', data)
 provide('practiceTaskWords', taskWords)
 provide('practiceFlowCursor', activeCursor)
+provide('practiceFlowConfig', activeFlowConfig)
 
 const { bumpActivity, handleResumeTimer, startTimer, stopTimer } = usePracticeIdleTimer({
   isFocus,
@@ -259,7 +255,7 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
     //不能直接赋值，会导致 inject 的数据为默认值
     taskWords = Object.assign(taskWords, initVal)
     try {
-      const start = resolveFlowStart(settingStore.wordPracticeMode, taskWords)
+      const start = navigator.resolveFlowStart(settingStore.wordPracticeMode, taskWords)
       data = getDefaultPracticeData(data, { words: start.words })
       statStore.total = start.total
       statStore.newWordNumber = start.newWordNumber
@@ -312,71 +308,79 @@ async function complete() {
     settling = true
     runtimeStore.globalLoading = true
     stopTimer()
-
-    //如果 shuffle 数组不为空，就说明是复习，不用修改 lastLearnIndex
-    if (settingStore.wordPracticeMode !== WordPracticeMode.Shuffle) {
-      store.sdict.lastLearnIndex = store.sdict.lastLearnIndex + statStore.newWordNumber
-      // 检查已忽略的单词数量，是否全部完成
-      let ignoreList = [store.allIgnoreWords, store.knownWords][settingStore.ignoreSimpleWord ? 0 : 1]
-      // 忽略单词数
-      const ignoreCount = ignoreList.filter(word =>
-        store.sdict.words.slice(store.sdict.lastLearnIndex).some(w => w.word.toLowerCase() === word)
-      ).length
-      // 如果lastLearnIndex已经超过可学单词数，则判定完成
-      if (store.sdict.lastLearnIndex + ignoreCount >= store.sdict.length) {
-        store.sdict.complete = true
-        store.sdict.lastLearnIndex = store.sdict.length
+    try {
+      //如果 shuffle 数组不为空，就说明是复习，不用修改 lastLearnIndex
+      if (settingStore.wordPracticeMode !== WordPracticeMode.Shuffle) {
+        store.sdict.lastLearnIndex = store.sdict.lastLearnIndex + statStore.newWordNumber
+        // 检查已忽略的单词数量，是否全部完成
+        let ignoreList = [store.allIgnoreWords, store.knownWords][settingStore.ignoreSimpleWord ? 0 : 1]
+        // 忽略单词数
+        const ignoreCount = ignoreList.filter(word =>
+          store.sdict.words.slice(store.sdict.lastLearnIndex).some(w => w.word.toLowerCase() === word)
+        ).length
+        // 如果lastLearnIndex已经超过可学单词数，则判定完成
+        if (store.sdict.lastLearnIndex + ignoreCount >= store.sdict.length) {
+          store.sdict.complete = true
+          store.sdict.lastLearnIndex = store.sdict.length
+        }
       }
-    }
 
-    // 结算前先将最后一条片段的 end 定格为当前时刻（segments 已是最新，无需临时快照）
-    if (!statStore.timerPaused && statStore.segments.length > 0) {
-      statStore.segments[statStore.segments.length - 1][1] = Date.now()
-    }
-
-    // 按自然日对 segments 分组，每天生成一条 Statistics 记录，落库到 store.sdict.statistics
-    flushStatToStore(statStore.$state)
-
-    for (const [word, wrongTimes] of Object.entries(data.wrongTimesMap)) {
-      let rating = data.ratingMap[word]
-      if (rating !== undefined) {
-        setWordCard(rating, word)
-      } else {
-        // 则根据错误次数生成评级
-        setWordCard(getGradeByWrongTimes(wrongTimes), word, wrongTimes)
+      // 结算前先将最后一条片段的 end 定格为当前时刻（segments 已是最新，无需临时快照）
+      if (!statStore.timerPaused && statStore.segments.length > 0) {
+        statStore.segments[statStore.segments.length - 1][1] = Date.now()
       }
-    }
 
-    if (AppEnv.CAN_REQUEST) {
-      let res = await addStat({
-        ...data,
-        type: 'word',
-        perDayStudyNumber: store.sdict.perDayStudyNumber,
-        lastLearnIndex: store.sdict.lastLearnIndex,
+      // 按自然日对 segments 分组，每天生成一条 Statistics 记录，落库到 store.sdict.statistics
+      flushStatToStore(statStore.$state)
+
+      for (const [word, wrongTimes] of Object.entries(data.wrongTimesMap)) {
+        let rating = data.ratingMap[word]
+        if (rating !== undefined) {
+          setWordCard(rating, word)
+        } else {
+          // 则根据错误次数生成评级
+          setWordCard(getGradeByWrongTimes(wrongTimes), word, wrongTimes)
+        }
+      }
+
+      try {
+        if (AppEnv.CAN_REQUEST) {
+          let res = await addStat({
+            ...data,
+            type: 'word',
+            perDayStudyNumber: store.sdict.perDayStudyNumber,
+            lastLearnIndex: store.sdict.lastLearnIndex,
+            complete: store.sdict.complete,
+          })
+          if (!res.success) Toast.error(res.msg)
+        }
+        await dataSync.saveDictState(store.$state, { pullWhenRemoteNewer: false })
+      } catch (error) {
+        console.error('[practice-v2] 远端结算同步失败', error)
+        Toast.error('本地结算已完成，远端同步失败，可稍后重试')
+      }
+
+      await wordPersistence.clear()
+
+      let trackData = {
+        funSpend: Date.now() - start,
+        name: store.sdict.name,
+        spend: Number(statStore.spend / 1000 / 60).toFixed(1),
+        index: store.sdict.lastLearnIndex,
+        per: store.sdict.perDayStudyNumber,
+        custom: store.sdict.custom,
         complete: store.sdict.complete,
-      })
-      if (!res.success) {
-        Toast.error(res.msg)
+        str: '',
       }
+      trackData.str = `name:${trackData.name},per:${trackData.per},spend:${trackData.spend},index:${trackData.index},funSpend:${trackData.funSpend}`
+      window.umami?.track('endStudyWord', trackData)
+    } catch (error) {
+      console.error('[practice-v2] 本地结算失败', error)
+      Toast.error('结算失败，请重试')
+    } finally {
+      settling = false
+      runtimeStore.globalLoading = false
     }
-
-    await dataSync.saveDictState(store.$state, { pullWhenRemoteNewer: false })
-    await wordPersistence.clear()
-
-    let trackData = {
-      funSpend: Date.now() - start,
-      name: store.sdict.name,
-      spend: Number(statStore.spend / 1000 / 60).toFixed(1),
-      index: store.sdict.lastLearnIndex,
-      per: store.sdict.perDayStudyNumber,
-      custom: store.sdict.custom,
-      complete: store.sdict.complete,
-      str: '',
-    }
-    trackData.str = `name:${trackData.name},per:${trackData.per},spend:${trackData.spend},index:${trackData.index},funSpend:${trackData.funSpend}`
-    window.umami?.track('endStudyWord', trackData)
-    settling = false
-    runtimeStore.globalLoading = false
   }
 }
 
@@ -441,20 +445,26 @@ async function savePracticeDataIns() {
   if (isComplete) return
   if (runtimeStore.globalLoading) return
   runtimeStore.globalLoading = true
-  // 若计时未暂停，将最后一条片段的 end 更新为当前时刻，确保保存内容最新
-  if (!statStore.timerPaused && statStore.segments.length > 0) {
-    statStore.segments[statStore.segments.length - 1][1] = Date.now()
+  try {
+    // 若计时未暂停，将最后一条片段的 end 更新为当前时刻，确保保存内容最新
+    if (!statStore.timerPaused && statStore.segments.length > 0) {
+      statStore.segments[statStore.segments.length - 1][1] = Date.now()
+    }
+    await wordPersistence.save({
+      taskWords,
+      practiceData: data,
+      statStoreData: statStore.$state,
+      sessionSnapshot: {
+        ...navigator.buildSessionSnapshot(),
+        displayOverride: displayOverride.value ? { ...displayOverride.value } : null,
+      },
+    })
+  } catch (error) {
+    console.error('[practice-v2] 保存练习缓存失败', error)
+    Toast.error('练习进度保存失败，请稍后重试')
+  } finally {
+    runtimeStore.globalLoading = false
   }
-  await wordPersistence.save({
-    taskWords,
-    practiceData: data,
-    statStoreData: statStore.$state,
-    sessionSnapshot: {
-      ...navigator.buildSessionSnapshot(),
-      displayOverride: displayOverride.value ? { ...displayOverride.value } : null,
-    },
-  })
-  runtimeStore.globalLoading = false
 }
 
 const savePracticeData = debounce(savePracticeDataIns, 500)

@@ -12,6 +12,7 @@ import type {
 
 /** 跟写分组大小，与 v1 groupSize 一致。 */
 export const GROUP_SIZE = 7
+export const CURRENT_FLOW_VERSION = 5
 
 export function phaseDisplay(overrides: Partial<PracticeDisplayPolicy> = {}): PracticeDisplayPolicy {
   return {
@@ -97,7 +98,7 @@ export function materializeWordAdvance(config?: PracticeWordAdvanceConfig): Word
 const WORD_LOOP_WITH_SPELL: PracticeWordAdvanceConfig = {
   type: 'wordLoop',
   groupSize: GROUP_SIZE,
-  subSteps: [{ templateId: 'spell' }],
+  subSteps: [{ templateId: 'spell', clearWrongOnSuccess: true }],
 }
 
 /** 标准错词清空 action：FollowWrite + wordLoop(Spell)，与 v1 行为对齐 */
@@ -117,7 +118,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   system: {
     id: 'system',
-    version: 4,
+    version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.System,
     label: '学习',
     nodes: [
@@ -170,7 +171,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   free: {
     id: 'free',
-    version: 4,
+    version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.Free,
     label: '自由练习',
     nodes: [
@@ -194,7 +195,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   review: {
     id: 'review',
-    version: 4,
+    version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.Review,
     label: '复习',
     nodes: [
@@ -225,7 +226,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   identifyOnly: {
     id: 'identifyOnly',
-    version: 4,
+    version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.IdentifyOnly,
     label: '自测',
     nodes: [
@@ -258,7 +259,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   dictationOnly: {
     id: 'dictationOnly',
-    version: 4,
+    version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.DictationOnly,
     label: '默写',
     nodes: [
@@ -291,7 +292,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   listenOnly: {
     id: 'listenOnly',
-    version: 4,
+    version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.ListenOnly,
     label: '听写',
     nodes: [
@@ -326,7 +327,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
    */
   shuffle: {
     id: 'shuffle',
-    version: 4,
+    version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.Shuffle,
     label: '随机复习',
     nodes: [

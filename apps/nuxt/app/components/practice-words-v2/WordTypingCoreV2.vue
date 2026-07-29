@@ -90,6 +90,8 @@ let waitClear = false
 let wordRepeatCount = 0
 let wordCompletedTime = 0
 let jumpTimer: ReturnType<typeof setTimeout> | null = null
+let repeatTimer: ReturnType<typeof setTimeout> | null = null
+let wrongClearTimer: ReturnType<typeof setTimeout> | null = null
 let pressNumber = 0
 let cursor = $ref({
   top: 0,
@@ -128,6 +130,14 @@ function clearJumpTimer() {
   jumpTimer = null
 }
 
+function clearDeferredTimers() {
+  clearJumpTimer()
+  if (repeatTimer) clearTimeout(repeatTimer)
+  if (wrongClearTimer) clearTimeout(wrongClearTimer)
+  repeatTimer = null
+  wrongClearTimer = null
+}
+
 function typo() {
   emit('wrong')
   emitWrongTimes(props.wrongTimes + 1)
@@ -146,7 +156,11 @@ function shouldRepeat() {
 }
 
 function repeat() {
-  setTimeout(() => {
+  if (repeatTimer) clearTimeout(repeatTimer)
+  const wordKey = props.word.word
+  repeatTimer = setTimeout(() => {
+    repeatTimer = null
+    if (props.word.word !== wordKey) return
     wrong = input = ''
     wordRepeatCount++
     inputLock = false
@@ -163,7 +177,11 @@ function completeTypeWord(delay: boolean) {
   } else {
     if (delay) {
       clearJumpTimer()
-      jumpTimer = setTimeout(() => emit('wordComplete'), settingStore.waitTimeForChangeWord)
+      const wordKey = props.word.word
+      jumpTimer = setTimeout(() => {
+        jumpTimer = null
+        if (props.word.word === wordKey) emit('wordComplete')
+      }, settingStore.waitTimeForChangeWord)
     } else {
       emit('wordComplete')
     }
@@ -173,6 +191,7 @@ function completeTypeWord(delay: boolean) {
 function del() {
   playKeyboardAudio()
   inputLock = false
+  waitClear = false
   if (props.showWordResult) {
     input = ''
     emitShowWordResult(false)
@@ -247,7 +266,7 @@ async function onTyping(e: KeyboardEvent) {
   inputLock = true
   let letter = e.key
   //默写特殊逻辑
-  if (props.practiceType === WordPracticeType.Dictation) {
+  if (props.inputMode === 'dictation') {
     if (isSpace(e)) {
       //如果输入长度大于单词长度/单词不包含空格，并且输入不为空（开始直接输入空格不行），则显示单词；
       if (input.length && (input.length >= target.length || !target.includes(' '))) {
@@ -343,7 +362,11 @@ async function onTyping(e: KeyboardEvent) {
         props.playWord(WordPlayTrigger.Typo, { volumeRef: targetVolumeIcon })
       }
       waitClear = true
-      setTimeout(() => {
+      if (wrongClearTimer) clearTimeout(wrongClearTimer)
+      const wordKey = props.word.word
+      wrongClearTimer = setTimeout(() => {
+        wrongClearTimer = null
+        if (props.word.word !== wordKey) return
         if (settingStore.inputWrongClear) input = ''
         wrong = ''
         waitClear = false
@@ -374,16 +397,17 @@ async function onTyping(e: KeyboardEvent) {
 // ============ 重置状态 ============
 
 function resetTypingCore(trigger: WordPlayTrigger) {
-  clearJumpTimer()
+  clearDeferredTimers()
   cancelWordPracticeAudio()
   wrong = input = ''
+  waitClear = false
   wordRepeatCount = 0
   emitShowWordResult(false)
   inputLock = false
   wordCompletedTime = 0
   emitWrongTimes(0)
   resetActiveWordPlayCount(props.word.word)
-  if (settingStore.wordSound && props.practiceType !== WordPracticeType.Dictation) {
+  if (settingStore.wordSound && props.inputMode !== 'dictation') {
     props.playWord(trigger, { resetIcon: trigger === WordPlayTrigger.NewWord })
   }
   checkCursorPosition()
@@ -451,7 +475,7 @@ watch([() => input, () => props.showFullWord, () => props.inputMode], () => {
 })
 
 function unmounted() {
-  clearJumpTimer()
+  clearDeferredTimers()
   emitter.off(EventKey.resetWord, onResetWord)
   emitter.off(EventKey.onTyping, onTyping)
 }

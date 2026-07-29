@@ -6,6 +6,7 @@
     "dev": "nuxt dev",
     "build": "nuxt build",
     "test": "",
+    "test:unit": "vitest run",
     "docker-build": "nuxt generate",
     "static": "nuxt generate && node scripts/copyDist.js",
     "generate": "nuxt generate && node scripts/do.js && node ../../scripts/deploy-eo-pages.js --dir dist --name type-words-deploy",
@@ -18,5 +19,8 @@
     "@typewords/libs": "workspace:*",
     "@typewords/core": "workspace:*",
     "@typewords/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   }
 }

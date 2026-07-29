@@ -279,6 +279,10 @@ importers:
       '@typewords/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+    devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.7)(jiti@2.6.1)(jsdom@23.2.0)(less@4.5.1)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.46.2)(yaml@2.8.2)
 
   apps/vscode:
     devDependencies:
@@ -9439,7 +9443,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       fast-glob: 3.3.3
       lru-cache: 10.4.3
-      vitest: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.7)(jiti@2.6.1)(jsdom@23.2.0)(less@4.5.1)(lightningcss@1.32.0)(sass@1.97.3)(supports-color@8.1.1)(terser@5.46.2)(yaml@2.8.2)
+      vitest: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.7)(jiti@2.6.1)(jsdom@23.2.0)(less@4.5.1)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.46.2)(yaml@2.8.2)
     transitivePeerDependencies:
       - '@edge-runtime/vm'
       - '@types/debug'
@@ -18136,7 +18140,7 @@ snapshots:
     dependencies:
       vite: 7.3.1(@types/node@22.19.7)(jiti@2.6.1)(less@4.5.1)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.46.2)(yaml@2.8.2)
 
-  vite-node@3.2.4(@types/node@22.19.7)(jiti@2.6.1)(less@4.5.1)(lightningcss@1.32.0)(sass@1.97.3)(supports-color@8.1.1)(terser@5.46.2)(yaml@2.8.2):
+  vite-node@3.2.4(@types/node@22.19.7)(jiti@2.6.1)(less@4.5.1)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.46.2)(yaml@2.8.2):
     dependencies:
       cac: 6.7.14
       debug: 4.4.3(supports-color@8.1.1)
@@ -18248,7 +18252,7 @@ snapshots:
       terser: 5.46.2
       yaml: 2.8.2
 
-  vitest@3.2.4(@types/debug@4.1.13)(@types/node@22.19.7)(jiti@2.6.1)(jsdom@23.2.0)(less@4.5.1)(lightningcss@1.32.0)(sass@1.97.3)(supports-color@8.1.1)(terser@5.46.2)(yaml@2.8.2):
+  vitest@3.2.4(@types/debug@4.1.13)(@types/node@22.19.7)(jiti@2.6.1)(jsdom@23.2.0)(less@4.5.1)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.46.2)(yaml@2.8.2):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.4
@@ -18271,7 +18275,7 @@ snapshots:
       tinypool: 1.1.1
       tinyrainbow: 2.0.0
       vite: 7.3.1(@types/node@22.19.7)(jiti@2.6.1)(less@4.5.1)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.46.2)(yaml@2.8.2)
-      vite-node: 3.2.4(@types/node@22.19.7)(jiti@2.6.1)(less@4.5.1)(lightningcss@1.32.0)(sass@1.97.3)(supports-color@8.1.1)(terser@5.46.2)(yaml@2.8.2)
+      vite-node: 3.2.4(@types/node@22.19.7)(jiti@2.6.1)(less@4.5.1)(lightningcss@1.32.0)(sass@1.97.3)(terser@5.46.2)(yaml@2.8.2)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/debug': 4.1.13

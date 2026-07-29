@@ -14,18 +14,12 @@ import type { TaskWords, Word } from '@typewords/core/types/types.ts'
 import type { PracticeDataV2 } from './practice-word-session.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { usePracticeStore } from '@typewords/core/stores/practice.ts'
-import { WordPracticeType } from '@typewords/core/types/enum.ts'
 import { emitter, EventKey } from '@typewords/core/utils/eventBus.ts'
 import { cloneDeep, shuffle } from '@typewords/core/utils'
 import { getFlowIdForMode, GROUP_SIZE } from './practice-flow-config.ts'
 import {
-  advanceStepCursor,
-  getActiveFlowConfig,
-  getActiveFlowId,
+  createPracticeFlowRuntime,
   getInitialCursor,
-  getMainPhase,
-  loadPracticeFlow,
-  resolvePhaseByCtxCursor,
 } from './practice-flow-runtime.ts'
 import type {
   PracticeEndAction,
@@ -59,22 +53,19 @@ function resolveWordsFromSource(
   }
 }
 
-function getSourceForCursor(cursor: PracticeFlowCursor): PracticeWordsSource {
-  const node = getActiveFlowConfig().nodes[cursor.nodeIndex]
-  return node?.source ?? 'current'
-}
-
 // ─── 主工厂 ──────────────────────────────────────────────────────────────────────
 
 export function createPracticeWordNavigator(deps: NavigatorDeps) {
   const settingStore = useSettingStore()
   const statStore = usePracticeStore()
+  const flowRuntime = createPracticeFlowRuntime()
+  const { activeFlowConfig } = flowRuntime
   const activeCursor = ref<PracticeFlowCursor>(getInitialCursor())
-  const currentPhase = computed(() => resolvePhaseByCtxCursor(activeCursor.value))
+  const currentPhase = computed(() => flowRuntime.resolvePhaseByCursor(activeCursor.value))
   const currentPracticeType = computed(() => currentPhase.value.practiceType)
   const currentPhaseKey = computed(() => {
     const cursor = activeCursor.value
-    const config = getActiveFlowConfig()
+    const config = activeFlowConfig.value
     return [
       `${config.id}@${config.version}`,
       cursor.nodeIndex,
@@ -85,6 +76,11 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
   })
   /** 当前 Node 的稳定工作词表；错词清空只替换 data.words，不污染它。 */
   let nodeWorkingWords: Word[] = []
+  function getSourceForCursor(cursor: PracticeFlowCursor): PracticeWordsSource {
+    const node = activeFlowConfig.value.nodes[cursor.nodeIndex]
+    return node?.source ?? 'current'
+  }
+
   function resetCursor() {
     activeCursor.value = getInitialCursor()
   }
@@ -98,14 +94,14 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
       endActionIndex: (cursor as any).endActionIndex ?? null,
     }
 
-    const config = getActiveFlowConfig()
+    const config = activeFlowConfig.value
     const node = config.nodes[restored.nodeIndex]
     if (!node?.steps[restored.stepIndex]) {
       resetCursor()
       return
     }
 
-    const mainPhase = resolvePhaseByCtxCursor({
+    const mainPhase = flowRuntime.resolvePhaseByCursor({
       ...restored,
       inWrongWordClear: false,
       loop: null,
@@ -119,11 +115,18 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
       restored.endActionIndex = null
     }
 
-    const phaseWithoutLoop = resolvePhaseByCtxCursor({ ...restored, loop: null })
+    const phaseWithoutLoop = flowRuntime.resolvePhaseByCursor({ ...restored, loop: null })
     if (
       restored.loop &&
       (phaseWithoutLoop.wordAdvance.type !== 'wordLoop' ||
-        restored.loop.subStepIndex >= (phaseWithoutLoop.wordAdvance.subSteps?.length ?? 0))
+        !Number.isInteger(restored.loop.subStepIndex) ||
+        restored.loop.subStepIndex < 0 ||
+        restored.loop.subStepIndex >= (phaseWithoutLoop.wordAdvance.subSteps?.length ?? 0) ||
+        !Number.isInteger(restored.loop.startIndex) ||
+        restored.loop.startIndex < 0 ||
+        !Number.isInteger(restored.loop.endIndex) ||
+        restored.loop.endIndex < restored.loop.startIndex ||
+        restored.loop.endIndex >= deps.getPracticeData().words.length)
     ) {
       restored.loop = null
     }
@@ -232,13 +235,13 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     // onEnd/错词清空期间仍可能新增已掌握或主动跳过词，推进前再收敛一次。
     filterWorkingWords()
 
-    const { cursor: nextCursor, complete } = advanceStepCursor(cur)
+    const { cursor: nextCursor, complete } = flowRuntime.advanceStepCursor(cur)
     if (complete) {
       deps.complete()
       return
     }
 
-    const config = getActiveFlowConfig()
+    const config = activeFlowConfig.value
     const changedNode = nextCursor.nodeIndex !== cur.nodeIndex
     const nextSource = getSourceForCursor(nextCursor)
     const words = changedNode
@@ -347,7 +350,7 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     // ── 情形 1：处于 inWrongWordClear（错词清空完毕，判断是否还有错词） ──
     if (cur.inWrongWordClear) {
       data.wrongWords = data.wrongWords.filter(v => !deps.checkWordIsNeedNext(v))
-      const mainPhase = getMainPhase(cur)
+      const mainPhase = flowRuntime.getMainPhase(cur)
       if (data.wrongWords.length > 0) {
         // 继续错词清空
         const endActionIdx = cur.endActionIndex ?? 0
@@ -414,7 +417,11 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     const preTimes = data.wrongTimesMap[temp] ?? 0
     const phase = currentPhase.value
 
-    if (phase.practiceType === WordPracticeType.Spell && data.wrongTimes === 0 && preTimes) {
+    const loop = activeCursor.value.loop
+    const loopSubStep = loop
+      ? phase.wordAdvance.subSteps?.[loop.subStepIndex]
+      : undefined
+    if (loopSubStep?.clearWrongOnSuccess && data.wrongTimes === 0) {
       const rIndex = data.wrongWords.findIndex(v => v.word.toLowerCase() === temp)
       if (rIndex >= 0) data.wrongWords.splice(rIndex, 1)
     }
@@ -449,8 +456,11 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
   function buildSessionSnapshot(): PracticeSessionSnapshot {
     return {
       identifyMethod: settingStore.identifyMethod,
-      flowId: getActiveFlowId(),
-      cursor: { ...activeCursor.value },
+      flowId: flowRuntime.getActiveFlowId(),
+      cursor: {
+        ...activeCursor.value,
+        loop: activeCursor.value.loop ? { ...activeCursor.value.loop } : null,
+      },
       nodeWorkingWordKeys: nodeWorkingWords.map(word => word.word),
     }
   }
@@ -474,9 +484,9 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
   }
 
   function restoreSessionSnapshot(snapshot: PracticeSessionSnapshot) {
-    loadPracticeFlow(snapshot.flowId)
+    flowRuntime.loadPracticeFlow(snapshot.flowId)
 
-    settingStore.wordPracticeMode = getActiveFlowConfig().mode
+    settingStore.wordPracticeMode = activeFlowConfig.value.mode
     settingStore.identifyMethod = snapshot.identifyMethod
 
     if (snapshot.cursor) restoreCursorFromSnapshot(snapshot.cursor)
@@ -486,12 +496,13 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
 
   /** v2 缓存尚无 sessionSnapshot 时的兜底 */
   function restoreSessionFromLegacy() {
-    loadPracticeFlow(getFlowIdForMode(settingStore.wordPracticeMode))
+    flowRuntime.loadPracticeFlow(getFlowIdForMode(settingStore.wordPracticeMode))
     resetCursor()
     restoreWorkingWords()
   }
 
   return {
+    activeFlowConfig,
     activeCursor,
     currentPhase,
     currentPracticeType,
@@ -503,5 +514,6 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     buildSessionSnapshot,
     restoreSessionSnapshot,
     restoreSessionFromLegacy,
+    resolveFlowStart: flowRuntime.resolveFlowStart,
   }
 }
