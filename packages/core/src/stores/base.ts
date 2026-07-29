@@ -105,7 +105,7 @@ export const useBaseStore = defineStore('base', {
       return res ?? getDefaultDict()
     },
     collectArticle(): Dict {
-      let res = this.word.bookList.find(v => [v.enName, v.id].includes(DictId.articleCollect))
+      let res = this.article.bookList.find(v => [v.enName, v.id].includes(DictId.articleCollect))
       return res ?? getDefaultDict()
     },
     wrong(): Dict {
