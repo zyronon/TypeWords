@@ -5,7 +5,9 @@ export default defineNuxtPlugin(nuxtApp => {
   // v-opacity: 根据布尔值控制透明度
   nuxtApp.vueApp.directive('opacity', {
     mounted(el: HTMLElement, binding: any) {
-      el.classList.add('anim')
+      if (binding.arg === undefined || binding.arg !== 'noAnim') {
+        el.classList.add('anim')
+      }
       el.style.opacity = binding?.value ? '1' : '0'
     },
     updated(el: HTMLElement, binding: any) {

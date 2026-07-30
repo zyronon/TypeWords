@@ -3,27 +3,12 @@ import { IdentifyMethod, WordPracticeMode, WordPracticeType } from '@typewords/c
 
 // ─── 显隐策略 ──────────────────────────────────────────────────────────────────
 
-export interface PracticeDisplayPolicy {
-  showWordTranslation: boolean
-  showSentences: boolean
-  showSentenceTranslation: boolean
-  showPhrases: boolean
-  showSynos: boolean
-  showEtymology: boolean
-  showRelWords: boolean
-  inputMode: PracticeInputMode
-}
-
-/** 输入核心的渲染与键入方式；是否激活输入由组件的 active 状态单独控制。 */
-export type PracticeInputMode = 'followWrite' | 'spell' | 'dictation'
-
-export type PracticeDisplayOverride = Partial<
-  Pick<PracticeDisplayPolicy, 'inputMode' | 'showWordTranslation' | 'showSentences' | 'showSentenceTranslation'>
->
-
-export interface EffectiveDisplay extends PracticeDisplayPolicy {
-  isDictation: boolean
+export interface PracticeViewState {
+  practiceType: WordPracticeType
+  /** 只描述当前画面是否遮罩单词，不参与选择键入算法。 */
+  isWordMasked: boolean
   isShowTranslate: boolean
+  revealAll: boolean
 }
 
 // ─── 流程模型 ──────────────────────────────────────────────────────────────────
@@ -31,12 +16,11 @@ export interface EffectiveDisplay extends PracticeDisplayPolicy {
 /** Step Template 的 id — 只描述"怎么练"，不关心词源 */
 export type PracticeStepTemplateId = 'followWrite' | 'spell' | 'listen' | 'dictation' | 'identify'
 
-/** Step Template — 纯动作描述（展示策略 + 练习类型） */
+/** Step Template 的名称和练习类型元数据。 */
 export interface PracticeStepTemplate {
   id: PracticeStepTemplateId
   label: string
   practiceType: WordPracticeType
-  display: PracticeDisplayPolicy
 }
 
 /** 词表来源 */
@@ -48,7 +32,6 @@ export type PracticeWordsSource = 'taskNew' | 'taskReview' | 'current' | 'wrongW
 export interface PracticeLoopSubStep {
   templateId: PracticeStepTemplateId
   label?: string
-  displayOverride?: Partial<PracticeDisplayPolicy>
   /** 本子步骤零错误完成当前词时，是否将其从本轮待复练错词中移除。 */
   clearWrongOnSuccess?: boolean
 }
@@ -58,7 +41,7 @@ export type PracticeWordAdvanceConfig =
   | { type: 'increment' }
   | {
       type: 'wordLoop'
-      groupSize?: number
+      groupSize: number
       /** 每组练完后依次执行的子步骤；全部完成后回主步骤继续下一组 */
       subSteps: PracticeLoopSubStep[]
     }
@@ -69,7 +52,6 @@ export type PracticeWordAdvanceConfig =
 export interface PracticeWrongWordClearAction {
   type: 'wrongWordClear'
   templateId: PracticeStepTemplateId
-  displayOverride?: Partial<PracticeDisplayPolicy>
   wordAdvance?: PracticeWordAdvanceConfig
 }
 
@@ -101,7 +83,6 @@ export type PracticeEndAction =
 export interface PracticeFlowStep {
   templateId: PracticeStepTemplateId
   label?: string
-  displayOverride?: Partial<PracticeDisplayPolicy>
   wordAdvance?: PracticeWordAdvanceConfig
   /** 词表练完后按顺序执行的动作队列（替代旧 requireWrongWordClear） */
   onEnd?: PracticeEndAction[]
@@ -158,7 +139,6 @@ export interface WordAdvanceRule {
 export interface PracticePhaseDefinition {
   /** 练习类型（FollowWrite / Listen / Dictation / Identify / Spell） */
   practiceType: WordPracticeType
-  display: PracticeDisplayPolicy
   wordAdvance: WordAdvanceRule
   /** 词表练完后执行的动作队列（替代 requireWrongWordClear） */
   onEnd: PracticeEndAction[]
@@ -179,8 +159,7 @@ export interface FlowStartResult {
 export interface PracticeSessionSnapshot {
   identifyMethod: IdentifyMethod
   flowId: string
-  cursor?: PracticeFlowCursor
+  cursor: PracticeFlowCursor
   /** 当前 Node 经前序 Step 处理后的工作词表；下一 Step 以它为输入。 */
   nodeWorkingWordKeys?: string[]
-  displayOverride?: PracticeDisplayOverride | null
 }

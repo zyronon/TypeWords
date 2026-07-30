@@ -201,7 +201,7 @@ const showSkipStep = computed(() => {
             @click="displayActions.toggleDictation()"
             :title="`${$t('toggle_dictation_mode')}(${settingStore.shortcutKeyMap[ShortcutKey.ToggleDictation]})`"
           >
-            <IconFluentEyeOff16Regular v-if="effective.isDictation" />
+            <IconFluentEyeOff16Regular v-if="effective.isWordMasked" />
             <IconFluentEye16Regular v-else />
           </BaseIcon>
 

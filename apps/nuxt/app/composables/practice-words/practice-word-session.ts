@@ -1,11 +1,19 @@
-/** V2 练习会话的数据结构、默认值和本地持久化。 */
 import { useBaseStore } from '@typewords/core/stores/base.ts'
+import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import type { PracticeState } from '@typewords/core/stores/practice.ts'
 import type { PracticeData, Question, TaskWords, Word } from '@typewords/core/types/types.ts'
-import { get, set } from 'idb-keyval'
+import { CompareResult, IdentifyMethod, SyncDataType } from '@typewords/core/types/enum.ts'
+import {
+  checkAndUpgradePracticeWordCache,
+  getPracticeWordCacheLocalWithMeta,
+  PRACTICE_WORD_CACHE,
+  type LocalCacheResult,
+  type PracticeWordCacheStored,
+} from '@typewords/core/utils/cache.ts'
+import { useDataSyncPersistence } from '@typewords/core/composables/useDataSyncPersistence.ts'
+import { shouldFetchRemote } from '@typewords/core/utils/index.ts'
 import type { PracticeSessionSnapshot } from './practice-flow-types.ts'
 
-/** V2 的流程位置由 Navigator Cursor 表达，不再保留 V1 的 isTypingWrongWord 镜像字段。 */
 export type PracticeDataV2 = Omit<PracticeData, 'isTypingWrongWord' | 'question'> & {
   question: Question | null
 }
@@ -17,38 +25,41 @@ export type PracticeWordCacheV2 = {
   sessionSnapshot?: PracticeSessionSnapshot
 }
 
-type PracticeWordCacheCompactV2 = {
-  taskWordsStr: {
-    new: string[]
-    review: string[]
-  }
-  practiceData: Omit<PracticeDataV2, 'words' | 'wrongWords'> & {
+export type PracticeWordCacheCompactV2 = {
+  taskWordsStr: { new: string[]; review: string[] }
+  practiceData?: Omit<PracticeDataV2, 'words' | 'wrongWords'> & {
     wordsStr: string[]
     wrongWordsStr: string[]
   }
-  statStoreData: PracticeState
+  statStoreData?: PracticeState
   sessionSnapshot?: PracticeSessionSnapshot
 }
 
-type PracticeWordCacheStoredV2 = PracticeWordCacheV2 | PracticeWordCacheCompactV2
-type LocalCacheResult<T> = { val: T; updated_at?: string; version: number }
+export class UnsupportedPracticeCacheVersionError extends Error {
+  constructor(public readonly version: number) {
+    super(`UNSUPPORTED_PRACTICE_CACHE_VERSION:${version}`)
+  }
+}
 
-const PRACTICE_WORD_CACHE_V2 = {
-  key: 'PracticeSaveWordV2',
-  version: 1,
+export function resolveNewerRemotePracticeCacheTime(
+  meta: { data_version?: number; updated_at?: string } | null,
+  knownUpdatedAt: number
+): number | null {
+  if (!meta) return null
+  const version = meta.data_version ?? 1
+  if (version > PRACTICE_WORD_CACHE.version) {
+    throw new UnsupportedPracticeCacheVersionError(version)
+  }
+  if (version !== PRACTICE_WORD_CACHE.version) return null
+  const remoteUpdatedAt = Date.parse(meta.updated_at ?? '')
+  return Number.isFinite(remoteUpdatedAt) && remoteUpdatedAt > knownUpdatedAt ? remoteUpdatedAt : null
 }
 
 export function getDefaultPracticeData(
   origin?: Partial<PracticeDataV2>,
   val?: Partial<PracticeDataV2>
 ): PracticeDataV2 {
-  // 旧版 V2 缓存可能仍带有 V1 字段，恢复时主动清除，避免继续持久化双状态。
-  const target = (origin ?? {}) as Partial<PracticeData>
-  const sanitizedVal = { ...(val ?? {}) } as Partial<PracticeData>
-  delete target.isTypingWrongWord
-  delete sanitizedVal.isTypingWrongWord
-
-  return Object.assign(target, {
+  return Object.assign(origin ?? {}, {
     index: 0,
     words: [],
     wrongWords: [],
@@ -58,115 +69,166 @@ export function getDefaultPracticeData(
     ratingMap: {},
     wrongTimes: 0,
     question: null,
-    ...sanitizedVal,
+    ...val,
   }) as PracticeDataV2
-}
-
-function isCompactPracticeWordCache(data: PracticeWordCacheStoredV2 | null): data is PracticeWordCacheCompactV2 {
-  return !!data && 'taskWordsStr' in data
 }
 
 function createWordMap(): Map<string, Word> {
   const store = useBaseStore()
-  return new Map(store.sdict.words.map(word => [word.word, word]))
+  return new Map(store.sdict.words.map(word => [word.word.toLowerCase(), word]))
 }
 
-function restoreWords(words: string[], wordMap: Map<string, Word>): Word[] {
-  return words.map(word => wordMap.get(word)).filter((word): word is Word => !!word)
+function restoreWords(words: unknown, wordMap: Map<string, Word>): Word[] {
+  if (!Array.isArray(words)) return []
+  return words
+    .map(word => typeof word === 'string' ? wordMap.get(word.toLowerCase()) : undefined)
+    .filter((word): word is Word => !!word)
 }
 
-function serializePracticeWordCache(data: PracticeWordCacheV2 | null): PracticeWordCacheStoredV2 | null {
-  if (!data?.practiceData || !data.statStoreData) return data
-  const { words, wrongWords, ...practiceDataRest } = data.practiceData
+function serializePracticeWordCache(data: PracticeWordCacheV2 | null): PracticeWordCacheCompactV2 | null {
+  if (!data) return null
+  const taskWordsStr = {
+    new: data.taskWords.new.map(word => word.word),
+    review: data.taskWords.review.map(word => word.word),
+  }
+  if (!data.practiceData && !data.statStoreData && !data.sessionSnapshot) return { taskWordsStr }
+  if (!data.practiceData || !data.statStoreData || !data.sessionSnapshot) return null
+  const { words, wrongWords, ...practiceData } = data.practiceData
   return {
-    taskWordsStr: {
-      new: data.taskWords.new.map(v => v.word),
-      review: data.taskWords.review.map(v => v.word),
-    },
+    taskWordsStr,
     practiceData: {
-      ...practiceDataRest,
-      wordsStr: (words ?? []).map(v => v.word),
-      wrongWordsStr: (wrongWords ?? []).map(v => v.word),
+      ...practiceData,
+      wordsStr: words.map(word => word.word),
+      wrongWordsStr: wrongWords.map(word => word.word),
     },
     statStoreData: data.statStoreData,
     sessionSnapshot: data.sessionSnapshot,
   }
 }
 
-function restorePracticeWordCache(data: PracticeWordCacheStoredV2 | null): PracticeWordCacheV2 | null {
-  if (!data) return null
-  if (!isCompactPracticeWordCache(data)) {
-    if (!data.taskWords?.new.length && !data.taskWords?.review.length) return null
-    if (!data.practiceData) return data
-    const { isTypingWrongWord: _legacyWrongWordState, ...practiceData } = data.practiceData as PracticeDataV2 &
-      Partial<Pick<PracticeData, 'isTypingWrongWord'>>
-    return { ...data, practiceData }
-  }
-  if (!data.taskWordsStr?.new.length && !data.taskWordsStr?.review.length) return null
+function isCurrentSnapshot(value: unknown): value is PracticeSessionSnapshot {
+  if (!value || typeof value !== 'object') return false
+  const snapshot = value as PracticeSessionSnapshot
+  const cursor = snapshot.cursor
+  return (
+    typeof snapshot.flowId === 'string' &&
+    Object.values(IdentifyMethod).includes(snapshot.identifyMethod) &&
+    !!cursor &&
+    Number.isInteger(cursor.nodeIndex) &&
+    cursor.nodeIndex >= 0 &&
+    Number.isInteger(cursor.stepIndex) &&
+    cursor.stepIndex >= 0 &&
+    typeof cursor.inWrongWordClear === 'boolean' &&
+    (cursor.endActionIndex === null || (Number.isInteger(cursor.endActionIndex) && cursor.endActionIndex >= 0)) &&
+    (cursor.loop === null || (
+      Number.isInteger(cursor.loop.startIndex) &&
+      cursor.loop.startIndex >= 0 &&
+      Number.isInteger(cursor.loop.endIndex) &&
+      cursor.loop.endIndex >= cursor.loop.startIndex &&
+      Number.isInteger(cursor.loop.subStepIndex) &&
+      cursor.loop.subStepIndex >= 0
+    ))
+  )
+}
 
+function restoreCurrentCache(value: unknown): PracticeWordCacheV2 | null {
+  if (!value || typeof value !== 'object' || !('taskWordsStr' in value)) return null
+  const data = value as PracticeWordCacheCompactV2
+  if (
+    !Array.isArray(data.taskWordsStr?.new) ||
+    !Array.isArray(data.taskWordsStr?.review)
+  ) return null
   const wordMap = createWordMap()
-  const taskWords: TaskWords = {
+  const taskWords = {
     new: restoreWords(data.taskWordsStr.new, wordMap),
     review: restoreWords(data.taskWordsStr.review, wordMap),
   }
-  const words = restoreWords(data.practiceData?.wordsStr ?? [], wordMap)
-  const wrongWords = restoreWords(data.practiceData?.wrongWordsStr ?? [], wordMap)
-  const index = words.length ? Math.min(data.practiceData.index, words.length - 1) : 0
-  const { isTypingWrongWord: _legacyWrongWordState, ...practiceDataRest } = data.practiceData as typeof data.practiceData &
-    Partial<Pick<PracticeData, 'isTypingWrongWord'>>
-
+  if (!taskWords.new.length && !taskWords.review.length) return null
+  if (!data.practiceData && !data.statStoreData && !data.sessionSnapshot) return { taskWords }
+  if (!data.practiceData || !data.statStoreData || !isCurrentSnapshot(data.sessionSnapshot)) return null
+  if (
+    !Array.isArray(data.practiceData.wordsStr) ||
+    !Array.isArray(data.practiceData.wrongWordsStr) ||
+    !Number.isInteger(data.practiceData.index) ||
+    data.practiceData.index < 0
+  ) return null
+  const words = restoreWords(data.practiceData.wordsStr, wordMap)
+  const wrongWords = restoreWords(data.practiceData.wrongWordsStr, wordMap)
+  const index = words.length ? Math.min(Math.max(data.practiceData.index, 0), words.length - 1) : 0
+  const { wordsStr: _wordsStr, wrongWordsStr: _wrongWordsStr, ...practiceData } = data.practiceData
   return {
     taskWords,
-    practiceData: {
-      ...practiceDataRest,
-      index,
-      words,
-      wrongWords,
-    },
+    practiceData: { ...practiceData, index, words, wrongWords, question: null },
     statStoreData: data.statStoreData,
     sessionSnapshot: data.sessionSnapshot,
   }
 }
 
-async function getPracticeWordCacheLocal(): Promise<PracticeWordCacheStoredV2 | null> {
-  const raw = await get(PRACTICE_WORD_CACHE_V2.key)
-  if (!raw) return null
-
-  let result: LocalCacheResult<PracticeWordCacheStoredV2>
-  if (typeof raw === 'string') {
-    try {
-      result = JSON.parse(raw)
-    } catch {
-      return null
-    }
-  } else {
-    result = raw
-  }
-  return result?.val && Object.keys(result.val).length > 0 ? result.val : null
-}
-
-async function setPracticeWordCacheLocal(cache: PracticeWordCacheStoredV2 | null): Promise<void> {
-  const payload: LocalCacheResult<PracticeWordCacheStoredV2 | null> = {
-    version: PRACTICE_WORD_CACHE_V2.version,
-    val: cache,
-    updated_at: new Date().toISOString(),
-  }
-  await set(PRACTICE_WORD_CACHE_V2.key, JSON.stringify(payload))
-}
-
-/** V2 练习持久化：仅读写本地 `PracticeSaveWordV2`，不走 V1 云端同步。 */
 export function usePracticeWordPersistenceV2() {
-  async function load(): Promise<PracticeWordCacheV2 | null> {
-    return restorePracticeWordCache(await getPracticeWordCacheLocal())
-  }
+  const dataSync = useDataSyncPersistence()
+  const settingStore = useSettingStore()
 
   async function save(data: PracticeWordCacheV2 | null) {
-    await setPracticeWordCacheLocal(serializePracticeWordCache(data))
+    const compact = serializePracticeWordCache(data)
+    return await dataSync.saveLocalAndSync(SyncDataType.practice_word, compact, { pullWhenRemoteNewer: false })
+  }
+
+  async function load(): Promise<PracticeWordCacheV2 | null> {
+    debugger
+    const [local, remote] = await Promise.all([
+      getPracticeWordCacheLocalWithMeta() as Promise<LocalCacheResult<PracticeWordCacheStored> | null>,
+      dataSync.getRemoteData(SyncDataType.practice_word),
+    ])
+
+    let selected: LocalCacheResult<unknown> | null = local
+    if (remote) {
+      const remoteCache: LocalCacheResult<unknown> = {
+        val: remote.data,
+        version: remote.data_version ?? 1,
+        updated_at: remote.updated_at,
+      }
+      if (!selected || shouldFetchRemote(
+        selected.updated_at,
+        remoteCache.updated_at,
+        remoteCache.version,
+        selected.version
+      ) === CompareResult.RemoteNewer) {
+        selected = remoteCache
+      }
+    }
+    if (!selected) return null
+    if (selected.version > PRACTICE_WORD_CACHE.version) {
+      throw new UnsupportedPracticeCacheVersionError(selected.version)
+    }
+
+    if (selected.version !== PRACTICE_WORD_CACHE.version) {
+      const upgraded = checkAndUpgradePracticeWordCache({
+        val: selected.val,
+        version: selected.version,
+        updated_at: selected.updated_at,
+      }, settingStore)
+      if (upgraded.val == null) {
+        await save(null)
+        return null
+      }
+      const restored = restoreCurrentCache(upgraded.val)
+      if (!restored) return null
+      await save(restored)
+      return restored
+    }
+
+    if (selected.val == null) return null
+    return restoreCurrentCache(selected.val)
   }
 
   async function clear() {
-    await setPracticeWordCacheLocal(null)
+    return await save(null)
   }
 
-  return { load, save, clear }
+  async function getRemoteUpdateTime(knownUpdatedAt: number): Promise<number | null> {
+    const meta = await dataSync.getRemoteMeta(SyncDataType.practice_word)
+    return resolveNewerRemotePracticeCacheTime(meta, knownUpdatedAt)
+  }
+
+  return { load, save, clear, getRemoteUpdateTime }
 }

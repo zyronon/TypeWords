@@ -13,7 +13,6 @@ import {
   listUserFlows,
   saveUserFlow,
   setActiveCustomFlowId,
-  validateFlowConfig,
 } from '~/composables/practice-words/practice-flow-runtime.ts'
 
 useHead({ title: APP_NAME + ' 流程编排' })
@@ -195,13 +194,13 @@ function handleSave() {
   const configToSave = normalizeBeforeSave()
   if (!configToSave) return
 
-  const validated = validateFlowConfig(configToSave)
-  if (validated.id === 'system' && configToSave.id !== 'system') {
+  try {
+    saveUserFlow(configToSave.id, configToSave, configToSave.label)
+  } catch {
     Toast.warning('流程配置无效，请检查是否有空阶段或非法配置')
     return
   }
 
-  saveUserFlow(configToSave.id, configToSave, configToSave.label)
   setActiveCustomFlowId(configToSave.id)
   config = cloneConfig(configToSave)
   flowName = configToSave.label

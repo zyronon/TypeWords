@@ -1,7 +1,7 @@
-/** Step 模板、默认显隐和内置可序列化流程。 */
+/** Step 模板和内置可序列化流程。 */
 import { WordPracticeMode, WordPracticeType } from '@typewords/core/types/enum.ts'
+import { PRACTICE_WORD_GROUP_SIZE } from '@typewords/core/utils/cache.ts'
 import type {
-  PracticeDisplayPolicy,
   PracticeEndAction,
   PracticeFlowConfig,
   PracticeStepTemplate,
@@ -11,84 +11,22 @@ import type {
 } from './practice-flow-types.ts'
 
 /** 跟写分组大小，与 v1 groupSize 一致。 */
-export const GROUP_SIZE = 7
-export const CURRENT_FLOW_VERSION = 5
-
-export function phaseDisplay(overrides: Partial<PracticeDisplayPolicy> = {}): PracticeDisplayPolicy {
-  return {
-    showWordTranslation: true,
-    showSentences: true,
-    showSentenceTranslation: true,
-    showPhrases: true,
-    showSynos: true,
-    showEtymology: true,
-    showRelWords: true,
-    inputMode: 'followWrite',
-    ...overrides,
-  }
-}
-
-const DISPLAY_FOLLOW_WRITE = phaseDisplay()
-const DISPLAY_SPELL = phaseDisplay({
-  inputMode: 'spell',
-  showEtymology: false,
-  showRelWords: false,
-})
-const DISPLAY_LISTEN = phaseDisplay({
-  showWordTranslation: false,
-  showSentences: false,
-  showSentenceTranslation: false,
-  showPhrases: false,
-  showSynos: false,
-  showEtymology: false,
-  showRelWords: false,
-  inputMode: 'spell',
-})
-const DISPLAY_DICTATION = phaseDisplay({
-  showWordTranslation: true,
-  showSentences: false,
-  showSentenceTranslation: false,
-  showPhrases: false,
-  showSynos: false,
-  showEtymology: false,
-  showRelWords: false,
-  inputMode: 'dictation',
-})
-const DISPLAY_IDENTIFY = phaseDisplay({
-  showWordTranslation: false,
-  showSentences: false,
-  showSentenceTranslation: false,
-  showPhrases: false,
-  showSynos: false,
-  showEtymology: false,
-  showRelWords: false,
-  inputMode: 'followWrite',
-})
+export const GROUP_SIZE = PRACTICE_WORD_GROUP_SIZE
+export const CURRENT_FLOW_VERSION = 6
 
 export const STEP_TEMPLATE_META: Record<PracticeStepTemplateId, PracticeStepTemplate> = {
-  followWrite: { id: 'followWrite', label: '跟写', practiceType: WordPracticeType.FollowWrite, display: DISPLAY_FOLLOW_WRITE, },
-  spell: { id: 'spell', label: '拼写', practiceType: WordPracticeType.Spell, display: DISPLAY_SPELL },
-  listen: { id: 'listen', label: '听写', practiceType: WordPracticeType.Listen, display: DISPLAY_LISTEN },
-  dictation: { id: 'dictation', label: '默写', practiceType: WordPracticeType.Dictation, display: DISPLAY_DICTATION },
-  identify: { id: 'identify', label: '自测', practiceType: WordPracticeType.Identify, display: DISPLAY_IDENTIFY },
-}
-
-export function materializeStepTemplate(
-  templateId: PracticeStepTemplateId,
-  displayOverride?: Partial<PracticeDisplayPolicy>
-): Pick<PracticeStepTemplate, 'practiceType' | 'display'> {
-  const template = STEP_TEMPLATE_META[templateId]
-  return {
-    practiceType: template.practiceType,
-    display: displayOverride ? { ...template.display, ...displayOverride } : template.display,
-  }
+  followWrite: { id: 'followWrite', label: '跟写', practiceType: WordPracticeType.FollowWrite },
+  spell: { id: 'spell', label: '拼写', practiceType: WordPracticeType.Spell },
+  listen: { id: 'listen', label: '听写', practiceType: WordPracticeType.Listen },
+  dictation: { id: 'dictation', label: '默写', practiceType: WordPracticeType.Dictation },
+  identify: { id: 'identify', label: '自测', practiceType: WordPracticeType.Identify },
 }
 
 export function materializeWordAdvance(config?: PracticeWordAdvanceConfig): WordAdvanceRule {
   return config?.type === 'wordLoop'
     ? {
         type: 'wordLoop',
-        groupSize: config.groupSize ?? GROUP_SIZE,
+        groupSize: config.groupSize,
         subSteps: config.subSteps ?? [],
       }
     : { type: 'increment' }

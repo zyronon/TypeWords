@@ -453,6 +453,16 @@ export function useDataSyncPersistence() {
     }
   }
 
+  async function getRemoteData(type: SyncDataType, client?: SupabaseClient | null): Promise<RemoteDataRow | null> {
+    const rows = await fetchServerDatas([type], client)
+    return rows?.[0] ?? null
+  }
+
+  async function getRemoteMeta(type: SyncDataType, client?: SupabaseClient | null): Promise<RemoteMetaRow | null> {
+    const rows = await fetchServerMeta([type], client)
+    return rows?.[0] ?? null
+  }
+
   async function forcePushLocalDataToRemote(data: BackupData['val'], client?: SupabaseClient | null): Promise<boolean> {
     let syncResult = true
     const updated_at = new Date().toISOString()
@@ -592,6 +602,8 @@ export function useDataSyncPersistence() {
   return {
     pullIfRemoteNewer,
     saveLocalAndSync,
+    getRemoteData,
+    getRemoteMeta,
     saveDictState,
     forcePushLocalDataToRemote,
     pullAllRemoteToLocal,

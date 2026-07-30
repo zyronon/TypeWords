@@ -15,8 +15,8 @@ import { Toast } from '@typewords/base'
 import { useBaseStore } from '../stores/base'
 import { useSettingStore } from '../stores/setting'
 import { ref } from 'vue'
-import { PRACTICE_ARTICLE_CACHE, PRACTICE_WORD_CACHE } from '../utils/cache'
-import { usePracticeArticlePersistence, usePracticeWordPersistence } from '../composables/usePracticePersistence.ts'
+import { getPracticeWordCacheLocalWithMeta, PRACTICE_ARTICLE_CACHE, PRACTICE_WORD_CACHE } from '../utils/cache'
+import { usePracticeArticlePersistence } from '../composables/usePracticePersistence.ts'
 import type { BackupData } from '../types'
 
 export function useExport() {
@@ -26,7 +26,6 @@ export function useExport() {
   let loading = ref(false)
 
   async function getExportedData() {
-    const wordPersistence = usePracticeWordPersistence()
     const articlePersistence = usePracticeArticlePersistence()
 
     let data: BackupData = {
@@ -50,9 +49,9 @@ export function useExport() {
         },
       },
     }
-    let d = await wordPersistence.getLocalDataCompact()
-    if (d) {
-      data.val[PRACTICE_WORD_CACHE.key].val = d
+    const wordCache = await getPracticeWordCacheLocalWithMeta()
+    if (wordCache?.val) {
+      data.val[PRACTICE_WORD_CACHE.key] = wordCache
     }
     let d1 = await articlePersistence.getLocalDataCompact()
     if (d1) {

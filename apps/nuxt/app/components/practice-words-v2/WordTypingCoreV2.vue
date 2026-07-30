@@ -30,16 +30,13 @@ import { onMounted, onUnmounted, watch } from 'vue'
 import Space from '@typewords/core/components/article/Space.vue'
 import { _nextTick, last, normalizeWord } from '@typewords/core/utils'
 import { useOnKeyboardEventListener } from '@typewords/core/hooks/event.ts'
-import type { PracticeInputMode } from '~/composables/practice-words/practice-flow-types.ts'
 
 interface IProps {
   word: Word
   /** 当前 Cursor 解析出的真实练习类型。 */
   practiceType: WordPracticeType
-  /** 输入区的渲染及交互模式。 */
-  inputMode: PracticeInputMode
-  /** 当前单词及元信息是否处于遮罩状态。 */
-  isDictation: boolean
+  /** 当前单词及元信息是否处于遮罩状态，只影响画面。 */
+  isWordMasked: boolean
   showWordResult: boolean
   wrongTimes: number
   showFullWord: boolean
@@ -61,8 +58,7 @@ const props = withDefaults(defineProps<IProps>(), {
   wrongTimes: 0,
   active: true,
   showFullWord: false,
-  inputMode: 'followWrite',
-  isDictation: false,
+  isWordMasked: false,
   wordFontSize: 48,
   volumeIconRef: undefined,
   playWord: () => {},
@@ -115,7 +111,7 @@ let displayWord = $computed(() => {
 const isWordRight = $computed(() => {
   let a = input
   let b = props.word.word
-  if (props.inputMode === 'dictation') {
+  if (props.practiceType === WordPracticeType.Dictation) {
     a = normalizeWord(a)
     b = normalizeWord(b)
   }
@@ -266,7 +262,7 @@ async function onTyping(e: KeyboardEvent) {
   inputLock = true
   let letter = e.key
   //默写特殊逻辑
-  if (props.inputMode === 'dictation') {
+  if (props.practiceType === WordPracticeType.Dictation) {
     if (isSpace(e)) {
       //如果输入长度大于单词长度/单词不包含空格，并且输入不为空（开始直接输入空格不行），则显示单词；
       if (input.length && (input.length >= target.length || !target.includes(' '))) {
@@ -407,7 +403,7 @@ function resetTypingCore(trigger: WordPlayTrigger) {
   wordCompletedTime = 0
   emitWrongTimes(0)
   resetActiveWordPlayCount(props.word.word)
-  if (settingStore.wordSound && props.inputMode !== 'dictation') {
+  if (settingStore.wordSound && props.practiceType !== WordPracticeType.Dictation) {
     props.playWord(trigger, { resetIcon: trigger === WordPlayTrigger.NewWord })
   }
   checkCursorPosition()
@@ -470,7 +466,7 @@ watch(
   () => resetTypingCore(WordPlayTrigger.NewWord)
 )
 
-watch([() => input, () => props.showFullWord, () => props.inputMode], () => {
+watch([() => input, () => props.showFullWord, () => props.practiceType], () => {
   checkCursorPosition()
 })
 
@@ -525,10 +521,10 @@ defineExpose({
 <template>
   <div class="typing-core" ref="typingWordRef" :class="wrong ? 'is-wrong' : ''">
     <!-- 默写模式 -->
-    <div v-if="inputMode === 'dictation'">
+    <div v-if="practiceType === WordPracticeType.Dictation">
       <div
         class="letter text-align-center w-full inline-block"
-        v-opacity="!isDictation || showWordResult || showFullWord"
+        v-opacity:noAnim="!isWordMasked || showWordResult || showFullWord"
       >
         {{ word.word }}
       </div>
@@ -548,7 +544,7 @@ defineExpose({
     <template v-else>
       <span class="input" v-if="input">{{ input }}</span>
       <span class="wrong" v-if="wrong">{{ wrong }}</span>
-      <span class="letter" v-if="isDictation && !showFullWord">
+      <span class="letter" v-if="isWordMasked && !showFullWord">
         {{
           displayWord
             .split('')

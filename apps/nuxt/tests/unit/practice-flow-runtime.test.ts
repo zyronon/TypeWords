@@ -4,9 +4,9 @@ import { getDefaultWord } from '@typewords/core/types/func.ts'
 import {
   createPracticeFlowRuntime,
   getUserFlow,
-  migrateFlowConfig,
+  isValidFlowConfig,
+  resolveFlowConfigOrSystem,
   saveUserFlow,
-  validateFlowConfig,
 } from '../../app/composables/practice-words/practice-flow-runtime.ts'
 import { CURRENT_FLOW_VERSION } from '../../app/composables/practice-words/practice-flow-config.ts'
 import type { PracticeFlowConfig } from '../../app/composables/practice-words/practice-flow-types.ts'
@@ -41,29 +41,7 @@ beforeEach(() => {
   Object.defineProperty(globalThis, 'localStorage', { value: new MemoryStorage(), configurable: true })
 })
 
-describe('Flow v5 migration and validation', () => {
-  it('migrates Spell loop subSteps, including wrongWordClear, without enabling other templates', () => {
-    const legacy = flow('legacy') as PracticeFlowConfig
-    legacy.version = 4
-    legacy.nodes[0].steps[0].wordAdvance = {
-      type: 'wordLoop', groupSize: 7,
-      subSteps: [{ templateId: 'listen' }, { templateId: 'spell' }],
-    }
-    legacy.nodes[0].steps[0].onEnd = [{
-      type: 'wrongWordClear', templateId: 'followWrite',
-      wordAdvance: { type: 'wordLoop', groupSize: 3, subSteps: [{ templateId: 'spell' }] },
-    }]
-
-    const migrated = migrateFlowConfig(legacy)!
-    expect(migrated.version).toBe(5)
-    expect(migrated.nodes[0].steps[0].wordAdvance?.subSteps).toEqual([
-      { templateId: 'listen', clearWrongOnSuccess: false },
-      { templateId: 'spell', clearWrongOnSuccess: true },
-    ])
-    const action = migrated.nodes[0].steps[0].onEnd?.[0]
-    expect(action?.type === 'wrongWordClear' && action.wordAdvance?.subSteps[0].clearWrongOnSuccess).toBe(true)
-  })
-
+describe('Flow v6 strict validation', () => {
   it.each([
     { name: 'zero groupSize', patch: { wordAdvance: { type: 'wordLoop', groupSize: 0, subSteps: [] } } },
     { name: 'fraction groupSize', patch: { wordAdvance: { type: 'wordLoop', groupSize: 1.5, subSteps: [] } } },
@@ -72,30 +50,53 @@ describe('Flow v5 migration and validation', () => {
   ])('falls back to System for $name', ({ patch }) => {
     const invalid = flow('invalid')
     Object.assign(invalid.nodes[0].steps[0], patch)
-    expect(validateFlowConfig(invalid).id).toBe('system')
+    expect(resolveFlowConfigOrSystem(invalid).id).toBe('system')
   })
 
-  it('falls back for a future version', () => {
-    const future = flow('future')
-    future.version = CURRENT_FLOW_VERSION + 1
-    expect(validateFlowConfig(future).id).toBe('system')
+  it.each([CURRENT_FLOW_VERSION - 1, CURRENT_FLOW_VERSION + 1])('falls back for unsupported version %s', version => {
+    const unsupported = flow('unsupported')
+    unsupported.version = version
+    expect(resolveFlowConfigOrSystem(unsupported).id).toBe('system')
   })
 
-  it('writes migrated user flows without changing their storage metadata', () => {
+  it('does not migrate or write back an unsupported stored flow', () => {
     const legacy = flow('stored')
-    legacy.version = 4
-    legacy.nodes[0].steps[0] = {
-      templateId: 'followWrite',
-      wordAdvance: { type: 'wordLoop', groupSize: 7, subSteps: [{ templateId: 'spell' }] },
-    }
+    legacy.version = CURRENT_FLOW_VERSION - 1
     const createdAt = 100
     const updatedAt = 200
     localStorage.setItem('PracticeFlowV2', JSON.stringify({
       activeId: 'stored', flows: { stored: { config: legacy, name: 'stored', createdAt, updatedAt } },
     }))
-    expect(getUserFlow('stored')?.version).toBe(5)
+    expect(getUserFlow('stored')).toBeNull()
     const stored = JSON.parse(localStorage.getItem('PracticeFlowV2')!)
-    expect(stored.flows.stored).toMatchObject({ createdAt, updatedAt })
+    expect(stored.flows.stored).toMatchObject({ config: { version: CURRENT_FLOW_VERSION - 1 }, createdAt, updatedAt })
+  })
+
+  it('ignores malformed stored entries without throwing', () => {
+    localStorage.setItem('PracticeFlowV2', JSON.stringify({
+      activeId: 'broken',
+      flows: { broken: { name: 'broken', createdAt: 1, updatedAt: 2 } },
+    }))
+    expect(() => getUserFlow('broken')).not.toThrow()
+    expect(getUserFlow('broken')).toBeNull()
+  })
+
+  it('contains no display policy in the current serialized flow', () => {
+    expect(JSON.stringify(resolveFlowConfigOrSystem(flow('current')))).not.toContain('display')
+  })
+
+  it('safely rejects malformed values from storage', () => {
+    expect(isValidFlowConfig(null)).toBe(false)
+    expect(isValidFlowConfig({ id: 'broken' })).toBe(false)
+    expect(() => resolveFlowConfigOrSystem({ id: 'broken' })).not.toThrow()
+    expect(resolveFlowConfigOrSystem({ id: 'broken' }).id).toBe('system')
+  })
+
+  it('does not infer validity from a system id', () => {
+    const invalidSystem = flow('system') as any
+    invalidSystem.nodes = []
+    expect(isValidFlowConfig(invalidSystem)).toBe(false)
+    expect(() => saveUserFlow('system', invalidSystem, 'invalid')).toThrow('INVALID_FLOW_CONFIG')
   })
 })
 

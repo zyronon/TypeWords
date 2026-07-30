@@ -14,22 +14,24 @@ import { getDefaultWord } from '@typewords/core/types/func.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import ClickableEnglishText from '@typewords/core/components/word/ClickableEnglishText.vue'
 import ClickableWord from '@typewords/core/components/word/ClickableWord.vue'
-import { VolumeIcon } from '@typewords/base'
+import { Toast, VolumeIcon } from '@typewords/base'
 import { useI18n } from 'vue-i18n'
 import TranslationList from '@typewords/core/components/word/TranslationList.vue'
 import TypingSentence from '~/components/practice-sentences/TypingSentence.vue'
-import type { EffectiveDisplay } from '~/composables/practice-words/practice-flow-types.ts'
+import type { PracticeViewState } from '~/composables/practice-words/practice-flow-types.ts'
 import { useEventsByWatch } from '@typewords/core/utils/eventBus.ts'
 import { SENTENCE_PLAY_SHORTCUT_KEYS, ShortcutKey } from '@typewords/core'
+import { WordPracticeType } from '@typewords/core/types/enum.ts'
+import { computed } from 'vue'
+import { watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { getBrowserKey, useTTsPlayAudio } from '@typewords/core/hooks/sound.ts'
 
 const { t: $t } = useI18n()
 
 interface IProps {
   word: Word
-  effective: EffectiveDisplay
-  highlightedSentenceIndex: number
-  playSentence: (index: number, options?: { highlight?: boolean }) => void
-  playTtsWithGuide: (text: string, onEnd?: () => void) => void
+  effective: PracticeViewState
 }
 
 const props = withDefaults(defineProps<IProps>(), {
@@ -42,6 +44,20 @@ const emit = defineEmits<{
 }>()
 
 const settingStore = useSettingStore()
+const router = useRouter()
+const ttsPlayAudio = useTTsPlayAudio()
+let highlightedSentenceIndex = $ref(-1)
+let ttsVoiceHintShown = false
+const showDetails = computed(() =>
+  props.effective.revealAll || [WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(props.effective.practiceType)
+)
+const showTranslation = computed(() => props.effective.revealAll || props.effective.isShowTranslate)
+const showEtymology = computed(() =>
+  props.effective.revealAll ||
+  (props.effective.practiceType === WordPracticeType.FollowWrite &&
+    !props.effective.isWordMasked &&
+    props.effective.isShowTranslate)
+)
 let activeSentenceIndex = $ref(-1)
 const sentenceRef = useTemplateRef('sentences')
 
@@ -54,6 +70,51 @@ function noticePlaySentence(index: number) {
   if (index < 0 || index >= props.word.sentences.length) return
   sentenceRef.value?.[index]?.play?.()
 }
+
+function playTtsWithGuide(text: string, onEnd?: () => void) {
+  if (!ttsVoiceHintShown) {
+    const browserKey = getBrowserKey()
+    const hasVoice = settingStore.ttsVoiceMap?.some(v => v.key === browserKey && v.voice)
+    if (!hasVoice) {
+      ttsVoiceHintShown = true
+      const ins = Toast.warning(
+        '例句默认使用浏览器内置 TTS 发音，若无声请前往「设置 → 音效设置 → TTS 声色」选择可用声色',
+        {
+          duration: 15000000,
+          action: {
+            text: '设置',
+            onClick: () => {
+              router.push('/setting?index=4')
+              ins.close()
+            },
+          },
+        }
+      )
+    }
+  }
+  ttsPlayAudio(text, {
+    onEnd,
+    volume: settingStore.sentenceSoundVolume / 100,
+    rate: settingStore.sentenceSoundSpeed,
+  })
+}
+
+function playSentence(index: number, options?: { highlight?: boolean }) {
+  const text = props.word.sentences?.[index]?.c
+  if (!text) return
+  const wordKey = props.word.word
+  const highlight = options?.highlight ?? false
+  if (highlight) highlightedSentenceIndex = index
+  playTtsWithGuide(text, () => {
+    if (props.word.word === wordKey && highlight && highlightedSentenceIndex === index) {
+      highlightedSentenceIndex = -1
+    }
+  })
+}
+
+watch(() => props.word.word, () => {
+  highlightedSentenceIndex = -1
+})
 
 function onCompleteSentence(text: string) {
   //简单比对，句子里面是否有当前单词，没有则为错
@@ -71,21 +132,21 @@ function startPracticeSentence() {
   activeSentenceIndex = 0
 }
 
-defineExpose({ startPracticeSentence })
+defineExpose({ startPracticeSentence, playSentence })
 </script>
 
 <template>
   <div class="word-meta">
     <!-- 翻译区 -->
     <template v-if="word?.trans?.length">
-      <div class="translate flex flex-col items-center gap-2 my-3" v-opacity="effective.showWordTranslation">
-        <TranslationList :word="word" :showFull="!effective.isDictation" />
+      <div class="translate flex flex-col items-center gap-2 my-3" v-opacity="showTranslation">
+        <TranslationList :word="word" :showFull="!effective.isWordMasked" />
       </div>
     </template>
 
     <!-- 例句列表 -->
     <template v-if="word?.sentences?.length">
-      <div v-opacity="effective.showSentences">
+      <div v-opacity="showDetails">
         <div class="line-white my-3"></div>
         <div
           class="sentence-typing"
@@ -100,8 +161,8 @@ defineExpose({ startPracticeSentence })
             :key="i.c"
             :index="j"
             :sentence="i"
-            :isHighlightWordsMask="effective.isDictation"
-            :showSentenceTranslation="effective.showSentenceTranslation"
+            :isHighlightWordsMask="effective.isWordMasked"
+            :showSentenceTranslation="showTranslation"
             :active="activeSentenceIndex === j"
             :highlight-words="[word.word]"
             @complete="onCompleteSentence"
@@ -113,17 +174,17 @@ defineExpose({ startPracticeSentence })
 
     <!-- 短语列表 -->
     <template v-if="word?.phrases?.length">
-      <div v-opacity="effective.showPhrases">
+      <div v-opacity="showDetails">
         <div class="line-white my-3"></div>
         <div class="flex">
           <div class="label">{{ $t('phrases') }}</div>
           <div class="flex flex-col">
             <div class="flex items-center gap-4" v-for="(item, index) in word.phrases" :key="index">
               <div class="flex gap-space items-center">
-                <ClickableEnglishText class="en" :text="item.c" :word="word.word" :dictation="effective.isDictation" />
+                <ClickableEnglishText class="en" :text="item.c" :word="word.word" :dictation="effective.isWordMasked" />
                 <VolumeIcon :simple="false" title="发音" @click.stop="() => playTtsWithGuide(item.c)" />
               </div>
-              <div class="anim" v-opacity="effective.showSentenceTranslation">
+              <div class="anim" v-opacity="showTranslation">
                 {{ item.cn }}
               </div>
             </div>
@@ -134,7 +195,7 @@ defineExpose({ startPracticeSentence })
 
     <!-- 近义词 -->
     <template v-if="word?.synos?.length">
-      <div v-opacity="effective.showSynos">
+      <div v-opacity="showDetails">
         <div class="line-white my-3"></div>
         <div class="flex">
           <div class="label">{{ $t('synonyms') }}</div>
@@ -142,10 +203,10 @@ defineExpose({ startPracticeSentence })
             <div class="flex" v-for="item in word.synos">
               <div class="pos en">{{ item.pos }}</div>
               <div>
-                <div class="anim" v-opacity="effective.showSentenceTranslation">
+                <div class="anim" v-opacity="showTranslation">
                   {{ item.cn }}
                 </div>
-                <div class="anim" v-opacity="!effective.isDictation">
+                <div class="anim" v-opacity="!effective.isWordMasked">
                   <template v-for="(i, j) in item.ws" :key="j">
                     <ClickableWord class="en" :word="i" />
                     <span v-if="j !== item.ws.length - 1"> / </span>
@@ -161,7 +222,7 @@ defineExpose({ startPracticeSentence })
     <!-- 词源 / 关联词 -->
     <template v-if="settingStore.showEtymologyAndRelWords">
       <template v-if="word?.etymology?.length">
-        <div v-opacity="effective.showEtymology && !effective.isDictation">
+        <div v-opacity="showEtymology">
           <div class="line-white my-3"></div>
           <div class="flex">
             <div class="label">{{ $t('etymology') }}</div>
@@ -176,7 +237,7 @@ defineExpose({ startPracticeSentence })
       </template>
 
       <template v-if="word?.relWords?.root">
-        <div v-opacity="effective.showRelWords && !effective.isDictation">
+        <div v-opacity="showEtymology">
           <div class="line-white my-3"></div>
           <div class="flex">
             <div class="label">{{ $t('related_words') }}</div>

@@ -23,7 +23,7 @@ import {
 import { useRoute, useRouter } from 'vue-router'
 import FooterV2 from '~/components/practice-words-v2/FooterV2.vue'
 import Panel from '@typewords/core/components/Panel.vue'
-import { BaseIcon, Toast, ToastComponent, Tooltip } from '@typewords/base'
+import { BaseIcon, Dialog, Toast, ToastComponent, Tooltip } from '@typewords/base'
 import WordList from '@typewords/core/components/list/WordList.vue'
 import TypeWordV2 from '~/components/practice-words-v2/TypeWordV2.vue'
 import Empty from '@typewords/core/components/Empty.vue'
@@ -39,6 +39,7 @@ import {
   getDefaultPracticeData,
   type PracticeDataV2,
   type PracticeWordCacheV2,
+  UnsupportedPracticeCacheVersionError,
   usePracticeWordPersistenceV2,
 } from '~/composables/practice-words/practice-word-session.ts'
 import { flushStatToStore } from '@typewords/core/composables/usePracticePersistence.ts'
@@ -68,6 +69,11 @@ const onboardingHostRef = ref<InstanceType<typeof PracticeOnboardingHostV2>>()
 let isComplete = $ref(false)
 let loading = $ref(false)
 let settling = $ref(false)
+let showRemoteReloadDialog = $ref(false)
+let remoteCheckInProgress = false
+let pendingRemoteUpdatedAt = 0
+let knownCacheUpdatedAt = Date.now()
+let visibilityResumeTimer: ReturnType<typeof setTimeout> | null = null
 /** 仅用于 visibilitychange 内 fetch：与 `!document.hidden` 一致 */
 const isFocus = ref(true)
 let taskWords = $ref<TaskWords>({
@@ -91,8 +97,10 @@ const navigator = createPracticeWordNavigator({
   complete,
 })
 const { activeFlowConfig, activeCursor, currentPhase, currentPracticeType, currentPhaseKey } = navigator
-const { effective, displayOverride, toggleDictation, toggleTranslate, patchDisplayOverride, restoreDisplayOverride } =
-  usePracticeDisplayPolicy(currentPhase, currentPhaseKey)
+const { effective, toggleDictation, toggleTranslate, setWordMasked } = usePracticeDisplayPolicy(
+  currentPracticeType,
+  currentPhaseKey
+)
 
 function next(isTyping: boolean = true, ignoreLoop = false) {
   navigator.next(isTyping, ignoreLoop)
@@ -103,13 +111,8 @@ function skipStep() {
 }
 
 function restorePracticeSession(cache: { sessionSnapshot?: PracticeSessionSnapshot }) {
-  if (cache.sessionSnapshot) {
-    navigator.restoreSessionSnapshot(cache.sessionSnapshot)
-    restoreDisplayOverride(cache.sessionSnapshot.displayOverride)
-  } else {
-    navigator.restoreSessionFromLegacy()
-    restoreDisplayOverride(null)
-  }
+  if (!cache.sessionSnapshot) throw new Error('INVALID_V2_SESSION_SNAPSHOT')
+  navigator.restoreSessionSnapshot(cache.sessionSnapshot)
 }
 
 /** 将完整缓存恢复到当前响应式会话对象。 */
@@ -164,24 +167,94 @@ const onvisibilitychange = async () => {
   isFocus.value = !document.hidden
   if (isFocus.value) {
     bumpActivity()
-    if (statStore.timerPaused && statStore.timerPauseReason === 'auto_visibility') {
-      //特意延迟提示用户，让用户看到，免得用户焦虑，以为没暂停
-      setTimeout(() => {
-        statStore.resumeTimer()
-        Toast.success('已自动恢复计时')
-      }, 1500)
-    }
-    if (runtimeStore.globalLoading) return
-    runtimeStore.globalLoading = true
-    try {
-      //todo 这里如果另一台机器学完了，这里的d可能为空
-      const cache = await wordPersistence.load()
-      if (cache) applyPracticeCache(cache)
-    } finally {
-      runtimeStore.globalLoading = false
-    }
+    if (await checkRemotePracticeUpdate()) return
+    scheduleVisibilityResume()
   } else {
+    clearVisibilityResumeTimer()
     statStore.pauseTimer('auto_visibility')
+    if (!showRemoteReloadDialog) await savePracticeDataIns()
+  }
+}
+
+function clearVisibilityResumeTimer() {
+  if (visibilityResumeTimer) clearTimeout(visibilityResumeTimer)
+  visibilityResumeTimer = null
+}
+
+function scheduleVisibilityResume() {
+  clearVisibilityResumeTimer()
+  if (document.hidden || showRemoteReloadDialog) return
+  if (statStore.timerPaused && statStore.timerPauseReason === 'auto_visibility') {
+    // 特意延迟提示用户，让用户看到，免得用户焦虑，以为没暂停。
+    visibilityResumeTimer = setTimeout(() => {
+      visibilityResumeTimer = null
+      if (document.hidden || showRemoteReloadDialog) return
+      statStore.resumeTimer()
+      Toast.success('已自动恢复计时')
+    }, 1500)
+  }
+}
+
+async function checkRemotePracticeUpdate(): Promise<boolean> {
+  if (remoteCheckInProgress || showRemoteReloadDialog) return showRemoteReloadDialog
+  remoteCheckInProgress = true
+  try {
+    const remoteUpdatedAt = await wordPersistence.getRemoteUpdateTime(knownCacheUpdatedAt)
+    if (document.hidden || !remoteUpdatedAt) return false
+    pendingRemoteUpdatedAt = remoteUpdatedAt
+    showRemoteReloadDialog = true
+    return true
+  } catch (error) {
+    if (error instanceof UnsupportedPracticeCacheVersionError) {
+      Toast.error('远端练习缓存来自更高版本，请升级后再继续')
+    } else {
+      console.error('[practice-v2] 检查远端练习进度失败', error)
+    }
+    return false
+  } finally {
+    remoteCheckInProgress = false
+  }
+}
+
+function keepCurrentPracticeSession() {
+  knownCacheUpdatedAt = Math.max(knownCacheUpdatedAt, pendingRemoteUpdatedAt)
+  pendingRemoteUpdatedAt = 0
+}
+
+function onRemoteReloadDialogClosed() {
+  showRemoteReloadDialog = false
+  scheduleVisibilityResume()
+}
+
+async function reloadRemotePracticeSession(): Promise<boolean> {
+  if (runtimeStore.globalLoading) return false
+  runtimeStore.globalLoading = true
+  try {
+    const cache = await wordPersistence.load()
+    knownCacheUpdatedAt = Math.max(knownCacheUpdatedAt, pendingRemoteUpdatedAt, Date.now())
+    pendingRemoteUpdatedAt = 0
+    if (!cache) {
+      Toast.warning('远端练习已结束或缓存已清空')
+      await router.push('/words-v2')
+      return true
+    }
+    if (!applyPracticeCache(cache)) {
+      Toast.error('远端练习进度无效，无法重新加载')
+      return false
+    }
+    emitter.emit(EventKey.resetWord)
+    Toast.success('已加载其他设备的最新进度')
+    return true
+  } catch (error) {
+    if (error instanceof UnsupportedPracticeCacheVersionError) {
+      Toast.error('远端练习缓存来自更高版本，请升级后再继续')
+    } else {
+      console.error('[practice-v2] 加载远端练习进度失败', error)
+      Toast.error('远端进度加载失败，请稍后重试')
+    }
+    return false
+  } finally {
+    runtimeStore.globalLoading = false
   }
 }
 
@@ -198,7 +271,8 @@ onMounted(async () => {
 
 onUnmounted(async () => {
   document.removeEventListener('visibilitychange', onvisibilitychange)
-  await savePracticeDataIns()
+  clearVisibilityResumeTimer()
+  if (!showRemoteReloadDialog) await savePracticeDataIns()
   stopTimer()
   watchRefList.map(v => v?.stop())
 })
@@ -239,7 +313,14 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
   if (init) {
     let d = runtimeStore.routeData
     if (!d) {
-      d = await wordPersistence.load()
+      try {
+        d = await wordPersistence.load()
+      } catch (error) {
+        if (!(error instanceof UnsupportedPracticeCacheVersionError)) throw error
+        Toast.error('练习缓存来自更高版本，请升级后再继续')
+        await router.push('/words-v2')
+        return
+      }
     }
     if (!d) {
       initData(getCurrentStudyWord())
@@ -285,6 +366,7 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
   updateQuestion()
 
   startTimer()
+  knownCacheUpdatedAt = Math.max(knownCacheUpdatedAt, Date.now())
   isIniting.value = false
   settling = isComplete = false
 }
@@ -456,9 +538,9 @@ async function savePracticeDataIns() {
       statStoreData: statStore.$state,
       sessionSnapshot: {
         ...navigator.buildSessionSnapshot(),
-        displayOverride: displayOverride.value ? { ...displayOverride.value } : null,
       },
     })
+    knownCacheUpdatedAt = Math.max(knownCacheUpdatedAt, Date.now())
   } catch (error) {
     console.error('[practice-v2] 保存练习缓存失败', error)
     Toast.error('练习进度保存失败，请稍后重试')
@@ -598,12 +680,7 @@ function randomWrite() {
   console.log('随机默写')
   data.words = shuffle(data.words)
   data.index = 0
-  patchDisplayOverride({
-    inputMode: 'spell',
-    showSentences: false,
-    showWordTranslation: true,
-    showSentenceTranslation: true,
-  })
+  setWordMasked(true)
 }
 
 useStartKeyboardEventListener()
@@ -729,7 +806,7 @@ useEvents([
 
             <Tooltip :title="`下一个(${settingStore.shortcutKeyMap[ShortcutKey.Next]})`">
               <div class="relative center gap-2 cp float-right mr-3" @click="next(false)" v-if="nextWord">
-                <div class="word" :class="effective.isDictation && 'word-shadow'">
+                <div class="word" :class="effective.isWordMasked && 'word-shadow'">
                   {{ nextWord.word }}
                 </div>
                 <IconFluentArrowRight16Regular class="arrow" width="22" />
@@ -782,7 +859,7 @@ useEvents([
             v-if="data.words.length"
             :is-active="settingStore.showPanel"
             :static="false"
-            :show-word="!effective.isDictation"
+            :show-word="!effective.isWordMasked"
             :show-translate="effective.isShowTranslate"
             :list="data.words"
             :activeIndex="data.index"
@@ -804,6 +881,20 @@ useEvents([
     ref="onboardingHostRef"
     :ready="data.words.length > 0"
     :dict-id="String(route.params.id ?? '')"
+  />
+  <Dialog
+    v-model="showRemoteReloadDialog"
+    title="检测到其他设备的新进度，是否重新加载？"
+    content="重新加载将使用其他设备的最新练习进度；保留当前进度则继续本页练习。"
+    confirm-button-text="重新加载"
+    cancel-button-text="保留当前进度"
+    :footer="true"
+    :padding="true"
+    :show-close="false"
+    :close-on-click-bg="false"
+    :on-confirm="reloadRemotePracticeSession"
+    @cancel="keepCurrentPracticeSession"
+    @close="onRemoteReloadDialogClosed"
   />
 </template>
 

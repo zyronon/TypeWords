@@ -59,6 +59,7 @@ import { useDataSyncPersistence } from '@typewords/core/composables/useDataSyncP
 import { WordPracticeMode } from '@typewords/core/types/enum.ts'
 import {
   usePracticeWordPersistenceV2,
+  UnsupportedPracticeCacheVersionError,
   type PracticeWordCacheV2,
 } from '~/composables/practice-words/practice-word-session.ts'
 import dayjs from 'dayjs'
@@ -76,6 +77,18 @@ const { nav } = useNav()
 const runtimeStore = useRuntimeStore()
 let loading = $ref(true)
 let isSaveData = $ref(false)
+let unsupportedCacheVersion = false
+
+async function loadPracticeCache() {
+  try {
+    return await wordPersistence.load()
+  } catch (error) {
+    if (!(error instanceof UnsupportedPracticeCacheVersionError)) throw error
+    unsupportedCacheVersion = true
+    Toast.error('练习缓存来自更高版本，请升级后再继续')
+    return null
+  }
+}
 
 const shouldShowDialogPracticeMode = [WordPracticeMode.Shuffle, WordPracticeMode.ShuffleWordsTest]
 
@@ -91,6 +104,7 @@ let practiceData = $ref<PracticeWordCacheV2>({
 } as any)
 
 async function resetCacheData() {
+  if (unsupportedCacheVersion) return
   isSaveData && flushStatToStore(practiceData.statStoreData)
   isSaveData = false
   practiceData.practiceData = null
@@ -140,7 +154,7 @@ watch(
 async function onvisibilitychange() {
   if (!document.hidden) {
     //当页面可见时，检查是否需要从缓存恢复
-    const d = await wordPersistence.load()
+    const d = await loadPracticeCache()
     if (d) {
       practiceData = d
       isSaveData = true
@@ -189,11 +203,11 @@ async function init() {
   }
 
   if (!practiceData?.taskWords.new.length && store.sdict.words.length) {
-    const d = await wordPersistence.load()
+    const d = await loadPracticeCache()
     if (d) {
       practiceData = d
       isSaveData = true
-    } else {
+    } else if (!unsupportedCacheVersion) {
       practiceData.taskWords = getCurrentStudyWord()
     }
   }
@@ -201,6 +215,10 @@ async function init() {
 }
 
 async function startPractice(practiceMode: WordPracticeMode, resetCache: boolean = false): Promise<void> {
+  if (unsupportedCacheVersion) {
+    Toast.error('当前客户端无法读取这份练习缓存，请升级后再继续')
+    return
+  }
   if (practiceMode === WordPracticeMode.Custom) {
     const activeCustomFlowId = getActiveCustomFlowId()
     if (!activeCustomFlowId || !getUserFlow(activeCustomFlowId)) {

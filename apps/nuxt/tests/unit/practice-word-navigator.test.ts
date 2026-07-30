@@ -119,13 +119,15 @@ describe('clearWrongOnSuccess', () => {
 
   it('rejects an invalid restored loop cursor', () => {
     const { navigator } = setupNavigator(makeFlow('bad-cursor', [{ templateId: 'spell' }]), 1)
-    navigator.restoreSessionSnapshot({
+    const restored = navigator.restoreSessionSnapshot({
       identifyMethod: 0 as any, flowId: 'bad-cursor',
       cursor: {
         nodeIndex: 0, stepIndex: 0, inWrongWordClear: false, endActionIndex: null,
         loop: { startIndex: 0, endIndex: 5, subStepIndex: 8 },
       },
     })
+    expect(restored).toBe(false)
+    expect(navigator.activeFlowConfig.value.id).toBe('system')
     expect(navigator.activeCursor.value.loop).toBeNull()
   })
 
@@ -133,13 +135,14 @@ describe('clearWrongOnSuccess', () => {
     const { navigator } = setupNavigator(makeFlow('valid-cursor', [
       { templateId: 'spell' }, { templateId: 'listen' },
     ]), 7)
-    navigator.restoreSessionSnapshot({
+    const restored = navigator.restoreSessionSnapshot({
       identifyMethod: 0 as any, flowId: 'valid-cursor',
       cursor: {
         nodeIndex: 0, stepIndex: 0, inWrongWordClear: false, endActionIndex: null,
         loop: { startIndex: 0, endIndex: 6, subStepIndex: 1 },
       },
     })
+    expect(restored).toBe(true)
     expect(navigator.activeCursor.value.loop).toEqual({ startIndex: 0, endIndex: 6, subStepIndex: 1 })
   })
 

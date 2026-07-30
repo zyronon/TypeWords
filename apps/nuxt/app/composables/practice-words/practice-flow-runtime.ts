@@ -1,4 +1,4 @@
-/** Flow 配置存储、迁移、校验，以及每个练习实例独享的运行时。 */
+/** Flow 配置的严格校验、存储，以及每个练习实例独享的运行时。 */
 import { shallowRef } from 'vue'
 import type { TaskWords, Word } from '@typewords/core/types/types.ts'
 import { WordPracticeMode } from '@typewords/core/types/enum.ts'
@@ -7,8 +7,8 @@ import {
   CURRENT_FLOW_VERSION,
   getFlowConfig,
   getFlowIdForMode,
-  materializeStepTemplate,
   materializeWordAdvance,
+  STEP_TEMPLATE_META,
 } from './practice-flow-config.ts'
 import type {
   FlowStartResult,
@@ -18,15 +18,12 @@ import type {
   PracticeFlowStep,
   PracticeLoopSubStep,
   PracticePhaseDefinition,
-  PracticeStepTemplateId,
   PracticeWordAdvanceConfig,
   PracticeWordsSource,
 } from './practice-flow-types.ts'
 
 const VALID_SOURCES = new Set<PracticeWordsSource>(['taskNew', 'taskReview', 'current', 'wrongWords'])
-const VALID_TEMPLATE_IDS: PracticeStepTemplateId[] = ['followWrite', 'spell', 'listen', 'dictation', 'identify']
-const VALID_TEMPLATE_IDS_SET = new Set<string>(VALID_TEMPLATE_IDS)
-const VALID_INPUT_MODES = new Set(['followWrite', 'spell', 'dictation'])
+const VALID_TEMPLATE_IDS_SET = new Set<string>(Object.keys(STEP_TEMPLATE_META))
 const VALID_MODES = new Set(
   Object.values(WordPracticeMode).filter((value): value is WordPracticeMode => typeof value === 'number')
 )
@@ -46,6 +43,10 @@ interface PracticeFlowStorageData {
 
 function cloneConfig(config: PracticeFlowConfig): PracticeFlowConfig {
   return JSON.parse(JSON.stringify(config)) as PracticeFlowConfig
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 
 function getFlowStorage(): PracticeFlowStorageData {
@@ -70,111 +71,66 @@ function setFlowStorage(data: PracticeFlowStorageData) {
   localStorage.setItem(FLOW_STORAGE_KEY, JSON.stringify(data))
 }
 
-function migrateSubSteps(subSteps: PracticeLoopSubStep[], addLegacyDefault: boolean): PracticeLoopSubStep[] {
-  return subSteps.map(subStep => addLegacyDefault && subStep.clearWrongOnSuccess === undefined
-    ? { ...subStep, clearWrongOnSuccess: subStep.templateId === 'spell' }
-    : { ...subStep })
-}
-
-function migrateWordAdvance(
-  wordAdvance: PracticeWordAdvanceConfig | undefined,
-  addLegacyDefault: boolean
-): PracticeWordAdvanceConfig | undefined {
-  if (wordAdvance?.type !== 'wordLoop') return wordAdvance
-  return {
-    ...wordAdvance,
-    subSteps: migrateSubSteps(wordAdvance.subSteps ?? [], addLegacyDefault),
-  }
-}
-
-function migrateEndAction(action: PracticeEndAction, addLegacyDefault: boolean): PracticeEndAction {
-  if (action.type !== 'wrongWordClear') return { ...action }
-  return {
-    ...action,
-    wordAdvance: migrateWordAdvance(action.wordAdvance, addLegacyDefault),
-  }
-}
-
-/** 将受支持的旧配置迁移到当前版本；未来版本返回 null，避免错误降级解释。 */
-export function migrateFlowConfig(config: PracticeFlowConfig | null | undefined): PracticeFlowConfig | null {
-  if (!config || !Number.isInteger(config.version) || config.version < 1 || config.version > CURRENT_FLOW_VERSION) {
-    return null
-  }
-
-  const migrated = cloneConfig(config)
-  const addLegacyDefault = migrated.version <= 4
-  migrated.version = CURRENT_FLOW_VERSION
-  migrated.nodes = (migrated.nodes ?? []).map(node => ({
-    ...node,
-    steps: (node.steps ?? []).map(step => ({
-      ...step,
-      wordAdvance: migrateWordAdvance(step.wordAdvance, addLegacyDefault),
-      onEnd: step.onEnd?.map(action => migrateEndAction(action, addLegacyDefault)),
-    })),
-  }))
-  return migrated
-}
-
-function isValidDisplayOverride(value: unknown): boolean {
-  if (value === undefined) return true
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
-  return Object.entries(value).every(([key, item]) => {
-    if (key === 'inputMode') return typeof item === 'string' && VALID_INPUT_MODES.has(item)
-    return typeof item === 'boolean'
-  })
-}
-
-function isValidSubStep(subStep: PracticeLoopSubStep): boolean {
+function isValidSubStep(value: unknown): value is PracticeLoopSubStep {
+  if (!isRecord(value)) return false
   return (
-    !!subStep &&
-    VALID_TEMPLATE_IDS_SET.has(subStep.templateId) &&
-    isValidDisplayOverride(subStep.displayOverride) &&
-    (subStep.clearWrongOnSuccess === undefined || typeof subStep.clearWrongOnSuccess === 'boolean')
+    typeof value.templateId === 'string' &&
+    VALID_TEMPLATE_IDS_SET.has(value.templateId) &&
+    (value.label === undefined || typeof value.label === 'string') &&
+    (value.clearWrongOnSuccess === undefined || typeof value.clearWrongOnSuccess === 'boolean')
   )
 }
 
-function isValidWordAdvance(wordAdvance?: PracticeWordAdvanceConfig): boolean {
-  if (wordAdvance === undefined) return true
-  if (wordAdvance.type === 'increment') return true
-  if (wordAdvance.type !== 'wordLoop') return false
-  if (!Number.isFinite(wordAdvance.groupSize) || !Number.isInteger(wordAdvance.groupSize) || wordAdvance.groupSize! < 1) {
+function isValidWordAdvance(value: unknown): value is PracticeWordAdvanceConfig | undefined {
+  if (value === undefined) return true
+  if (!isRecord(value)) return false
+  if (value.type === 'increment') return true
+  if (value.type !== 'wordLoop') return false
+  if (!Number.isFinite(value.groupSize) || !Number.isInteger(value.groupSize) || value.groupSize < 1) {
     return false
   }
-  return Array.isArray(wordAdvance.subSteps) && wordAdvance.subSteps.every(isValidSubStep)
+  return Array.isArray(value.subSteps) && value.subSteps.every(isValidSubStep)
 }
 
-function isValidEndAction(action: PracticeEndAction): boolean {
-  if (!action || typeof action !== 'object') return false
-  if (action.type === 'wrongWordClear') {
+function isValidEndAction(value: unknown): value is PracticeEndAction {
+  if (!isRecord(value)) return false
+  if (value.type === 'wrongWordClear') {
     return (
-      VALID_TEMPLATE_IDS_SET.has(action.templateId) &&
-      isValidDisplayOverride(action.displayOverride) &&
-      isValidWordAdvance(action.wordAdvance)
+      VALID_TEMPLATE_IDS_SET.has(value.templateId) &&
+      isValidWordAdvance(value.wordAdvance)
     )
   }
-  if (action.type === 'collectWrongWords') return ['favorite', 'wrongBook'].includes(action.target)
-  if (action.type === 'generateReport') return ['stepSummary', 'sessionSummary'].includes(action.reportType)
-  if (action.type === 'navigate') return typeof action.target === 'string' && action.target.length > 0
+  if (value.type === 'collectWrongWords') {
+    return typeof value.target === 'string' && ['favorite', 'wrongBook'].includes(value.target)
+  }
+  if (value.type === 'generateReport') {
+    return typeof value.reportType === 'string' && ['stepSummary', 'sessionSummary'].includes(value.reportType)
+  }
+  if (value.type === 'navigate') return typeof value.target === 'string' && value.target.length > 0
   return false
 }
 
-function isValidFlowConfig(config: PracticeFlowConfig): boolean {
+export function isValidFlowConfig(value: unknown): value is PracticeFlowConfig {
+  if (!isRecord(value)) return false
   if (
-    !config.id ||
-    config.version !== CURRENT_FLOW_VERSION ||
-    !VALID_MODES.has(config.mode) ||
-    !Array.isArray(config.nodes) ||
-    config.nodes.length === 0
+    typeof value.id !== 'string' || !value.id ||
+    typeof value.label !== 'string' || !value.label ||
+    value.version !== CURRENT_FLOW_VERSION ||
+    typeof value.mode !== 'number' || !VALID_MODES.has(value.mode) ||
+    !Array.isArray(value.nodes) ||
+    value.nodes.length === 0
   ) {
     return false
   }
 
   const nodeIds = new Set<string>()
-  for (const node of config.nodes) {
+  for (const node of value.nodes) {
     if (
-      !node?.id ||
+      !isRecord(node) ||
+      typeof node.id !== 'string' || !node.id ||
+      typeof node.label !== 'string' || !node.label ||
       nodeIds.has(node.id) ||
-      !VALID_SOURCES.has(node.source) ||
+      typeof node.source !== 'string' || !VALID_SOURCES.has(node.source as PracticeWordsSource) ||
       !Array.isArray(node.steps) ||
       node.steps.length === 0
     ) {
@@ -184,8 +140,9 @@ function isValidFlowConfig(config: PracticeFlowConfig): boolean {
 
     for (const step of node.steps) {
       if (
-        !VALID_TEMPLATE_IDS_SET.has(step?.templateId) ||
-        !isValidDisplayOverride(step.displayOverride) ||
+        !isRecord(step) ||
+        typeof step.templateId !== 'string' || !VALID_TEMPLATE_IDS_SET.has(step.templateId) ||
+        (step.label !== undefined && typeof step.label !== 'string') ||
         !isValidWordAdvance(step.wordAdvance) ||
         (step.shuffleOnEnter !== undefined && typeof step.shuffleOnEnter !== 'boolean') ||
         (step.onEnd !== undefined && (!Array.isArray(step.onEnd) || !step.onEnd.every(isValidEndAction)))
@@ -198,34 +155,36 @@ function isValidFlowConfig(config: PracticeFlowConfig): boolean {
 }
 
 /** 非法配置统一回退 System；返回值总是当前版本的独立配置对象。 */
-export function validateFlowConfig(config: PracticeFlowConfig | null | undefined): PracticeFlowConfig {
-  const migrated = migrateFlowConfig(config)
-  return migrated && isValidFlowConfig(migrated) ? migrated : cloneConfig(BUILTIN_FLOWS.system)
+export function resolveFlowConfigOrSystem(value: unknown): PracticeFlowConfig {
+  return isValidFlowConfig(value) ? cloneConfig(value) : cloneConfig(BUILTIN_FLOWS.system)
 }
 
-function migrateStoredFlow(id: string, data: PracticeFlowStorageData): PracticeFlowConfig | null {
+function isValidUserFlowEntry(value: unknown): value is UserFlowEntry {
+  return (
+    isRecord(value) &&
+    typeof value.name === 'string' &&
+    typeof value.createdAt === 'number' && Number.isFinite(value.createdAt) &&
+    typeof value.updatedAt === 'number' && Number.isFinite(value.updatedAt) &&
+    isValidFlowConfig(value.config)
+  )
+}
+
+function getStoredFlow(id: string, data: PracticeFlowStorageData): PracticeFlowConfig | null {
   const entry = data.flows[id]
-  if (!entry) return null
-  const migrated = migrateFlowConfig(entry.config)
-  if (!migrated || !isValidFlowConfig(migrated)) return null
-  if (entry.config.version !== migrated.version || JSON.stringify(entry.config) !== JSON.stringify(migrated)) {
-    entry.config = migrated
-    setFlowStorage(data)
-  }
-  return migrated
+  return isValidUserFlowEntry(entry) ? cloneConfig(entry.config) : null
 }
 
 export function listUserFlows(): { id: string; name: string; updatedAt: number }[] {
   const data = getFlowStorage()
   return Object.entries(data.flows)
-    .filter(([id]) => !!migrateStoredFlow(id, data))
+    .filter(([, entry]) => isValidUserFlowEntry(entry))
     .map(([id, entry]) => ({ id, name: entry.name, updatedAt: entry.updatedAt }))
     .sort((a, b) => b.updatedAt - a.updatedAt)
 }
 
 export function getUserFlow(flowId: string): PracticeFlowConfig | null {
   const data = getFlowStorage()
-  return migrateStoredFlow(flowId, data)
+  return getStoredFlow(flowId, data)
 }
 
 export function getActiveCustomFlowId(): string {
@@ -239,13 +198,12 @@ export function setActiveCustomFlowId(id: string) {
 }
 
 export function saveUserFlow(id: string, config: PracticeFlowConfig, name: string) {
+  if (id !== config.id || !isValidFlowConfig(config)) throw new Error('INVALID_FLOW_CONFIG')
   const data = getFlowStorage()
   const now = Date.now()
   const existing = data.flows[id]
-  const validated = validateFlowConfig(config)
-  if (validated.id === 'system' && config.id !== 'system') throw new Error('INVALID_FLOW_CONFIG')
   data.flows[id] = {
-    config: validated,
+    config: cloneConfig(config),
     name,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
@@ -289,23 +247,19 @@ function resolveTaskCounts(config: PracticeFlowConfig, taskWords: TaskWords) {
 
 /** 创建一个练习实例独享的 Flow Runtime。 */
 export function createPracticeFlowRuntime(initialConfig: PracticeFlowConfig = BUILTIN_FLOWS.system) {
-  const activeFlowConfig = shallowRef(validateFlowConfig(initialConfig))
+  const activeFlowConfig = shallowRef(resolveFlowConfigOrSystem(initialConfig))
 
   function resolveFlowInput(flowIdOrConfig: string | PracticeFlowConfig): PracticeFlowConfig {
-    if (typeof flowIdOrConfig !== 'string') return validateFlowConfig(flowIdOrConfig)
+    if (typeof flowIdOrConfig !== 'string') return resolveFlowConfigOrSystem(flowIdOrConfig)
     if (flowIdOrConfig === 'custom') {
       const activeId = getActiveCustomFlowId()
-      return validateFlowConfig(activeId ? getUserFlow(activeId) : null)
+      return (activeId ? getUserFlow(activeId) : null) ?? resolveFlowConfigOrSystem(null)
     }
-    return validateFlowConfig(getUserFlow(flowIdOrConfig) ?? getFlowConfig(flowIdOrConfig))
+    return getUserFlow(flowIdOrConfig) ?? resolveFlowConfigOrSystem(getFlowConfig(flowIdOrConfig))
   }
 
   function loadPracticeFlow(flowIdOrConfig: string | PracticeFlowConfig) {
     activeFlowConfig.value = resolveFlowInput(flowIdOrConfig)
-    return activeFlowConfig.value
-  }
-
-  function getActiveFlowConfig() {
     return activeFlowConfig.value
   }
 
@@ -320,7 +274,7 @@ export function createPracticeFlowRuntime(initialConfig: PracticeFlowConfig = BU
 
   function materializeStep(step: PracticeFlowStep): PracticePhaseDefinition {
     return {
-      ...materializeStepTemplate(step.templateId, step.displayOverride),
+      practiceType: STEP_TEMPLATE_META[step.templateId].practiceType,
       wordAdvance: materializeWordAdvance(step.wordAdvance),
       onEnd: step.onEnd ?? [],
     }
@@ -375,11 +329,20 @@ export function createPracticeFlowRuntime(initialConfig: PracticeFlowConfig = BU
     if (taskWords.new.length + taskWords.review.length === 0) throw new Error('NO_WORDS')
     loadPracticeFlow(flowIdOrConfig ?? getFlowIdForMode(mode))
     const config = activeFlowConfig.value
-    const nodeIndex = config.nodes.findIndex(node => resolveInitialWords(node.source, taskWords).length > 0)
+    let nodeIndex = -1
+    let words: Word[] = []
+    for (let index = 0; index < config.nodes.length; index++) {
+      const resolvedWords = resolveInitialWords(config.nodes[index].source, taskWords)
+      if (resolvedWords.length > 0) {
+        nodeIndex = index
+        words = resolvedWords
+        break
+      }
+    }
     if (nodeIndex < 0) throw new Error('NO_WORDS')
 
     return {
-      words: resolveInitialWords(config.nodes[nodeIndex].source, taskWords),
+      words,
       ...resolveTaskCounts(config, taskWords),
       cursor: getInitialCursor({ nodeIndex }),
     }
@@ -388,7 +351,6 @@ export function createPracticeFlowRuntime(initialConfig: PracticeFlowConfig = BU
   return {
     activeFlowConfig,
     loadPracticeFlow,
-    getActiveFlowConfig,
     getActiveFlowId,
     getMainPhase,
     resolvePhaseByCursor,

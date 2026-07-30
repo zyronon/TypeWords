@@ -14,6 +14,7 @@ import type { TaskWords, Word } from '@typewords/core/types/types.ts'
 import type { PracticeDataV2 } from './practice-word-session.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { usePracticeStore } from '@typewords/core/stores/practice.ts'
+import { WordPracticeMode } from '@typewords/core/types/enum.ts'
 import { emitter, EventKey } from '@typewords/core/utils/eventBus.ts'
 import { cloneDeep, shuffle } from '@typewords/core/utils'
 import { getFlowIdForMode, GROUP_SIZE } from './practice-flow-config.ts'
@@ -85,20 +86,31 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     activeCursor.value = getInitialCursor()
   }
 
-  function restoreCursorFromSnapshot(cursor: PracticeFlowCursor) {
+  function restoreCursorFromSnapshot(cursor: PracticeFlowCursor): boolean {
     const restored: PracticeFlowCursor = {
-      nodeIndex: cursor.nodeIndex ?? 0,
-      stepIndex: cursor.stepIndex ?? 0,
-      inWrongWordClear: (cursor as any).inWrongWordClear ?? (cursor as any).wrongRetry ?? false,
-      loop: (cursor as any).loop ?? null,
-      endActionIndex: (cursor as any).endActionIndex ?? null,
+      nodeIndex: cursor.nodeIndex,
+      stepIndex: cursor.stepIndex,
+      inWrongWordClear: cursor.inWrongWordClear,
+      loop: cursor.loop,
+      endActionIndex: cursor.endActionIndex,
+    }
+
+    if (
+      !Number.isInteger(restored.nodeIndex) ||
+      !Number.isInteger(restored.stepIndex) ||
+      typeof restored.inWrongWordClear !== 'boolean' ||
+      !('loop' in cursor) ||
+      !('endActionIndex' in cursor)
+    ) {
+      resetCursor()
+      return false
     }
 
     const config = activeFlowConfig.value
     const node = config.nodes[restored.nodeIndex]
     if (!node?.steps[restored.stepIndex]) {
       resetCursor()
-      return
+      return false
     }
 
     const mainPhase = flowRuntime.resolvePhaseByCursor({
@@ -111,8 +123,8 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
       restored.inWrongWordClear &&
       mainPhase.onEnd[restored.endActionIndex ?? 0]?.type !== 'wrongWordClear'
     ) {
-      restored.inWrongWordClear = false
-      restored.endActionIndex = null
+      resetCursor()
+      return false
     }
 
     const phaseWithoutLoop = flowRuntime.resolvePhaseByCursor({ ...restored, loop: null })
@@ -128,10 +140,12 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
         restored.loop.endIndex < restored.loop.startIndex ||
         restored.loop.endIndex >= deps.getPracticeData().words.length)
     ) {
-      restored.loop = null
+      resetCursor()
+      return false
     }
 
     activeCursor.value = restored
+    return true
   }
 
   function filterWorkingWords() {
@@ -483,22 +497,21 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
       .filter(word => !deps.checkWordIsNeedNext(word))
   }
 
-  function restoreSessionSnapshot(snapshot: PracticeSessionSnapshot) {
+  function restoreSessionSnapshot(snapshot: PracticeSessionSnapshot): boolean {
     flowRuntime.loadPracticeFlow(snapshot.flowId)
+
+    const flowMatched = activeFlowConfig.value.id === snapshot.flowId
+    const cursorRestored = flowMatched && restoreCursorFromSnapshot(snapshot.cursor)
+    if (!cursorRestored) {
+      flowRuntime.loadPracticeFlow(getFlowIdForMode(WordPracticeMode.System))
+      resetCursor()
+    }
 
     settingStore.wordPracticeMode = activeFlowConfig.value.mode
     settingStore.identifyMethod = snapshot.identifyMethod
 
-    if (snapshot.cursor) restoreCursorFromSnapshot(snapshot.cursor)
-    else resetCursor()
-    restoreWorkingWords(snapshot.nodeWorkingWordKeys)
-  }
-
-  /** v2 缓存尚无 sessionSnapshot 时的兜底 */
-  function restoreSessionFromLegacy() {
-    flowRuntime.loadPracticeFlow(getFlowIdForMode(settingStore.wordPracticeMode))
-    resetCursor()
-    restoreWorkingWords()
+    restoreWorkingWords(cursorRestored ? snapshot.nodeWorkingWordKeys : undefined)
+    return cursorRestored
   }
 
   return {
@@ -513,7 +526,6 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     initializeNodeWords,
     buildSessionSnapshot,
     restoreSessionSnapshot,
-    restoreSessionFromLegacy,
     resolveFlowStart: flowRuntime.resolveFlowStart,
   }
 }

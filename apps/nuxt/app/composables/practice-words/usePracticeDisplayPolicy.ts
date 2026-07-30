@@ -1,19 +1,8 @@
-/**
- * 练习页显隐策略：TypeWordV2 / FooterV2 的唯一数据源。
- *
- * v2 统一走 currentPhase.display + displayOverride（用户 Footer 临时 Toggle）。
- * 不再读 settingStore.dictation / translate（该二字段仍保留在 core 供 v1 使用）。
- */
 import { computed, inject, provide, ref, watch, type ComputedRef, type InjectionKey, type Ref } from 'vue'
-import type {
-  EffectiveDisplay,
-  PracticeDisplayOverride,
-  PracticeDisplayPolicy,
-  PracticePhaseDefinition,
-} from './practice-flow-types.ts'
-import { phaseDisplay } from '~/composables/practice-words/practice-flow-config.ts'
+import { WordPracticeType } from '@typewords/core/types/enum.ts'
+import type { PracticeViewState } from './practice-flow-types.ts'
 
-const PRACTICE_DISPLAY_POLICY_KEY: InjectionKey<ComputedRef<EffectiveDisplay>> = Symbol('practiceDisplayPolicy')
+const PRACTICE_VIEW_STATE_KEY: InjectionKey<ComputedRef<PracticeViewState>> = Symbol('practiceViewState')
 const PRACTICE_DISPLAY_ACTIONS_KEY: InjectionKey<{
   toggleDictation: () => void
   toggleTranslate: () => void
@@ -24,100 +13,90 @@ interface PracticeLocalReveal {
   showWordResult: boolean
 }
 
-/** 合并当前 Phase 显隐与用户临时 override。 */
-function mergeDisplay(base: PracticeDisplayPolicy, override: PracticeDisplayOverride | null): PracticeDisplayPolicy {
-  if (!override) return base
-  return { ...base, ...override }
-}
-
-/** Policy → 模板使用的基础 EffectiveDisplay。 */
-function toEffective(policy: PracticeDisplayPolicy): EffectiveDisplay {
-  return {
-    ...policy,
-    isDictation: ['spell', 'dictation'].includes(policy.inputMode),
-    isShowTranslate: policy.showWordTranslation,
+export function resolvePracticeViewDefaults(practiceType: WordPracticeType): {
+  isWordMasked: boolean
+  isShowTranslate: boolean
+} {
+  switch (practiceType) {
+    case WordPracticeType.Spell:
+      return { isWordMasked: true, isShowTranslate: true }
+    case WordPracticeType.Listen:
+      return { isWordMasked: true, isShowTranslate: false }
+    case WordPracticeType.Dictation:
+      return { isWordMasked: true, isShowTranslate: true }
+    case WordPracticeType.Identify:
+      return { isWordMasked: false, isShowTranslate: false }
+    default:
+      return { isWordMasked: false, isShowTranslate: true }
   }
 }
 
-/** TypeWordV2 的临时揭示层，只影响当前单词，不影响 Footer / WordList。 */
-function applyLocalReveal(display: EffectiveDisplay, localReveal: PracticeLocalReveal): EffectiveDisplay {
-  if (!localReveal.showFullWord && !localReveal.showWordResult) return display
-  return {
-    ...phaseDisplay(),
-    isDictation: false,
-    isShowTranslate: true,
-    inputMode: display.inputMode,
-  }
-}
-
-/** 页面级 composable：provide effective + Footer Toggle 方法 */
 export function usePracticeDisplayPolicy(
-  currentPhase: ComputedRef<PracticePhaseDefinition>,
+  currentPracticeType: ComputedRef<WordPracticeType>,
   phaseKey: ComputedRef<string>
 ) {
-  const displayOverride = ref<PracticeDisplayOverride | null>(null)
-  const effective = computed(() => toEffective(mergeDisplay(currentPhase.value.display, displayOverride.value)))
+  const wordMaskOverride = ref<boolean | null>(null)
+  const translateOverride = ref<boolean | null>(null)
 
-  watch(
-    phaseKey,
-    (key, previousKey) => {
-      if (previousKey !== undefined && key !== previousKey) displayOverride.value = null
-    },
-    { flush: 'sync' }
-  )
-
-  function patchDisplayOverride(override: PracticeDisplayOverride) {
-    displayOverride.value = {
-      ...displayOverride.value,
-      ...override,
+  const effective = computed<PracticeViewState>(() => {
+    const defaults = resolvePracticeViewDefaults(currentPracticeType.value)
+    return {
+      practiceType: currentPracticeType.value,
+      isWordMasked: wordMaskOverride.value ?? defaults.isWordMasked,
+      isShowTranslate: translateOverride.value ?? defaults.isShowTranslate,
+      revealAll: false,
     }
+  })
+
+  watch(phaseKey, (_key, previousKey) => {
+    if (previousKey !== undefined) {
+      wordMaskOverride.value = null
+      translateOverride.value = null
+    }
+  }, { flush: 'sync' })
+
+  function setWordMasked(value: boolean) {
+    const defaults = resolvePracticeViewDefaults(currentPracticeType.value)
+    wordMaskOverride.value = value === defaults.isWordMasked ? null : value
   }
 
-  function restoreDisplayOverride(override?: PracticeDisplayOverride | null) {
-    displayOverride.value = override ? { ...override } : null
-  }
-
-  /** 切换默写显隐：只写 displayOverride，不写 settingStore */
   function toggleDictation() {
-    if (displayOverride.value?.inputMode !== undefined) {
-      const { inputMode, ...rest } = displayOverride.value
-      displayOverride.value = Object.keys(rest).length ? rest : null
-      return
-    }
-
-    const baseMode = currentPhase.value.display.inputMode
-    patchDisplayOverride({
-      inputMode: ['spell', 'dictation'].includes(baseMode) ? 'followWrite' : 'spell',
-    })
+    setWordMasked(!effective.value.isWordMasked)
   }
 
-  /** 切换翻译显隐 */
   function toggleTranslate() {
+    const defaults = resolvePracticeViewDefaults(currentPracticeType.value)
     const next = !effective.value.isShowTranslate
-    patchDisplayOverride({
-      showWordTranslation: next,
-      showSentenceTranslation: next,
-    })
+    translateOverride.value = next === defaults.isShowTranslate ? null : next
   }
 
-  provide(PRACTICE_DISPLAY_POLICY_KEY, effective)
+  provide(PRACTICE_VIEW_STATE_KEY, effective)
   provide(PRACTICE_DISPLAY_ACTIONS_KEY, { toggleDictation, toggleTranslate })
 
   return {
     effective,
-    displayOverride,
+    wordMaskOverride,
+    translateOverride,
+    setWordMasked,
     toggleDictation,
     toggleTranslate,
-    patchDisplayOverride,
-    restoreDisplayOverride,
   }
 }
 
-export function useInjectedDisplayPolicy(localReveal?: Ref<PracticeLocalReveal>): ComputedRef<EffectiveDisplay> {
-  const baseDisplay = inject(PRACTICE_DISPLAY_POLICY_KEY)!
-  if (!localReveal) return baseDisplay
+export function useInjectedDisplayPolicy(localReveal?: Ref<PracticeLocalReveal>): ComputedRef<PracticeViewState> {
+  const baseState = inject(PRACTICE_VIEW_STATE_KEY)!
+  if (!localReveal) return baseState
 
-  return computed(() => applyLocalReveal(baseDisplay.value, localReveal.value))
+  return computed(() => {
+    const state = baseState.value
+    if (!localReveal.value.showFullWord && !localReveal.value.showWordResult) return state
+    return {
+      ...state,
+      isWordMasked: false,
+      isShowTranslate: true,
+      revealAll: true,
+    }
+  })
 }
 
 export function useInjectedDisplayActions() {

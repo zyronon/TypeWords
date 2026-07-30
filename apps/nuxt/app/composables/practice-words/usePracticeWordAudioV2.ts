@@ -1,108 +1,67 @@
-import { ref, watch, type Ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { Toast } from '@typewords/base'
+import type { Ref } from 'vue'
 import type { Word } from '@typewords/core/types/types.ts'
-import { cancelWordPracticeAudio, getBrowserKey, usePlayWordAudio, useTTsPlayAudio } from '@typewords/core/hooks/sound.ts'
+import { WordPracticeType } from '@typewords/core/types/enum.ts'
+import { cancelWordPracticeAudio, usePlayWordAudio } from '@typewords/core/hooks/sound.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { WordPlayTrigger } from '@typewords/core/composables/useWordPracticeAudio.ts'
 
-const CHAIN_FIRST_SENTENCE_TRIGGERS = new Set([
-  WordPlayTrigger.NewWord,
-  WordPlayTrigger.RepeatWord,
-  WordPlayTrigger.ResetSameWord,
-  WordPlayTrigger.RevealUnknown,
-  WordPlayTrigger.DictationReveal,
-  WordPlayTrigger.IdentifyWrongKey,
-])
+export function shouldAutoPlayFirstSentence(options: {
+  enabled: boolean
+  practiceType: WordPracticeType
+  isWordMasked: boolean
+  trigger: WordPlayTrigger
+  hasSentence: boolean
+}) {
+  return (
+    options.enabled &&
+    options.practiceType === WordPracticeType.FollowWrite &&
+    !options.isWordMasked &&
+    options.trigger === WordPlayTrigger.NewWord &&
+    options.hasSentence
+  )
+}
 
 export interface PracticeWordAudioV2Options {
   word: Ref<Word>
-  shouldShowSentences: () => boolean
+  practiceType: () => WordPracticeType
+  isWordMasked: () => boolean
+  playFirstSentence: () => void
 }
 
-export function usePracticeWordAudioV2({ word, shouldShowSentences }: PracticeWordAudioV2Options) {
+export function usePracticeWordAudioV2({
+  word,
+  practiceType,
+  isWordMasked,
+  playFirstSentence,
+}: PracticeWordAudioV2Options) {
   const settingStore = useSettingStore()
-  const router = useRouter()
   const playWordAudio = usePlayWordAudio()
-  const ttsPlayAudio = useTTsPlayAudio()
 
-  const highlightedSentenceIndex = ref(-1)
-  let ttsVoiceHintShown = false
-
-  function shouldAutoPlaySentence(trigger: WordPlayTrigger) {
-    return (
-      settingStore.autoPlayFirstSentence &&
-      CHAIN_FIRST_SENTENCE_TRIGGERS.has(trigger) &&
-      shouldShowSentences() &&
-      !!word.value.sentences?.[0]?.c
-    )
-  }
-
-  function playTtsWithGuide(text: string, onEnd?: () => void) {
-    if (!ttsVoiceHintShown) {
-      const browserKey = getBrowserKey()
-      const hasVoice = settingStore.ttsVoiceMap?.some(v => v.key === browserKey && v.voice)
-      if (!hasVoice) {
-        ttsVoiceHintShown = true
-        const ins = Toast.warning(
-          '例句默认使用浏览器内置 TTS 发音，若无声请前往「设置 → 音效设置 → TTS 声色」选择可用声色',
-          {
-            duration: 15000000,
-            action: {
-              text: '设置',
-              onClick: () => {
-                router.push('/setting?index=4')
-                ins.close()
-              },
-            },
-          }
-        )
-      }
-    }
-    ttsPlayAudio(text, {
-      onEnd,
-      volume: settingStore.sentenceSoundVolume / 100,
-      rate: settingStore.sentenceSoundSpeed,
+  function shouldPlayFirstSentence(trigger: WordPlayTrigger) {
+    return shouldAutoPlayFirstSentence({
+      enabled: settingStore.autoPlayFirstSentence,
+      practiceType: practiceType(),
+      isWordMasked: isWordMasked(),
+      trigger,
+      hasSentence: !!word.value.sentences?.[0]?.c,
     })
   }
-
-  function playSentence(index: number, options?: { highlight?: boolean }) {
-    const text = word.value.sentences?.[index]?.c
-    if (!text) return
-    const wordKey = word.value.word
-    const highlight = options?.highlight ?? false
-    if (highlight) highlightedSentenceIndex.value = index
-    playTtsWithGuide(text, () => {
-      if (word.value.word === wordKey && highlight && highlightedSentenceIndex.value === index) {
-        highlightedSentenceIndex.value = -1
-      }
-    })
-  }
-
-  watch(word, () => {
-    highlightedSentenceIndex.value = -1
-  })
 
   function playWord(trigger: WordPlayTrigger, _options?: { volumeRef?: unknown; resetIcon?: boolean }) {
     cancelWordPracticeAudio()
 
-    const handle =
-      trigger === WordPlayTrigger.RepeatWord ||
-      trigger === WordPlayTrigger.Manual ||
-      trigger === WordPlayTrigger.Shortcut
-    const chain = shouldAutoPlaySentence(trigger)
-    const chainWord = chain ? word.value.word : undefined
+    const handle = [WordPlayTrigger.RepeatWord, WordPlayTrigger.Manual, WordPlayTrigger.Shortcut].includes(trigger)
+    const chainWord = shouldPlayFirstSentence(trigger) ? word.value.word : ''
     const onEnd = chainWord
       ? () => {
-          if (word.value.word !== chainWord) return
-          playSentence(0, { highlight: true })
+          if (word.value.word === chainWord) playFirstSentence()
         }
       : undefined
 
     playWordAudio(word.value.word, handle, onEnd)
   }
 
-  return { highlightedSentenceIndex, playWord, playSentence, playTtsWithGuide }
+  return { playWord }
 }
 
 export { WordPlayTrigger }

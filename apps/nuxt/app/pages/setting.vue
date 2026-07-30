@@ -43,7 +43,11 @@ import FsrsSetting from '@typewords/core/components/setting/FsrsSetting.vue'
 import ArticleSetting from '@typewords/core/components/setting/ArticleSetting.vue'
 import WordSetting from '@typewords/core/components/setting/WordSetting.vue'
 import SoundSetting from '@typewords/core/components/setting/SoundSetting.vue'
-import { PRACTICE_ARTICLE_CACHE, PRACTICE_WORD_CACHE } from '@typewords/core/utils/cache'
+import {
+  checkAndUpgradePracticeWordCache,
+  PRACTICE_ARTICLE_CACHE,
+  PRACTICE_WORD_CACHE,
+} from '@typewords/core/utils/cache'
 import { useDataSyncPersistence } from '@typewords/core/composables/useDataSyncPersistence'
 import SettingItem from '@typewords/core/components/setting/SettingItem.vue'
 import { Supabase } from '@typewords/core/utils/supabase.ts'
@@ -221,6 +225,13 @@ let configLoading = $ref(false)
 
 const { loading: exportLoading, exportData, getExportedData } = useExport()
 
+function upgradeImportedPracticeWordCache(data: BackupData['val']) {
+  data[PRACTICE_WORD_CACHE.key] = checkAndUpgradePracticeWordCache(
+    data[PRACTICE_WORD_CACHE.key],
+    data.setting.val
+  )
+}
+
 async function importJson(str: string) {
   importLoading = true
   let obj: BackupData = {
@@ -240,6 +251,7 @@ async function importJson(str: string) {
     let data = obj.val
     data.dict.val = await checkAndUpgradeSaveDict(data.dict)
     data.setting.val = await checkAndUpgradeSaveSetting(data.setting)
+    upgradeImportedPracticeWordCache(data)
     //老版本兼容逻辑
     if (obj.version === 4) {
       if (!isEmpty(data?.[APP_VERSION.key])) {
@@ -384,6 +396,7 @@ async function restoreHistoryData() {
     }
     data.dict.val = await checkAndUpgradeSaveDict(data.dict)
     data.setting.val = await checkAndUpgradeSaveSetting(data.setting)
+    upgradeImportedPracticeWordCache(data)
 
     //需在调同步方法前面，同步方法可能报错
     let hasRemote = Supabase.check()
