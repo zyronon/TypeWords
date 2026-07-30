@@ -110,19 +110,31 @@ function skipStep() {
   navigator.skipStep()
 }
 
-function restorePracticeSession(cache: { sessionSnapshot?: PracticeSessionSnapshot }) {
-  if (!cache.sessionSnapshot) throw new Error('INVALID_V2_SESSION_SNAPSHOT')
-  navigator.restoreSessionSnapshot(cache.sessionSnapshot)
+function restorePracticeSession(cache: { sessionSnapshot?: PracticeSessionSnapshot }): boolean {
+  if (!cache.sessionSnapshot) return false
+  return navigator.restoreSessionSnapshot(cache.sessionSnapshot)
 }
 
 /** 将完整缓存恢复到当前响应式会话对象。 */
 function applyPracticeCache(cache: PracticeWordCacheV2): boolean {
   if (!cache.practiceData || !cache.statStoreData) return false
 
+  // 远端运行中恢复也会走这里；快照无效时必须保留当前内存会话，不能只恢复一半。
+  const previousTaskWords = cloneDeep(taskWords)
+  const previousData = cloneDeep(data)
+  const previousStatStoreData = cloneDeep(statStore.$state)
+  const previousSessionSnapshot = navigator.buildSessionSnapshot()
+
   Object.assign(taskWords, cache.taskWords)
   data = getDefaultPracticeData(data, cache.practiceData)
   statStore.$patch(cache.statStoreData)
-  restorePracticeSession(cache)
+  if (!restorePracticeSession(cache)) {
+    Object.assign(taskWords, previousTaskWords)
+    data = getDefaultPracticeData(data, previousData)
+    statStore.$patch(previousStatStoreData)
+    navigator.restoreSessionSnapshot(previousSessionSnapshot)
+    return false
+  }
   if (!statStore.timerPaused) {
     const now = Date.now()
     statStore.segments.push([now, now])

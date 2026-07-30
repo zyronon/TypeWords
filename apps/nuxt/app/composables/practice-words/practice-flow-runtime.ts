@@ -106,7 +106,7 @@ function isValidEndAction(value: unknown): value is PracticeEndAction {
   if (value.type === 'generateReport') {
     return typeof value.reportType === 'string' && ['stepSummary', 'sessionSummary'].includes(value.reportType)
   }
-  if (value.type === 'navigate') return typeof value.target === 'string' && value.target.length > 0
+  if (value.type === 'navigate') return value.target === 'nextStep' || value.target === 'complete'
   return false
 }
 

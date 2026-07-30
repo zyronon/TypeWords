@@ -230,45 +230,52 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     const displayList = options.shuffle ? shuffle([...list]) : [...list]
     console.log(options.log || `[Nav] → cursor ${newCursor.nodeIndex}:${newCursor.stepIndex}`)
     activeCursor.value = newCursor
-    if (displayList.length) {
-      data.words = displayList
-      data.index = 0
-    } else {
-      console.log(`[Nav] cursor ${newCursor.nodeIndex}:${newCursor.stepIndex} 无单词，跳过`)
-      data.words = []
-      data.index = 0
-      next(false)
-    }
+    data.words = displayList
+    data.index = 0
   }
 
   /** 进入下一静态 Step；同 Node 继承工作词表，跨 Node 才重新解析 source。 */
-  function runStepAdvance() {
+  function runStepAdvance(): boolean {
     const data = deps.getPracticeData()
     const taskWords = deps.getTaskWords()
-    const cur = activeCursor.value
     // onEnd/错词清空期间仍可能新增已掌握或主动跳过词，推进前再收敛一次。
     filterWorkingWords()
 
-    const { cursor: nextCursor, complete } = flowRuntime.advanceStepCursor(cur)
-    if (complete) {
-      deps.complete()
-      return
+    // 空 Node/Step 在游标层迭代跳过，不能调用 next() 伪造“完成了一个空单词”。
+    while (true) {
+      const cur = activeCursor.value
+      const { cursor: nextCursor, complete } = flowRuntime.advanceStepCursor(cur)
+      if (complete) {
+        deps.complete()
+        return true
+      }
+
+      const config = activeFlowConfig.value
+      const changedNode = nextCursor.nodeIndex !== cur.nodeIndex
+      const nextSource = getSourceForCursor(nextCursor)
+      const words = changedNode
+        ? nextSource === 'current'
+          ? nodeWorkingWords
+          : resolveWordsFromSource(nextSource, taskWords, data)
+        : nodeWorkingWords
+      const list = words.filter(word => !deps.checkWordIsNeedNext(word))
+      const nextStep = config.nodes[nextCursor.nodeIndex].steps[nextCursor.stepIndex]
+
+      if (list.length === 0) {
+        console.log(`[Nav] cursor ${nextCursor.nodeIndex}:${nextCursor.stepIndex} 无单词，跳过`)
+        activeCursor.value = nextCursor
+        data.words = []
+        data.index = 0
+        if (changedNode) nodeWorkingWords = []
+        continue
+      }
+
+      goToCursor(nextCursor, list, {
+        resetNodeWords: changedNode,
+        shuffle: nextStep.shuffleOnEnter ?? false,
+      })
+      return false
     }
-
-    const config = activeFlowConfig.value
-    const changedNode = nextCursor.nodeIndex !== cur.nodeIndex
-    const nextSource = getSourceForCursor(nextCursor)
-    const words = changedNode
-      ? nextSource === 'current'
-        ? nodeWorkingWords
-        : resolveWordsFromSource(nextSource, taskWords, data)
-      : nodeWorkingWords
-    const nextStep = config.nodes[nextCursor.nodeIndex].steps[nextCursor.stepIndex]
-
-    goToCursor(nextCursor, words, {
-      resetNodeWords: changedNode,
-      shuffle: nextStep.shuffleOnEnter ?? false,
-    })
   }
 
   // ─── 错词清空（由 onEnd wrongWordClear action 驱动） ────────────────────────
@@ -300,7 +307,7 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
    * - 即时型：执行后立即推进到下一个 action
    * - 队列耗尽：进入下一静态 Step
    */
-  function processNextEndAction(phase: PracticePhaseDefinition, startActionIndex: number) {
+  function processNextEndAction(phase: PracticePhaseDefinition, startActionIndex: number): boolean {
     const onEnd = phase.onEnd
     const data = deps.getPracticeData()
 
@@ -320,7 +327,7 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
             loop: null,
           }
           runWrongWordRetry(action)
-          return // 挂起，等待用户完成错词清空
+          return false // 挂起，等待用户完成错词清空
         }
         // 无错词，跳过此 action，继续下一个
         actionIdx++
@@ -330,9 +337,9 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
       if (action.type === 'navigate') {
         if (action.target === 'complete') {
           deps.complete()
-          return
+          return true
         }
-        // nextStep 或其他 → 进入下一静态 Step
+        // nextStep → 进入下一静态 Step
         break
       }
 
@@ -342,26 +349,44 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     }
 
     // 队列耗尽或遇到 navigate(nextStep)，进入下一静态 Step
-    runStepAdvance()
+    return runStepAdvance()
   }
 
-  function handleListEnd(phase: PracticePhaseDefinition, ignoreLoop = false): void {
+  function handleListEnd(phase: PracticePhaseDefinition, ignoreLoop = false): boolean {
     const data = deps.getPracticeData()
     let cur = activeCursor.value
+    let ownerPhase = phase
 
     // loop 子步骤到达组尾时，直接在结束处理中切换子步骤。
     // 若刚完成的是整张词表的最后一组，则继续向下执行 Step 收尾。
     if (!ignoreLoop && cur.loop !== null) {
       const loopEndIndex = cur.loop.endIndex
       advanceLoopSubStep(phase)
-      if (activeCursor.value.loop !== null || loopEndIndex < data.words.length - 1) return
+      if (activeCursor.value.loop !== null || loopEndIndex < data.words.length - 1) return false
       cur = activeCursor.value
+      // 当前交互 phase 是最后一个 loop subStep；退出 loop 后必须回到所属 Step/Action 收尾。
+      ownerPhase = flowRuntime.resolvePhaseByCursor(cur)
     } else if (ignoreLoop && cur.loop !== null) {
       activeCursor.value = { ...cur, loop: null }
       cur = activeCursor.value
+      ownerPhase = flowRuntime.resolvePhaseByCursor(cur)
     }
 
-    // ── 情形 1：处于 inWrongWordClear（错词清空完毕，判断是否还有错词） ──
+    // ── 情形 1：wordLoop 主阶段词表自然结束，最后一组尚未进入 loop 子步骤 ──
+    // 该判断必须早于 wrongWordClear 完成判断，否则错词清空 action 自己的尾组 loop 会被绕过。
+    if (!ignoreLoop && ownerPhase.wordAdvance.type === 'wordLoop' && data.words.length > 0 && data.index < data.words.length) {
+      const groupSize = ownerPhase.wordAdvance.groupSize ?? GROUP_SIZE
+      const endIndex = data.index
+      const groupStart = Math.floor(endIndex / groupSize) * groupSize
+      const subSteps = ownerPhase.wordAdvance.subSteps
+
+      if (subSteps && subSteps.length > 0) {
+        enterLoop(groupStart, endIndex)
+        return false
+      }
+    }
+
+    // ── 情形 2：处于 inWrongWordClear（自身 loop 已完成，判断是否还有错词） ──
     if (cur.inWrongWordClear) {
       data.wrongWords = data.wrongWords.filter(v => !deps.checkWordIsNeedNext(v))
       const mainPhase = flowRuntime.getMainPhase(cur)
@@ -373,46 +398,26 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
           // 重置 loop 状态（上一轮可能残留 loop 脏数据），避免 runWordLoop 误判
           activeCursor.value = { ...cur, loop: null }
           runWrongWordRetry(action)
-          return
+          return false
         }
       }
 
       // 错词清空完毕，继续下一个 action
       const nextActionIdx = (cur.endActionIndex ?? 0) + 1
       activeCursor.value = { ...cur, inWrongWordClear: false, endActionIndex: null }
-      processNextEndAction(mainPhase, nextActionIdx)
-      return
-    }
-
-    // ── 情形 2.5：wordLoop 主步骤词表自然结束，最后一组尚未进入 loop 子步骤 ──
-    // 例如 20 个词、groupSize=7，前三组 0-6/7-13 正常进入 loop，但最后一组 14-19 因
-    // index 停在 19 不满足 19%7===0，导致漏入。这里补刀：词表穷尽时若主步骤是 wordLoop，
-    // 将当前未完成的组强行送入 loop 子步骤。
-    // 注意：此判断仅在 index 仍处于列表有效范围内生效；若 index 已越界（loop 退出后
-    // endIndex+1 == words.length），应走情形 3 的 onEnd / 静态 Step 推进。
-    if (!ignoreLoop && phase.wordAdvance.type === 'wordLoop' && data.words.length > 0 && data.index < data.words.length) {
-      const groupSize = phase.wordAdvance.groupSize ?? GROUP_SIZE
-      const endIndex = data.index
-      const groupStart = Math.floor(endIndex / groupSize) * groupSize
-      const subSteps = phase.wordAdvance.subSteps
-
-      if (subSteps && subSteps.length > 0) {
-        enterLoop(groupStart, endIndex)
-        return
-      }
+      return processNextEndAction(mainPhase, nextActionIdx)
     }
 
     // ── 情形 3：普通主步骤词表练完 → 更新 Node 输出并进入 onEnd 队列 ──
     // 普通 Step 只移除已掌握/主动跳过词；Identify 中认识的词也已进入排除列表，
     // 因而自测 Step 的输出自然只剩 unknown/答错词。错词清空期间不会改写这份输出。
     filterWorkingWords()
-    if (phase.onEnd.length > 0) {
-      processNextEndAction(phase, 0)
-      return
+    if (ownerPhase.onEnd.length > 0) {
+      return processNextEndAction(ownerPhase, 0)
     }
 
     // 无 onEnd，直接进入下一静态 Step
-    runStepAdvance()
+    return runStepAdvance()
   }
 
   function atListEnd(data: PracticeDataV2): boolean {
@@ -425,33 +430,41 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
   }
 
   function next(isTyping = true, ignoreLoop = false) {
-    const data = deps.getPracticeData()
-    const word = deps.getCurrentWord()
-    const temp = word.word.toLowerCase()
-    const preTimes = data.wrongTimesMap[temp] ?? 0
-    const phase = currentPhase.value
+    let countAsTyping = isTyping
+    let shouldIgnoreLoop = ignoreLoop
 
-    const loop = activeCursor.value.loop
-    const loopSubStep = loop
-      ? phase.wordAdvance.subSteps?.[loop.subStepIndex]
-      : undefined
-    if (loopSubStep?.clearWrongOnSuccess && data.wrongTimes === 0) {
-      const rIndex = data.wrongWords.findIndex(v => v.word.toLowerCase() === temp)
-      if (rIndex >= 0) data.wrongWords.splice(rIndex, 1)
-    }
+    // 已掌握/主动跳过的连续单词在同一推进循环内消费，避免递归造成深栈和重复进入。
+    while (true) {
+      const data = deps.getPracticeData()
+      const word = deps.getCurrentWord()
+      if (!word.word) {
+        runStepAdvance()
+        return
+      }
 
-    data.wrongTimesMap[temp] = preTimes + data.wrongTimes
-    data.wrongTimes = 0
-    if (isTyping) statStore.inputWordNumber++
+      const temp = word.word.toLowerCase()
+      const preTimes = data.wrongTimesMap[temp] ?? 0
+      const phase = currentPhase.value
+      const loop = activeCursor.value.loop
+      const loopSubStep = loop
+        ? phase.wordAdvance.subSteps?.[loop.subStepIndex]
+        : undefined
+      if (loopSubStep?.clearWrongOnSuccess && data.wrongTimes === 0) {
+        const rIndex = data.wrongWords.findIndex(v => v.word.toLowerCase() === temp)
+        if (rIndex >= 0) data.wrongWords.splice(rIndex, 1)
+      }
 
-    if (atListEnd(data)) {
-      handleListEnd(phase, ignoreLoop)
-    } else {
-      runWordAdvance(phase)
-    }
+      data.wrongTimesMap[temp] = preTimes + data.wrongTimes
+      data.wrongTimes = 0
+      if (countAsTyping) statStore.inputWordNumber++
 
-    if (data.words.length > 0 && deps.checkWordIsNeedNext(deps.getCurrentWord())) {
-      next(false)
+      const completed = atListEnd(data)
+        ? handleListEnd(phase, shouldIgnoreLoop)
+        : (runWordAdvance(phase), false)
+      if (completed || data.words.length === 0 || !deps.checkWordIsNeedNext(deps.getCurrentWord())) return
+
+      countAsTyping = false
+      shouldIgnoreLoop = false
     }
   }
 

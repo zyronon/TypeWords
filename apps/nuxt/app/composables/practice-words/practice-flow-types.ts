@@ -70,7 +70,7 @@ export interface PracticeGenerateReportAction {
 /** 跳转动作：指令型 */
 export interface PracticeNavigateAction {
   type: 'navigate'
-  target: 'nextStep' | 'complete' | string
+  target: 'nextStep' | 'complete'
 }
 
 export type PracticeEndAction =

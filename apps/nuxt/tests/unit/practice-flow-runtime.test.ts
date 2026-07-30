@@ -47,6 +47,7 @@ describe('Flow v6 strict validation', () => {
     { name: 'fraction groupSize', patch: { wordAdvance: { type: 'wordLoop', groupSize: 1.5, subSteps: [] } } },
     { name: 'unknown template', patch: { templateId: 'missing' } },
     { name: 'invalid action', patch: { onEnd: [{ type: 'navigate', target: '' }] } },
+    { name: 'unsupported navigation', patch: { onEnd: [{ type: 'navigate', target: 'previousStep' }] } },
   ])('falls back to System for $name', ({ patch }) => {
     const invalid = flow('invalid')
     Object.assign(invalid.nodes[0].steps[0], patch)

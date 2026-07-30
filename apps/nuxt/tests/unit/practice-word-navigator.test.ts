@@ -29,6 +29,19 @@ function makeFlow(id: string, subSteps: { templateId: PracticeStepTemplateId; cl
   }
 }
 
+function addStandardWrongWordClear(config: PracticeFlowConfig) {
+  config.nodes[0].steps[0].onEnd = [{
+    type: 'wrongWordClear',
+    templateId: 'followWrite',
+    wordAdvance: {
+      type: 'wordLoop',
+      groupSize: 7,
+      subSteps: [{ templateId: 'spell', clearWrongOnSuccess: true }],
+    },
+  }]
+  return config
+}
+
 function setupNavigator(config: PracticeFlowConfig, count: number) {
   saveUserFlow(config.id, config, config.label)
   const words = Array.from({ length: count }, (_, i) => makeWord(`w${i}`))
@@ -71,6 +84,68 @@ describe('Navigator wordLoop cursor', () => {
     expect(visits.filter(v => v.startsWith('main:'))).toHaveLength(count)
     expect(visits.filter(v => v.startsWith('0:'))).toHaveLength(count)
     expect(visits.filter(v => v.startsWith('1:'))).toHaveLength(count)
+  })
+
+  it('runs the owner Step onEnd after the final loop subStep', () => {
+    const { navigator, data, words } = setupNavigator(addStandardWrongWordClear(
+      makeFlow('loop-owner-on-end', [{ templateId: 'spell', clearWrongOnSuccess: true }])
+    ), 1)
+
+    navigator.next()
+    expect(navigator.activeCursor.value.loop).not.toBeNull()
+
+    data.wrongWords = [words[0]]
+    data.wrongTimes = 1
+    navigator.next()
+
+    expect(navigator.activeCursor.value).toMatchObject({
+      nodeIndex: 0,
+      stepIndex: 0,
+      inWrongWordClear: true,
+      endActionIndex: 0,
+      loop: null,
+    })
+    expect(data.words.map((word: any) => word.word)).toEqual(['w0'])
+  })
+
+  it('completeCurrentList exits a loop through the owner Step onEnd', () => {
+    const { navigator, data, words } = setupNavigator(addStandardWrongWordClear(
+      makeFlow('complete-loop-owner', [{ templateId: 'spell' }])
+    ), 1)
+    data.wrongWords = [words[0]]
+    navigator.activeCursor.value.loop = { startIndex: 0, endIndex: 0, subStepIndex: 0 }
+
+    navigator.completeCurrentList()
+
+    expect(navigator.activeCursor.value.inWrongWordClear).toBe(true)
+    expect(data.words.map((word: any) => word.word)).toEqual(['w0'])
+  })
+
+  it('keeps retrying wrongWordClear and then resumes the remaining flow', () => {
+    const { navigator, data, words, completed } = setupNavigator(addStandardWrongWordClear(
+      makeFlow('multi-round-wrong-clear', [{ templateId: 'spell', clearWrongOnSuccess: true }])
+    ), 1)
+
+    // 主 Step 留下错词，进入第一轮错词清空。
+    navigator.next()
+    data.wrongWords = [words[0]]
+    data.wrongTimes = 1
+    navigator.next()
+
+    // 第一轮错词清空仍然答错，必须留在同一个 action 并开启下一轮。
+    data.wrongWords = [words[0]]
+    data.wrongTimes = 1
+    navigator.next()
+    data.wrongTimes = 1
+    navigator.next()
+    expect(navigator.activeCursor.value.inWrongWordClear).toBe(true)
+    expect(data.words.map((word: any) => word.word)).toEqual(['w0'])
+
+    // 第二轮一次通过后才允许离开 wrongWordClear 并结算 Flow。
+    navigator.next()
+    navigator.next()
+    expect(completed()).toBe(true)
+    expect(navigator.activeCursor.value.inWrongWordClear).toBe(false)
   })
 })
 
@@ -149,8 +224,10 @@ describe('clearWrongOnSuccess', () => {
   it('safely skips an empty node', () => {
     const config = makeFlow('empty-node', [])
     config.nodes.push({ id: 'empty', label: 'empty', source: 'wrongWords', steps: [{ templateId: 'spell' }] })
-    const { navigator, completed } = setupNavigator(config, 1)
+    const { navigator, data, completed } = setupNavigator(config, 1)
     navigator.next()
     expect(completed()).toBe(true)
+    expect(data.wrongTimesMap).toEqual({ w0: 0 })
+    expect(Object.prototype.hasOwnProperty.call(data.wrongTimesMap, '')).toBe(false)
   })
 })
