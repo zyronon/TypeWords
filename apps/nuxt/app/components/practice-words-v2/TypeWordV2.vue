@@ -2,7 +2,7 @@
 /**
  * TypeWordV2 — 单词练习外壳组件
  *
- * Phase 4 拆分后，此组件负责：
+ * 此组件负责：
  * - 布局容器编排（组合 WordTypingCoreV2 / WordIdentifyPanelV2 / WordMetaPanelV2）
  * - effective 显示策略计算
  * - 笔记 / 收藏 / 操作按钮
@@ -19,11 +19,10 @@ import { getDefaultWord } from '@typewords/core/types/func.ts'
 import { IdentifyMethod, ShortcutKey, WordPracticeType } from '@typewords/core/types/enum.ts'
 import { useBaseStore } from '@typewords/core/stores/base.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
-import { usePlayBeep, usePlayCorrect } from '@typewords/core/hooks/sound.ts'
-import { usePracticeWordAudioV2, WordPlayTrigger } from '~/composables/practice-words/usePracticeWordAudioV2.ts'
+import { cancelWordPracticeAudio, usePlayBeep, usePlayCorrect, usePlayWordAudio } from '@typewords/core/hooks/sound.ts'
 import { useInjectedDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
 import { emitter, EventKey } from '@typewords/core/utils/eventBus.ts'
-import { computed, onMounted, onUnmounted, ref, toRef, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import WordLookupPopover from '@typewords/core/components/word/WordLookupPopover.vue'
 import { BaseButton, BaseIcon, Textarea, ToastComponent, Tooltip, VolumeIcon } from '@typewords/base'
 import { useI18n } from 'vue-i18n'
@@ -33,6 +32,7 @@ import WordTypingCoreV2 from './WordTypingCoreV2.vue'
 import WordIdentifyPanelV2 from './WordIdentifyPanelV2.vue'
 import WordMetaPanelV2 from './WordMetaPanelV2.vue'
 import { useOnKeyboardEventListener } from '@typewords/core/hooks/event.ts'
+import { WordPlayTrigger } from '@typewords/core/composables/useWordPracticeAudio.ts'
 
 const { t: $t } = useI18n()
 
@@ -63,12 +63,13 @@ const store = useBaseStore()
 
 const playBeep = usePlayBeep()
 const playCorrect = usePlayCorrect()
+const playWordAudio = usePlayWordAudio()
 
 const volumeIconRef: any = $ref()
 let isTypingWord = $ref(true)
+let isPlayedFirstSentence = false
 
 // ============ 共享状态 ============
-
 let showFullWord = $ref(false)
 let showWordResult = $ref(false)
 const wrongTimesModel = ref(0)
@@ -83,12 +84,33 @@ const typingCoreRef = $ref<InstanceType<typeof WordTypingCoreV2>>()
 const identifyPanelRef = $ref<InstanceType<typeof WordIdentifyPanelV2>>()
 const wordMetaPanelRef = $ref<InstanceType<typeof WordMetaPanelV2>>()
 
-const { playWord } = usePracticeWordAudioV2({
-  word: toRef(props, 'word'),
-  practiceType: () => props.practiceType,
-  isWordMasked: () => effective.value.isWordMasked,
-  playFirstSentence: () => wordMetaPanelRef?.playSentence(0, { highlight: true }),
-})
+function shouldPlayFirstSentence() {
+  return (
+    settingStore.autoPlayFirstSentence &&
+    [WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(props.practiceType) &&
+    !!props.word.sentences?.[0]?.c &&
+    !isPlayedFirstSentence
+  )
+}
+
+function playWord(trigger: WordPlayTrigger) {
+  const handle = trigger === WordPlayTrigger.Manual
+  if (handle || settingStore.wordSound) {
+    if (handle) cancelWordPracticeAudio()
+    const chainWord = shouldPlayFirstSentence() ? props.word.word : ''
+    const onEnd = chainWord
+      ? () => {
+          if (props.word.word === chainWord) {
+            isPlayedFirstSentence = true
+            wordMetaPanelRef?.playSentence(0, { highlight: true })
+          }
+        }
+      : undefined
+    playWordAudio(props.word.word, handle, onEnd, () => {
+      volumeIconRef?.animate(true)
+    })
+  }
+}
 
 function onTypingCoreComplete() {
   if (settingStore.practiceSentence && props.word.sentences.length) {
@@ -107,12 +129,7 @@ function onSentencePracticeComplete() {
   emit('complete')
 }
 
-function onSentencePracticeWrong() {
-  emit('wrong')
-}
-
 // ============ 单词操作 ============
-
 function checkIsWrong() {
   if (effective.value.isWordMasked) {
     if (!showWordResult && !typingCoreRef?.right) {
@@ -121,9 +138,9 @@ function checkIsWrong() {
   }
 }
 
-function onVolumeIconClick(handle: boolean) {
+function onVolumeIconClick() {
   checkIsWrong()
-  playWord(handle ? WordPlayTrigger.Manual : WordPlayTrigger.Shortcut)
+  playWord(WordPlayTrigger.Manual)
 }
 
 function showWord() {
@@ -237,8 +254,8 @@ function onIdentifyWrong() {
     // WordTest 选错
     typingCoreRef?.setWordTestResult?.(false, props.word.word)
     playBeep()
-    playWord(WordPlayTrigger.Shortcut)
     emit('wrong')
+    playWord(WordPlayTrigger.Typo)
     return
   }
   // 其他情况透传
@@ -249,7 +266,7 @@ function onIdentifyUnknown() {
   if (!showWordResult) {
     showWordResult = true
     emit('wrong')
-    if (settingStore.wordSound) playWord(WordPlayTrigger.RevealUnknown)
+    playWord(WordPlayTrigger.Typo)
   }
 }
 
@@ -299,6 +316,7 @@ useOnKeyboardEventListener(
 function onResetWord() {
   isTypingWord = true
   showFullWord = false
+  isPlayedFirstSentence = false
   showWordResult = false
   if (identifyPanelRef) identifyPanelRef.resetIdentifyState?.()
   editingNote = false
@@ -353,18 +371,16 @@ defineExpose({
         >
           <WordTypingCoreV2
             ref="typingCoreRef"
-            :active="isTypingWord && !isWordTestVal"
             :word="word"
+            :active="isTypingWord && !isWordTestVal && !editingNote"
             :practiceType="practiceType"
             :isWordMasked="effective.isWordMasked"
             v-model:showWordResult="showWordResult"
             v-model:wrongTimes="wrongTimesModel"
             :showFullWord="showFullWord"
             :wordFontSize="settingStore.fontSize.wordForeignFontSize"
-            :volumeIconRef="volumeIconRef"
             :playWord="playWord"
-            :editingNote="editingNote"
-            @wordComplete="onTypingCoreComplete"
+            @complete="onTypingCoreComplete"
             @wrong="onTypingCoreWrong"
           />
         </div>
@@ -448,7 +464,7 @@ defineExpose({
         />
       </div>
 
-      <!-- WordMetaPanelV2: 翻译 + 例句 + 短语 + 词源 等只读展示 -->
+      <!-- WordMetaPanelV2: 翻译 + 例句 + 短语 + 词源 等展示 -->
       <WordMetaPanelV2
         :key="word.word"
         ref="wordMetaPanelRef"

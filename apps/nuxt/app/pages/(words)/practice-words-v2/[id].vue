@@ -851,10 +851,7 @@ useEvents([
               v-if="taskWords.new.length && settingStore.wordPracticeMode !== WordPracticeMode.Shuffle"
             />
             <BaseIcon
-              v-if="
-                taskWords.new.length &&
-                ![WordPracticeMode.Review, WordPracticeMode.Shuffle].includes(settingStore.wordPracticeMode)
-              "
+              v-if="taskWords.new.length"
               @click="continueStudy"
               :title="`下一组(${settingStore.shortcutKeyMap[ShortcutKey.NextChapter]})`"
             >

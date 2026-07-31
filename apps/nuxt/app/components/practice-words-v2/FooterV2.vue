@@ -49,6 +49,7 @@ function format(val: number, suffix: string = '', check: number = -1) {
  * 单节点单步骤流程（Free/Shuffle 等价）直接显示 flow 名。
  */
 const status = computed(() => {
+  if (activeCursor.value.loop) return '小组巩固'
   if (activeCursor.value.inWrongWordClear) return $t('review_wrong_words')
   const config = activeFlowConfig.value
   const nodes = config.nodes
@@ -286,7 +287,9 @@ const showSkipStep = computed(() => {
     top: -40%;
     left: 50%;
     cursor: pointer;
-    transition: top 0.5s ease, transform 0.5s ease;
+    transition:
+      top 0.5s ease,
+      transform 0.5s ease;
     transform: rotate(-90deg);
     padding: 0.5rem;
     font-size: 1.2rem;

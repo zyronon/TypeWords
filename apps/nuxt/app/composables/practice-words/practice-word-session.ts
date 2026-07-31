@@ -174,7 +174,6 @@ export function usePracticeWordPersistenceV2() {
   }
 
   async function load(): Promise<PracticeWordCacheV2 | null> {
-    debugger
     const [local, remote] = await Promise.all([
       getPracticeWordCacheLocalWithMeta() as Promise<LocalCacheResult<PracticeWordCacheStored> | null>,
       dataSync.getRemoteData(SyncDataType.practice_word),

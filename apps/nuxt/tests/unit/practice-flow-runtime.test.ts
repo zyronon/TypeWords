@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { WordPracticeMode } from '@typewords/core/types/enum.ts'
 import { getDefaultWord } from '@typewords/core/types/func.ts'
 import {
@@ -8,7 +8,7 @@ import {
   resolveFlowConfigOrSystem,
   saveUserFlow,
 } from '../../app/composables/practice-words/practice-flow-runtime.ts'
-import { CURRENT_FLOW_VERSION } from '../../app/composables/practice-words/practice-flow-config.ts'
+import { BUILTIN_FLOWS, CURRENT_FLOW_VERSION } from '../../app/composables/practice-words/practice-flow-config.ts'
 import type { PracticeFlowConfig } from '../../app/composables/practice-words/practice-flow-types.ts'
 
 class MemoryStorage implements Storage {
@@ -132,6 +132,31 @@ describe('isolated runtime and task counts', () => {
       new: [word('n')], review: [word('r')],
     }, config)
     expect(result.total).toBe(2)
+  })
+
+  it('honors shuffleOnEnter when the Flow starts from its first Step', () => {
+    const config = flow('initial-shuffle', 'current')
+    config.nodes[0].steps[0].shuffleOnEnter = true
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0)
+    const runtime = createPracticeFlowRuntime(config)
+
+    const result = runtime.resolveFlowStart(WordPracticeMode.Custom, {
+      new: [word('a'), word('b')],
+      review: [word('c')],
+    }, config)
+
+    expect(result.words.map(item => item.word)).toEqual(['b', 'c', 'a'])
+    random.mockRestore()
+  })
+
+  it('enables shuffleOnEnter for every built-in Dictation Step', () => {
+    const dictationSteps = Object.values(BUILTIN_FLOWS)
+      .flatMap(config => config.nodes)
+      .flatMap(node => node.steps)
+      .filter(step => step.templateId === 'dictation')
+
+    expect(dictationSteps.length).toBeGreaterThan(0)
+    expect(dictationSteps.every(step => step.shuffleOnEnter === true)).toBe(true)
   })
 
   it('counts built-in Review and System from their actual sources', () => {

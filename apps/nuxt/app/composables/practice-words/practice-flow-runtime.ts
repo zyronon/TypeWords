@@ -2,6 +2,7 @@
 import { shallowRef } from 'vue'
 import type { TaskWords, Word } from '@typewords/core/types/types.ts'
 import { WordPracticeMode } from '@typewords/core/types/enum.ts'
+import { shuffle } from '@typewords/core/utils'
 import {
   BUILTIN_FLOWS,
   CURRENT_FLOW_VERSION,
@@ -335,7 +336,8 @@ export function createPracticeFlowRuntime(initialConfig: PracticeFlowConfig = BU
       const resolvedWords = resolveInitialWords(config.nodes[index].source, taskWords)
       if (resolvedWords.length > 0) {
         nodeIndex = index
-        words = resolvedWords
+        const firstStep = config.nodes[index].steps[0]
+        words = firstStep.shuffleOnEnter ? shuffle(resolvedWords) : resolvedWords
         break
       }
     }

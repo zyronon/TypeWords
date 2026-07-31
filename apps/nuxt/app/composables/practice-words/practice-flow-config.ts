@@ -78,6 +78,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
           },
           {
             templateId: 'dictation',
+            shuffleOnEnter: true,
             onEnd: DEFAULT_ON_END,
           },
         ],
@@ -98,6 +99,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
           },
           {
             templateId: 'dictation',
+            shuffleOnEnter: true,
             onEnd: DEFAULT_ON_END,
           },
         ],
@@ -153,6 +155,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
           },
           {
             templateId: 'dictation',
+            shuffleOnEnter: true,
             onEnd: DEFAULT_ON_END,
           },
         ],
@@ -208,6 +211,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
         steps: [
           {
             templateId: 'dictation',
+            shuffleOnEnter: true,
             onEnd: DEFAULT_ON_END,
           },
         ],
@@ -219,6 +223,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
         steps: [
           {
             templateId: 'dictation',
+            shuffleOnEnter: true,
             onEnd: DEFAULT_ON_END,
           },
         ],

@@ -2,7 +2,7 @@
 /**
  * WordTypingCoreV2 — 纯键入引擎
  *
- * 从 TypeWordV2 拆出，负责：
+ * 负责：
  * - 键入状态管理（input / wrong / inputLock / ...）
  * - 键盘事件处理（onTyping / del）
  * - 单词完成/错误/重复逻辑
@@ -15,7 +15,7 @@
  */
 import type { Word } from '@typewords/core/types/types.ts'
 import { getDefaultWord } from '@typewords/core/types/func.ts'
-import { ShortcutKey, WordPracticeType } from '@typewords/core/types/enum.ts'
+import { WordPracticeType } from '@typewords/core/types/enum.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import {
   cancelWordPracticeAudio,
@@ -24,12 +24,12 @@ import {
   usePlayCorrect,
   usePlayKeyboardAudio,
 } from '@typewords/core/hooks/sound.ts'
-import { WordPlayTrigger } from '~/composables/practice-words/usePracticeWordAudioV2.ts'
 import { emitter, EventKey } from '@typewords/core/utils/eventBus.ts'
-import { onMounted, onUnmounted, watch } from 'vue'
+import { onUnmounted, watch } from 'vue'
 import Space from '@typewords/core/components/article/Space.vue'
 import { _nextTick, last, normalizeWord } from '@typewords/core/utils'
 import { useOnKeyboardEventListener } from '@typewords/core/hooks/event.ts'
+import { WordPlayTrigger } from '@typewords/core/composables/useWordPracticeAudio.ts'
 
 interface IProps {
   word: Word
@@ -42,14 +42,10 @@ interface IProps {
   showFullWord: boolean
   /** 当前单词字体大小 */
   wordFontSize: number
-  /** 发音图标的 DOM ref，用于音量动画定位 */
-  volumeIconRef: any
   /** 是否激活键盘监听 */
   active?: boolean
   /** 外部注入的 playWord 函数 */
-  playWord: (trigger: WordPlayTrigger, opts?: { volumeRef?: any; resetIcon?: boolean }) => void
-  /** 是否正在编辑笔记（隐藏光标） */
-  editingNote: boolean
+  playWord: (trigger: WordPlayTrigger) => void
 }
 
 const props = withDefaults(defineProps<IProps>(), {
@@ -60,15 +56,12 @@ const props = withDefaults(defineProps<IProps>(), {
   showFullWord: false,
   isWordMasked: false,
   wordFontSize: 48,
-  volumeIconRef: undefined,
-  playWord: () => {},
-  editingNote: false,
 })
 
 const emit = defineEmits<{
   'update:showWordResult': [value: boolean]
   'update:wrongTimes': [value: number]
-  wordComplete: []
+  complete: []
   wrong: []
 }>()
 
@@ -137,6 +130,7 @@ function clearDeferredTimers() {
 function typo() {
   emit('wrong')
   emitWrongTimes(props.wrongTimes + 1)
+  props.playWord(WordPlayTrigger.Typo)
 }
 
 function shouldRepeat() {
@@ -160,8 +154,7 @@ function repeat() {
     wrong = input = ''
     wordRepeatCount++
     inputLock = false
-
-    if (settingStore.wordSound) props.playWord(WordPlayTrigger.RepeatWord)
+    props.playWord(WordPlayTrigger.RepeatWord)
   }, settingStore.waitTimeForChangeWord)
 }
 
@@ -176,10 +169,10 @@ function completeTypeWord(delay: boolean) {
       const wordKey = props.word.word
       jumpTimer = setTimeout(() => {
         jumpTimer = null
-        if (props.word.word === wordKey) emit('wordComplete')
+        if (props.word.word === wordKey) emit('complete')
       }, settingStore.waitTimeForChangeWord)
     } else {
-      emit('wordComplete')
+      emit('complete')
     }
   }
 }
@@ -194,7 +187,6 @@ function del() {
     //如果是自测阶段，按删除键代码弄错了，需要标记为错词，同时从excludeWords里排除
     if (props.practiceType === WordPracticeType.Identify) {
       typo()
-      if (settingStore.wordSound) props.playWord(WordPlayTrigger.DelRetry)
     }
   } else {
     if (wrong) {
@@ -209,10 +201,9 @@ const isSpace = (e: KeyboardEvent) => e.code === 'Space'
 
 async function onTyping(e: KeyboardEvent) {
   if (e.code === 'Backspace') return del()
-  if (waitClear) return
+  // if (waitClear) return
 
   const target = props.word.word
-  const targetVolumeIcon = props.volumeIconRef
   // 输入完成会锁死不能再输入
   if (inputLock) {
     //判断是否是空格键以便切换到下一个
@@ -270,22 +261,17 @@ async function onTyping(e: KeyboardEvent) {
         if (isWordRight) {
           //如果已显示单词，则发射完成事件，并 return
           if (props.showWordResult) {
-            return emit('wordComplete')
+            return emit('complete')
           } else {
             //未显示单词，则播放正确音乐，并在后面设置为 showWordResult.value 为 true 来显示单词
             emitShowWordResult(true)
             playCorrect()
-            if (settingStore.wordSound) {
-              props.playWord(WordPlayTrigger.DictationReveal, { volumeRef: targetVolumeIcon })
-            }
+            props.playWord(WordPlayTrigger.DictationReveal)
           }
         } else {
           //错误处理
           playBeep()
           emitShowWordResult(true)
-          if (settingStore.wordSound) {
-            props.playWord(WordPlayTrigger.DictationReveal, { volumeRef: targetVolumeIcon })
-          }
           typo()
         }
         return
@@ -296,16 +282,14 @@ async function onTyping(e: KeyboardEvent) {
     wrong = ''
     playKeyboardAudio()
     inputLock = false
-  } else if (props.practiceType === WordPracticeType.Identify && !props.showWordResult) {
-    //当自测模式下，按其他键则自动默认为不认识
-    emitShowWordResult(true)
-    typo()
-    if (settingStore.wordSound) {
-      props.playWord(WordPlayTrigger.IdentifyWrongKey, { volumeRef: targetVolumeIcon })
-    }
-    inputLock = false
-    onTyping(e)
   } else {
+    if (props.practiceType === WordPracticeType.Identify && !props.showWordResult) {
+      // emit 更新父组件 prop 不是同步的，不能递归调用 onTyping，否则会反复进入此分支。
+      // 标记为不认识后，当前按键直接继续走下面的正常键入逻辑。
+      emitShowWordResult(true)
+      typo()
+    }
+
     let isKeyRight = false
     if (settingStore.ignoreCase) {
       isKeyRight = letter.toLowerCase() === target[input.length]?.toLowerCase()
@@ -351,12 +335,9 @@ async function onTyping(e: KeyboardEvent) {
       wrong = ''
       playKeyboardAudio()
     } else {
+      playBeep()
       typo()
       wrong = letter
-      playBeep()
-      if (settingStore.wordSound) {
-        props.playWord(WordPlayTrigger.Typo, { volumeRef: targetVolumeIcon })
-      }
       waitClear = true
       if (wrongClearTimer) clearTimeout(wrongClearTimer)
       const wordKey = props.word.word
@@ -373,10 +354,7 @@ async function onTyping(e: KeyboardEvent) {
     if (isWordRight) {
       wordCompletedTime = Date.now() // 记录单词完成的时间戳
       playCorrect()
-      if (
-        [WordPracticeType.Listen, WordPracticeType.Identify].includes(props.practiceType) &&
-        !props.showWordResult
-      ) {
+      if ([WordPracticeType.Listen, WordPracticeType.Identify].includes(props.practiceType) && !props.showWordResult) {
         emitShowWordResult(true)
       }
       if ([WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(props.practiceType)) {
@@ -391,7 +369,6 @@ async function onTyping(e: KeyboardEvent) {
 }
 
 // ============ 重置状态 ============
-
 function resetTypingCore(trigger: WordPlayTrigger) {
   clearDeferredTimers()
   cancelWordPracticeAudio()
@@ -403,8 +380,8 @@ function resetTypingCore(trigger: WordPlayTrigger) {
   wordCompletedTime = 0
   emitWrongTimes(0)
   resetActiveWordPlayCount(props.word.word)
-  if (settingStore.wordSound && props.practiceType !== WordPracticeType.Dictation) {
-    props.playWord(trigger, { resetIcon: trigger === WordPlayTrigger.NewWord })
+  if (props.practiceType !== WordPracticeType.Dictation) {
+    props.playWord(trigger)
   }
   checkCursorPosition()
 }
@@ -414,7 +391,6 @@ function onResetWord() {
 }
 
 // ============ 光标定位 ============
-
 function checkCursorPosition() {
   _nextTick(() => {
     let cursorOffset: { top: number; left: number }
@@ -556,7 +532,7 @@ defineExpose({
     </template>
 
     <div
-      v-if="!editingNote && active"
+      v-if="active"
       class="cursor"
       :style="{
         top: cursor.top + 'px',
