@@ -15,11 +15,11 @@ export const GROUP_SIZE = PRACTICE_WORD_GROUP_SIZE
 export const CURRENT_FLOW_VERSION = 6
 
 export const STEP_TEMPLATE_META: Record<PracticeStepTemplateId, PracticeStepTemplate> = {
-  followWrite: { id: 'followWrite', label: '跟写', practiceType: WordPracticeType.FollowWrite },
-  spell: { id: 'spell', label: '拼写', practiceType: WordPracticeType.Spell },
-  listen: { id: 'listen', label: '听写', practiceType: WordPracticeType.Listen },
-  dictation: { id: 'dictation', label: '默写', practiceType: WordPracticeType.Dictation },
-  identify: { id: 'identify', label: '自测', practiceType: WordPracticeType.Identify },
+  followWrite: { id: 'followWrite', label: 'followWrite', practiceType: WordPracticeType.FollowWrite },
+  spell: { id: 'spell', label: 'spell', practiceType: WordPracticeType.Spell },
+  listen: { id: 'listen', label: 'listen', practiceType: WordPracticeType.Listen },
+  dictation: { id: 'dictation', label: 'dictation', practiceType: WordPracticeType.Dictation },
+  identify: { id: 'identify', label: 'identify', practiceType: WordPracticeType.Identify },
 }
 
 export function materializeWordAdvance(config?: PracticeWordAdvanceConfig): WordAdvanceRule {
@@ -58,11 +58,11 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
     id: 'system',
     version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.System,
-    label: '学习',
+    label: 'smart_learning',
     nodes: [
       {
         id: 'new',
-        label: '新词',
+        label: 'new_words',
         source: 'taskNew',
         steps: [
           {
@@ -85,7 +85,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
       },
       {
         id: 'review',
-        label: '复习',
+        label: 'review',
         source: 'taskReview',
         steps: [
           {
@@ -113,11 +113,11 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
     id: 'free',
     version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.Free,
-    label: '自由练习',
+    label: 'free_practice',
     nodes: [
       {
         id: 'practice',
-        label: '自由练习',
+        label: 'free_practice',
         source: 'current',
         steps: [
           {
@@ -137,11 +137,11 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
     id: 'review',
     version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.Review,
-    label: '复习',
+    label: 'review',
     nodes: [
       {
         id: 'review',
-        label: '复习',
+        label: 'review',
         source: 'taskReview',
         steps: [
           {
@@ -169,11 +169,11 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
     id: 'identifyOnly',
     version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.IdentifyOnly,
-    label: '自测',
+    label: 'identify',
     nodes: [
       {
         id: 'new',
-        label: '新词',
+        label: 'new_words',
         source: 'taskNew',
         steps: [
           {
@@ -184,7 +184,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
       },
       {
         id: 'review',
-        label: '复习',
+        label: 'review',
         source: 'taskReview',
         steps: [
           {
@@ -202,11 +202,11 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
     id: 'dictationOnly',
     version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.DictationOnly,
-    label: '默写',
+    label: 'dictation',
     nodes: [
       {
         id: 'new',
-        label: '新词',
+        label: 'new_words',
         source: 'taskNew',
         steps: [
           {
@@ -218,7 +218,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
       },
       {
         id: 'review',
-        label: '复习',
+        label: 'review',
         source: 'taskReview',
         steps: [
           {
@@ -237,11 +237,11 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
     id: 'listenOnly',
     version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.ListenOnly,
-    label: '听写',
+    label: 'listen',
     nodes: [
       {
         id: 'new',
-        label: '新词',
+        label: 'new_words',
         source: 'taskNew',
         steps: [
           {
@@ -253,7 +253,7 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
       },
       {
         id: 'review',
-        label: '复习',
+        label: 'review',
         source: 'taskReview',
         steps: [
           {
@@ -272,11 +272,11 @@ export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
     id: 'shuffle',
     version: CURRENT_FLOW_VERSION,
     mode: WordPracticeMode.Shuffle,
-    label: '随机复习',
+    label: 'random_review',
     nodes: [
       {
         id: 'practice',
-        label: '随机复习',
+        label: 'random_review',
         source: 'taskReview',
         steps: [
           {

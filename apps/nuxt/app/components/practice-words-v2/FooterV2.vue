@@ -59,7 +59,7 @@ const status = computed(() => {
   const step = node.steps[cursor.stepIndex]
   const stepLabel = step?.label ?? step?.templateId ?? ''
   if (nodes.length === 1 && nodes[0].steps.length === 1) return config.label
-  return node.label + (stepLabel ? ' · ' + stepLabel : '')
+  return $t(node.label) + (stepLabel ? ' · ' + $t(stepLabel) : '')
 })
 
 /**
@@ -107,7 +107,7 @@ const stages = computed(() => {
             const isCurrentStep = si === stepIndex
             const isCompletedStep = si < stepIndex
             return {
-              name: step.label ?? step.templateId,
+              name: $t(step.label ?? step.templateId),
               ratio: Math.floor(100 / node.steps.length),
               percentage: isCompletedStep ? 100 : isCurrentStep ? currentProgress : 0,
               active: isCurrentStep,
@@ -116,7 +116,7 @@ const stages = computed(() => {
         : undefined
 
     return {
-      name: node.label,
+      name: $t(node.label),
       ratio: nodeRatio,
       percentage: isCompleted ? 100 : isCurrentNode ? currentProgress : 0,
       active: isCurrentNode,

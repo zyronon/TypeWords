@@ -10,6 +10,13 @@ import { ref } from 'vue'
 import type { Ref } from 'vue'
 import { Toast } from '@typewords/base'
 
+export function canAutoResumeVisibilityTimer(timer: {
+  timerPaused: boolean
+  timerPauseReason: string | null
+}) {
+  return timer.timerPaused && timer.timerPauseReason === 'auto_visibility'
+}
+
 export function usePracticeIdleTimer(options: {
   isFocus: Ref<boolean>
   statStore: {

@@ -220,6 +220,12 @@ export async function checkAndUpgradeSaveSetting(val: any) {
         updateLocalData = true
       }
 
+      //更新历史用户的自动播放首条例句选项为true
+      if (version <= 22) {
+        state.autoPlayFirstSentence = true
+        updateLocalData = true
+      }
+
       // @ts-ignore
       delete state.shortcutKeyMap
       checkRiskKey(defaultState, state)

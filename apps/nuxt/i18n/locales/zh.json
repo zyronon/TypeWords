@@ -448,7 +448,7 @@
 	"phrases": "短语",
 	"synonyms": "近义词",
 	"word_root": "词根",
-	"review_wrong_words": "复习错词",
+	"review_wrong_words": "错词巩固",
 	"collapse": "收起",
 	"expand": "展开",
 	"minutes": "分钟",
@@ -805,5 +805,10 @@
 	"expand_detail_settings": "展开详细设置",
 	"sentence_pronunciation": "例句发音",
 	"sentence_volume": "例句音量",
-	"sentence_speed": "例句倍速"
+	"sentence_speed": "例句倍速",
+	"followWrite": "跟写",
+	"spell": "拼写",
+	"listen": "听写",
+	"dictation": "默写",
+	"identify": "自测"
 }

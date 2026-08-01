@@ -50,7 +50,10 @@ import { useGetGradeByWrongTimes, useNextCard } from '@typewords/core/hooks/fsrs
 import WordMarkPickList, { type WordMarkPickResult } from '@typewords/core/components/word/WordMarkPickList.vue'
 import { buildQuestion } from '@typewords/core/utils/word-test.ts'
 import type { PracticeSessionSnapshot } from '~/composables/practice-words/practice-flow-types.ts'
-import { usePracticeIdleTimer } from '~/composables/practice-words/usePracticeIdleTimer.ts'
+import {
+  canAutoResumeVisibilityTimer,
+  usePracticeIdleTimer,
+} from '~/composables/practice-words/usePracticeIdleTimer.ts'
 
 const { isWordSimple, toggleWordSimple } = useWordOptions()
 const settingStore = useSettingStore()
@@ -196,11 +199,12 @@ function clearVisibilityResumeTimer() {
 function scheduleVisibilityResume() {
   clearVisibilityResumeTimer()
   if (document.hidden || showRemoteReloadDialog) return
-  if (statStore.timerPaused && statStore.timerPauseReason === 'auto_visibility') {
+  if (canAutoResumeVisibilityTimer(statStore)) {
     // 特意延迟提示用户，让用户看到，免得用户焦虑，以为没暂停。
     visibilityResumeTimer = setTimeout(() => {
       visibilityResumeTimer = null
       if (document.hidden || showRemoteReloadDialog) return
+      if (!canAutoResumeVisibilityTimer(statStore)) return
       statStore.resumeTimer()
       Toast.success('已自动恢复计时')
     }, 1500)

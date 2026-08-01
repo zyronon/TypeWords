@@ -46,7 +46,7 @@
 	"more": "เพิ่มเติม",
 	"loading": "กำลังโหลด",
 	"introduction": "แนะนำ",
-	"learn": "เรียน",
+	"learn": "Learn",
 	"practice": "ฝึก",
 	"test": "ทดสอบ",
 	"feedback": "ข้อเสนอแนะ",
@@ -805,5 +805,10 @@
 	"expand_detail_settings": "展开详细设置",
 	"sentence_pronunciation": "例句发音",
 	"sentence_volume": "例句音量",
-	"sentence_speed": "例句倍速"
+	"sentence_speed": "例句倍速",
+	"followWrite": "Follow Write",
+	"spell": "Spell",
+	"listen": "Listen",
+	"dictation": "Dictation",
+	"identify": "Identify"
 }

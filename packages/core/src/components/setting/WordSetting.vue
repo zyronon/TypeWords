@@ -2,7 +2,7 @@
 import { InputNumber, Slider, Switch, Radio, RadioGroup } from '@typewords/base'
 import SettingItem from './SettingItem.vue'
 import { useSettingStore } from '../../stores/setting.ts'
-import { IdentifyMethod } from '../../types';
+import { IdentifyMethod } from '../../types'
 
 const settingStore = useSettingStore()
 </script>
@@ -15,10 +15,6 @@ const settingStore = useSettingStore()
 
     <SettingItem :title="$t('clear_input_on_error')">
       <Switch v-model="settingStore.inputWrongClear" />
-    </SettingItem>
-
-    <SettingItem :title="$t('practice_sentence')">
-      <Switch v-model="settingStore.practiceSentence" />
     </SettingItem>
 
     <SettingItem :title="$t('word_repeat_setting')" class="gap-0!">
@@ -51,6 +47,15 @@ const settingStore = useSettingStore()
       <Switch v-model="settingStore.showEtymologyAndRelWords" />
     </SettingItem>
 
+    <div class="line"></div>
+    <SettingItem :mainTitle="`例句设置`" />
+    <SettingItem :title="$t('practice_sentence')">
+      <Switch v-model="settingStore.practiceSentence" />
+    </SettingItem>
+    <SettingItem :title="$t('auto_play_first_sentence')" :desc="$t('auto_play_first_sentence_desc')">
+      <Switch v-model="settingStore.autoPlayFirstSentence" />
+    </SettingItem>
+
     <!--          自动切换-->
     <div class="line"></div>
     <SettingItem :mainTitle="$t('auto_switch')" />
@@ -58,14 +63,12 @@ const settingStore = useSettingStore()
       <Switch v-model="settingStore.autoNextWord" />
     </SettingItem>
 
-    <SettingItem v-if="settingStore.autoNextWord" :title="$t('auto_next_word_time')" :desc="$t('auto_next_word_time_desc')">
-      <InputNumber
-        v-model="settingStore.waitTimeForChangeWord"
-        :min="0"
-        :max="10000"
-        :step="50"
-        type="number"
-      />
+    <SettingItem
+      v-if="settingStore.autoNextWord"
+      :title="$t('auto_next_word_time')"
+      :desc="$t('auto_next_word_time_desc')"
+    >
+      <InputNumber v-model="settingStore.waitTimeForChangeWord" :min="0" :max="10000" :step="50" type="number" />
       <span class="ml-4">{{ $t('milliseconds') }}</span>
     </SettingItem>
 
