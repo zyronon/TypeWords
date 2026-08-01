@@ -30,6 +30,7 @@ import type {
   PracticeWordsSource,
   PracticeWrongWordClearAction,
 } from './practice-flow-types.ts'
+import { Toast } from '@typewords/base'
 
 export type NavigatorDeps = {
   getPracticeData: () => PracticeDataV2
@@ -282,6 +283,7 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
   function runWrongWordRetry(action: PracticeWrongWordClearAction) {
     const data = deps.getPracticeData()
     // 实际 practiceType 由 resolvePhaseByCtxCursor 从 action.templateId 派生，无需在此设置
+    Toast.info('还有错词，继续巩固一下吧')
     console.log(`[Nav] 还有错词，进入错词清空（templateId=${action.templateId}）`)
     data.words = shuffle(cloneDeep(data.wrongWords))
     data.index = 0
@@ -451,7 +453,10 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
         : undefined
       if (loopSubStep?.clearWrongOnSuccess && data.wrongTimes === 0) {
         const rIndex = data.wrongWords.findIndex(v => v.word.toLowerCase() === temp)
-        if (rIndex >= 0) data.wrongWords.splice(rIndex, 1)
+        if (rIndex >= 0) {
+          Toast.success(temp+' 已自动从错词列表移除！原因：跟写时错误，但拼写时正确')
+          data.wrongWords.splice(rIndex, 1)
+        }
       }
 
       data.wrongTimesMap[temp] = preTimes + data.wrongTimes

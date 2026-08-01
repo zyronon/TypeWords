@@ -30,6 +30,7 @@ import Space from '@typewords/core/components/article/Space.vue'
 import { _nextTick, last, normalizeWord } from '@typewords/core/utils'
 import { useOnKeyboardEventListener } from '@typewords/core/hooks/event.ts'
 import { WordPlayTrigger } from '@typewords/core/composables/useWordPracticeAudio.ts'
+import { Toast } from '@typewords/base'
 
 interface IProps {
   word: Word
@@ -200,6 +201,7 @@ function del() {
 const isSpace = (e: KeyboardEvent) => e.code === 'Space'
 
 async function onTyping(e: KeyboardEvent) {
+  // console.log('onTyping',e)
   if (e.code === 'Backspace') return del()
   // if (waitClear) return
 
@@ -227,7 +229,7 @@ async function onTyping(e: KeyboardEvent) {
           // 错误时，提示用户按删除键，仅默写需要提示
           pressNumber++
           if (pressNumber >= 3) {
-            // Toast handled in parent shell
+            Toast.info($t('press_delete_reinput'), { duration: 2000 })
             pressNumber = 0
           }
         }
@@ -237,6 +239,7 @@ async function onTyping(e: KeyboardEvent) {
       if (isWordRight) {
         pressNumber++
         if (pressNumber >= 3) {
+          Toast.info($t('press_space_continue'), { duration: 2000 })
           pressNumber = 0
         }
       } else {
@@ -474,21 +477,22 @@ function revealWord(wordStr: string) {
   inputLock = true
   input = wordStr
   emitShowWordResult(true)
+  playCorrect()
 }
 
 /** WordTest 选择后设置结果 */
 function setWordTestResult(isCorrect: boolean, wordStr: string) {
   if (isCorrect) {
     input = wordStr
-    // correct sound handled by parent
+    playCorrect()
   } else {
     wrong = wordStr
-    // beep handled by parent
+    playBeep()
   }
 }
 
 defineExpose({
-  right: isWordRight,
+  isWordRight: () => isWordRight,
   revealWord,
   setWordTestResult,
 })

@@ -131,7 +131,7 @@ defineExpose({
 
 <template>
   <template v-if="isSelfAssessment && !showWordResult">
-    <div class="mt-4 flex gap-2">
+    <div class="mt-4 mb-2 flex gap-2">
       <BaseButton
         :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.KnowWord]})`"
         size="large"

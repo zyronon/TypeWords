@@ -9,7 +9,7 @@ const Dialog = defineAsyncComponent(() => import('@typewords/base/Dialog'))
 let settingStore = useSettingStore()
 const model = defineModel()
 
-useDisableEventListener(() => model)
+useDisableEventListener(model)
 </script>
 
 <template>

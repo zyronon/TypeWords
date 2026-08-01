@@ -24,7 +24,7 @@ import { useInjectedDisplayPolicy } from '~/composables/practice-words/usePracti
 import { emitter, EventKey } from '@typewords/core/utils/eventBus.ts'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import WordLookupPopover from '@typewords/core/components/word/WordLookupPopover.vue'
-import { BaseButton, BaseIcon, Textarea, ToastComponent, Tooltip, VolumeIcon } from '@typewords/base'
+import { BaseButton, BaseIcon, Textarea, Toast, ToastComponent, Tooltip, VolumeIcon } from '@typewords/base'
 import { useI18n } from 'vue-i18n'
 import { useWordOptions } from '@typewords/core/hooks/dict.ts'
 import { openWordCollectPicker } from '@typewords/core/hooks/useWordCollectPicker.ts'
@@ -233,12 +233,19 @@ const isWordTestVal = computed(() => {
   return props.practiceType === WordPracticeType.Identify && settingStore.identifyMethod === IdentifyMethod.WordTest
 })
 
+let showNotice = false
+
 function onIdentifyKnow() {
   if (isWordTestVal.value) {
     // WordTest 选对
     typingCoreRef?.setWordTestResult?.(true, props.word.word)
     playCorrect()
     emit('know')
+
+    if (!showNotice) {
+      Toast.info($t('press_space_continue'), { duration: 5000 })
+      showNotice = true
+    }
     return
   }
   // SelfAssessment "认识"
@@ -246,6 +253,10 @@ function onIdentifyKnow() {
     showWordResult = true
     typingCoreRef?.revealWord?.(props.word.word)
     emit('know')
+    if (!showNotice) {
+      Toast.info($t('know_word_tip'), { duration: 5000 })
+      showNotice = true
+    }
   }
 }
 
@@ -256,6 +267,11 @@ function onIdentifyWrong() {
     playBeep()
     emit('wrong')
     playWord(WordPlayTrigger.Typo)
+
+    if (!showNotice) {
+      Toast.info($t('press_space_continue'), { duration: 5000 })
+      showNotice = true
+    }
     return
   }
   // 其他情况透传
@@ -283,7 +299,7 @@ const notice = $computed(() => {
       : props.practiceType === WordPracticeType.Listen
         ? '输入完成后按空格键切换下一个'
         : showWordResult
-          ? typingCoreRef?.right
+          ? typingCoreRef?.isWordRight()
             ? '按空格键切换下一个'
             : $t('press_delete_reinput')
           : '按空格键完成输入'
