@@ -156,7 +156,7 @@ watch(
   }
 }
 
-// 移动端适配
+
 @media (max-width: 768px) {
   .target-modal {
     width: 90vw !important;

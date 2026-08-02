@@ -77,7 +77,7 @@ defineProps<{
   }
 }
 
-// 移动端适配
+
 @media (max-width: 768px) {
   .wrap {
     height: calc(100vh - 6rem);

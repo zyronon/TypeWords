@@ -232,7 +232,7 @@ const encouragementText = $computed(() => {
   </Dialog>
 </template>
 <style scoped lang="scss">
-// 移动端适配
+
 @media (max-width: 768px) {
   // 弹窗容器优化
   .w-140 {

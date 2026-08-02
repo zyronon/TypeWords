@@ -204,6 +204,7 @@ async function onTyping(e: KeyboardEvent) {
   // console.log('onTyping',e)
   if (e.code === 'Backspace') return del()
   // if (waitClear) return
+  debugger
 
   const target = props.word.word
   // 输入完成会锁死不能再输入
@@ -473,18 +474,16 @@ onUnmounted(unmounted)
 // ============ 暴露给父组件 ============
 
 /** 自测"认识"时调用：展示完整单词并锁定输入 */
-function revealWord(wordStr: string) {
+function setWordCorrectAndLock(wordStr: string) {
   inputLock = true
   input = wordStr
-  emitShowWordResult(true)
   playCorrect()
 }
 
 /** WordTest 选择后设置结果 */
 function setWordTestResult(isCorrect: boolean, wordStr: string) {
   if (isCorrect) {
-    input = wordStr
-    playCorrect()
+    setWordCorrectAndLock(wordStr)
   } else {
     wrong = wordStr
     playBeep()
@@ -493,7 +492,7 @@ function setWordTestResult(isCorrect: boolean, wordStr: string) {
 
 defineExpose({
   isWordRight: () => isWordRight,
-  revealWord,
+  setWordCorrectAndLock,
   setWordTestResult,
 })
 </script>

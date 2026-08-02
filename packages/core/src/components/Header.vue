@@ -16,7 +16,7 @@ const attrs = useAttrs()
 </script>
 
 <template>
-  <div class="mb-3 text-xl font-bold relative min-h-8">
+  <div class="mb-3 font-bold relative min-h-8">
     <BackIcon class="z-2 relative" v-bind="attrs" v-if="showBackIcon" />
     <span class="absolute text-center w-full left-0" @click.stop>{{ title }}</span>
   </div>

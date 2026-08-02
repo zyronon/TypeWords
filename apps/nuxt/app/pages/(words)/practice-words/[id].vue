@@ -1118,7 +1118,7 @@ useEvents([
   width: var(--toolbar-width);
 }
 
-// 移动端适配
+
 @media (max-width: 768px) {
   .practice-word {
     width: 100%;

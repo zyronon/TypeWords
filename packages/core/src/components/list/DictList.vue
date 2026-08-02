@@ -34,7 +34,7 @@ const emit = defineEmits<{
   gap: 1rem;
 }
 
-// 移动端适配
+
 @media (max-width: 768px) {
   .flex.gap-4.flex-wrap {
     gap: 0.5rem;

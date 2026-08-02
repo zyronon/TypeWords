@@ -1056,7 +1056,7 @@ $article-lh: 2.4;
   display: none;
 }
 
-// 移动端适配
+
 @media (max-width: 768px) {
   .typing-article {
     max-width: 100%;

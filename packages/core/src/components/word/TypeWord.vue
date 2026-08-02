@@ -1186,7 +1186,7 @@ defineExpose({
   }
 }
 
-// 移动端适配
+
 @media (max-width: 768px) {
   .typing-word {
     .label {

@@ -33,6 +33,7 @@ import WordIdentifyPanelV2 from './WordIdentifyPanelV2.vue'
 import WordMetaPanelV2 from './WordMetaPanelV2.vue'
 import { useOnKeyboardEventListener } from '@typewords/core/hooks/event.ts'
 import { WordPlayTrigger } from '@typewords/core/composables/useWordPracticeAudio.ts'
+import { _nextTick } from '@typewords/core'
 
 const { t: $t } = useI18n()
 
@@ -41,6 +42,8 @@ interface IProps {
   question?: Question | null
   /** 当前 Cursor 解析出的真实练习类型。 */
   practiceType: WordPracticeType
+  /** 当前练习阶段标识，用于重置“显示单词”计错状态。 */
+  phaseKey: string
 }
 
 const props = withDefaults(defineProps<IProps>(), {
@@ -54,6 +57,7 @@ const emit = defineEmits<{
   mastered: []
   skip: []
   toggleSimple: []
+  quickMark: []
 }>()
 
 const settingStore = useSettingStore()
@@ -81,7 +85,6 @@ const localReveal = computed(() => ({
 const effective = useInjectedDisplayPolicy(localReveal)
 
 const typingCoreRef = $ref<InstanceType<typeof WordTypingCoreV2>>()
-const identifyPanelRef = $ref<InstanceType<typeof WordIdentifyPanelV2>>()
 const wordMetaPanelRef = $ref<InstanceType<typeof WordMetaPanelV2>>()
 
 function shouldPlayFirstSentence() {
@@ -143,39 +146,44 @@ function onVolumeIconClick() {
   playWord(WordPlayTrigger.Manual)
 }
 
-function showWord() {
-  if (!settingStore.allowWordTip) return
+function play() {
+  volumeIconRef?.play()
+}
 
+//一个 phase 一个单词，仅可通过 reveal 单词计算一次错误，避免多次 reveal 多次计算
+let revealWordsSet = new Set()
+watch(
+  () => props.phaseKey,
+  () => {
+    console.log('revealWordsSet', revealWordsSet.values())
+    revealWordsSet = new Set()
+  }
+)
+
+function showWord() {
+  console.log('showWord')
+  if (!settingStore.allowWordTip) return
   // 如果不是跟写模式，查看单词一律标记为错词
   if (props.practiceType !== WordPracticeType.FollowWrite || effective.value.isWordMasked) {
-    // 原版 typo() 无条件调用
-    if (!showWordResult) {
+    if (!showWordResult && !revealWordsSet.has(props.word.word)) {
+      revealWordsSet.add(props.word.word)
       emit('wrong')
     }
-  }
-  if (
-    props.practiceType === WordPracticeType.Identify &&
-    settingStore.identifyMethod === IdentifyMethod.WordTest &&
-    identifyPanelRef
-  ) {
-    identifyPanelRef.showAllCandidates = true
   }
   showFullWord = true
 }
 
 function hideWord() {
-  if (identifyPanelRef) identifyPanelRef.showAllCandidates = false
   showFullWord = false
 }
 
-function play() {
-  volumeIconRef?.play()
-}
-
-function mouseleave() {
-  setTimeout(() => {
-    showFullWord = false
-  }, 50)
+const wordWrapRef = useTemplateRef('word-wrap')
+function onMouseEnter() {
+  if (!settingStore.allowWordTip) return
+  //解决：默写情况下，单词显示为下划线，而下划线的宽度比字母的宽度更宽，导致hover上去，单词立马显示，导致整个div的宽度变窄，这样又会立马触发mouseleave
+  let rect = wordWrapRef.value.getBoundingClientRect()
+  wordWrapRef.value.style.minWidth = rect.width + 'px'
+  _nextTick(showWord)
 }
 
 // ============ 笔记 ============
@@ -236,22 +244,9 @@ const isWordTestVal = computed(() => {
 let showNotice = false
 
 function onIdentifyKnow() {
-  if (isWordTestVal.value) {
-    // WordTest 选对
-    typingCoreRef?.setWordTestResult?.(true, props.word.word)
-    playCorrect()
-    emit('know')
-
-    if (!showNotice) {
-      Toast.info($t('press_space_continue'), { duration: 5000 })
-      showNotice = true
-    }
-    return
-  }
-  // SelfAssessment "认识"
   if (!showWordResult) {
     showWordResult = true
-    typingCoreRef?.revealWord?.(props.word.word)
+    typingCoreRef?.setWordCorrectAndLock?.(props.word.word)
     emit('know')
     if (!showNotice) {
       Toast.info($t('know_word_tip'), { duration: 5000 })
@@ -260,7 +255,7 @@ function onIdentifyKnow() {
   }
 }
 
-function onIdentifyWrong() {
+function onAnswerWrong() {
   if (isWordTestVal.value) {
     // WordTest 选错
     typingCoreRef?.setWordTestResult?.(false, props.word.word)
@@ -276,6 +271,10 @@ function onIdentifyWrong() {
   }
   // 其他情况透传
   emit('wrong')
+}
+
+function onAnswerCorrect() {
+  typingCoreRef?.setWordTestResult?.(true, props.word.word)
 }
 
 function onIdentifyUnknown() {
@@ -334,9 +333,9 @@ function onResetWord() {
   showFullWord = false
   isPlayedFirstSentence = false
   showWordResult = false
-  if (identifyPanelRef) identifyPanelRef.resetIdentifyState?.()
   editingNote = false
   noteInputValue = ''
+  if (wordWrapRef.value) wordWrapRef.value.style.minWidth = 'unset'
 }
 
 // ============ defineExpose ============
@@ -375,20 +374,19 @@ defineExpose({
       </div>
 
       <!-- 单词键入区 -->
-      <Tooltip
-        :title="effective.isWordMasked ? `快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示单词` : ''"
-      >
+      <Tooltip :title="`快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示单词`">
         <div
-          id="word"
+          id="word-wrap"
+          ref="word-wrap"
           class="word my-1"
           :style="{ fontSize: settingStore.fontSize.wordForeignFontSize + 'px' }"
-          @mouseenter="showWord"
-          @mouseleave="mouseleave"
+          @mouseenter="onMouseEnter"
+          @mouseleave="hideWord"
         >
           <WordTypingCoreV2
             ref="typingCoreRef"
             :word="word"
-            :active="isTypingWord && !isWordTestVal && !editingNote"
+            :active="isTypingWord && !editingNote"
             :practiceType="practiceType"
             :isWordMasked="effective.isWordMasked"
             v-model:showWordResult="showWordResult"
@@ -431,19 +429,6 @@ defineExpose({
         </BaseIcon>
       </div>
 
-      <!-- 自测 / WordTest UI -->
-      <WordIdentifyPanelV2
-        ref="identifyPanelRef"
-        :word="word"
-        :question="question"
-        :practiceType="practiceType"
-        :showWordResult="showWordResult"
-        @know="onIdentifyKnow"
-        @unknown="onIdentifyUnknown"
-        @mastered="onIdentifyMastered"
-        @wrong="onIdentifyWrong"
-      />
-
       <!-- 笔记编辑区 -->
       <template v-if="editingNote || store.noteData[word.word]?.trim()">
         <div class="flex flex-col gap-2 w-full mt-4">
@@ -467,6 +452,21 @@ defineExpose({
         </div>
         <div class="line-white my-3"></div>
       </template>
+
+      <!-- 自测 UI -->
+      <WordIdentifyPanelV2
+        v-if="!showWordResult && !showFullWord"
+        :key="word.word"
+        :word="word"
+        :question="question"
+        @know="onIdentifyKnow"
+        @unknown="onIdentifyUnknown"
+        @mastered="onIdentifyMastered"
+        @wrong="onAnswerWrong"
+        @correct="onAnswerCorrect"
+        @complete="emit('complete')"
+        @quickMark="emit('quickMark')"
+      />
 
       <!-- 提示 Toast -->
       <div class="center mt-3" v-if="notice.show && settingStore.showUsageTips">
@@ -539,7 +539,6 @@ defineExpose({
   }
 }
 
-// 移动端适配
 @media (max-width: 768px) {
   .typing-word {
     .label {

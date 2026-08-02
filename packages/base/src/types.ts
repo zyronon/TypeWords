@@ -4,5 +4,5 @@ export type ButtonProps = {
   disabled?: boolean
   loading?: boolean
   size?: 'small' | 'normal' | 'large'
-  type?: 'primary' | 'info' | 'orange'
+  type?: 'primary' | 'info' | 'orange' | 'text'
 }

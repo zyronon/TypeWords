@@ -204,7 +204,7 @@ export function useEventListener(type: string, listener: EventListenerOrEventLis
         if (event.inputType === 'deleteContentBackward') {
           char = 'Backspace'
           keyCode = 8
-        }else {
+        } else {
           char = target?.value?.slice(-1) || (event as any).data?.slice(-1)
           keyCode = char === ' ' ? 32 : char.toUpperCase().charCodeAt(0)
         }
@@ -318,6 +318,7 @@ export function useStartKeyboardEventListener() {
 
   useEventListener('keydown', (e: KeyboardEvent) => {
     // console.log('keydown', e)
+    // debugger
     //解决无法复制、全选的问题
     if ((e.ctrlKey || e.metaKey) && ['KeyC', 'KeyA', 'KeyD'].includes(e.code)) return
     if (!window?.disableEventListener) {
@@ -335,6 +336,7 @@ export function useStartKeyboardEventListener() {
           }
         }
       }
+      // console.log('shortcutEvent', shortcutEvent, settingStore.shortcutKeyMap, emitter.all)
       if (shortcutEvent.length > 0) {
         e.preventDefault()
         shortcutEvent.map(s => emitter.emit(s, e))

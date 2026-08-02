@@ -801,7 +801,7 @@ function minusStartTime(val: Sentence) {
   }
 }
 
-// 移动端适配
+
 @media (max-width: 768px) {
   .content {
     flex-direction: column;

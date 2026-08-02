@@ -16,7 +16,7 @@
   margin-top: 1.2rem;
 }
 
-// 移动端适配
+
 @media (max-width: 768px) {
   .page {
     width: 100vw !important;

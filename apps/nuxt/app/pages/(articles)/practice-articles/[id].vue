@@ -645,7 +645,7 @@ provide('currentPractice', currentPractice)
   }
 }
 
-// 移动端适配
+
 @media (max-width: 768px) {
   // 优化练习区域布局
   .practice-article {

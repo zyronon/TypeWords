@@ -818,7 +818,7 @@ defineRender(() => {
   display: none;
 }
 
-// 移动端适配
+
 @media (max-width: 768px) {
   .dict-detail-card {
     height: unset;

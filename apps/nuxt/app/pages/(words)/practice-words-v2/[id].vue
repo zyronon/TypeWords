@@ -491,12 +491,14 @@ function addExcludeWord() {
 }
 
 function onWordKnow() {
+  console.log('onWordKnow')
   //"我认识“强制更新了Good，因为点”已掌握“才会设置Easy
   data.ratingMap[word.word.toLowerCase()] = Rating.Good
   addExcludeWord()
 }
 
 function onTypeWrong() {
+  console.log('onTypeWrong')
   data.wrongTimes++
   //这里的代码暂时不能移动，因为要实时把错词加入到列表里面，从而更新toolbar里面的错词数
   //todo 后续可以优化
@@ -600,7 +602,7 @@ function skip() {
 }
 
 function show() {
-  typingRef.showWord()
+  typingRef?.showWord()
 }
 
 function collect() {
@@ -611,7 +613,7 @@ function collect() {
 }
 
 function play() {
-  typingRef.play()
+  typingRef?.play()
 }
 
 function toggleWordSimpleWrapper() {
@@ -765,6 +767,8 @@ useEvents([
   [ShortcutKey.TogglePanel, () => (settingStore.showPanel = !settingStore.showPanel)],
   [ShortcutKey.RandomWrite, randomWrite],
 ])
+
+let isQuickMarkWordList = $ref(false)
 </script>
 
 <template>
@@ -788,13 +792,10 @@ useEvents([
         </div>
 
         <WordMarkPickList
-          v-if="
-            currentPracticeType === WordPracticeType.Identify &&
-            data.wrongWords.length === 0 &&
-            settingStore.identifyMethod === IdentifyMethod.QuickIdentify
-          "
+          v-if="isQuickMarkWordList"
           :words="data.words"
           @complete="onWordMarkPickComplete"
+          @back="isQuickMarkWordList = false"
         />
 
         <div class="mb-50 w-full" v-else>
@@ -834,11 +835,13 @@ useEvents([
             :word="word"
             :question="data.question"
             :practiceType="currentPracticeType"
+            :phaseKey="currentPhaseKey"
             @wrong="onTypeWrong"
             @complete="next"
             @mastered="toggleWordSimpleWrapper"
             @know="onWordKnow"
             @skip="skip"
+            @quickMark="isQuickMarkWordList = true"
             @toggle-simple="toggleWordSimpleWrapper"
           />
         </div>
@@ -921,7 +924,6 @@ useEvents([
   width: var(--toolbar-width);
 }
 
-// 移动端适配
 @media (max-width: 768px) {
   .practice-word {
     width: 100%;

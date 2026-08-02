@@ -150,7 +150,7 @@ watch(dict_list, val => {
 </template>
 
 <style scoped lang="scss">
-// 移动端适配
+
 @media (max-width: 768px) {
   .dict-list-page {
     padding: 0.8rem;

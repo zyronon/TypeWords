@@ -9,10 +9,10 @@
  */
 import type { Question, Word } from '@typewords/core/types/types.ts'
 import { getDefaultWord } from '@typewords/core/types/func.ts'
-import { IdentifyMethod, ShortcutKey, WordPracticeType } from '@typewords/core/types/enum.ts'
+import { ShortcutKey } from '@typewords/core/types/enum.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
-import { useEventsByWatch } from '@typewords/core/utils/eventBus.ts'
-import { BaseButton } from '@typewords/base'
+import { EventKey, useEvents } from '@typewords/core/utils/eventBus.ts'
+import { BaseButton, ToastComponent, Tooltip } from '@typewords/base'
 import TranslationList from '@typewords/core/components/word/TranslationList.vue'
 import { useI18n } from 'vue-i18n'
 
@@ -21,159 +21,176 @@ const { t: $t } = useI18n()
 interface IProps {
   word: Word
   question?: Question | null
-  showWordResult: boolean
-  /** 当前 Cursor 解析出的真实练习类型。 */
-  practiceType: WordPracticeType
 }
 
 const props = withDefaults(defineProps<IProps>(), {
   word: () => getDefaultWord(),
-  showWordResult: false,
 })
 
 const emit = defineEmits<{
   know: []
   mastered: []
   unknown: []
+  correct: []
   wrong: []
+  quickMark: []
+  complete: []
 }>()
 
 const settingStore = useSettingStore()
-
-let showAllCandidates = $ref(false)
-let completeSelect = false
+let completeSelect = $ref(false)
 let selectIndex = $ref(-1)
 
-const isSelfAssessment = $computed(() => {
-  return (
-    props.practiceType === WordPracticeType.Identify &&
-    settingStore.identifyMethod === IdentifyMethod.SelfAssessment
-  )
-})
-
-const isWordTest = $computed(() => {
-  return (
-    props.practiceType === WordPracticeType.Identify &&
-    settingStore.identifyMethod === IdentifyMethod.WordTest
-  )
-})
-
 function know() {
-  if (isSelfAssessment) {
-    if (!props.showWordResult) {
-      emit('know')
-      return
-    }
-  }
+  emit('know')
 }
 
 function mastered() {
-  if (isSelfAssessment) {
-    emit('mastered')
-    return
-  }
+  emit('mastered')
 }
 
 function unknown() {
-  if (isSelfAssessment) {
-    if (!props.showWordResult) {
-      emit('unknown')
-      return
-    }
-  }
+  emit('unknown')
 }
+
+let isCorrect = $computed(() => selectIndex === props.question?.correctIndex)
 
 function select(e: KeyboardEvent | MouseEvent, index: number) {
   if (completeSelect) return
-  if (isWordTest) {
-    completeSelect = true
-    selectIndex = index
-    if (index == props.question?.correctIndex) {
-      emit('know')
-    } else {
-      emit('wrong')
-    }
-    return
+  completeSelect = true
+  selectIndex = index
+  if (isCorrect) {
+    emit('correct')
+  } else {
+    emit('wrong')
   }
 }
 
 function resetIdentifyState() {
-  showAllCandidates = false
   completeSelect = false
   selectIndex = -1
 }
 
-// 快捷键绑定
-useEventsByWatch(
-  [
-    [ShortcutKey.KnowWord, know],
-    [ShortcutKey.UnknownWord, unknown],
-    [ShortcutKey.MasteredWord, mastered],
-  ],
-  () => isSelfAssessment
-)
+function onTyping(e) {
+  if (e.code === 'Space' && isCorrect) {
+    // e.stopPropagation()
+    // emit('complete')
+  }
+}
 
-useEventsByWatch(
-  [
-    [ShortcutKey.ChooseA, (e: KeyboardEvent) => select(e, 0)],
-    [ShortcutKey.ChooseB, (e: KeyboardEvent) => select(e, 1)],
-    [ShortcutKey.ChooseC, (e: KeyboardEvent) => select(e, 2)],
-    [ShortcutKey.ChooseD, (e: KeyboardEvent) => select(e, 3)],
-  ],
-  () => isWordTest
-)
-
-defineExpose({
-  showAllCandidates,
-  resetIdentifyState,
-})
+useEvents([
+  [ShortcutKey.KnowWord, know],
+  [ShortcutKey.UnknownWord, unknown],
+  [ShortcutKey.MasteredWord, mastered],
+  [ShortcutKey.SelfTestingChooseA, (e: KeyboardEvent) => select(e, 0)],
+  [ShortcutKey.SelfTestingChooseB, (e: KeyboardEvent) => select(e, 1)],
+  [ShortcutKey.SelfTestingChooseC, (e: KeyboardEvent) => select(e, 2)],
+  [ShortcutKey.SelfTestingChooseD, (e: KeyboardEvent) => select(e, 3)],
+  [EventKey.onTyping, onTyping],
+])
 </script>
 
 <template>
-  <template v-if="isSelfAssessment && !showWordResult">
-    <div class="mt-4 mb-2 flex gap-2">
-      <BaseButton
-        :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.KnowWord]})`"
-        size="large"
-        @click="know"
-        >{{ $t('i_know') }}
-      </BaseButton>
-      <BaseButton
-        :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.UnknownWord]})`"
-        size="large"
-        @click="unknown"
-        >{{ $t('i_dont_know') }}
-      </BaseButton>
-      <BaseButton
-        :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.MasteredWord]})`"
-        size="large"
-        @click="mastered"
-        >已掌握
-      </BaseButton>
-    </div>
-  </template>
+  <div class="mt-4 flex gap-2 relative w-full center">
 
-  <div v-if="isWordTest && !showWordResult" class="flex gap-8 flex-col my-8 w-full">
+    <Tooltip>
+      <IconFluentQuestionCircle20Regular class="absolute left-0 bottom-0 opacity-50" width="24" />
+      <template #reference>
+        <div class="p-1">
+          <ul class="pl-4 my-0">
+            <li>直接拼写：直接输入单词；开始输入后，该词会自动标记为 <span class="font-bold">“不认识”</span></li>
+            <li>
+              快速标记：{{
+                `${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.KnowWord]}/${settingStore.shortcutKeyMap[ShortcutKey.UnknownWord]}/${settingStore.shortcutKeyMap[ShortcutKey.MasteredWord]})`
+              }}
+              分别标记为“我认识 / 不认识 / 已掌握
+            </li>
+            <li>
+              选择答案：按{{
+                `${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.SelfTestingChooseA]}/${settingStore.shortcutKeyMap[ShortcutKey.SelfTestingChooseB]}/${settingStore.shortcutKeyMap[ShortcutKey.SelfTestingChooseC]}/${settingStore.shortcutKeyMap[ShortcutKey.SelfTestingChooseD]})`
+              }}，或点击 A～D
+            </li>
+            <li>批量标记：点击右侧按钮，可一次标记多个单词</li>
+          </ul>
+          <div class="opacity-50 flex items-center">
+            <span>提示：快捷键可在设置中修改</span>
+          </div>
+        </div>
+      </template>
+    </Tooltip>
+
+    <BaseButton
+      :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.KnowWord]})`"
+      size="large"
+      @click="know"
+      >{{ $t('i_know') }}
+    </BaseButton>
+    <BaseButton
+      :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.UnknownWord]})`"
+      size="large"
+      @click="unknown"
+      >{{ $t('i_dont_know') }}
+    </BaseButton>
+    <BaseButton
+      :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.MasteredWord]})`"
+      size="large"
+      @click="mastered"
+      >已掌握
+    </BaseButton>
+
+    <BaseButton type="text" keyboard="批量标记" class="absolute! right-0" @click="emit('quickMark')">
+      <IconFluentMultiselectRtl20Regular />
+    </BaseButton>
+  </div>
+
+  <div class="line-white my-3"></div>
+
+  <div class="flex flex-col gap-2 w-full">
     <div
-      v-for="(value, index) in question?.candidates ?? []"
-      class="flex gap-2 min-h-20"
+      v-for="(value, index) in question?.candidates"
+      class="flex gap-2 question cp"
+      @click="(e: MouseEvent) => select(e, index)"
       :class="{
-        'text-green-600': completeSelect && index === question?.correctIndex,
-        'text-red-600': completeSelect && index !== question?.correctIndex && index === selectIndex,
+        'text-green-600 question-correct': completeSelect && index === question?.correctIndex,
+        'text-red-600 question-wrong': completeSelect && index !== question?.correctIndex && index === selectIndex,
       }"
     >
       <BaseButton
-        :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[[ShortcutKey.ChooseA, ShortcutKey.ChooseB, ShortcutKey.ChooseC, ShortcutKey.ChooseD][index]]})`"
-        @click="(e: MouseEvent) => select(e, index)"
+        type="text"
+        :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[[ShortcutKey.SelfTestingChooseA, ShortcutKey.SelfTestingChooseB, ShortcutKey.SelfTestingChooseC, ShortcutKey.SelfTestingChooseD][index]]})`"
       >
         {{ ['A', 'B', 'C', 'D'][index] }}
       </BaseButton>
       <span class="ml-2">
-        <div class="min-h-10 text-2xl" :class="{ 'word-shadow': !showAllCandidates && !completeSelect }">
+        <TranslationList :word="value.word" :showFull="true" />
+        <div class="text-2xl" v-if="completeSelect">
           {{ value.word.word }}
         </div>
-        <TranslationList :word="value.word" :showFull="showAllCandidates || completeSelect" />
       </span>
     </div>
   </div>
+
+  <div class="line-white my-3"></div>
+
+  <!-- 提示 Toast -->
+  <div class="center mt-3" v-if="completeSelect">
+    <ToastComponent :duration="0" :shadow="false" :message="isCorrect ? '按空格键继续' : '请输入单词'" />
+  </div>
 </template>
+<style scoped lang="scss">
+.question {
+  @apply rounded-lg px-3 py-2 -mx-3;
+  background: transparent;
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+.question-correct {
+  background: color-mix(in srgb, var(--color-link) 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-link) 25%, transparent);
+}
+.question-wrong {
+  background: color-mix(in srgb, red 10%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, red 25%, transparent);
+}
+</style>

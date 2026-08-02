@@ -99,7 +99,7 @@ const encouragementText = $computed(() => {
 
 <template>
   <Dialog v-model="model" :close-on-click-bg="false" :header="false" :keyboard="false" :show-close="false">
-    <div class="p-8 pr-3 bg-[var(--bg-card-primary)] rounded-2xl">
+    <div class="p-8 pr-3 bg-[var(--bg-card-primary)] min-w-130 rounded-2xl">
       <!-- Header Section -->
       <div class="text-center relative">
         <div

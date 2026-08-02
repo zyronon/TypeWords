@@ -123,6 +123,15 @@ html.dark {
     }
   }
 
+  &.text {
+    border: 1px solid var(--color-main-text);
+    color: var(--color-main-text);
+
+    &:hover:not(.disabled) {
+      background: var(--btn-info);
+    }
+  }
+
   &.orange {
     background: var(--btn-orange);
     color: black;

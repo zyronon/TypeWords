@@ -360,7 +360,7 @@ const stages = $computed(() => {
   }
 }
 
-// 移动端适配
+
 @media (max-width: 768px) {
   .footer {
     width: 100%;

@@ -220,22 +220,11 @@ const weekList = $computed(() => {
 })
 
 const { data: recommendBookList, isFetching } = useFetch(resourceWrap(DICT_LIST.ARTICLE.RECOMMENDED)).json()
-
-let isOldHost = $ref(false)
-onMounted(() => {
-  isOldHost = window.location.host === Old_Host
-})
 </script>
 
 <template>
   <BasePage>
     <ReleaseBanner />
-
-    <div class="my-100 text-4xl font-bold text-red" v-if="isOldHost">
-      已启用新域名
-      <a class="mr-4" :href="`${Origin}/words?from_old_site=1`">{{ Origin }}</a
-      >当前 2study.top 域名将在 7 月 3 号停止使用
-    </div>
 
     <div class="card flex flex-col md:flex-row justify-between gap-space p-4 md:p-6">
       <div class="">

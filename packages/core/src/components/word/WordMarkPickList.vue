@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { Word } from '../../types'
-import { BaseButton } from '@typewords/base'
+import { BackIcon, BaseButton } from '@typewords/base'
 import { reactive, ref } from 'vue'
+import Header from '../Header.vue'
 
 type PaintMode = 'know' | 'unknown' | 'mastered'
 
@@ -17,6 +18,7 @@ export type WordMarkPickResult = {
 
 const emit = defineEmits<{
   complete: [payload: WordMarkPickResult]
+  back: []
 }>()
 
 const paintMode = ref<PaintMode>('know')
@@ -77,8 +79,13 @@ function onComplete() {
 
 <template>
   <div class="word-mark-pick-list text-xl flex flex-col gap-3 w-full pt-10">
+    <Header title="批量标记" @click="emit('back')"></Header>
+    <div>
+      操作说明：先选择分类，再点击单词进行标记。再次点击相同分类可取消，切换分类后点击可直接改标。
+      <div class="font-bold">未标记和标为“不认识”的单词将进入后续练习。</div>
+    </div>
     <div class="flex flex-wrap gap-2 items-center">
-      <div>标记分类:</div>
+      <div>当前标记:</div>
       <button
         v-for="mode in ['know', 'unknown', 'mastered'] as const"
         :key="mode"
@@ -90,11 +97,8 @@ function onComplete() {
         {{ modeLabels[mode] }}
       </button>
     </div>
-    <div>
-      说明：点词标记，重复点击取消；切换分类继续标记。未标记与“不认识”将进入后续练习。
-    </div>
     <div class="text-sm color-[var(--color-font-3)]">
-      小提示：如果认识的多，建议切换为“不认识”进行标记；反之，切换为“我认识”进行标记
+      省时技巧：优先标记数量较少的一类——大多数认识时，只标“不认识”；大多数不认识时，只标“我认识
     </div>
 
     <div class="word-grid" role="list" aria-label="单词列表">
@@ -111,7 +115,7 @@ function onComplete() {
     </div>
 
     <div class="center pt-1">
-      <BaseButton type="primary" size="large" @click="onComplete">标记完成</BaseButton>
+      <BaseButton type="primary" size="large" @click="onComplete">完成标记</BaseButton>
     </div>
   </div>
 </template>
