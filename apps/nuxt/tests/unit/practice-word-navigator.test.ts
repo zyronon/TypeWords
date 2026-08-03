@@ -1,7 +1,9 @@
+// @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import { WordPracticeMode } from '@typewords/core/types/enum.ts'
+import { IdentifyMethod, WordPracticeMode } from '@typewords/core/types/enum.ts'
 import { getDefaultWord } from '@typewords/core/types/func.ts'
+import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { createPracticeWordNavigator } from '../../app/composables/practice-words/usePracticeWordNavigator.ts'
 import { saveUserFlow } from '../../app/composables/practice-words/practice-flow-runtime.ts'
 import { CURRENT_FLOW_VERSION } from '../../app/composables/practice-words/practice-flow-config.ts'
@@ -58,7 +60,6 @@ function setupNavigator(config: PracticeFlowConfig, count: number) {
     complete: () => { completed = true },
   })
   navigator.restoreSessionSnapshot({
-    identifyMethod: 0 as any,
     flowId: config.id,
     cursor: { nodeIndex: 0, stepIndex: 0, inWrongWordClear: false, loop: null, endActionIndex: null },
   })
@@ -195,7 +196,7 @@ describe('clearWrongOnSuccess', () => {
   it('rejects an invalid restored loop cursor', () => {
     const { navigator } = setupNavigator(makeFlow('bad-cursor', [{ templateId: 'spell' }]), 1)
     const restored = navigator.restoreSessionSnapshot({
-      identifyMethod: 0 as any, flowId: 'bad-cursor',
+      flowId: 'bad-cursor',
       cursor: {
         nodeIndex: 0, stepIndex: 0, inWrongWordClear: false, endActionIndex: null,
         loop: { startIndex: 0, endIndex: 5, subStepIndex: 8 },
@@ -211,7 +212,7 @@ describe('clearWrongOnSuccess', () => {
       { templateId: 'spell' }, { templateId: 'listen' },
     ]), 7)
     const restored = navigator.restoreSessionSnapshot({
-      identifyMethod: 0 as any, flowId: 'valid-cursor',
+      flowId: 'valid-cursor',
       cursor: {
         nodeIndex: 0, stepIndex: 0, inWrongWordClear: false, endActionIndex: null,
         loop: { startIndex: 0, endIndex: 6, subStepIndex: 1 },
@@ -219,6 +220,18 @@ describe('clearWrongOnSuccess', () => {
     })
     expect(restored).toBe(true)
     expect(navigator.activeCursor.value.loop).toEqual({ startIndex: 0, endIndex: 6, subStepIndex: 1 })
+  })
+
+  it('does not persist or restore the legacy identify method', () => {
+    const settingStore = useSettingStore()
+    settingStore.identifyMethod = IdentifyMethod.QuickIdentify
+    const { navigator } = setupNavigator(makeFlow('snapshot-without-identify-method', [{ templateId: 'spell' }]), 1)
+    const snapshot = navigator.buildSessionSnapshot()
+
+    expect(snapshot).not.toHaveProperty('identifyMethod')
+    settingStore.identifyMethod = IdentifyMethod.WordTest
+    expect(navigator.restoreSessionSnapshot(snapshot)).toBe(true)
+    expect(settingStore.identifyMethod).toBe(IdentifyMethod.WordTest)
   })
 
   it('safely skips an empty node', () => {

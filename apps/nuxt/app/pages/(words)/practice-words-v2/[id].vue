@@ -44,12 +44,12 @@ import {
 } from '~/composables/practice-words/practice-word-session.ts'
 import { flushStatToStore } from '@typewords/core/composables/usePracticePersistence.ts'
 import { useDataSyncPersistence } from '@typewords/core/composables/useDataSyncPersistence.ts'
-import { IdentifyMethod, ShortcutKey, WordPracticeMode, WordPracticeType } from '@typewords/core/types/enum.ts'
+import { ShortcutKey, WordPracticeMode, WordPracticeType } from '@typewords/core/types/enum.ts'
 import { createEmptyCard, Rating } from 'ts-fsrs'
 import { useGetGradeByWrongTimes, useNextCard } from '@typewords/core/hooks/fsrs.ts'
 import WordMarkPickList, { type WordMarkPickResult } from '@typewords/core/components/word/WordMarkPickList.vue'
-import { buildQuestion } from '@typewords/core/utils/word-test.ts'
 import type { PracticeSessionSnapshot } from '~/composables/practice-words/practice-flow-types.ts'
+import { resolvePracticeQuestion } from '~/composables/practice-words/practice-question.ts'
 import {
   canAutoResumeVisibilityTimer,
   usePracticeIdleTimer,
@@ -145,17 +145,14 @@ function applyPracticeCache(cache: PracticeWordCacheV2): boolean {
   return true
 }
 
-watch([() => data.words, () => data.index, currentPracticeType, () => settingStore.identifyMethod], () => {
+watch([() => data.words, () => data.index, currentPracticeType], () => {
   updateQuestion()
   handleResumeTimer()
 })
 
 function updateQuestion() {
   const word = data.words?.[data.index]
-  const shouldBuildQuestion =
-    currentPracticeType.value === WordPracticeType.Identify && settingStore.identifyMethod === IdentifyMethod.WordTest
-
-  data.question = shouldBuildQuestion && word ? buildQuestion(word, allWords) : null
+  data.question = resolvePracticeQuestion(currentPracticeType.value, word, allWords)
 }
 
 provide('practiceData', data)

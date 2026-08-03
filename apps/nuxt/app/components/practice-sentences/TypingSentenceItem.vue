@@ -47,7 +47,7 @@ const props = withDefaults(defineProps<IProps>(), {
 
 const emit = defineEmits<{
   /** 句子输入完成 */
-  complete: [text:string]
+  complete: [text: string]
   /** 输入错误 */
   wrong: [word: ArticleWord]
   /** 词点击 */
@@ -369,7 +369,7 @@ function onWordClick(e: MouseEvent, word: ArticleWord) {
 }
 
 function getWordIsDictation(word: ArticleWord, index: number) {
-  if (isCurrent(index) && !isSpace && props.highlightWords.includes(word.word) && props.isHighlightWordsMask) {
+  if (isCurrent(index) && !isSpace && props.highlightWords.includes(word.word.toLowerCase()) && props.isHighlightWordsMask && props.active) {
     return true
   }
   return props.mode === PracticeType.Dictation
@@ -407,8 +407,8 @@ function play() {
           <TypingArticleWord
             :is-dictation="getWordIsDictation(word, w)"
             :word="word"
-            :is-typing="isCurrent(w) && !isSpace"
-            :isHighLight="highlightWords.includes(word.word)"
+            :is-typing="isCurrent(w) && !isSpace && active"
+            :isHighLight="highlightWords.includes(word.word.toLowerCase())"
             :isHighlightWordsMask="isHighlightWordsMask"
           />
           <span class="border-bottom" v-if="getWordIsDictation(word, w)"></span>
@@ -451,7 +451,9 @@ function play() {
     word-break: keep-all;
     word-wrap: break-word;
     white-space: pre-wrap;
-    transition: color 0.3s ease, opacity 0.3s ease;
+    transition:
+      color 0.3s ease,
+      opacity 0.3s ease;
   }
 
   .wrote,

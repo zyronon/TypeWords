@@ -487,7 +487,6 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
 
   function buildSessionSnapshot(): PracticeSessionSnapshot {
     return {
-      identifyMethod: settingStore.identifyMethod,
       flowId: flowRuntime.getActiveFlowId(),
       cursor: {
         ...activeCursor.value,
@@ -526,7 +525,6 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     }
 
     settingStore.wordPracticeMode = activeFlowConfig.value.mode
-    settingStore.identifyMethod = snapshot.identifyMethod
 
     restoreWorkingWords(cursorRestored ? snapshot.nodeWorkingWordKeys : undefined)
     return cursorRestored

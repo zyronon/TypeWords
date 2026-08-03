@@ -1,6 +1,6 @@
 # 单词练习 v2 当前实现上下文
 
-> 更新时间：2026-07-29
+> 更新时间：2026-08-03
 > 适用范围：`Typewords/apps/nuxt` 的单词练习 v2、Flow、显隐、音频和练习缓存
 > 文档定位：后续开发或审查 v2 时优先阅读的当前事实文档
 
@@ -96,6 +96,8 @@ Flow schema、Step、subStep、wrongWordClear、Phase 和 sessionSnapshot 中均
 | Dictation | 遮罩 | 显示 | 隐藏 | 隐藏 |
 | Identify | 由识别面板决定 | 隐藏 | 隐藏 | 隐藏 |
 
+v2 的 Identify 不再区分 `SelfAssessment`、`WordTest` 和 `QuickIdentify` 子类型，而是在同一面板中同时提供自评按钮、直接拼写、选择题和批量标记。进入 Identify 阶段且当前单词存在时始终生成选择题 `question`，切词时重新生成，离开 Identify 阶段时清空；v1 的 `identifyMethod` 设置不影响 v2。
+
 Footer 只维护两个临时状态：
 
 - `wordMaskOverride`
@@ -167,7 +169,8 @@ v2 沿用已上线的练习缓存通道：
 - 根据 `wordPracticeMode + statStore.stage` 映射内置 Flow 的 Node/Step。
 - `isTypingWrongWord` 映射到 `cursor.inWrongWordClear`，转换结果不再保留该字段。
 - 当前 `wordPracticeType === Spell` 时，根据 index 和分组大小恢复 loop。
-- 生成当前 `sessionSnapshot` 和工作词标识，`question` 置空后由页面重新构建。
+- 生成当前 `sessionSnapshot` 和工作词标识；快照不保存或恢复 v1 的 `identifyMethod`。
+- `question` 置空后由页面根据当前 Identify 阶段和单词重新构建，不复用 v1 的旧题目。
 
 v2 是对 v1 的替换实现，不设计 v1/v2 并存和双向兼容。通用缓存配置的当前版本直接为 2；只有读取到已上线的版本 1 数据时才执行一次 v1→v2 转换。
 

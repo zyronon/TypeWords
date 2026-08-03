@@ -1,5 +1,5 @@
 import type { PracticeData, TaskWords } from '../types'
-import { IdentifyMethod, WordPracticeMode, WordPracticeStage, WordPracticeType } from '../types/enum'
+import { WordPracticeMode, WordPracticeStage, WordPracticeType } from '../types/enum'
 import type { PracticeState } from '../stores'
 import { get, set } from 'idb-keyval'
 
@@ -54,7 +54,6 @@ export type LocalCacheResult<T> = { val: T; updated_at?: string; version: number
 export type PracticeWordCacheUpgradeContext = {
   wordPracticeMode: WordPracticeMode
   wordPracticeType: WordPracticeType
-  identifyMethod: IdentifyMethod
 }
 
 export type PracticeWordCacheCursor = {
@@ -76,7 +75,6 @@ export type PracticeWordCacheV2Stored = {
   }
   statStoreData?: PracticeState
   sessionSnapshot?: {
-    identifyMethod: IdentifyMethod
     flowId: string
     cursor: PracticeWordCacheCursor
     nodeWorkingWordKeys?: string[]
@@ -198,7 +196,6 @@ function upgradePracticeWordCacheV1(value: unknown, context: PracticeWordCacheUp
     practiceData: { ...practiceData, wordsStr, wrongWordsStr, question: null },
     statStoreData: raw.statStoreData,
     sessionSnapshot: {
-      identifyMethod: context.identifyMethod,
       flowId: getPracticeFlowId(context.wordPracticeMode),
       cursor,
       nodeWorkingWordKeys: cursor.inWrongWordClear ? undefined : wordsStr,

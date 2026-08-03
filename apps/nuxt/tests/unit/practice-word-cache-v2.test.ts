@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CompareResult, WordPracticeMode, WordPracticeStage, WordPracticeType } from '@typewords/core/types/enum.ts'
+import { CompareResult, IdentifyMethod, WordPracticeMode, WordPracticeStage, WordPracticeType } from '@typewords/core/types/enum.ts'
 import { shouldFetchRemote } from '@typewords/core/utils/index.ts'
 import {
   checkAndUpgradePracticeWordCache,
@@ -124,7 +124,6 @@ describe('public practice cache upgrade', () => {
     }, {
       wordPracticeMode: WordPracticeMode.System,
       wordPracticeType: WordPracticeType.FollowWrite,
-      identifyMethod: 0,
     })
 
     expect(upgraded.version).toBe(PRACTICE_WORD_CACHE.version)
@@ -132,5 +131,35 @@ describe('public practice cache upgrade', () => {
     expect(upgraded.val?.practiceData).not.toHaveProperty('isTypingWrongWord')
     expect(upgraded.val?.practiceData?.question).toBeNull()
     expect(upgraded.val?.sessionSnapshot?.cursor.inWrongWordClear).toBe(true)
+    expect(upgraded.val?.sessionSnapshot).not.toHaveProperty('identifyMethod')
+  })
+
+  it.each([
+    IdentifyMethod.SelfAssessment,
+    IdentifyMethod.WordTest,
+    IdentifyMethod.QuickIdentify,
+  ])('restores an Identify cursor without preserving legacy identify method %s', identifyMethod => {
+    const context = {
+      wordPracticeMode: WordPracticeMode.System,
+      wordPracticeType: WordPracticeType.Identify,
+      identifyMethod,
+    }
+    const upgraded = checkAndUpgradePracticeWordCache({
+      version: 1,
+      val: {
+        taskWordsStr: { new: [], review: ['identify'] },
+        practiceData: {
+          index: 0,
+          wordsStr: ['identify'],
+          wrongWordsStr: [],
+          question: { stale: true },
+        },
+        statStoreData: { stage: WordPracticeStage.IdentifyReview },
+      },
+    }, context)
+
+    expect(upgraded.val?.practiceData?.question).toBeNull()
+    expect(upgraded.val?.sessionSnapshot?.cursor).toMatchObject({ nodeIndex: 1, stepIndex: 0 })
+    expect(upgraded.val?.sessionSnapshot).not.toHaveProperty('identifyMethod')
   })
 })

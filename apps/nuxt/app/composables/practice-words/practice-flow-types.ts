@@ -1,5 +1,5 @@
 import type { Word } from '@typewords/core/types/types.ts'
-import { IdentifyMethod, WordPracticeMode, WordPracticeType } from '@typewords/core/types/enum.ts'
+import { WordPracticeMode, WordPracticeType } from '@typewords/core/types/enum.ts'
 
 // ─── 显隐策略 ──────────────────────────────────────────────────────────────────
 
@@ -157,7 +157,6 @@ export interface FlowStartResult {
 // ─── 持久化快照 ─────────────────────────────────────────────────────────────────
 
 export interface PracticeSessionSnapshot {
-  identifyMethod: IdentifyMethod
   flowId: string
   cursor: PracticeFlowCursor
   /** 当前 Node 经前序 Step 处理后的工作词表；下一 Step 以它为输入。 */

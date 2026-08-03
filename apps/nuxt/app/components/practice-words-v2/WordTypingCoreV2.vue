@@ -204,7 +204,7 @@ async function onTyping(e: KeyboardEvent) {
   // console.log('onTyping',e)
   if (e.code === 'Backspace') return del()
   // if (waitClear) return
-  debugger
+  // debugger
 
   const target = props.word.word
   // 输入完成会锁死不能再输入
@@ -358,7 +358,7 @@ async function onTyping(e: KeyboardEvent) {
     if (isWordRight) {
       wordCompletedTime = Date.now() // 记录单词完成的时间戳
       playCorrect()
-      if ([WordPracticeType.Listen, WordPracticeType.Identify].includes(props.practiceType) && !props.showWordResult) {
+      if ([WordPracticeType.Listen].includes(props.practiceType) && !props.showWordResult) {
         emitShowWordResult(true)
       }
       if ([WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(props.practiceType)) {
@@ -375,7 +375,6 @@ async function onTyping(e: KeyboardEvent) {
 // ============ 重置状态 ============
 function resetTypingCore(trigger: WordPlayTrigger) {
   clearDeferredTimers()
-  cancelWordPracticeAudio()
   wrong = input = ''
   waitClear = false
   wordRepeatCount = 0

@@ -38,6 +38,13 @@ const classNames = $computed(() => {
   return [isHide, isHighLight, isHighlightWordsMask]
 })
 
+// watchEffect(() => {
+//   if (props.word.word === 'Calcium') {
+//     // console.log('props.word.word', props.word.word, isHighlightWordsMask,isHighLight, props.isHighLight, isHide)
+//     console.log('props.word.word', !props.isTyping, props.isHighLight, props.word.type === PracticeArticleWordType.Word)
+//   }
+// })
+
 const list = $computed(() => {
   let t = []
   let right = ''

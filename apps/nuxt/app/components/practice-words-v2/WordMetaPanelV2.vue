@@ -164,7 +164,7 @@ defineExpose({ startPracticeSentence, playSentence })
             :isHighlightWordsMask="effective.isWordMasked"
             :showSentenceTranslation="showTranslation"
             :active="activeSentenceIndex === j"
-            :highlight-words="[word.word]"
+            :highlight-words="[word.word.toLowerCase()]"
             @complete="onCompleteSentence"
             @play="playSentence(j, { highlight: true })"
           />

@@ -16,7 +16,7 @@
  */
 import type { Question, Word } from '@typewords/core/types/types.ts'
 import { getDefaultWord } from '@typewords/core/types/func.ts'
-import { IdentifyMethod, ShortcutKey, WordPracticeType } from '@typewords/core/types/enum.ts'
+import { ShortcutKey, WordPracticeType } from '@typewords/core/types/enum.ts'
 import { useBaseStore } from '@typewords/core/stores/base.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { cancelWordPracticeAudio, usePlayBeep, usePlayCorrect, usePlayWordAudio } from '@typewords/core/hooks/sound.ts'
@@ -116,7 +116,11 @@ function playWord(trigger: WordPlayTrigger) {
 }
 
 function onTypingCoreComplete() {
-  if (settingStore.practiceSentence && props.word.sentences.length) {
+  if (
+    [WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(props.practiceType) &&
+    settingStore.practiceSentence &&
+    props.word.sentences.length
+  ) {
     isTypingWord = false
     return wordMetaPanelRef.startPracticeSentence()
   }
@@ -237,10 +241,6 @@ const isSimple = $computed(() => isWordSimple(props.word))
 
 // ============ 自测/WordTest 事件处理 ============
 
-const isWordTestVal = computed(() => {
-  return props.practiceType === WordPracticeType.Identify && settingStore.identifyMethod === IdentifyMethod.WordTest
-})
-
 let showNotice = false
 
 function onIdentifyKnow() {
@@ -256,21 +256,14 @@ function onIdentifyKnow() {
 }
 
 function onAnswerWrong() {
-  if (isWordTestVal.value) {
-    // WordTest 选错
-    typingCoreRef?.setWordTestResult?.(false, props.word.word)
-    playBeep()
-    emit('wrong')
-    playWord(WordPlayTrigger.Typo)
-
-    if (!showNotice) {
-      Toast.info($t('press_space_continue'), { duration: 5000 })
-      showNotice = true
-    }
-    return
-  }
-  // 其他情况透传
+  typingCoreRef?.setWordTestResult?.(false, props.word.word)
   emit('wrong')
+  playWord(WordPlayTrigger.Typo)
+
+  if (!showNotice) {
+    Toast.info($t('press_space_continue'), { duration: 5000 })
+    showNotice = true
+  }
 }
 
 function onAnswerCorrect() {
@@ -455,7 +448,7 @@ defineExpose({
 
       <!-- 自测 UI -->
       <WordIdentifyPanelV2
-        v-if="!showWordResult && !showFullWord"
+        v-if="!showWordResult && !showFullWord && practiceType === WordPracticeType.Identify"
         :key="word.word"
         :word="word"
         :question="question"

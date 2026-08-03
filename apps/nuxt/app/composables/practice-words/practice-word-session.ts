@@ -2,7 +2,7 @@ import { useBaseStore } from '@typewords/core/stores/base.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import type { PracticeState } from '@typewords/core/stores/practice.ts'
 import type { PracticeData, Question, TaskWords, Word } from '@typewords/core/types/types.ts'
-import { CompareResult, IdentifyMethod, SyncDataType } from '@typewords/core/types/enum.ts'
+import { CompareResult, SyncDataType } from '@typewords/core/types/enum.ts'
 import {
   checkAndUpgradePracticeWordCache,
   getPracticeWordCacheLocalWithMeta,
@@ -112,7 +112,6 @@ function isCurrentSnapshot(value: unknown): value is PracticeSessionSnapshot {
   const cursor = snapshot.cursor
   return (
     typeof snapshot.flowId === 'string' &&
-    Object.values(IdentifyMethod).includes(snapshot.identifyMethod) &&
     !!cursor &&
     Number.isInteger(cursor.nodeIndex) &&
     cursor.nodeIndex >= 0 &&
