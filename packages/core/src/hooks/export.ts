@@ -71,16 +71,7 @@ export function useExport() {
     loading.value = true
 
     try {
-      const JSZip = await loadJsLib('JSZip', LIB_JS_URL.JSZIP)
-
-      const zip = new JSZip()
-      zip.file('data.json', JSON.stringify(await getExportedData()))
-      const mp3 = zip.folder('mp3')
-      const allRecords = await get(LOCAL_FILE_KEY)
-      for (const rec of allRecords ?? []) {
-        mp3.file(rec.id + '.mp3', rec.file)
-      }
-      let content = await zip.generateAsync({ type: 'blob' })
+      const content = await buildExportZip()
       saveAs(content, fileName)
       notice && Toast.success(notice)
       return content
@@ -91,9 +82,23 @@ export function useExport() {
     }
   }
 
+  /** 构建与手动导出完全一致的 ZIP，不下载文件、不显示提示。 */
+  async function buildExportZip(): Promise<Blob> {
+    const JSZip = await loadJsLib('JSZip', LIB_JS_URL.JSZIP)
+    const zip = new JSZip()
+    zip.file('data.json', JSON.stringify(await getExportedData()))
+    const mp3 = zip.folder('mp3')
+    const allRecords = await get(LOCAL_FILE_KEY)
+    for (const rec of allRecords ?? []) {
+      mp3.file(rec.id + '.mp3', rec.file)
+    }
+    return await zip.generateAsync({ type: 'blob' })
+  }
+
   return {
     loading,
     exportData,
     getExportedData,
+    buildExportZip,
   }
 }

@@ -7,6 +7,7 @@ import { ensureHashGuardBeforeInit, useDataSyncPersistence } from './useDataSync
 import { SyncDataType } from '../types'
 import { SubscriptionCallbackMutation } from 'pinia'
 import { onUnmounted } from 'vue'
+import { checkAndUploadUserCollection } from './useUserCollection'
 // import { startRrwebRecording } from './useRrweb'
 
 let unsub = null
@@ -122,6 +123,9 @@ export function useInit() {
     // runtimeStore.isNew = true
     runtimeStore.isError = Supabase.getStatus().status === 'error'
     window.umami?.track('host', { host: window.location.host })
+
+    // 按学习数据门槛静默检查并上传一次测试数据。
+    void checkAndUploadUserCollection()
 
     // 静默后台录制用户操作，数据保存到 IndexedDB
     // startRrwebRecording().catch(console.error)

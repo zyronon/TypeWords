@@ -54,9 +54,6 @@ export function uploadImportData<T>(data, onUploadProgress): Promise<AxiosRespon
   return axiosInstance({
     url: 'dict/uploadImportData',
     method: 'post',
-    headers: {
-      contentType: 'formdata',
-    },
     timeout: 1000000000,
     data,
     onUploadProgress,
@@ -67,9 +64,6 @@ export function upload(data, onUploadProgress) {
   return axiosInstance({
     url: 'file/upload',
     method: 'post',
-    headers: {
-      contentType: 'formdata',
-    },
     data,
     onUploadProgress,
   })
@@ -77,4 +71,17 @@ export function upload(data, onUploadProgress) {
 
 export function getProgress() {
   return http<{ status: number; reason: string }>('dict/getProgress', null, null, 'get')
+}
+
+export function userCollectionPreflight(params?, data?) {
+  return http<Dict>('public.userCollection/preflight', data, params, 'get')
+}
+
+export function userCollectionUpload<T>(data): Promise<AxiosResponse<T>> {
+  return axiosInstance({
+    url: 'public.userCollection/upload',
+    method: 'post',
+    timeout: 1000000000,
+    data,
+  })
 }
