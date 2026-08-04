@@ -157,7 +157,7 @@ async function cancel() {
   <Teleport to="body">
     <div class="modal-root" :style="{ 'z-index': zIndex }" v-if="visible">
       <div class="modal-mask" ref="maskRef" v-if="!fullScreen" @click.stop="closeOnClickBg && close()"></div>
-      <div class="modal" ref="modalRef" :class="[fullScreen ? 'full' : 'window']">
+      <div class="modal" ref="modalRef" :class="[fullScreen ? 'full' : 'window', content && ' w-84']">
         <Tooltip :title="localeT('close')">
           <IconFluentDismiss20Regular @click="close" v-if="showClose" class="close cursor-pointer" width="24" />
         </Tooltip>
@@ -166,7 +166,7 @@ async function cancel() {
         </div>
         <div class="modal-body" :class="{ padding }">
           <slot></slot>
-          <div v-if="content" class="content max-h-60vh">{{ content }}</div>
+          <div v-if="content" class="pt-4 max-h-60vh">{{ content }}</div>
         </div>
         <div class="modal-footer" v-if="footer">
           <div class="left flex items-end">
@@ -269,10 +269,6 @@ $time: 0.3s;
 
       &.padding {
         @apply p-1 px-5;
-      }
-
-      .content {
-        @apply w-64 p-2 px-4 pb-4;
       }
     }
 

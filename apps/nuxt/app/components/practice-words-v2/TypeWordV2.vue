@@ -21,8 +21,8 @@ import { useBaseStore } from '@typewords/core/stores/base.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import { cancelWordPracticeAudio, usePlayBeep, usePlayCorrect, usePlayWordAudio } from '@typewords/core/hooks/sound.ts'
 import { useInjectedDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
-import { emitter, EventKey } from '@typewords/core/utils/eventBus.ts'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { EventKey, useEvents } from '@typewords/core/utils/eventBus.ts'
+import { computed, ref, watch } from 'vue'
 import WordLookupPopover from '@typewords/core/components/word/WordLookupPopover.vue'
 import { BaseButton, BaseIcon, Textarea, Toast, ToastComponent, Tooltip, VolumeIcon } from '@typewords/base'
 import { useI18n } from 'vue-i18n'
@@ -299,13 +299,7 @@ const notice = $computed(() => {
 
 watch(() => props.word, onResetWord)
 
-onMounted(() => {
-  emitter.on(EventKey.resetWord, onResetWord)
-})
-
-onUnmounted(() => {
-  emitter.off(EventKey.resetWord, onResetWord)
-})
+useEvents([EventKey.resetWord, onResetWord])
 
 // keyup 时隐藏单词
 useOnKeyboardEventListener(

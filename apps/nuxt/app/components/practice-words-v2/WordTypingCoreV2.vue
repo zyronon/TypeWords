@@ -18,7 +18,6 @@ import { getDefaultWord } from '@typewords/core/types/func.ts'
 import { WordPracticeType } from '@typewords/core/types/enum.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
 import {
-  cancelWordPracticeAudio,
   resetActiveWordPlayCount,
   usePlayBeep,
   usePlayCorrect,
