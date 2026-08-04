@@ -222,7 +222,7 @@ const stats = $computed(() => [
 
 let mobileMenuOpen = $ref(false)
 
-// ── SEO: 动态多语言 title + hreflang ──
+// ── SEO: 动态多语言 title ──
 const seoTitle = $computed(() => t('seo_home_title'))
 const seoDesc = $computed(() => t('seo_home_desc'))
 
@@ -236,19 +236,96 @@ useSeoMeta({
   ogUrl: 'https://typewords.cc/',
 })
 
-const i18nLocaleMap: Record<string, string> = {
-  en: 'en', zh: 'zh-CN', es: 'es', fr: 'fr', pt: 'pt-BR',
-  de: 'de', ru: 'ru', uk: 'uk', ja: 'ja', ko: 'ko',
-  th: 'th', vi: 'vi', id: 'id', tw: 'zh-TW',
-}
 useHead({
-  link: [
-    ...Object.entries(i18nLocaleMap).map(([code, hreflang]) => ({
-      rel: 'alternate',
-      hreflang,
-      href: 'https://typewords.cc/',
-    })),
-    { rel: 'alternate', hreflang: 'x-default', href: 'https://typewords.cc/' },
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'TypeWords',
+        alternateName: ['Type Words', '词文记'],
+        url: 'https://typewords.cc/',
+        inLanguage: 'zh-CN',
+        publisher: { '@id': 'https://typewords.cc/#organization' },
+        sameAs: ['https://github.com/zyronon/TypeWords'],
+      }),
+    },
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        '@id': 'https://typewords.cc/#organization',
+        name: 'TypeWords',
+        alternateName: ['Type Words', '词文记'],
+        url: 'https://typewords.cc/',
+        logo: 'https://typewords.cc/favicon.ico',
+        sameAs: ['https://github.com/zyronon/TypeWords'],
+      }),
+    },
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: 'TypeWords',
+        alternateName: '词文记',
+        applicationCategory: 'EducationApplication',
+        operatingSystem: 'Web, VSCode Extension',
+        description: '免费的电脑网页版背单词工具，通过英语打字练习和 FSRS 间隔复习强化拼写记忆。',
+        url: 'https://typewords.cc/',
+        inLanguage: 'zh-CN',
+        screenshot: 'https://typewords.cc/imgs/og-image.png',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'CNY',
+        },
+      }),
+    },
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        inLanguage: 'zh-CN',
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: '数据存储在哪里？',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: '所有数据优先保存在本地浏览器（IndexedDB / localStorage），完全离线可用。如需跨设备同步，可在设置中配置自己的 Supabase 实例，实现双向云端同步。',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: '支持哪些平台？',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: '支持所有现代浏览器（Web 端），同时提供 VSCode 扩展版，可在编写代码的同时练习单词，无需切换窗口。',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: '和其他单词软件有什么不同？',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: '核心差异在于「打字输入」与「FSRS 间隔复习算法」的结合。不是简单点击选择，而是真正键入单词，配合 7 种练习模式递进阶段，有效加深肌肉记忆与拼写能力。',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: '如何添加自定义词库或文章？',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: '在「单词」模块可新建自定义词典并手动添加单词；在「文章」模块可添加自定义书籍和文章（支持本地音频）。完全自由，不依赖任何平台。',
+            },
+          },
+        ],
+      }),
+    },
   ],
 })
 </script>
@@ -390,15 +467,18 @@ useHead({
 
             <!-- Title -->
             <h1
-              class="hero-title text-[clamp(3rem,8vw,5.5rem)] mt-0 leading-[1.08] mb-4 bg-gradient-to-r from-[#bd34fe] via-[#7c3aed] to-[#41d1ff] bg-clip-text text-transparent [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]"
+              class="hero-title flex flex-col mt-0 mb-4 leading-[1.08]"
             >
-              {{ APP_NAME }}
+              <span
+                class="text-[clamp(3rem,8vw,5.5rem)] bg-gradient-to-r from-[#bd34fe] via-[#7c3aed] to-[#41d1ff] bg-clip-text text-transparent [-webkit-background-clip:text] [-webkit-text-fill-color:transparent]"
+              >
+                {{ APP_NAME }}
+              </span>
+              <span class="mt-3 text-[clamp(1.35rem,3vw,2rem)] leading-[1.35] font-semibold text-[var(--hw-text)]">
+                {{ $t('hero_tagline') }}
+              </span>
             </h1>
 
-            <!-- Core value headline -->
-            <p class="text-[clamp(1.1rem,2.5vw,1.35rem)] text-[var(--hw-text)] font-semibold mb-3 leading-[1.5]">
-              {{ $t('hero_tagline') }}
-            </p>
             <p class="text-[clamp(.9rem,2vw,1.05rem)] text-[var(--hw-text-2)] mb-6 leading-[1.75] max-w-[520px] mx-auto lg:mx-0">
               {{ $t('hero_desc') }}
             </p>

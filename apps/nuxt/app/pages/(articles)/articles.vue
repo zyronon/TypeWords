@@ -32,8 +32,13 @@ import ReleaseBanner from '@typewords/core/components/ReleaseBanner.vue'
 dayjs.extend(isoWeek)
 dayjs.extend(isBetween)
 
-useHead({
-  title: APP_NAME + ' 文章',
+useSeoMeta({
+  title: `英语文章跟打练习｜${APP_NAME}`,
+  description: '在电脑上进行英语文章跟打、逐句精听和键盘输入练习，通过真实语境提升英语阅读、听力与拼写能力。',
+  ogTitle: `英语文章跟打练习｜${APP_NAME}`,
+  ogDescription: '使用英语文章跟打、逐句精听和键盘输入练习，在真实语境中提升英语能力。',
+  twitterTitle: `英语文章跟打练习｜${APP_NAME}`,
+  twitterDescription: '使用英语文章跟打、逐句精听和键盘输入练习，在真实语境中提升英语能力。',
 })
 
 const { nav } = useNav()
@@ -225,6 +230,15 @@ const { data: recommendBookList, isFetching } = useFetch(resourceWrap(DICT_LIST.
 <template>
   <BasePage>
     <ReleaseBanner />
+
+    <section class="mb-4 px-1">
+      <h1 class="m-0 text-2xl md:text-2xl font-bold leading-tight text-[var(--color-main-text)]">
+        英语文章跟打与精听练习
+      </h1>
+      <p class="mt-2 mb-0 max-w-[65rem] text-base leading-relaxed text-[var(--color-sub-text)]">
+        在电脑上逐句跟打英语文章，结合音频、释义和键盘输入，在真实语境中练习阅读、听力与拼写。
+      </p>
+    </section>
 
     <div class="card flex flex-col md:flex-row justify-between gap-space p-4 md:p-6">
       <div class="">

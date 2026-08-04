@@ -72,8 +72,13 @@ let isSaveData = $ref(false)
 
 const shouldShowDialogPracticeMode = [WordPracticeMode.Shuffle, WordPracticeMode.ShuffleWordsTest]
 
-useHead({
-  title: APP_NAME + ' 单词',
+useSeoMeta({
+  title: `在线背单词与英语打字练习｜${APP_NAME}`,
+  description: '在电脑上选择 CET-4、CET-6、考研、GRE、IELTS 等词库，通过键盘跟打、拼写和科学间隔复习高效背单词。',
+  ogTitle: `在线背单词与英语打字练习｜${APP_NAME}`,
+  ogDescription: '在电脑上用键盘打字背单词，支持 50+ 词库和科学间隔复习。',
+  twitterTitle: `在线背单词与英语打字练习｜${APP_NAME}`,
+  twitterDescription: '在电脑上用键盘打字背单词，支持 50+ 词库和科学间隔复习。',
 })
 
 let practiceData = $ref<PracticeWordCache>({
@@ -493,6 +498,14 @@ onUnmounted(() => {
 <template>
   <BasePage>
     <ReleaseBanner />
+    <section class="mb-4 px-1">
+      <h1 class="m-0 text-2xl md:text-2xl font-bold leading-tight text-[var(--color-main-text)]">
+        在线英语单词打字练习
+      </h1>
+      <p class="mt-2 mb-0 max-w-[65rem] text-base leading-relaxed text-[var(--color-sub-text)]">
+        选择适合你的英语词库，在电脑上通过跟打、听写、默写和间隔复习背单词，并记录每天的学习进度。
+      </p>
+    </section>
     <div class="card flex flex-col md:flex-row gap-4">
       <div class="flex-1 flex flex-col justify-between">
         <div class="flex gap-3">

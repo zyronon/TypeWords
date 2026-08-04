@@ -10,7 +10,7 @@
     "docker-build": "nuxt generate",
     "static": "nuxt generate && node scripts/copyDist.js",
     "generate": "nuxt generate && node scripts/do.js && node ../../scripts/deploy-eo-pages.js --dir dist --name type-words-deploy",
-    "generate-dev": "nuxt generate && node scripts/do.js && node ../../scripts/deploy-eo-pages.js --dir dist --name dev-typeword",
+    "generate-dev": "nuxt generate && node scripts/do.js && node scripts/prepareDevDist.js && node ../../scripts/deploy-eo-pages.js --dir dist --name dev-typeword",
     "preview": "nuxt preview",
     "i18n:write": "gulp i18nWrite"
   },
