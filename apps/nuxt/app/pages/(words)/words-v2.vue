@@ -6,10 +6,12 @@ import {
   BaseIcon,
   BasePage,
   Calendar,
+  DeleteIcon,
   Dialog,
   OptionButton,
   PopConfirm,
   Progress,
+  Switch,
   Toast,
 } from '@typewords/base'
 import {
@@ -17,22 +19,20 @@ import {
   _getDictDataByUrl,
   _nextTick,
   debounce,
+  getShufflePracticeWords,
   isMobile,
   loadJsLib,
   msToHourMinute,
-  getShufflePracticeWords,
   resourceWrap,
   type ShufflePracticeSetting,
   total,
   useNav,
 } from '@typewords/core/utils'
 import type { DictResource, Statistics } from '@typewords/core/types/types.ts'
-import { onMounted, onUnmounted, shallowReactive, watch } from 'vue'
-import { getCurrentStudyWord } from '@typewords/core/hooks/dict.ts'
+import { onMounted, onUnmounted, watch } from 'vue'
 import { useRuntimeStore } from '@typewords/core/stores/runtime.ts'
 import Book from '@typewords/core/components/Book.vue'
 import { getDefaultDict } from '@typewords/core/types/func.ts'
-import { DeleteIcon } from '@typewords/base'
 import PracticeSettingDialog from '@typewords/core/components/word/PracticeSettingDialog.vue'
 import ChangeLastPracticeIndexDialog from '@typewords/core/components/word/ChangeLastPracticeIndexDialog.vue'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
@@ -58,12 +58,13 @@ import { flushStatToStore } from '@typewords/core/composables/usePracticePersist
 import { useDataSyncPersistence } from '@typewords/core/composables/useDataSyncPersistence'
 import { WordPracticeMode } from '@typewords/core/types/enum.ts'
 import {
-  usePracticeWordPersistenceV2,
-  UnsupportedPracticeCacheVersionError,
   type PracticeWordCacheV2,
+  UnsupportedPracticeCacheVersionError,
+  usePracticeWordPersistenceV2,
 } from '~/composables/practice-words/practice-word-session.ts'
 import dayjs from 'dayjs'
 import { getActiveCustomFlowId, getUserFlow } from '~/composables/practice-words/practice-flow-runtime.ts'
+import { createStudyTaskV2 } from '~/composables/practice-words/study-task-v2.ts'
 
 const store = useBaseStore()
 const settingStore = useSettingStore()
@@ -99,6 +100,25 @@ let practiceData = $ref<PracticeWordCacheV2>({
     review: [],
   },
 } as any)
+let dueReviewCount = $ref(0)
+
+function refreshStudyTask() {
+  const result = createStudyTaskV2()
+  practiceData.taskWords = result.taskWords
+  dueReviewCount = result.dueReviewCount
+  return result
+}
+
+function toggleAutoAddRandomReview(enabled: boolean) {
+  settingStore.autoAddRandomReviewWhenNoDue = enabled
+  const result = refreshStudyTask()
+  if (!enabled) return
+  if (result.randomReviewCount > 0) {
+    Toast.success(`已将 ${result.randomReviewCount} 个随机复习词加入本次学习`)
+  } else {
+    Toast.warning('暂无单词可以复习，先学习一些新词后再来看看吧')
+  }
+}
 
 async function resetCacheData() {
   if (unsupportedCacheVersion) return
@@ -205,7 +225,7 @@ async function init() {
       practiceData = d
       isSaveData = true
     } else if (!unsupportedCacheVersion) {
-      practiceData.taskWords = getCurrentStudyWord()
+      refreshStudyTask()
     }
   }
   loading = false
@@ -459,7 +479,7 @@ function check(cb: Function) {
 async function savePracticeSetting() {
   await resetCacheData()
   await store.changeDict(runtimeStore.editDict)
-  practiceData.taskWords = getCurrentStudyWord()
+  refreshStudyTask()
   Toast.success('修改成功')
 }
 
@@ -495,7 +515,7 @@ async function saveLastPracticeIndex(e) {
   showChangeLastPracticeIndexDialog = false
   await resetCacheData()
   await store.changeDict(runtimeStore.editDict)
-  practiceData.taskWords = getCurrentStudyWord()
+  refreshStudyTask()
   Toast.success('修改成功')
 }
 
@@ -609,7 +629,7 @@ onUnmounted(() => {
             <span class="color-link cursor-pointer" v-if="store.sdict.id" @click="showPracticeWordListDialog = true">{{
               $t('word_list')
             }}</span>
-<!--            <span class="color-link cursor-pointer ml-2" @click="nav('/practice-flow-editor', {})">流程编排</span>-->
+            <!--            <span class="color-link cursor-pointer ml-2" @click="nav('/practice-flow-editor', {})">流程编排</span>-->
           </div>
           <div class="flex gap-1 items-center" v-if="store.sdict.id">
             {{ $t('daily_goal') }}
@@ -632,8 +652,17 @@ onUnmounted(() => {
             <div class="txt">{{ $t('new_words') }}</div>
           </div>
           <div class="stat">
-            <div class="num">{{ practiceData?.taskWords?.review?.length }}</div>
+            <div class="num flex center">
+              {{ practiceData?.taskWords?.review?.length }}
+              <span class="text-base color-reverse-black" v-if="!practiceData?.taskWords?.review?.length"
+                >(暂无到期词)</span
+              >
+            </div>
             <div class="txt">{{ $t('review') }}</div>
+            <div class="center gap-2 mt-1 text-sm" v-if="!isSaveData && dueReviewCount === 0">
+              <span>加入随机复习</span>
+              <Switch :model-value="settingStore.autoAddRandomReviewWhenNoDue" @change="toggleAutoAddRandomReview" />
+            </div>
           </div>
         </div>
         <div class="flex items-end mt-4 gap-4 btn-no-margin">
@@ -696,13 +725,13 @@ onUnmounted(() => {
               >
                 {{ $t('random_words_test') }}
               </BaseButton>
-<!--              <BaseButton-->
-<!--                class="w-full"-->
-<!--                v-if="settingStore.wordPracticeMode !== WordPracticeMode.Custom"-->
-<!--                @click="startPractice(WordPracticeMode.Custom, true)"-->
-<!--              >-->
-<!--                自定义流程-->
-<!--              </BaseButton>-->
+              <!--              <BaseButton-->
+              <!--                class="w-full"-->
+              <!--                v-if="settingStore.wordPracticeMode !== WordPracticeMode.Custom"-->
+              <!--                @click="startPractice(WordPracticeMode.Custom, true)"-->
+              <!--              >-->
+              <!--                自定义流程-->
+              <!--              </BaseButton>-->
             </template>
           </OptionButton>
 

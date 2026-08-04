@@ -15,6 +15,7 @@ export interface SettingState {
   sentenceSoundVolume: number
   sentenceSoundSpeed: number
   wordReviewRatio: number // 单词复习比例
+  autoAddRandomReviewWhenNoDue: boolean // 无到期词时自动加入随机复习
 
   articleSound: boolean
   articleAutoPlayNext: boolean
@@ -86,6 +87,7 @@ export const getDefaultSettingState = (): SettingState => ({
   sentenceSoundVolume: 100,
   sentenceSoundSpeed: 1,
   wordReviewRatio: 3,
+  autoAddRandomReviewWhenNoDue: false,
 
   articleSound: true,
   articleAutoPlayNext: false,

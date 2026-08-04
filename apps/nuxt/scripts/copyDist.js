@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 
-const sourceDir = path.resolve(__dirname, '../dist')
+const sourceDir = path.resolve(__dirname, '../.output/public')
 const targetDir = path.resolve(__dirname, '../../../dist')
 
 // 递归复制目录

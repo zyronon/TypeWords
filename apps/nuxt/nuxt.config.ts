@@ -120,7 +120,6 @@ export default defineNuxtConfig({
   },
   // ssr: false,
   routeRules: {
-    '/index.html': { redirect: { to: '/', statusCode: 301 } },
     '/words': { ssr: false },
     '/articles': { ssr: false },
     '/setting': { ssr: false },

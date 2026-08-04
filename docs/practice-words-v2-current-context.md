@@ -181,6 +181,16 @@ v2 是对 v1 的替换实现，不设计 v1/v2 并存和双向兼容。通用缓
 - Review 或只包含复习 Node 的 Custom Flow，`newWordNumber` 为 0，结算不推进 `lastLearnIndex`。
 - Navigator 的 Node 工作词表在进入 Node 时解析，Node 内后续 Step 使用稳定的 `nodeWorkingWords`。
 
+### 7.1 无到期词时加入随机复习
+
+- v2 的正常任务只使用 FSRS 到期复习词，不再为了达到复习比例固定补足历史词。
+- `autoAddRandomReviewWhenNoDue` 默认为 `false`；首页和单词设置页共用同一个持久 Switch。
+- 只有补充前的到期复习数为 0 时才显示首页 Switch、执行随机补充；开启后 Switch 保持显示，关闭时重新生成当前任务并移除随机补充词。
+- 随机数量为 `floor(perDayStudyNumber * wordReviewRatio)`，候选仅来自当前学习进度之前的已学词，并排除新词、忽略词、已掌握词和重复词；候选不足时使用实际数量。
+- 首页显式开启后提示加入数量；没有候选词时提示“无单词可以复习”，但持久偏好保持开启。自动初始化和“再来一组”不弹该提示。
+- 随机复习词合并到 `taskWords.review`，与新词在一次 Flow 中完成；不记录单词级来源，继续沿用 FSRS 卡片有则更新、无则创建的结算逻辑。
+- “重学一遍”复用当前任务；“再来一组”按当前持久偏好生成新任务，生成结果为空时保留结算弹窗。
+
 ## 8. 测试与验收
 
 单测目录：`apps/nuxt/tests/unit`
@@ -189,6 +199,7 @@ v2 是对 v1 的替换实现，不设计 v1/v2 并存和双向兼容。通用缓
 - `practice-word-navigator.test.ts`：7/8/14 词 loop、验证步骤消错、重加错词、Cursor 恢复和空 Node。
 - `practice-view-audio.test.ts`：五类显隐默认值与首句串播条件。
 - `practice-word-cache-v2.test.ts`：版本优先级、更新时间选择和 v1 stage→Cursor。
+- `study-task-v2.test.ts`：无到期词随机补充、开关条件、数量与候选排除规则。
 
 提交前执行：
 

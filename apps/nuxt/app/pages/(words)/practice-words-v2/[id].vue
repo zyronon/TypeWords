@@ -9,7 +9,7 @@ import { useStartKeyboardEventListener } from '@typewords/core/hooks/event.ts'
 import { usePracticeDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
 import { createPracticeWordNavigator } from '~/composables/practice-words/usePracticeWordNavigator.ts'
 import useTheme from '@typewords/core/hooks/theme.ts'
-import { getCurrentStudyWord, useWordOptions } from '@typewords/core/hooks/dict.ts'
+import { useWordOptions } from '@typewords/core/hooks/dict.ts'
 import { openWordCollectPicker } from '@typewords/core/hooks/useWordCollectPicker.ts'
 import {
   _getDictDataByUrl,
@@ -54,6 +54,7 @@ import {
   canAutoResumeVisibilityTimer,
   usePracticeIdleTimer,
 } from '~/composables/practice-words/usePracticeIdleTimer.ts'
+import { createStudyTaskV2 } from '~/composables/practice-words/study-task-v2.ts'
 
 const { isWordSimple, toggleWordSimple } = useWordOptions()
 const settingStore = useSettingStore()
@@ -338,7 +339,7 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
       }
     }
     if (!d) {
-      initData(getCurrentStudyWord())
+      initData(createStudyTaskV2().taskWords)
       return
     }
     if (!applyPracticeCache(d)) {
@@ -661,7 +662,11 @@ async function continueStudy() {
     } else {
       console.log('学完了，正常下一组')
     }
-    temp = getCurrentStudyWord()
+    temp = createStudyTaskV2().taskWords
+  }
+  if (!temp.new.length && !temp.review.length) {
+    Toast.warning('当前没有可学习的单词')
+    return
   }
   emitter.emit(EventKey.resetWord)
   initData(temp)
@@ -680,7 +685,7 @@ async function jumpToGroup(group: number) {
   console.log('没学完，强行跳过', group)
   store.sdict.lastLearnIndex = (group - 1) * store.sdict.perDayStudyNumber
   emitter.emit(EventKey.resetWord)
-  initData(getCurrentStudyWord())
+  initData(createStudyTaskV2().taskWords)
   if (AppEnv.CAN_REQUEST) {
     let res = await setUserDictProp(null, { ...store.sdict, type: 'word' })
     if (!res.success) {

@@ -1,7 +1,7 @@
 const { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } = require('fs')
 const { join, resolve } = require('path')
 
-const distDir = resolve(process.env.TYPEWORDS_DIST_DIR || resolve(__dirname, '../dist'))
+const distDir = resolve(process.env.TYPEWORDS_DIST_DIR || resolve(__dirname, '../.output/public'))
 const indexableRobotsPattern = /<meta\s+name=["']robots["']\s+content=["'][^"']*["']\s*\/?>/i
 const noIndexMeta = '<meta name="robots" content="noindex, nofollow, noarchive">'
 

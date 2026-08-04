@@ -35,6 +35,10 @@ const settingStore = useSettingStore()
       <InputNumber :min="0" :max="10" v-model="settingStore.wordReviewRatio" />
     </SettingItem>
 
+    <SettingItem title="无到期词时加入随机复习" desc="开启后，智能学习没有到期复习词时，会从已学单词中随机补充复习词">
+      <Switch v-model="settingStore.autoAddRandomReviewWhenNoDue" />
+    </SettingItem>
+
     <SettingItem :title="$t('identify_method')">
       <RadioGroup v-model="settingStore.identifyMethod">
         <Radio :value="IdentifyMethod.SelfAssessment" size="default">{{ $t('self_assessment') }}</Radio>

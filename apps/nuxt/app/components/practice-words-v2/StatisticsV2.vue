@@ -71,7 +71,8 @@ useEvents([
 
 function options(emitType: string) {
   emitter.emit(emitType)
-  close()
+  // “再来一组”由练习页成功初始化下一组后关闭；生成空任务时保留结算弹窗。
+  if (emitType !== ShortcutKey.NextChapter) close()
 }
 
 // 计算学习进度百分比

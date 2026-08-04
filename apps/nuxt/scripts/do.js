@@ -1,10 +1,12 @@
-const { SitemapStream, streamToPromise } = require('sitemap')
+const { SitemapStream } = require('sitemap')
 const { createWriteStream } = require('fs')
+const { mkdir } = require('fs/promises')
 const { resolve } = require('path')
+const { pipeline } = require('stream/promises')
 
 async function generateSitemap() {
   const SITE_URL = (process.env.ORIGIN || 'https://typewords.cc').replace(/\/$/, '')
-  const distDir = resolve(process.env.TYPEWORDS_DIST_DIR || resolve(__dirname, '../dist'))
+  const distDir = resolve(process.env.TYPEWORDS_DIST_DIR || resolve(__dirname, '../.output/public'))
 
   // 只提交可索引、有独立内容且使用自引用 canonical 的页面。
   const pages = [
@@ -19,17 +21,18 @@ async function generateSitemap() {
   ]
 
   const uniquePages = [...new Map(pages.map(page => [page.url, page])).values()]
+  await mkdir(distDir, { recursive: true })
+
   const sitemap = new SitemapStream({ hostname: SITE_URL })
   const writeStream = createWriteStream(resolve(distDir, 'sitemap.xml'))
-
-  sitemap.pipe(writeStream)
+  const writeCompleted = pipeline(sitemap, writeStream)
 
   uniquePages.forEach(page => sitemap.write(page))
 
   sitemap.end()
 
-  await streamToPromise(sitemap)
-  console.log('✅ sitemap.xml 已生成在 dist 目录')
+  await writeCompleted
+  console.log(`✅ sitemap.xml 已生成在 ${distDir}`)
 }
 
 generateSitemap().catch(error => {

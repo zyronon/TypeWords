@@ -9,7 +9,10 @@ import { addDict, detail } from '../apis'
 import { useRuntimeStore } from '../stores/runtime.ts'
 import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
+
 import { computed } from 'vue'
+dayjs.extend(isSameOrBefore)
 
 export function useWordOptions() {
   const store = useBaseStore()
@@ -79,7 +82,9 @@ export function useWordOptions() {
     return { ok: true }
   }
 
-  async function createCustomDict(name: string): Promise<{ ok: true; dict: Dict } | { ok: false; reason: 'empty' | 'duplicate' | 'api' }> {
+  async function createCustomDict(
+    name: string
+  ): Promise<{ ok: true; dict: Dict } | { ok: false; reason: 'empty' | 'duplicate' | 'api' }> {
     const trimmed = name.trim()
     if (!trimmed) return { ok: false, reason: 'empty' }
     if (store.word.bookList.find(v => v.name === trimmed)) {
@@ -178,23 +183,25 @@ export function getCurrentStudyWord(): TaskWords {
       const wordMap = new Map(words.map(s => [s.word, s]))
       //复习总数量;如果已结束那么复习比最小是1
       const totalNeed = perDay * (isEnd ? reviewRatio || 1 : reviewRatio)
-      const now = Date.now()
-
+      const now = dayjs()
       let waitRemoveFromFsrsData = []
-
       //取 due 到期的单词
       let reviewWordStrList = Object.entries(store.fsrsData)
         .filter(([word, card]) => {
           //1、这里的due字段被json序列化之后又恢复是字符串了，所以要用dayjs比较
           //2、要在当前学习这本词典里面
           //3、不在新词里面
+          //4、到自然日就算到期
           // console.log(`单词：${word},到期时间：${dayjs(card.due).format('YYYY-MM-DD HH:mm:ss')}`)
           let isMastered = ignoreSet.has(word)
           if (isMastered) {
             waitRemoveFromFsrsData.push(word)
           }
           return (
-            !isMastered && dayjs(card.due).valueOf() <= now && wordMap.has(word) && !data.new.find(v => v.word === word)
+            !isMastered &&
+            dayjs(card.due).isSameOrBefore(now, 'day') &&
+            wordMap.has(word) &&
+            !data.new.find(v => v.word === word)
           )
         })
         .sort((a, b) => dayjs(a[1].due).valueOf() - dayjs(b[1].due).valueOf())
@@ -212,19 +219,19 @@ export function getCurrentStudyWord(): TaskWords {
           .filter(obj => obj)
       )
       //如果数量不够再填充
-      if (data.review.length < totalNeed) {
-        // 固定填充逻辑
-        let list = words.slice(0, start).reverse()
-        if (complete) list = list.concat(words.slice(end).reverse())
-        // 固定填充复习词需要过滤掉有FSRS记录的
-        let set = new Set(
-          Array.from(ignoreSet)
-            .concat(Object.keys(store.fsrsData))
-            .concat(data.new.map(v => v.word))
-        )
-        list = list.filter(item => !set.has(item.word))
-        data.review = data.review.concat(list.slice(0, totalNeed - data.review.length))
-      }
+      // if (data.review.length < totalNeed) {
+      //   // 固定填充逻辑
+      //   let list = words.slice(0, start).reverse()
+      //   if (complete) list = list.concat(words.slice(end).reverse())
+      //   // 固定填充复习词需要过滤掉有FSRS记录的
+      //   let set = new Set(
+      //     Array.from(ignoreSet)
+      //       .concat(Object.keys(store.fsrsData))
+      //       .concat(data.new.map(v => v.word))
+      //   )
+      //   list = list.filter(item => !set.has(item.word))
+      //   data.review = data.review.concat(list.slice(0, totalNeed - data.review.length))
+      // }
     }
   }
   return data
@@ -276,12 +283,7 @@ export function useGetDict() {
       if (!dict) dict = dict_list.flat().find(v => isDictIdMatch(v, dictId)) as Dict
     }
     if (dict && dict.id) {
-      if (
-        !dict?.articles?.length &&
-        !dict?.custom &&
-        !dict?.system &&
-        !dict?.is_default
-      ) {
+      if (!dict?.articles?.length && !dict?.custom && !dict?.system && !dict?.is_default) {
         fetching = true
         let r = await _getDictDataByUrl(dict, DictType.article)
         runtimeStore.editDict = r
