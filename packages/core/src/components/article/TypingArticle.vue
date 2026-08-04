@@ -820,7 +820,7 @@ const currentPractice = inject('currentPractice', [])
             >
               <span
                 class="word-wrap"
-                @mouseenter="settingStore.allowWordTip && showSentence(indexI, indexJ, indexW)"
+                @mouseenter="showSentence(indexI, indexJ, indexW)"
                 @mouseleave="hideSentence"
                 :class="[
                   hoverIndex.sectionIndex === indexI &&

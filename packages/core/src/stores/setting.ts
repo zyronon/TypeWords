@@ -34,6 +34,7 @@ export interface SettingState {
   translate: boolean // 显示翻译
   showNearWord: boolean // 显示上/下一个词
   ignoreCase: boolean // 忽略大小写
+  //@deprecated 没有意义
   allowWordTip: boolean // 默写时时否允许查看提示
   waitTimeForChangeWord: number // 切下一个词的等待时间（自动模式）
   spaceCooldownTime: number // 空格冷却时间（手动模式，单词完成后忽略空格键的时间）
@@ -73,7 +74,7 @@ export interface SettingState {
   identifyMethod: IdentifyMethod
   _ignoreWatch: boolean //忽略监听，避免重复保存和上传
   ttsVoiceMap: { key: string; voice: string }[] // 浏览器 TTS 声色映射，key 为 OS+浏览器组合（如 mac+chrome）
-  showEtymologyAndRelWords:boolean // 显示词源和相关词
+  showEtymologyAndRelWords: boolean // 显示词源和相关词
 }
 
 export const getDefaultSettingState = (): SettingState => ({

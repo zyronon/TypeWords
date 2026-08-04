@@ -55,10 +55,10 @@ const status = computed(() => {
   const nodes = config.nodes
   const cursor = activeCursor.value
   const node = nodes[cursor.nodeIndex]
-  if (!node) return config.label
+  if (!node) return $t(config.label)
   const step = node.steps[cursor.stepIndex]
   const stepLabel = step?.label ?? step?.templateId ?? ''
-  if (nodes.length === 1 && nodes[0].steps.length === 1) return config.label
+  if (nodes.length === 1 && nodes[0].steps.length === 1) return $t(config.label)
   return $t(node.label) + (stepLabel ? ' · ' + $t(stepLabel) : '')
 })
 
@@ -300,7 +300,6 @@ const showSkipStep = computed(() => {
     }
   }
 }
-
 
 @media (max-width: 768px) {
   .footer {

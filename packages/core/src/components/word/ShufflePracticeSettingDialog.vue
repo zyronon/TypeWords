@@ -36,7 +36,7 @@ const displayRange = $computed(() => {
   const start = end > 0 ? Math.min(Math.max(Math.floor(Number(startNo) || 1), 1), end) : 0
   return { start, end }
 })
-const rangeWordCount = $computed(() => (displayRange.end > 0 ? displayRange.end - displayRange.start + 1 : 0))
+const rangeWordCount = $computed(() => (displayRange.end > 0 ? displayRange.end - displayRange.start : 0))
 const sliderMinGap = $computed(() =>
   wordCount >= MIN_RANGE_WORD_COUNT && rangeWordCount >= MIN_RANGE_WORD_COUNT ? MIN_RANGE_GAP : 0
 )

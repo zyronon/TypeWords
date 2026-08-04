@@ -228,8 +228,6 @@
 	"i_understand": "알겠습니다",
 	"ignore_case": "대소문자 구분 안 함",
 	"ignore_case_desc": "켜면 입력 시 대소문자를 구분하지 않으며, \"hello\"와 \"Hello\"를 입력해도 모두 정답으로 인정됩니다.",
-	"allow_dictation_tip": "받아쓰기 모드에서 힌트 표시 허용",
-	"allow_dictation_tip_desc": "켜면 단어 위로 마우스를 올리거나 단축키를 눌러 정답을 표시할 수 있습니다.",
 	"simple_word_filter": "간단한 단어 필터",
 	"simple_word_filter_desc": "켜면 연습 단어에 간단한 단어가 포함되지 않으며, 문서의 총 단어 수에도 간단한 단어가 포함되지 않습니다.",
 	"simple_word_list": "간단한 단어 목록",

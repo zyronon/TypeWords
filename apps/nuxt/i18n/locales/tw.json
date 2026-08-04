@@ -228,8 +228,6 @@
 	"i_understand": "我知道了",
 	"ignore_case": "忽略大小寫",
 	"ignore_case_desc": "開啟後，輸入時不區分大小寫，如輸入「hello」和「Hello」都會被認為是正確的",
-	"allow_dictation_tip": "允許默寫模式下顯示提示",
-	"allow_dictation_tip_desc": "開啟後，可以通過將滑鼠移動到單詞上或者按快捷鍵顯示正確答案",
 	"simple_word_filter": "簡單詞過濾",
 	"simple_word_filter_desc": "開啟後，練習的單詞中不會包含簡單詞；文章統計的總詞數中不會包含簡單詞",
 	"simple_word_list": "簡單詞列表",

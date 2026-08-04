@@ -228,8 +228,6 @@
 	"i_understand": "Tôi hiểu rồi",
 	"ignore_case": "Bỏ qua chữ hoa/thường",
 	"ignore_case_desc": "Khi bật, đầu vào không phân biệt chữ hoa/thường, do đó nhập \"hello\" và \"Hello\" đều được coi là đúng.",
-	"allow_dictation_tip": "Cho phép hiển thị gợi ý ở chế độ viết chính tả",
-	"allow_dictation_tip_desc": "Khi bật, bạn có thể hiện đáp án đúng bằng cách di chuột qua từ hoặc nhấn phím tắt.",
 	"simple_word_filter": "Bộ lọc từ đơn giản",
 	"simple_word_filter_desc": "Khi bật, các từ đơn giản sẽ không được bao gồm trong các từ luyện tập và cũng không được tính vào tổng số từ của bài viết.",
 	"simple_word_list": "Danh sách từ đơn giản",

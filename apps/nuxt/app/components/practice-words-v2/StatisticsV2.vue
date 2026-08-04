@@ -67,11 +67,10 @@ useEvents([
   //特意注释掉，因为在练习界面用快捷键下一组时，需要判断是否在结算界面
   // [ShortcutKey.NextChapter, close],
   [ShortcutKey.RepeatChapter, close],
-  [ShortcutKey.DictationChapter, close],
 ])
 
 function options(emitType: string) {
-  emitter.emit(EventKey[emitType])
+  emitter.emit(emitType)
   close()
 }
 
@@ -197,7 +196,7 @@ const encouragementText = $computed(() => {
           <div class="summary-actions flex justify-center flex-wrap">
             <BaseButton
               :keyboard="settingStore.shortcutKeyMap[ShortcutKey.RepeatChapter]"
-              @click="options(EventKey.repeatStudy)"
+              @click="options(ShortcutKey.RepeatChapter)"
             >
               <div class="center gap-2">
                 <IconFluentArrowClockwise20Regular />
@@ -205,13 +204,12 @@ const encouragementText = $computed(() => {
               </div>
             </BaseButton>
             <BaseButton
-              v-if="settingStore.wordPracticeMode !== WordPracticeMode.Review"
               :keyboard="settingStore.shortcutKeyMap[ShortcutKey.NextChapter]"
-              @click="options(EventKey.continueStudy)"
+              @click="options(ShortcutKey.NextChapter)"
             >
               <div class="center gap-2">
                 <IconFluentPlay20Regular />
-                {{ store.sdict.complete ? $t('start_from_beginning') : $t('another_group') }}
+                {{ studyProgress === 100 ? $t('start_from_beginning') : $t('another_group') }}
               </div>
             </BaseButton>
             <BaseButton @click="$router.back">

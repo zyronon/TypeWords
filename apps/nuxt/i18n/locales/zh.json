@@ -228,8 +228,6 @@
 	"i_understand": "我知道了",
 	"ignore_case": "忽略大小写",
 	"ignore_case_desc": "开启后，输入时不区分大小写，如输入\"hello\"和\"Hello\"都会被认为是正确的",
-	"allow_dictation_tip": "允许默写模式下显示提示",
-	"allow_dictation_tip_desc": "开启后，可以通过将鼠标移动到单词上或者按快捷键显示正确答案",
 	"simple_word_filter": "简单词过滤",
 	"simple_word_filter_desc": "开启后，练习的单词中不会包含简单词；文章统计的总词数中不会包含简单词",
 	"simple_word_list": "简单词列表",

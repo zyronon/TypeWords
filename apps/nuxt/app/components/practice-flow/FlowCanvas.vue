@@ -242,14 +242,40 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
               <IconFluentArrowMove24Regular class="stage-drag" />
             </Tooltip>
             <div v-else class="stage-drag-placeholder" />
-            <div class="stage-title">{{ node.label || sourceLabel(node.source) }}</div>
-            <BaseIcon v-if="!readonly" title="上移阶段" no-bg role="button" :tabindex="nodeIndex === 0 ? -1 : 0" :disabled="nodeIndex === 0" @click="moveNode(nodeIndex, nodeIndex - 1)" @keydown.enter.space.prevent="moveNode(nodeIndex, nodeIndex - 1)">
+            <div class="stage-title">{{ $t(node.label) || sourceLabel(node.source) }}</div>
+            <BaseIcon
+              v-if="!readonly"
+              title="上移阶段"
+              no-bg
+              role="button"
+              :tabindex="nodeIndex === 0 ? -1 : 0"
+              :disabled="nodeIndex === 0"
+              @click="moveNode(nodeIndex, nodeIndex - 1)"
+              @keydown.enter.space.prevent="moveNode(nodeIndex, nodeIndex - 1)"
+            >
               <IconFluentArrowLeft20Regular />
             </BaseIcon>
-            <BaseIcon v-if="!readonly" title="下移阶段" no-bg role="button" :tabindex="nodeIndex === nodes.length - 1 ? -1 : 0" :disabled="nodeIndex === nodes.length - 1" @click="moveNode(nodeIndex, nodeIndex + 1)" @keydown.enter.space.prevent="moveNode(nodeIndex, nodeIndex + 1)">
+            <BaseIcon
+              v-if="!readonly"
+              title="下移阶段"
+              no-bg
+              role="button"
+              :tabindex="nodeIndex === nodes.length - 1 ? -1 : 0"
+              :disabled="nodeIndex === nodes.length - 1"
+              @click="moveNode(nodeIndex, nodeIndex + 1)"
+              @keydown.enter.space.prevent="moveNode(nodeIndex, nodeIndex + 1)"
+            >
               <IconFluentArrowRight20Regular />
             </BaseIcon>
-            <BaseIcon v-if="!readonly" title="删除阶段" no-bg role="button" tabindex="0" @click="removeNode(nodeIndex)" @keydown.enter.space.prevent="removeNode(nodeIndex)">
+            <BaseIcon
+              v-if="!readonly"
+              title="删除阶段"
+              no-bg
+              role="button"
+              tabindex="0"
+              @click="removeNode(nodeIndex)"
+              @keydown.enter.space.prevent="removeNode(nodeIndex)"
+            >
               <IconFluentDelete20Regular />
             </BaseIcon>
             <div v-else class="stage-delete-placeholder" />
@@ -269,15 +295,41 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
                     <IconFluentArrowMove24Regular class="step-drag" />
                   </Tooltip>
                   <div v-else class="step-drag-placeholder" />
-                  <div class="step-title">{{ stepLabel(step) }}</div>
+                  <div class="step-title">{{ $t(stepLabel(step)) }}</div>
                   <div class="step-actions">
-                    <BaseIcon v-if="!readonly" title="上移步骤" no-bg role="button" :tabindex="stepIndex === 0 ? -1 : 0" :disabled="stepIndex === 0" @click="moveStep(nodeIndex, stepIndex, stepIndex - 1)" @keydown.enter.space.prevent="moveStep(nodeIndex, stepIndex, stepIndex - 1)">
+                    <BaseIcon
+                      v-if="!readonly"
+                      title="上移步骤"
+                      no-bg
+                      role="button"
+                      :tabindex="stepIndex === 0 ? -1 : 0"
+                      :disabled="stepIndex === 0"
+                      @click="moveStep(nodeIndex, stepIndex, stepIndex - 1)"
+                      @keydown.enter.space.prevent="moveStep(nodeIndex, stepIndex, stepIndex - 1)"
+                    >
                       <IconFluentArrowUp20Regular />
                     </BaseIcon>
-                    <BaseIcon v-if="!readonly" title="下移步骤" no-bg role="button" :tabindex="stepIndex === node.steps.length - 1 ? -1 : 0" :disabled="stepIndex === node.steps.length - 1" @click="moveStep(nodeIndex, stepIndex, stepIndex + 1)" @keydown.enter.space.prevent="moveStep(nodeIndex, stepIndex, stepIndex + 1)">
+                    <BaseIcon
+                      v-if="!readonly"
+                      title="下移步骤"
+                      no-bg
+                      role="button"
+                      :tabindex="stepIndex === node.steps.length - 1 ? -1 : 0"
+                      :disabled="stepIndex === node.steps.length - 1"
+                      @click="moveStep(nodeIndex, stepIndex, stepIndex + 1)"
+                      @keydown.enter.space.prevent="moveStep(nodeIndex, stepIndex, stepIndex + 1)"
+                    >
                       <IconFluentArrowDown20Regular />
                     </BaseIcon>
-                    <BaseIcon v-if="!readonly" title="删除步骤" no-bg role="button" tabindex="0" @click="removeStep(nodeIndex, stepIndex)" @keydown.enter.space.prevent="removeStep(nodeIndex, stepIndex)">
+                    <BaseIcon
+                      v-if="!readonly"
+                      title="删除步骤"
+                      no-bg
+                      role="button"
+                      tabindex="0"
+                      @click="removeStep(nodeIndex, stepIndex)"
+                      @keydown.enter.space.prevent="removeStep(nodeIndex, stepIndex)"
+                    >
                       <IconFluentDelete20Regular />
                     </BaseIcon>
                   </div>
@@ -324,8 +376,15 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
             </template>
 
             <!-- Add step button (only when not readonly) -->
-            <div v-if="!readonly" class="add-step-card" role="button" tabindex="0" @click="openStepDialog(nodeIndex)" @keydown.enter.space.prevent="openStepDialog(nodeIndex)">
-              <IconFluentAdd24Regular class="text-2xl"/>
+            <div
+              v-if="!readonly"
+              class="add-step-card"
+              role="button"
+              tabindex="0"
+              @click="openStepDialog(nodeIndex)"
+              @keydown.enter.space.prevent="openStepDialog(nodeIndex)"
+            >
+              <IconFluentAdd24Regular class="text-2xl" />
             </div>
           </div>
         </section>
@@ -336,14 +395,29 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
       </template>
 
       <!-- Add node button: only show when there's at least one node and not readonly -->
-      <div v-if="!readonly && nodes.length > 0" class="add-stage-card" role="button" tabindex="0" @click="showSourceDialog = true" @keydown.enter.space.prevent="showSourceDialog = true">
+      <div
+        v-if="!readonly && nodes.length > 0"
+        class="add-stage-card"
+        role="button"
+        tabindex="0"
+        @click="showSourceDialog = true"
+        @keydown.enter.space.prevent="showSourceDialog = true"
+      >
         <IconFluentAdd24Regular />
       </div>
     </div>
 
     <Dialog v-model="showSourceDialog" title="选择词源" :footer="false">
       <div class="choice-list">
-        <div v-for="source in sourceOptions" :key="source.value" class="choice-item" role="button" tabindex="0" @click="addNode(source.value)" @keydown.enter.space.prevent="addNode(source.value)">
+        <div
+          v-for="source in sourceOptions"
+          :key="source.value"
+          class="choice-item"
+          role="button"
+          tabindex="0"
+          @click="addNode(source.value)"
+          @keydown.enter.space.prevent="addNode(source.value)"
+        >
           {{ source.label }}
         </div>
       </div>
@@ -364,7 +438,6 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
         </div>
       </div>
     </Dialog>
-
   </div>
 </template>
 
@@ -524,7 +597,9 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:hover {
     color: var(--color-link);
@@ -557,7 +632,10 @@ function onStepDrop(nodeIndex: number, stepIndex: number) {
   border-radius: 0.4rem;
   padding: 0.8rem 1rem;
   cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
 
   &:hover {
     border-color: var(--color-link);

@@ -228,8 +228,6 @@
 	"i_understand": "Ich verstehe",
 	"ignore_case": "Groß-/Kleinschreibung ignorieren",
 	"ignore_case_desc": "Wenn aktiviert, wird bei der Eingabe nicht zwischen Groß- und Kleinschreibung unterschieden, sodass sowohl \"hello\" als auch \"Hello\" als richtig gewertet werden.",
-	"allow_dictation_tip": "Hinweise im Diktatmodus erlauben",
-	"allow_dictation_tip_desc": "Wenn aktiviert, können Sie die richtige Antwort anzeigen, indem Sie die Maus über das Wort bewegen oder eine Tastenkombination drücken.",
 	"simple_word_filter": "Einfacher Wörterfilter",
 	"simple_word_filter_desc": "Wenn aktiviert, werden einfache Wörter weder in den Übungswörtern noch in der Gesamtwortzahl eines Artikels berücksichtigt.",
 	"simple_word_list": "Liste einfacher Wörter",

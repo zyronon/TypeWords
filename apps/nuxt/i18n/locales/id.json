@@ -228,8 +228,6 @@
 	"i_understand": "Saya mengerti",
 	"ignore_case": "Abaikan huruf besar/kecil",
 	"ignore_case_desc": "Saat diaktifkan, input tidak membedakan huruf besar/kecil, jadi mengetik \"hello\" dan \"Hello\" dianggap benar.",
-	"allow_dictation_tip": "Izinkan menampilkan petunjuk dalam mode dikte",
-	"allow_dictation_tip_desc": "Saat diaktifkan, Anda dapat menampilkan jawaban yang benar dengan mengarahkan mouse ke kata atau menekan tombol pintas.",
 	"simple_word_filter": "Filter kata sederhana",
 	"simple_word_filter_desc": "Saat diaktifkan, kata sederhana tidak akan disertakan dalam kata latihan dan tidak dihitung dalam total kata artikel.",
 	"simple_word_list": "Daftar kata sederhana",

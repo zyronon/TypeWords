@@ -63,10 +63,7 @@ import {
   type PracticeWordCacheV2,
 } from '~/composables/practice-words/practice-word-session.ts'
 import dayjs from 'dayjs'
-import {
-  getActiveCustomFlowId,
-  getUserFlow,
-} from '~/composables/practice-words/practice-flow-runtime.ts'
+import { getActiveCustomFlowId, getUserFlow } from '~/composables/practice-words/practice-flow-runtime.ts'
 
 const store = useBaseStore()
 const settingStore = useSettingStore()
@@ -480,8 +477,7 @@ async function onShufflePracticeSettingOk(setting: ShufflePracticeSetting) {
     wordPracticeMode: settingStore.wordPracticeMode,
   })
 
-  let ignoreSet = [store.allIgnoreWordsSet, store.knownWordsSet][settingStore.ignoreSimpleWord ? 0 : 1]
-  const result = getShufflePracticeWords(store.sdict.words, setting, ignoreSet)
+  const result = getShufflePracticeWords(store.sdict.words, setting, store.getIgnoreWordsSet())
   practiceData.taskWords.review = result.words
   nav(
     WordPracticeModeUrlMap[editingWordPracticeMode] + '-v2/' + store.sdict.id,
@@ -509,9 +505,7 @@ const systemPracticeText = $computed(() => {
   if (settingStore.wordPracticeMode === WordPracticeMode.Free) {
     return '开始学习'
   } else if (settingStore.wordPracticeMode === WordPracticeMode.Custom) {
-    return isSaveData
-      ? '继续自定义练习'
-      : '开始自定义练习'
+    return isSaveData ? '继续自定义练习' : '开始自定义练习'
   } else {
     return isSaveData
       ? '继续' + WordPracticeModeNameMap[settingStore.wordPracticeMode]
@@ -615,7 +609,7 @@ onUnmounted(() => {
             <span class="color-link cursor-pointer" v-if="store.sdict.id" @click="showPracticeWordListDialog = true">{{
               $t('word_list')
             }}</span>
-            <span class="color-link cursor-pointer ml-2" @click="nav('/practice-flow-editor', {})">流程编排</span>
+<!--            <span class="color-link cursor-pointer ml-2" @click="nav('/practice-flow-editor', {})">流程编排</span>-->
           </div>
           <div class="flex gap-1 items-center" v-if="store.sdict.id">
             {{ $t('daily_goal') }}
@@ -702,13 +696,13 @@ onUnmounted(() => {
               >
                 {{ $t('random_words_test') }}
               </BaseButton>
-              <BaseButton
-                class="w-full"
-                v-if="settingStore.wordPracticeMode !== WordPracticeMode.Custom"
-                @click="startPractice(WordPracticeMode.Custom, true)"
-              >
-                自定义流程
-              </BaseButton>
+<!--              <BaseButton-->
+<!--                class="w-full"-->
+<!--                v-if="settingStore.wordPracticeMode !== WordPracticeMode.Custom"-->
+<!--                @click="startPractice(WordPracticeMode.Custom, true)"-->
+<!--              >-->
+<!--                自定义流程-->
+<!--              </BaseButton>-->
             </template>
           </OptionButton>
 

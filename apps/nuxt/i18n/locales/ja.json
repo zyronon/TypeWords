@@ -228,8 +228,6 @@
 	"i_understand": "了解しました",
 	"ignore_case": "大文字と小文字を区別しない",
 	"ignore_case_desc": "有効にすると、入力時に大文字と小文字が区別されず、「hello」と「Hello」のどちらも正解とみなされます。",
-	"allow_dictation_tip": "ディクテーションモードでヒントを表示することを許可",
-	"allow_dictation_tip_desc": "有効にすると、単語の上にマウスを移動するかショートカットキーを押すことで正解を表示できます。",
 	"simple_word_filter": "簡単な単語のフィルター",
 	"simple_word_filter_desc": "有効にすると、練習する単語に簡単な単語が含まれなくなり、記事の総単語数にも簡単な単語が含まれません。",
 	"simple_word_list": "簡単な単語リスト",

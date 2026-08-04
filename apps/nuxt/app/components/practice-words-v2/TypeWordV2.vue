@@ -166,7 +166,6 @@ watch(
 
 function showWord() {
   console.log('showWord')
-  if (!settingStore.allowWordTip) return
   // 如果不是跟写模式，查看单词一律标记为错词
   if (props.practiceType !== WordPracticeType.FollowWrite || effective.value.isWordMasked) {
     if (!showWordResult && !revealWordsSet.has(props.word.word)) {
@@ -183,7 +182,7 @@ function hideWord() {
 
 const wordWrapRef = useTemplateRef('word-wrap')
 function onMouseEnter() {
-  if (!settingStore.allowWordTip) return
+  if (props.practiceType === WordPracticeType.Identify) return
   //解决：默写情况下，单词显示为下划线，而下划线的宽度比字母的宽度更宽，导致hover上去，单词立马显示，导致整个div的宽度变窄，这样又会立马触发mouseleave
   let rect = wordWrapRef.value.getBoundingClientRect()
   wordWrapRef.value.style.minWidth = rect.width + 'px'
@@ -259,11 +258,6 @@ function onAnswerWrong() {
   typingCoreRef?.setWordTestResult?.(false, props.word.word)
   emit('wrong')
   playWord(WordPlayTrigger.Typo)
-
-  if (!showNotice) {
-    Toast.info($t('press_space_continue'), { duration: 5000 })
-    showNotice = true
-  }
 }
 
 function onAnswerCorrect() {
@@ -367,7 +361,7 @@ defineExpose({
       </div>
 
       <!-- 单词键入区 -->
-      <Tooltip :title="`快捷键 ${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]} 显示单词`">
+      <Tooltip :title="`快捷键(${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]})显示单词信息`">
         <div
           id="word-wrap"
           ref="word-wrap"

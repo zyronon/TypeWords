@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Word } from '../../types'
-import { BackIcon, BaseButton } from '@typewords/base'
-import { reactive, ref } from 'vue'
+import { BackIcon, BaseButton, Checkbox, Toast } from '@typewords/base'
+import { reactive, ref, watch } from 'vue'
 import Header from '../Header.vue'
 
 type PaintMode = 'know' | 'unknown' | 'mastered'
@@ -23,6 +23,8 @@ const emit = defineEmits<{
 
 const paintMode = ref<PaintMode>('know')
 const marks = reactive<Record<number, PaintMode>>({})
+const chooseAllIndexes = ref<number[]>([])
+const chooseAllMode = ref<PaintMode | null>(null)
 
 const modeLabels: Record<PaintMode, string> = {
   know: '我认识',
@@ -75,6 +77,37 @@ function buildThreeLists(): WordMarkPickResult {
 function onComplete() {
   emit('complete', buildThreeLists())
 }
+
+function resetChooseAll() {
+  chooseAllIndexes.value = []
+  chooseAllMode.value = null
+}
+
+function chooseAll() {
+  if (chooseAllMode.value) {
+    const selectedMode = chooseAllMode.value
+    chooseAllIndexes.value.forEach(index => {
+      if (marks[index] === selectedMode) delete marks[index]
+    })
+    resetChooseAll()
+    return
+  }
+
+  const selectedIndexes: number[] = []
+  props.words.forEach((_, index) => {
+    if (marks[index] != null) return
+    marks[index] = paintMode.value
+    selectedIndexes.push(index)
+  })
+  if (!selectedIndexes.length) {
+    Toast.info('所有单词均已标记')
+    return
+  }
+  chooseAllIndexes.value = selectedIndexes
+  chooseAllMode.value = paintMode.value
+}
+
+watch(paintMode, resetChooseAll)
 </script>
 
 <template>
@@ -84,21 +117,24 @@ function onComplete() {
       操作说明：先选择分类，再点击单词进行标记。再次点击相同分类可取消，切换分类后点击可直接改标。
       <div class="font-bold">未标记和标为“不认识”的单词将进入后续练习。</div>
     </div>
-    <div class="flex flex-wrap gap-2 items-center">
-      <div>当前标记:</div>
-      <button
-        v-for="mode in ['know', 'unknown', 'mastered'] as const"
-        :key="mode"
-        type="button"
-        class="mode-btn"
-        :class="{ active: paintMode === mode, [mode]: true }"
-        @click="paintMode = mode"
-      >
-        {{ modeLabels[mode] }}
-      </button>
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div>当前标记:</div>
+        <button
+          v-for="mode in ['know', 'unknown', 'mastered'] as const"
+          :key="mode"
+          type="button"
+          class="mode-btn"
+          :class="{ active: paintMode === mode, [mode]: true }"
+          @click="paintMode = mode"
+        >
+          {{ modeLabels[mode] }}
+        </button>
+      </div>
+      <BaseButton type="info" @click="chooseAll">{{ chooseAllMode ? '取消全选' : '全选' }}</BaseButton>
     </div>
     <div class="text-sm color-[var(--color-font-3)]">
-      省时技巧：优先标记数量较少的一类——大多数认识时，只标“不认识”；大多数不认识时，只标“我认识
+      省时技巧：先标记数量较少的一类，再切换到多数类别点击“全选”，即可补齐未标记单词；再次点击可撤销本次全选，已有标记不会被覆盖。
     </div>
 
     <div class="word-grid" role="list" aria-label="单词列表">

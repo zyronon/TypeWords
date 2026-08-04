@@ -5,7 +5,11 @@ import { WordPracticeMode } from '@typewords/core/types/enum.ts'
 import { onMounted, onUnmounted } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import type { PracticeFlowConfig } from '~/composables/practice-words/practice-flow-types.ts'
-import { CURRENT_FLOW_VERSION, getAllBuiltinFlowIds, getFlowConfig } from '~/composables/practice-words/practice-flow-config.ts'
+import {
+  CURRENT_FLOW_VERSION,
+  getAllBuiltinFlowIds,
+  getFlowConfig,
+} from '~/composables/practice-words/practice-flow-config.ts'
 import {
   deleteUserFlow,
   getActiveCustomFlowId,
@@ -358,7 +362,7 @@ if (activeFlowId) {
               @keydown.enter.space.prevent="loadFlow(item.id, item.builtin)"
             >
               <div class="flex items-center gap-1">
-                <span class="flow-list-name">{{ item.name }}</span>
+                <span class="flow-list-name">{{ $t(item.name) }}</span>
                 <span v-if="item.builtin" class="builtin-badge">内置</span>
                 <IconFluentCheckmarkCircle16Filled
                   v-else-if="item.id === activeFlowId"
@@ -476,7 +480,10 @@ if (activeFlowId) {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .flow-list-item {

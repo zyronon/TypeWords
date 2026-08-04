@@ -286,9 +286,7 @@ watch([() => wordIndex, () => stringIndex, () => isEnd, () => props.active], () 
 let hoverIdx = $ref(-1)
 
 function showSentence(w: number) {
-  if (settingStore.allowWordTip) {
-    hoverIdx = w
-  }
+  hoverIdx = w
 }
 
 function hideSentence() {
@@ -369,7 +367,13 @@ function onWordClick(e: MouseEvent, word: ArticleWord) {
 }
 
 function getWordIsDictation(word: ArticleWord, index: number) {
-  if (isCurrent(index) && !isSpace && props.highlightWords.includes(word.word.toLowerCase()) && props.isHighlightWordsMask && props.active) {
+  if (
+    isCurrent(index) &&
+    !isSpace &&
+    props.highlightWords.includes(word.word.toLowerCase()) &&
+    props.isHighlightWordsMask &&
+    props.active
+  ) {
     return true
   }
   return props.mode === PracticeType.Dictation

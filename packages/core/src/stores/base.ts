@@ -7,6 +7,7 @@ import { AppEnv, DictId, IS_DEV, SAVE_DICT_KEY } from '../config/env'
 import { add2MyDict, dictListVersion, myDictList } from '../apis'
 import { Toast } from '@typewords/base'
 import type { Card } from 'ts-fsrs'
+import { useSettingStore } from './setting.ts'
 
 export interface BaseState {
   simpleWords: string[]
@@ -113,7 +114,7 @@ export const useBaseStore = defineStore('base', {
       return res ?? getDefaultDict()
     },
     known(): Dict {
-      let res =  this.word.bookList.find(v => [v.enName, v.id].includes(DictId.wordKnown))
+      let res = this.word.bookList.find(v => [v.enName, v.id].includes(DictId.wordKnown))
       return res ?? getDefaultDict()
     },
     knownWords(): string[] {
@@ -149,11 +150,6 @@ export const useBaseStore = defineStore('base', {
       if (!this.sdict.length) return 0
       return _getStudyProgress(this.sdict.lastLearnIndex, this.sdict.length)
     },
-    getDictCompleteDate(): number {
-      if (!this.sdict.length) return 0
-      if (!this.sdict.perDayStudyNumber) return 0
-      return Math.ceil((this.sdict.length - this.sdict.lastLearnIndex) / this.sdict.perDayStudyNumber)
-    },
     sbook(): Dict {
       return this.article.bookList[this.article.studyIndex] ?? getDefaultDict()
     },
@@ -164,6 +160,10 @@ export const useBaseStore = defineStore('base', {
     },
   },
   actions: {
+    getIgnoreWordsSet(): Set<string> {
+      let settingStore = useSettingStore()
+      return [this.allIgnoreWordsSet, this.knownWordsSet][settingStore.ignoreSimpleWord ? 0 : 1]
+    },
     setState(obj: BaseState) {
       obj.word.bookList.map(book => {
         book.words = shallowReactive(book.words)

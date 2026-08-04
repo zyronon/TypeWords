@@ -228,8 +228,6 @@
 	"i_understand": "I understand",
 	"ignore_case": "Ignore case",
 	"ignore_case_desc": "When enabled, input is case-insensitive, so typing \"hello\" and \"Hello\" are both considered correct.",
-	"allow_dictation_tip": "Allow showing hints in dictation mode",
-	"allow_dictation_tip_desc": "When enabled, you can reveal the correct answer by hovering over the word or pressing a shortcut key.",
 	"simple_word_filter": "Simple word filter",
 	"simple_word_filter_desc": "When enabled, simple words will be excluded from practice words, and they will not be counted in the total word count of an article.",
 	"simple_word_list": "Simple word list",

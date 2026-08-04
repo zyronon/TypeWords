@@ -66,18 +66,6 @@ function select(e: KeyboardEvent | MouseEvent, index: number) {
   }
 }
 
-function resetIdentifyState() {
-  completeSelect = false
-  selectIndex = -1
-}
-
-function onTyping(e) {
-  if (e.code === 'Space' && isCorrect) {
-    // e.stopPropagation()
-    // emit('complete')
-  }
-}
-
 useEvents([
   [ShortcutKey.KnowWord, know],
   [ShortcutKey.UnknownWord, unknown],
@@ -86,13 +74,11 @@ useEvents([
   [ShortcutKey.SelfTestingChooseB, (e: KeyboardEvent) => select(e, 1)],
   [ShortcutKey.SelfTestingChooseC, (e: KeyboardEvent) => select(e, 2)],
   [ShortcutKey.SelfTestingChooseD, (e: KeyboardEvent) => select(e, 3)],
-  [EventKey.onTyping, onTyping],
 ])
 </script>
 
 <template>
   <div class="mt-4 flex gap-2 relative w-full center">
-
     <Tooltip>
       <IconFluentQuestionCircle20Regular class="absolute left-0 bottom-0 opacity-50" width="24" />
       <template #reference>
@@ -145,7 +131,7 @@ useEvents([
 
   <div class="line-white my-3"></div>
 
-  <div class="flex flex-col gap-2 w-full">
+  <div class="flex flex-col gap-1.5 w-full">
     <div
       v-for="(value, index) in question?.candidates"
       class="flex gap-2 question cp"
@@ -157,29 +143,40 @@ useEvents([
     >
       <BaseButton
         type="text"
+        class="mt-1.5"
         :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[[ShortcutKey.SelfTestingChooseA, ShortcutKey.SelfTestingChooseB, ShortcutKey.SelfTestingChooseC, ShortcutKey.SelfTestingChooseD][index]]})`"
       >
         {{ ['A', 'B', 'C', 'D'][index] }}
       </BaseButton>
-      <span class="ml-2">
-        <TranslationList :word="value.word" :showFull="true" />
+      <div class="ml-2">
+        <TranslationList :word="value.word" :showFull="completeSelect" />
         <div class="text-2xl" v-if="completeSelect">
           {{ value.word.word }}
         </div>
-      </span>
+      </div>
     </div>
   </div>
 
-  <div class="line-white my-3"></div>
-
-  <!-- 提示 Toast -->
-  <div class="center mt-3" v-if="completeSelect">
-    <ToastComponent :duration="0" :shadow="false" :message="isCorrect ? '按空格键继续' : '请输入单词'" />
-  </div>
+  <template v-if="completeSelect">
+    <div class="line-white my-3"></div>
+    <!-- 提示 Toast -->
+    <div class="center mt-3">
+      <BaseButton
+        type="text"
+        size="large"
+        v-if="isCorrect"
+        class="min-w-50"
+        :keyboard="`${$t('shortcut')}(空格)`"
+        @click="emit('complete')"
+        >继续</BaseButton
+      >
+      <ToastComponent v-else :duration="0" :shadow="false" message="请输入单词" />
+    </div>
+  </template>
 </template>
 <style scoped lang="scss">
 .question {
-  @apply rounded-lg px-3 py-2 -mx-3;
+  @apply rounded-lg px-3 pb-1 -mx-3;
   background: transparent;
   transition:
     background-color 0.3s ease,

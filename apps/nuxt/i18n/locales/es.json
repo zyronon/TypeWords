@@ -228,8 +228,6 @@
 	"i_understand": "Entendido",
 	"ignore_case": "Ignorar mayúsculas y minúsculas",
 	"ignore_case_desc": "Cuando está activado, la entrada no distingue entre mayúsculas y minúsculas, por lo que escribir \"hello\" y \"Hello\" se considera correcto.",
-	"allow_dictation_tip": "Permitir mostrar sugerencias en el modo dictado",
-	"allow_dictation_tip_desc": "Cuando está activado, puede mostrar la respuesta correcta pasando el ratón sobre la palabra o pulsando una tecla de acceso rápido.",
 	"simple_word_filter": "Filtro de palabras simples",
 	"simple_word_filter_desc": "Cuando está activado, las palabras simples no se incluirán en las palabras de práctica ni en el recuento total de palabras del artículo.",
 	"simple_word_list": "Lista de palabras simples",

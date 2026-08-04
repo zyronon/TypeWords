@@ -77,6 +77,8 @@ let remoteCheckInProgress = false
 let pendingRemoteUpdatedAt = 0
 let knownCacheUpdatedAt = Date.now()
 let visibilityResumeTimer: ReturnType<typeof setTimeout> | null = null
+let isQuickMarkWordList = $ref(false)
+
 /** 仅用于 visibilitychange 内 fetch：与 `!document.hidden` 一致 */
 const isFocus = ref(true)
 let taskWords = $ref<TaskWords>({
@@ -495,7 +497,6 @@ function onWordKnow() {
 }
 
 function onTypeWrong() {
-  console.log('onTypeWrong')
   data.wrongTimes++
   //这里的代码暂时不能移动，因为要实时把错词加入到列表里面，从而更新toolbar里面的错词数
   //todo 后续可以优化
@@ -634,17 +635,15 @@ function toggleConciseMode() {
 async function continueStudy() {
   wordPersistence.clear()
   let temp = cloneDeep(taskWords)
-  let ignoreList = [store.allIgnoreWords, store.knownWords][settingStore.ignoreSimpleWord ? 0 : 1]
   //随机练习单独处理
   if (settingStore.wordPracticeMode === WordPracticeMode.Shuffle) {
-    const ignoreSet = [store.allIgnoreWordsSet, store.knownWordsSet][settingStore.ignoreSimpleWord ? 0 : 1]
     temp.review = getShufflePracticeWords(
       store.sdict.words,
       {
         total: runtimeStore.routeData?.total ?? temp.review.length,
         range: runtimeStore.routeData?.shuffleRange ?? { start: 0, end: store.sdict.lastLearnIndex },
       },
-      ignoreSet
+      store.getIgnoreWordsSet()
     ).words
   } else {
     //这里判断是否显示结算弹框，如果显示了结算弹框的话，就不用加进度了
@@ -652,6 +651,7 @@ async function continueStudy() {
       console.log('没学完，强行跳过')
       store.sdict.lastLearnIndex = store.sdict.lastLearnIndex + statStore.newWordNumber
       // 忽略单词数
+      let ignoreList = [store.allIgnoreWords, store.knownWords][settingStore.ignoreSimpleWord ? 0 : 1]
       const ignoreCount = ignoreList.filter(word => store.sdict.words.some(w => w.word.toLowerCase() === word)).length
       // 如果lastLearnIndex已经超过可学单词数，则判定完成
       if (store.sdict.lastLearnIndex + ignoreCount >= store.sdict.length) {
@@ -661,7 +661,6 @@ async function continueStudy() {
     } else {
       console.log('学完了，正常下一组')
     }
-
     temp = getCurrentStudyWord()
   }
   emitter.emit(EventKey.resetWord)
@@ -737,6 +736,7 @@ function onWordMarkPickComplete(result: WordMarkPickResult) {
   } else {
     data.wrongWords = []
   }
+  isQuickMarkWordList = false
   navigator.completeCurrentList()
 }
 
@@ -764,8 +764,6 @@ useEvents([
   [ShortcutKey.TogglePanel, () => (settingStore.showPanel = !settingStore.showPanel)],
   [ShortcutKey.RandomWrite, randomWrite],
 ])
-
-let isQuickMarkWordList = $ref(false)
 </script>
 
 <template>
@@ -926,7 +924,8 @@ let isQuickMarkWordList = $ref(false)
     width: 100%;
 
     .absolute.z-1.top-4 {
-      z-index: 100; // 提高层级，确保不被遮挡
+      /* // 提高层级，确保不被遮挡*/
+      z-index: 100;
 
       .center.gap-2.cursor-pointer {
         min-height: 44px;
@@ -937,11 +936,13 @@ let isQuickMarkWordList = $ref(false)
         justify-content: center;
 
         .word {
-          pointer-events: none; // 文字不拦截点击
+          /*// 文字不拦截点击*/
+          pointer-events: none;
         }
 
         .arrow {
-          pointer-events: none; // 箭头图标不拦截点击
+          /*// 箭头图标不拦截点击*/
+          pointer-events: none;
         }
       }
     }
@@ -951,7 +952,6 @@ let isQuickMarkWordList = $ref(false)
 .word-panel-wrapper {
   position: absolute;
   left: var(--panel-margin-left);
-  //left: 0;
   top: 0.8rem;
   z-index: 1;
   height: calc(100% - 1.5rem);

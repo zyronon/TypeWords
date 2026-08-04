@@ -228,8 +228,6 @@
 	"i_understand": "J'ai compris",
 	"ignore_case": "Ignorer la casse",
 	"ignore_case_desc": "Lorsqu'il est activé, la saisie ne distingue pas les majuscules et minuscules, donc écrire « hello » et « Hello » est considéré comme correct.",
-	"allow_dictation_tip": "Autoriser l'affichage d'indices en mode dictée",
-	"allow_dictation_tip_desc": "Lorsqu'il est activé, vous pouvez révéler la bonne réponse en survolant le mot ou en appuyant sur une touche de raccourci.",
 	"simple_word_filter": "Filtre de mots simples",
 	"simple_word_filter_desc": "Lorsqu'il est activé, les mots simples ne sont pas inclus dans les mots d'entraînement ni dans le nombre total de mots de l'article.",
 	"simple_word_list": "Liste de mots simples",
