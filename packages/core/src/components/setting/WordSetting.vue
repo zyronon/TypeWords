@@ -43,6 +43,10 @@ const settingStore = useSettingStore()
       <Switch v-model="settingStore.showEtymologyAndRelWords" />
     </SettingItem>
 
+    <SettingItem title="显示练习引导">
+      <Switch v-model="settingStore.showUsageTips" />
+    </SettingItem>
+
     <div class="line"></div>
     <SettingItem :mainTitle="`例句设置`" />
     <SettingItem :title="$t('practice_sentence')">

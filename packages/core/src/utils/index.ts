@@ -220,9 +220,10 @@ export async function checkAndUpgradeSaveSetting(val: any) {
         updateLocalData = true
       }
 
-      //更新历史用户的自动播放首条例句选项为true
+      //更新历史用户的自动播放首条例句选项为true，将引导重新显示
       if (version <= 22) {
         state.autoPlayFirstSentence = true
+        state.showUsageTips = true
         updateLocalData = true
       }
 

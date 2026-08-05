@@ -33,7 +33,8 @@ export function usePracticeWordAudioV2({
   function playWord(trigger: WordPlayTrigger, _options?: { volumeRef?: unknown; resetIcon?: boolean }) {
     const handle = trigger === WordPlayTrigger.Manual
     if (handle || settingStore.wordSound) {
-      if (handle) cancelWordPracticeAudio()
+      // 仅在确实要播放新音频时取消旧播放；默写切到下一词不会调用此函数。
+      cancelWordPracticeAudio()
       const chainWord = shouldPlayFirstSentence() ? word.value.word : ''
       const onEnd = chainWord
         ? () => {

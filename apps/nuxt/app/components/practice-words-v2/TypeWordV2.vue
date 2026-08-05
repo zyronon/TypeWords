@@ -1,7 +1,6 @@
 <script setup lang="ts">
 /**
- * TypeWordV2 — 单词练习外壳组件
- *
+ * 单词练习外壳组件
  * 此组件负责：
  * - 布局容器编排（组合 WordTypingCoreV2 / WordIdentifyPanelV2 / WordMetaPanelV2）
  * - effective 显示策略计算
@@ -19,7 +18,7 @@ import { getDefaultWord } from '@typewords/core/types/func.ts'
 import { ShortcutKey, WordPracticeType } from '@typewords/core/types/enum.ts'
 import { useBaseStore } from '@typewords/core/stores/base.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
-import { cancelWordPracticeAudio, usePlayWordAudio } from '@typewords/core/hooks/sound.ts'
+import { usePlayWordAudio } from '@typewords/core/hooks/sound.ts'
 import { useInjectedDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
 import { EventKey, useEvents } from '@typewords/core/utils/eventBus.ts'
 import { computed, ref, watch } from 'vue'
@@ -64,7 +63,6 @@ const settingStore = useSettingStore()
 const store = useBaseStore()
 
 // ============ 音频 ============
-
 const playWordAudio = usePlayWordAudio()
 
 const volumeIconRef: any = $ref()
@@ -74,7 +72,6 @@ let isPlayedFirstSentence = false
 // ============ 共享状态 ============
 let showFullWord = $ref(false)
 let showWordResult = $ref(false)
-const wrongTimesModel = ref(0)
 
 const localReveal = computed(() => ({
   showFullWord,
@@ -97,7 +94,6 @@ function shouldPlayFirstSentence() {
 function playWord(trigger: WordPlayTrigger) {
   const handle = trigger === WordPlayTrigger.Manual
   if (handle || settingStore.wordSound) {
-    if (handle) cancelWordPracticeAudio()
     const chainWord = shouldPlayFirstSentence() ? props.word.word : ''
     const onEnd = chainWord
       ? () => {
@@ -243,7 +239,7 @@ let showNotice = false
 function onIdentifyKnow() {
   if (!showWordResult) {
     showWordResult = true
-    typingCoreRef?.setWordCorrectAndLock?.(props.word.word)
+    onAnswerCorrect()
     emit('know')
     if (!showNotice) {
       Toast.info($t('know_word_tip'), { duration: 5000 })
@@ -277,20 +273,27 @@ function onIdentifyMastered() {
 // ============ 提示 Toast ============
 
 const notice = $computed(() => {
-  let text =
-    props.practiceType === WordPracticeType.Identify
-      ? '选择后/输入后，按空格键切换下一个'
-      : props.practiceType === WordPracticeType.Listen
-        ? '输入完成后按空格键切换下一个'
-        : showWordResult
-          ? typingCoreRef?.isWordRight()
-            ? '按空格键切换下一个'
-            : $t('press_delete_reinput')
-          : '按空格键完成输入'
-  return {
-    show: [WordPracticeType.Listen, WordPracticeType.Identify, WordPracticeType.Dictation].includes(props.practiceType),
-    text,
+  let text = ''
+  let show = false
+  if (props.practiceType === WordPracticeType.Identify) {
+    if (showWordResult) {
+      text = typingCoreRef?.isWordRight() ? '按空格键继续' : '请拼写单词'
+      show = true
+    }
+  } else if (props.practiceType === WordPracticeType.Listen) {
+    if (showWordResult) {
+      text = '按空格键继续'
+      show = true
+    }
+  } else if (props.practiceType === WordPracticeType.Dictation) {
+    text = showWordResult
+      ? typingCoreRef?.isWordRight()
+        ? '按空格键继续'
+        : $t('press_delete_reinput')
+      : '按空格键完成默写'
+    show = true
   }
+  return { show, text }
 })
 
 // ============ 重置：单词切换时 reset identify / note 状态 ============
@@ -369,10 +372,9 @@ defineExpose({
             :practiceType="practiceType"
             :isWordMasked="effective.isWordMasked"
             v-model:showWordResult="showWordResult"
-            v-model:wrongTimes="wrongTimesModel"
             :showFullWord="showFullWord"
             :wordFontSize="settingStore.fontSize.wordForeignFontSize"
-            :playWord="playWord"
+            @play="playWord"
             @complete="onTypingCoreComplete"
             @wrong="onTypingCoreWrong"
           />
@@ -432,6 +434,19 @@ defineExpose({
         <div class="line-white my-3"></div>
       </template>
 
+      <!-- 提示 Toast -->
+      <div class="center mt-3" v-if="notice.show && settingStore.showUsageTips">
+        <ToastComponent
+          :duration="0"
+          confirm
+          :anim="false"
+          :shadow="false"
+          :message="notice.text"
+          :showClose="store.sdict.statistics.length > 2"
+          @close="settingStore.showUsageTips = false"
+        />
+      </div>
+
       <!-- 自测 UI -->
       <WordIdentifyPanelV2
         v-if="!showWordResult && !showFullWord && practiceType === WordPracticeType.Identify"
@@ -446,18 +461,6 @@ defineExpose({
         @complete="emit('complete')"
         @quickMark="emit('quickMark')"
       />
-
-      <!-- 提示 Toast -->
-      <div class="center mt-3" v-if="notice.show && settingStore.showUsageTips">
-        <ToastComponent
-          :duration="0"
-          confirm
-          :shadow="false"
-          :showClose="store.sdict.statistics.length > 2"
-          :message="notice.text"
-          @close="settingStore.showUsageTips = false"
-        />
-      </div>
 
       <!-- WordMetaPanelV2: 翻译 + 例句 + 短语 + 词源 等展示 -->
       <!--      不要加key，里面有个只显示一次的变量-->

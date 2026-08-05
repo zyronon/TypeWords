@@ -149,10 +149,16 @@ export function resetActiveWordPlayCount(word: string) {
   activeWordPlayCountMap.delete(word.trim().toLowerCase())
 }
 
-let isPlaying = false
 let cachedWordAudio: HTMLAudioElement | null = null
 let wordPlaybackGeneration = 0
 let ttsPlaybackGeneration = 0
+
+function getCachedWordAudio(): HTMLAudioElement | null {
+  if (!cachedWordAudio && typeof Audio !== 'undefined') {
+    cachedWordAudio = new Audio()
+  }
+  return cachedWordAudio
+}
 
 export function cancelWordPracticeAudio() {
   wordPlaybackGeneration++
@@ -161,13 +167,13 @@ export function cancelWordPracticeAudio() {
     speechSynthesis.pause()
     speechSynthesis.cancel()
   }
-  if (cachedWordAudio) {
-    cachedWordAudio.onended = null
-    cachedWordAudio.onerror = null
-    cachedWordAudio.pause()
-    cachedWordAudio.currentTime = 0
+  const wordAudio = getCachedWordAudio()
+  if (wordAudio) {
+    wordAudio.onended = null
+    wordAudio.onerror = null
+    wordAudio.pause()
+    wordAudio.currentTime = 0
   }
-  isPlaying = false
 }
 
 export function usePlayWordAudio() {
@@ -176,17 +182,14 @@ export function usePlayWordAudio() {
   onMounted(() => {
     // @ts-ignore SSR guard
     if (import.meta.server) return
-    if (!cachedWordAudio) {
-      cachedWordAudio = new Audio()
-    }
+    getCachedWordAudio()
   })
 
   function playAudio(word: string, handle: boolean = true, onEnd?: () => void, onPlay?: () => void) {
-    if (!word || isPlaying || !cachedWordAudio) return
+    const wordAudio = getCachedWordAudio()
+    if (!word || !wordAudio) return
+    cancelWordPracticeAudio()
     const generation = ++wordPlaybackGeneration
-    isPlaying = true
-    speechSynthesis.pause()
-    speechSynthesis.cancel()
     let playbackRate = settingStore.wordSoundSpeed
     if (handle) {
       const key = word.trim().toLowerCase()
@@ -212,23 +215,19 @@ export function usePlayWordAudio() {
     }
     let onended = () => {
       if (generation !== wordPlaybackGeneration) return
-      isPlaying = false
       onEnd?.()
     }
-    cachedWordAudio.onended = onended
-    cachedWordAudio.onplay = () => onPlay?.()
-    cachedWordAudio.onerror = () => {
+    wordAudio.onended = onended
+    wordAudio.onplay = () => onPlay?.()
+    wordAudio.onerror = () => {
       if (generation !== wordPlaybackGeneration) return
       const ttsPlay = useTTsPlayAudio()
       ttsPlay(word, { rate: playbackRate, onEnd: onended })
     }
-    cachedWordAudio.src = url
-    cachedWordAudio.volume = settingStore.wordSoundVolume / 100
-    cachedWordAudio.playbackRate = playbackRate
-    void cachedWordAudio.play().catch(() => {
-      // pause()/切词会拒绝旧的 play Promise；旧代次不能改写当前播放状态。
-      if (generation === wordPlaybackGeneration) isPlaying = false
-    })
+    wordAudio.src = url
+    wordAudio.volume = settingStore.wordSoundVolume / 100
+    wordAudio.playbackRate = playbackRate
+    void wordAudio.play()
   }
 
   return playAudio

@@ -150,7 +150,7 @@ defineExpose({ startPracticeSentence, playSentence })
   <div class="word-meta">
     <!-- 翻译区 -->
     <template v-if="word?.trans?.length">
-      <div class="translate flex flex-col items-center gap-2 my-3" v-opacity="showTranslation">
+      <div class="translate flex flex-col items-center gap-2 my-3" v-opacity:noAnim="showTranslation">
         <TranslationList :word="word" :showFull="!effective.isWordMasked" />
       </div>
     </template>
@@ -277,15 +277,6 @@ defineExpose({ startPracticeSentence, playSentence })
 <style scoped lang="scss">
 .word-meta {
   width: 100%;
-
-  .phonetic {
-    color: var(--color-font-1);
-    font-family: var(--word-font-family);
-    font-size: 1.2rem;
-  }
-
-  .translate {
-  }
 
   .label {
     width: 6rem;

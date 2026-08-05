@@ -468,7 +468,7 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
       if (loopSubStep?.clearWrongOnSuccess && data.wrongTimes === 0) {
         const rIndex = data.wrongWords.findIndex(v => v.word.toLowerCase() === temp)
         if (rIndex >= 0) {
-          Toast.success(temp+' 已自动从错词列表移除！原因：跟写时错误，但拼写时正确')
+          Toast.success(temp + ' 已自动从错词列表移除！原因：跟写时错误，但拼写时正确')
           data.wrongWords.splice(rIndex, 1)
         }
       }
@@ -484,6 +484,15 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
 
       countAsTyping = false
       shouldIgnoreLoop = false
+    }
+  }
+
+  function prev() {
+    const data = deps.getPracticeData()
+    if (data.index === 0) {
+      Toast.warning('已经是第一个了~')
+    } else {
+      data.index--
     }
   }
 
@@ -551,6 +560,7 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     currentPracticeType,
     currentPhaseKey,
     next,
+    prev,
     skipStep,
     completeCurrentList,
     initializeNodeWords,

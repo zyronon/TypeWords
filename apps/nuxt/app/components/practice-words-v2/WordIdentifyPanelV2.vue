@@ -11,10 +11,11 @@ import type { Question, Word } from '@typewords/core/types/types.ts'
 import { getDefaultWord } from '@typewords/core/types/func.ts'
 import { ShortcutKey } from '@typewords/core/types/enum.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
-import { EventKey, useEvents } from '@typewords/core/utils/eventBus.ts'
-import { BaseButton, ToastComponent, Tooltip } from '@typewords/base'
+import { useEvents, useEventsByWatch } from '@typewords/core/utils/eventBus.ts'
+import { BaseButton, Switch, ToastComponent, Tooltip } from '@typewords/base'
 import TranslationList from '@typewords/core/components/word/TranslationList.vue'
 import { useI18n } from 'vue-i18n'
+import { useBaseStore } from '@typewords/core/stores/base.ts'
 
 const { t: $t } = useI18n()
 
@@ -37,6 +38,7 @@ const emit = defineEmits<{
   complete: []
 }>()
 
+const store = useBaseStore()
 const settingStore = useSettingStore()
 let completeSelect = $ref(false)
 let selectIndex = $ref(-1)
@@ -70,14 +72,43 @@ useEvents([
   [ShortcutKey.KnowWord, know],
   [ShortcutKey.UnknownWord, unknown],
   [ShortcutKey.MasteredWord, mastered],
-  [ShortcutKey.SelfTestingChooseA, (e: KeyboardEvent) => select(e, 0)],
-  [ShortcutKey.SelfTestingChooseB, (e: KeyboardEvent) => select(e, 1)],
-  [ShortcutKey.SelfTestingChooseC, (e: KeyboardEvent) => select(e, 2)],
-  [ShortcutKey.SelfTestingChooseD, (e: KeyboardEvent) => select(e, 3)],
 ])
+useEventsByWatch(
+  [
+    [ShortcutKey.SelfTestingChooseA, (e: KeyboardEvent) => select(e, 0)],
+    [ShortcutKey.SelfTestingChooseB, (e: KeyboardEvent) => select(e, 1)],
+    [ShortcutKey.SelfTestingChooseC, (e: KeyboardEvent) => select(e, 2)],
+    [ShortcutKey.SelfTestingChooseD, (e: KeyboardEvent) => select(e, 3)],
+  ],
+  () => settingStore.showWordQuestion
+)
+
+const text = $computed(() => {
+  if (!completeSelect) {
+    return '请选择 或 直接拼写'
+  } else {
+    if (isCorrect) {
+      return '按空格键继续'
+    } else {
+      return '请输入单词'
+    }
+  }
+})
 </script>
 
 <template>
+  <!-- 提示 Toast -->
+  <div class="center mt-3" v-if="settingStore.showUsageTips">
+    <ToastComponent
+      :duration="0"
+      :anim="false"
+      :shadow="false"
+      :message="text"
+      :showClose="store.sdict.statistics.length > 2"
+      @close="settingStore.showUsageTips = false"
+    />
+  </div>
+
   <div class="mt-4 flex gap-2 relative w-full center">
     <Tooltip>
       <IconFluentQuestionCircle20Regular class="absolute left-0 bottom-0 opacity-50" width="24" />
@@ -124,53 +155,43 @@ useEvents([
       >已掌握
     </BaseButton>
 
-    <BaseButton type="text" keyboard="批量标记" class="absolute! right-0" @click="emit('quickMark')">
-      <IconFluentMultiselectRtl20Regular />
-    </BaseButton>
-  </div>
-
-  <div class="line-white my-3"></div>
-
-  <div class="flex flex-col gap-1.5 w-full">
-    <div
-      v-for="(value, index) in question?.candidates"
-      class="flex gap-2 question cp"
-      @click="(e: MouseEvent) => select(e, index)"
-      :class="{
-        'text-green-600 question-correct': completeSelect && index === question?.correctIndex,
-        'text-red-600 question-wrong': completeSelect && index !== question?.correctIndex && index === selectIndex,
-      }"
-    >
-      <BaseButton
-        type="text"
-        class="mt-1.5"
-        :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[[ShortcutKey.SelfTestingChooseA, ShortcutKey.SelfTestingChooseB, ShortcutKey.SelfTestingChooseC, ShortcutKey.SelfTestingChooseD][index]]})`"
-      >
-        {{ ['A', 'B', 'C', 'D'][index] }}
+    <div class="flex gap-2 center absolute! right-0">
+      <Tooltip :title="`${settingStore.showWordQuestion ? '关闭' : '开启'}单词选项`">
+        <Switch type="info" v-model="settingStore.showWordQuestion" />
+      </Tooltip>
+      <BaseButton type="text" keyboard="批量标记" class="" @click="emit('quickMark')">
+        <IconFluentMultiselectRtl20Regular />
       </BaseButton>
-      <div class="ml-2">
-        <TranslationList :word="value.word" :showFull="completeSelect" />
-        <div class="text-2xl" v-if="completeSelect">
-          {{ value.word.word }}
-        </div>
-      </div>
     </div>
   </div>
 
-  <template v-if="completeSelect">
+  <template v-if="settingStore.showWordQuestion">
     <div class="line-white my-3"></div>
-    <!-- 提示 Toast -->
-    <div class="center mt-3">
-      <BaseButton
-        type="text"
-        size="large"
-        v-if="isCorrect"
-        class="min-w-50"
-        :keyboard="`${$t('shortcut')}(空格)`"
-        @click="emit('complete')"
-        >继续</BaseButton
+
+    <div class="flex flex-col gap-1.5 w-full">
+      <div
+        v-for="(value, index) in question?.candidates"
+        class="flex gap-2 question cp"
+        @click="(e: MouseEvent) => select(e, index)"
+        :class="{
+          'text-green-600 question-correct': completeSelect && index === question?.correctIndex,
+          'text-red-600 question-wrong': completeSelect && index !== question?.correctIndex && index === selectIndex,
+        }"
       >
-      <ToastComponent v-else :duration="0" :shadow="false" message="请输入单词" />
+        <BaseButton
+          type="text"
+          class="mt-1.5"
+          :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[[ShortcutKey.SelfTestingChooseA, ShortcutKey.SelfTestingChooseB, ShortcutKey.SelfTestingChooseC, ShortcutKey.SelfTestingChooseD][index]]})`"
+        >
+          {{ ['A', 'B', 'C', 'D'][index] }}
+        </BaseButton>
+        <div class="ml-2">
+          <TranslationList :word="value.word" :showFull="completeSelect" />
+          <div class="text-2xl" v-if="completeSelect">
+            {{ value.word.word }}
+          </div>
+        </div>
+      </div>
     </div>
   </template>
 </template>

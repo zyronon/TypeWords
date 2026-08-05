@@ -38,20 +38,16 @@ interface IProps {
   /** 当前单词及元信息是否处于遮罩状态，只影响画面。 */
   isWordMasked: boolean
   showWordResult: boolean
-  wrongTimes: number
   showFullWord: boolean
   /** 当前单词字体大小 */
   wordFontSize: number
   /** 是否激活键盘监听 */
   active?: boolean
-  /** 外部注入的 playWord 函数 */
-  playWord: (trigger: WordPlayTrigger) => void
 }
 
 const props = withDefaults(defineProps<IProps>(), {
   word: () => getDefaultWord(),
   showWordResult: false,
-  wrongTimes: 0,
   active: true,
   showFullWord: false,
   isWordMasked: false,
@@ -60,9 +56,9 @@ const props = withDefaults(defineProps<IProps>(), {
 
 const emit = defineEmits<{
   'update:showWordResult': [value: boolean]
-  'update:wrongTimes': [value: number]
   complete: []
   wrong: []
+  play: [trigger: WordPlayTrigger]
 }>()
 
 const settingStore = useSettingStore()
@@ -75,7 +71,6 @@ const playKeyboardAudio = usePlayKeyboardAudio()
 let input = $ref('')
 let wrong = $ref('')
 let inputLock = false
-let waitClear = false
 let wordRepeatCount = 0
 let wordCompletedTime = 0
 let jumpTimer: ReturnType<typeof setTimeout> | null = null
@@ -91,10 +86,6 @@ const typingWordRef = $ref<HTMLDivElement>()
 
 function emitShowWordResult(val: boolean) {
   emit('update:showWordResult', val)
-}
-
-function emitWrongTimes(val: number) {
-  emit('update:wrongTimes', val)
 }
 
 let displayWord = $computed(() => {
@@ -127,10 +118,9 @@ function clearDeferredTimers() {
   wrongClearTimer = null
 }
 
-function typo() {
+function typo(needPlay: boolean = true) {
   emit('wrong')
-  emitWrongTimes(props.wrongTimes + 1)
-  props.playWord(WordPlayTrigger.Typo)
+  needPlay && emit('play', WordPlayTrigger.Typo)
 }
 
 function shouldRepeat() {
@@ -154,12 +144,11 @@ function repeat() {
     wrong = input = ''
     wordRepeatCount++
     inputLock = false
-    props.playWord(WordPlayTrigger.RepeatWord)
+    emit('play', WordPlayTrigger.RepeatWord)
   }, settingStore.waitTimeForChangeWord)
 }
 
 // ============ 核心键入逻辑 ============
-
 function completeTypeWord(delay: boolean) {
   if (shouldRepeat()) {
     repeat()
@@ -177,32 +166,11 @@ function completeTypeWord(delay: boolean) {
   }
 }
 
-function del() {
-  playKeyboardAudio()
-  inputLock = false
-  waitClear = false
-  if (props.showWordResult) {
-    input = ''
-    emitShowWordResult(false)
-    //如果是自测阶段，按删除键代码弄错了，需要标记为错词，同时从excludeWords里排除
-    if (props.practiceType === WordPracticeType.Identify) {
-      typo()
-    }
-  } else {
-    if (wrong) {
-      wrong = ''
-    } else {
-      input = input.slice(0, -1)
-    }
-  }
-}
-
 const isSpace = (e: KeyboardEvent) => e.code === 'Space'
 
 async function onTyping(e: KeyboardEvent) {
   // console.log('onTyping',e)
   if (e.code === 'Backspace') return del()
-  // if (waitClear) return
   // debugger
 
   const target = props.word.word
@@ -222,7 +190,6 @@ async function onTyping(e: KeyboardEvent) {
           return
         }
         completeTypeWord(false)
-        emitShowWordResult(false)
         inputLock = false
       } else {
         if (props.showWordResult) {
@@ -269,7 +236,7 @@ async function onTyping(e: KeyboardEvent) {
             //未显示单词，则播放正确音乐，并在后面设置为 showWordResult.value 为 true 来显示单词
             emitShowWordResult(true)
             playCorrect()
-            props.playWord(WordPlayTrigger.DictationReveal)
+            emit('play', WordPlayTrigger.DictationReveal)
           }
         } else {
           //错误处理
@@ -290,7 +257,8 @@ async function onTyping(e: KeyboardEvent) {
       // emit 更新父组件 prop 不是同步的，不能递归调用 onTyping，否则会反复进入此分支。
       // 标记为不认识后，当前按键直接继续走下面的正常键入逻辑。
       emitShowWordResult(true)
-      typo()
+      //不发音
+      typo(false)
     }
 
     let isKeyRight = false
@@ -341,7 +309,6 @@ async function onTyping(e: KeyboardEvent) {
       playBeep()
       typo()
       wrong = letter
-      waitClear = true
       if (wrongClearTimer) clearTimeout(wrongClearTimer)
       const wordKey = props.word.word
       wrongClearTimer = setTimeout(() => {
@@ -349,7 +316,6 @@ async function onTyping(e: KeyboardEvent) {
         if (props.word.word !== wordKey) return
         if (settingStore.inputWrongClear) input = ''
         wrong = ''
-        waitClear = false
       }, 500)
     }
 
@@ -371,19 +337,35 @@ async function onTyping(e: KeyboardEvent) {
   }
 }
 
+function del() {
+  playKeyboardAudio()
+  inputLock = false
+  //如果是自测阶段，按删除键代码弄错了，需要标记为错词，同时从excludeWords里排除
+  if (props.practiceType === WordPracticeType.Identify) {
+    input = wrong = ''
+    emitShowWordResult(false)
+  } else if (props.practiceType === WordPracticeType.Dictation && props.showWordResult) {
+    input = wrong = ''
+    emitShowWordResult(false)
+  } else {
+    if (wrong) {
+      wrong = ''
+    } else {
+      input = input.slice(0, -1)
+    }
+  }
+}
+
 // ============ 重置状态 ============
 function resetTypingCore(trigger: WordPlayTrigger) {
   clearDeferredTimers()
   wrong = input = ''
-  waitClear = false
   wordRepeatCount = 0
-  emitShowWordResult(false)
   inputLock = false
   wordCompletedTime = 0
-  emitWrongTimes(0)
   resetActiveWordPlayCount(props.word.word)
   if (props.practiceType !== WordPracticeType.Dictation) {
-    props.playWord(trigger)
+    emit('play', trigger)
   }
   checkCursorPosition()
 }
@@ -431,11 +413,10 @@ function onKeyUp(_e: KeyboardEvent) {
 
 useOnKeyboardEventListener(onKeyDown, onKeyUp)
 
-// ============ 生命周期 ============
-
 watch(
   () => props.word,
-  () => resetTypingCore(WordPlayTrigger.NewWord)
+  () => resetTypingCore(WordPlayTrigger.NewWord),
+  { immediate: true }
 )
 
 watch([() => input, () => props.showFullWord, () => props.practiceType], () => {
@@ -463,19 +444,12 @@ watch(
 
 onUnmounted(unmounted)
 
-// ============ 暴露给父组件 ============
-
-/** 自测"认识"时调用：展示完整单词并锁定输入 */
-function setWordCorrectAndLock(wordStr: string) {
-  inputLock = true
-  input = wordStr
-  playCorrect()
-}
-
 /** WordTest 选择后设置结果 */
 function setWordTestResult(isCorrect: boolean, wordStr: string) {
   if (isCorrect) {
-    setWordCorrectAndLock(wordStr)
+    inputLock = true
+    input = wordStr
+    playCorrect()
   } else {
     wrong = wordStr
     playBeep()
@@ -484,7 +458,6 @@ function setWordTestResult(isCorrect: boolean, wordStr: string) {
 
 defineExpose({
   isWordRight: () => isWordRight,
-  setWordCorrectAndLock,
   setWordTestResult,
 })
 </script>
@@ -500,7 +473,7 @@ defineExpose({
         {{ word.word }}
       </div>
       <div
-        class="mt-2 w-120 dictation"
+        class="mt-2 min-w-120 dictation"
         :style="{ minHeight: wordFontSize + 'px' }"
         :class="showWordResult ? (isWordRight ? 'right' : 'wrong') : ''"
       >
