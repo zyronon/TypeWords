@@ -324,10 +324,23 @@ const stages = $computed(() => {
       .row {
         @apply flex flex-col items-center gap-1 text-gray;
 
+        width: 4rem;
+        padding: 0 0 0.5rem 0;
+
         .line {
           height: 1px;
           width: 100%;
           background: var(--color-sub-gray);
+        }
+
+        .num {
+          line-height: 1;
+          height: 1rem;
+        }
+
+        .name {
+          line-height: 1;
+          height: 1rem;
         }
       }
     }
