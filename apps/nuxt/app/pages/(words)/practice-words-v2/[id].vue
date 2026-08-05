@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, provide, ref, watch } from 'vue'
+import { nextTick, onMounted, onUnmounted, provide, ref, watch } from 'vue'
 import StatisticsV2 from '~/components/practice-words-v2/StatisticsV2.vue'
 import { emitter, EventKey, useEvents } from '@typewords/core/utils/eventBus.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
@@ -246,6 +246,7 @@ async function reloadRemotePracticeSession(): Promise<boolean> {
   if (runtimeStore.globalLoading) return false
   runtimeStore.globalLoading = true
   try {
+    const previousWord = word
     const cache = await wordPersistence.load()
     knownCacheUpdatedAt = Math.max(knownCacheUpdatedAt, pendingRemoteUpdatedAt, Date.now())
     pendingRemoteUpdatedAt = 0
@@ -258,7 +259,7 @@ async function reloadRemotePracticeSession(): Promise<boolean> {
       Toast.error('远端练习进度无效，无法重新加载')
       return false
     }
-    emitter.emit(EventKey.resetWord)
+    resetSameWordAfterViewUpdate(previousWord)
     Toast.success('已加载其他设备的最新进度')
     return true
   } catch (error) {
@@ -396,6 +397,18 @@ const prevWord: Word | null = $computed(() => {
 const nextWord: Word | null = $computed(() => {
   return data.words?.[data.index + 1] ?? null
 })
+
+/**
+ * 会话切换后，新的 Word 引用会由 TypeWordV2 的 props watcher 自动重置。
+ * 若切换前后仍是同一个引用（如“重学一遍”），则等新会话 props 刷新后补发重置事件。
+ */
+function resetSameWordAfterViewUpdate(previousWord: Word) {
+  const targetWord = word
+  if (targetWord !== previousWord) return
+  nextTick(() => {
+    if (word === targetWord) emitter.emit(EventKey.resetWord)
+  })
+}
 
 // 显隐与阶段同步由 Registry applyPhase 负责（Phase 2）
 async function complete() {
@@ -568,7 +581,8 @@ async function savePracticeDataIns() {
 
 const savePracticeData = debounce(savePracticeDataIns, 500)
 
-function repeat() {
+async function repeat() {
+  const previousWord = word
   console.log('重学一遍')
   wordPersistence.clear()
   let temp = cloneDeep(taskWords)
@@ -583,8 +597,8 @@ function repeat() {
     temp.new = temp.new.filter(v => !ignoreSet.has(v.word))
     temp.review = temp.review.filter(v => !ignoreSet.has(v.word))
   }
-  emitter.emit(EventKey.resetWord)
-  initData(temp)
+  await initData(temp)
+  resetSameWordAfterViewUpdate(previousWord)
 }
 
 function prev() {
@@ -634,6 +648,7 @@ function toggleConciseMode() {
 }
 
 async function continueStudy() {
+  const previousWord = word
   wordPersistence.clear()
   let temp = cloneDeep(taskWords)
   //随机练习单独处理
@@ -668,8 +683,8 @@ async function continueStudy() {
     Toast.warning('当前没有可学习的单词')
     return
   }
-  emitter.emit(EventKey.resetWord)
-  initData(temp)
+  await initData(temp)
+  resetSameWordAfterViewUpdate(previousWord)
 
   if (AppEnv.CAN_REQUEST) {
     let res = await setUserDictProp(null, { ...store.sdict, type: 'word' })
@@ -680,12 +695,13 @@ async function continueStudy() {
 }
 
 async function jumpToGroup(group: number) {
+  const previousWord = word
   window?.umami?.track('jumpToGroup')
   wordPersistence.clear()
   console.log('没学完，强行跳过', group)
   store.sdict.lastLearnIndex = (group - 1) * store.sdict.perDayStudyNumber
-  emitter.emit(EventKey.resetWord)
-  initData(createStudyTaskV2().taskWords)
+  await initData(createStudyTaskV2().taskWords)
+  resetSameWordAfterViewUpdate(previousWord)
   if (AppEnv.CAN_REQUEST) {
     let res = await setUserDictProp(null, { ...store.sdict, type: 'word' })
     if (!res.success) {

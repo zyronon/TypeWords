@@ -19,7 +19,7 @@ import { getDefaultWord } from '@typewords/core/types/func.ts'
 import { ShortcutKey, WordPracticeType } from '@typewords/core/types/enum.ts'
 import { useBaseStore } from '@typewords/core/stores/base.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
-import { cancelWordPracticeAudio, usePlayBeep, usePlayCorrect, usePlayWordAudio } from '@typewords/core/hooks/sound.ts'
+import { cancelWordPracticeAudio, usePlayWordAudio } from '@typewords/core/hooks/sound.ts'
 import { useInjectedDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
 import { EventKey, useEvents } from '@typewords/core/utils/eventBus.ts'
 import { computed, ref, watch } from 'vue'
@@ -65,8 +65,6 @@ const store = useBaseStore()
 
 // ============ 音频 ============
 
-const playBeep = usePlayBeep()
-const playCorrect = usePlayCorrect()
 const playWordAudio = usePlayWordAudio()
 
 const volumeIconRef: any = $ref()
@@ -139,7 +137,7 @@ function onSentencePracticeComplete() {
 // ============ 单词操作 ============
 function checkIsWrong() {
   if (effective.value.isWordMasked) {
-    if (!showWordResult && !typingCoreRef?.right) {
+    if (!showWordResult && !typingCoreRef?.isWordRight()) {
       emit('wrong')
     }
   }
@@ -462,8 +460,8 @@ defineExpose({
       </div>
 
       <!-- WordMetaPanelV2: 翻译 + 例句 + 短语 + 词源 等展示 -->
+      <!--      不要加key，里面有个只显示一次的变量-->
       <WordMetaPanelV2
-        :key="word.word"
         ref="wordMetaPanelRef"
         :word="word"
         @complete="onSentencePracticeComplete"

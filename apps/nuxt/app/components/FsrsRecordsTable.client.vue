@@ -49,9 +49,6 @@ function getStateName(state: number | undefined): string {
   }
   return stateMap[state ?? -1] ?? '未知'
 }
-function getScheduledDays(state: number | undefined): string {
-  return state === 0 ? '立刻' : state + '天后'
-}
 </script>
 
 <template>
@@ -85,11 +82,6 @@ function getScheduledDays(state: number | undefined): string {
           {{ formatDate(row.due as string | Date | null | undefined) }}
         </template>
       </vxe-column>
-      <vxe-column field="scheduled_days" title="复习间隔" min-width="90" sortable>
-        <template #default="{ row }">
-          {{ getScheduledDays(row.scheduled_days) }}
-        </template>
-      </vxe-column>
       <vxe-column field="state" title="状态" min-width="100" sortable>
         <template #default="{ row }">
           {{ getStateName(row.state) }}
@@ -97,6 +89,7 @@ function getScheduledDays(state: number | undefined): string {
       </vxe-column>
       <vxe-column field="reps" title="复习次数" min-width="90" sortable />
       <vxe-column field="lapses" title="遗忘次数" min-width="90" sortable />
+      <vxe-column field="scheduled_days" title="复习间隔" min-width="90" sortable />
       <!--            <vxe-column field="elapsed_days" title="经过天数" min-width="90" sortable/>-->
       <!--            <vxe-column field="learning_steps" title="学习步骤" min-width="90" />-->
       <vxe-column field="stability" title="记忆稳定性" min-width="100" sortable />

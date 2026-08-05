@@ -39,14 +39,6 @@ const settingStore = useSettingStore()
       <Switch v-model="settingStore.autoAddRandomReviewWhenNoDue" />
     </SettingItem>
 
-    <SettingItem :title="$t('identify_method')">
-      <RadioGroup v-model="settingStore.identifyMethod">
-        <Radio :value="IdentifyMethod.SelfAssessment" size="default">{{ $t('self_assessment') }}</Radio>
-        <Radio :value="IdentifyMethod.WordTest" size="default">{{ $t('word_test') }}</Radio>
-        <Radio :value="IdentifyMethod.QuickIdentify" size="default">快速自测</Radio>
-      </RadioGroup>
-    </SettingItem>
-
     <SettingItem title="显示词源和相关词" desc="单词的词源和相关词可能有误，请谨慎使用">
       <Switch v-model="settingStore.showEtymologyAndRelWords" />
     </SettingItem>

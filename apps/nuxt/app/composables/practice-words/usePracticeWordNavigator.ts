@@ -9,7 +9,7 @@
  * - runWrongWordRetry 接收来自 wrongWordClear action 的 templateId + wordAdvance 配置
  * - Cursor 与工作词表均属于 Navigator 实例，不再是模块级共享状态
  */
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import type { TaskWords, Word } from '@typewords/core/types/types.ts'
 import type { PracticeDataV2 } from './practice-word-session.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
@@ -159,12 +159,26 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
 
   // ─── wordLoop 子步骤推进 ──────────────────────────────────────────────────────
   function enterLoop(startIndex: number, endIndex: number, subStepIndex = 0) {
+    const previousWord = deps.getCurrentWord()
     activeCursor.value = {
       ...activeCursor.value,
       loop: { startIndex, endIndex, subStepIndex },
     }
     deps.getPracticeData().index = startIndex
-    emitter.emit(EventKey.resetWord)
+
+    // 切回组头后若还是同一个 Word 引用（典型场景为 groupSize=1），props.word
+    // 不会触发子组件的 watch，需要显式重置。事件必须等 Vue 刷新 practiceType
+    // 等 props 后再发，否则会拿旧 props 播放刚完成的上一个单词。
+    // 组头是另一个 Word 时，props.word 的 watch 自己会完成重置和播放，避免重复触发。
+    const targetWord = deps.getCurrentWord()
+    const scheduledLoop = activeCursor.value.loop
+    if (targetWord === previousWord) {
+      nextTick(() => {
+        if (activeCursor.value.loop === scheduledLoop && deps.getCurrentWord() === targetWord) {
+          emitter.emit(EventKey.resetWord)
+        }
+      })
+    }
   }
 
   function leaveLoop(endIndex: number) {

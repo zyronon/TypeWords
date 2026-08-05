@@ -13,6 +13,7 @@ import {
   Progress,
   Switch,
   Toast,
+  Tooltip,
 } from '@typewords/base'
 import {
   _getAccomplishDate,
@@ -119,6 +120,36 @@ function toggleAutoAddRandomReview(enabled: boolean) {
     Toast.warning('暂无单词可以复习，先学习一些新词后再来看看吧')
   }
 }
+
+const effectiveReviewRatio = $computed(() => {
+  const dict = store.sdict
+  const isEnd = dict.length !== 1 && dict.lastLearnIndex >= dict.length - 1
+  return isEnd ? settingStore.wordReviewRatio || 1 : settingStore.wordReviewRatio
+})
+
+const reviewWordLimit = $computed(() => {
+  return Math.max(0, Math.floor(store.sdict.perDayStudyNumber * effectiveReviewRatio))
+})
+
+const reviewWordTip = $computed(() => {
+  const dailyGoal = store.sdict.perDayStudyNumber
+  const actualCount = practiceData?.taskWords?.review?.length ?? 0
+  const rule = `复习词来自记忆曲线中今天及以前到期的已学单词，并会排除本组新词、已掌握词和已忽略词。“${effectiveReviewRatio} 倍”只决定数量上限：每日新词目标 ${dailyGoal} × ${effectiveReviewRatio}，本组最多安排 ${reviewWordLimit} 个。\n`
+
+  if (isSaveData) {
+    return `${rule}当前是已生成的未完成任务，共安排 ${actualCount} 个复习词；\n实际数量取决于任务生成时符合条件的到期词，不会用未到期词补足。`
+  }
+  if (reviewWordLimit === 0) {
+    return `${rule}当前数量上限为 0，因此本组不安排复习词。`
+  }
+  if (dueReviewCount === 0 && actualCount > 0) {
+    return `${rule}当前没有到期复习词，已按“加入随机复习”设置从已学单词中随机加入 ${actualCount} 个。`
+  }
+  if (actualCount < reviewWordLimit) {
+    return `${rule}当前只有 ${actualCount} 个符合条件的到期词，因此本组安排 ${actualCount} 个，不会用未到期词补足。`
+  }
+  return `${rule}当前本组安排 ${actualCount} 个，已达到数量上限。`
+})
 
 async function resetCacheData() {
   if (unsupportedCacheVersion) return
@@ -547,6 +578,15 @@ onUnmounted(() => {
   <BasePage>
     <ReleaseBanner />
 
+    <section class="mb-4 px-1">
+      <h1 class="m-0 text-2xl md:text-2xl font-bold leading-tight text-[var(--color-main-text)]">
+        在线英语单词打字练习
+      </h1>
+      <p class="mt-2 mb-0 max-w-[65rem] text-base leading-relaxed text-[var(--color-sub-text)]">
+        选择适合你的英语词库，在电脑上通过跟打、听写、默写和间隔复习背单词，并记录每天的学习进度。
+      </p>
+    </section>
+
     <div class="my-100 text-4xl font-bold text-red" v-if="isOldHost">
       已启用新域名
       <a class="mr-4" :href="`${Origin}/words?from_old_site=1`">{{ Origin }}</a
@@ -658,7 +698,15 @@ onUnmounted(() => {
                 >(暂无到期词)</span
               >
             </div>
-            <div class="txt">{{ $t('review') }}</div>
+            <div class="txt flex center gap-1">
+              <span>{{ $t('review') }}</span>
+              <Tooltip>
+                <IconFluentQuestionCircle20Regular class="mt-.5" width="18" />
+                <template #reference>
+                  <div class="whitespace-pre-wrap">{{ reviewWordTip }}</div>
+                </template>
+              </Tooltip>
+            </div>
             <div class="center gap-2 mt-1 text-sm" v-if="!isSaveData && dueReviewCount === 0">
               <span>加入随机复习</span>
               <Switch :model-value="settingStore.autoAddRandomReviewWhenNoDue" @change="toggleAutoAddRandomReview" />

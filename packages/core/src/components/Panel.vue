@@ -18,9 +18,10 @@ provide(
         <div class="color-main">
           <slot name="title"></slot>
         </div>
-        <Tooltip :title="`${$t('close')}(${settingStore.shortcutKeyMap[ShortcutKey.TogglePanel]})`">
-          <Close @click="settingStore.showPanel = false" />
-        </Tooltip>
+        <Close
+          :tooltip="`${$t('close')}(${settingStore.shortcutKeyMap[ShortcutKey.TogglePanel]})`"
+          @click="settingStore.showPanel = false"
+        />
       </header>
       <div class="flex-1 overflow-auto">
         <slot></slot>
@@ -34,7 +35,6 @@ provide(
   background: var(--color-second);
   @apply shadow-lg flex flex-col h-full rounded-xl;
 }
-
 
 @media (max-width: 768px) {
   .panel {

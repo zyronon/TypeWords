@@ -48,18 +48,26 @@ const router = useRouter()
 const ttsPlayAudio = useTTsPlayAudio()
 let highlightedSentenceIndex = $ref(-1)
 let ttsVoiceHintShown = false
-const showDetails = computed(() =>
-  props.effective.revealAll || [WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(props.effective.practiceType)
+const showDetails = computed(
+  () =>
+    props.effective.revealAll ||
+    [WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(props.effective.practiceType)
 )
 const showTranslation = computed(() => props.effective.revealAll || props.effective.isShowTranslate)
-const showEtymology = computed(() =>
-  props.effective.revealAll ||
-  (props.effective.practiceType === WordPracticeType.FollowWrite &&
-    !props.effective.isWordMasked &&
-    props.effective.isShowTranslate)
+const showEtymology = computed(
+  () =>
+    props.effective.revealAll ||
+    (props.effective.practiceType === WordPracticeType.FollowWrite &&
+      !props.effective.isWordMasked &&
+      props.effective.isShowTranslate)
 )
 let activeSentenceIndex = $ref(-1)
-const sentenceRef = useTemplateRef('sentences')
+let sentenceRefMap = new Map()
+function setRef(index, el) {
+  if (el) {
+    sentenceRefMap.set(index, el)
+  }
+}
 
 useEventsByWatch(
   SENTENCE_PLAY_SHORTCUT_KEYS.map((key, index) => [key, () => noticePlaySentence(index)]),
@@ -68,19 +76,18 @@ useEventsByWatch(
 
 function noticePlaySentence(index: number) {
   if (index < 0 || index >= props.word.sentences.length) return
-  sentenceRef.value?.[index]?.play?.()
+  sentenceRefMap.get(index)?.play?.()
 }
 
 function playTtsWithGuide(text: string, onEnd?: () => void) {
   if (!ttsVoiceHintShown) {
-    const browserKey = getBrowserKey()
-    const hasVoice = settingStore.ttsVoiceMap?.some(v => v.key === browserKey && v.voice)
+    const hasVoice = settingStore.ttsVoiceMap?.some(v => v.key === getBrowserKey() && v.voice)
     if (!hasVoice) {
       ttsVoiceHintShown = true
       const ins = Toast.warning(
         '例句默认使用浏览器内置 TTS 发音，若无声请前往「设置 → 音效设置 → TTS 声色」选择可用声色',
         {
-          duration: 15000000,
+          duration: 10000,
           action: {
             text: '设置',
             onClick: () => {
@@ -112,9 +119,13 @@ function playSentence(index: number, options?: { highlight?: boolean }) {
   })
 }
 
-watch(() => props.word.word, () => {
-  highlightedSentenceIndex = -1
-})
+watch(
+  () => props.word.word,
+  () => {
+    highlightedSentenceIndex = -1
+    sentenceRefMap = new Map<any, any>()
+  }
+)
 
 function onCompleteSentence(text: string) {
   //简单比对，句子里面是否有当前单词，没有则为错
@@ -157,7 +168,7 @@ defineExpose({ startPracticeSentence, playSentence })
           :key="i.c"
         >
           <TypingSentence
-            ref="sentences"
+            :ref="el => setRef(j, el)"
             :key="i.c"
             :index="j"
             :sentence="i"
@@ -285,13 +296,17 @@ defineExpose({ startPracticeSentence, playSentence })
   .sentence {
     @apply rounded-lg px-3 py-2 -mx-3;
     background: transparent;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    transition:
+      background-color 0.3s ease,
+      box-shadow 0.3s ease;
   }
 
   .sentence-typing {
     @apply rounded-lg px-3 py-1 -mx-3;
     background: transparent;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    transition:
+      background-color 0.3s ease,
+      box-shadow 0.3s ease;
   }
 
   .sentence-highlight {
@@ -299,7 +314,6 @@ defineExpose({ startPracticeSentence, playSentence })
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-link) 25%, transparent);
   }
 }
-
 
 @media (max-width: 768px) {
   .word-meta {

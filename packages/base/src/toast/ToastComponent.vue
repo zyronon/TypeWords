@@ -110,7 +110,7 @@ defineExpose({
   border: 1px solid #ebeef5;
   transition: all 0.3s ease;
   pointer-events: auto;
-  @apply rounded-md py-3 px-5 relative min-w-50;
+  @apply rounded-md py-3 px-5 relative min-w-50 text-base;
 
   &.shadow {
     @apply shadow-xl;

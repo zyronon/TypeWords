@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { nextTick } from 'vue'
 import { IdentifyMethod, WordPracticeMode } from '@typewords/core/types/enum.ts'
 import { getDefaultWord } from '@typewords/core/types/func.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
+import { emitter, EventKey } from '@typewords/core/utils/eventBus.ts'
 import { createPracticeWordNavigator } from '../../app/composables/practice-words/usePracticeWordNavigator.ts'
 import { saveUserFlow } from '../../app/composables/practice-words/practice-flow-runtime.ts'
 import { CURRENT_FLOW_VERSION } from '../../app/composables/practice-words/practice-flow-config.ts'
@@ -72,6 +74,38 @@ beforeEach(() => {
 })
 
 describe('Navigator wordLoop cursor', () => {
+  it('resets a same-word loop only after Vue props refreshes', async () => {
+    const { navigator } = setupNavigator(makeFlow('same-word-loop-reset', [
+      { templateId: 'spell' },
+    ]), 1)
+    let resetCount = 0
+    const onReset = () => { resetCount++ }
+    emitter.on(EventKey.resetWord, onReset)
+
+    navigator.next()
+    expect(resetCount).toBe(0)
+    await nextTick()
+    expect(resetCount).toBe(1)
+
+    emitter.off(EventKey.resetWord, onReset)
+  })
+
+  it('lets the word prop watcher reset when loop jumps to another word', async () => {
+    const { navigator, data } = setupNavigator(makeFlow('changed-word-loop-reset', [
+      { templateId: 'spell' },
+    ]), 7)
+    let resetCount = 0
+    const onReset = () => { resetCount++ }
+    emitter.on(EventKey.resetWord, onReset)
+
+    for (let i = 0; i < 7; i++) navigator.next()
+    expect(data.index).toBe(0)
+    await nextTick()
+    expect(resetCount).toBe(0)
+
+    emitter.off(EventKey.resetWord, onReset)
+  })
+
   it.each([7, 8, 14])('visits every main and loop word for %i words and multiple subSteps', count => {
     const { navigator, data, completed } = setupNavigator(makeFlow(`order-${count}`, [
       { templateId: 'spell' }, { templateId: 'listen' },

@@ -395,33 +395,27 @@ function onResetWord() {
 // ============ 光标定位 ============
 function checkCursorPosition() {
   _nextTick(() => {
-    let cursorOffset: { top: number; left: number }
-    cursorOffset = { top: 0, left: -3 }
-    // 选中目标元素
-    const inputList = typingWordRef?.querySelectorAll(`.l`) ?? []
     if (!typingWordRef) return
     const typingWordRect = typingWordRef.getBoundingClientRect()
-    const cursorHeight = props.wordFontSize
-
+    const inputList = typingWordRef?.querySelectorAll(`.l`) ?? []
     if (inputList.length) {
       let inputRect = last(Array.from(inputList)).getBoundingClientRect()
       cursor = {
-        top: inputRect.top + inputRect.height - cursorHeight - typingWordRect.top + cursorOffset.top,
-        left: inputRect.right - typingWordRect.left + cursorOffset.left,
+        top: inputRect.top - typingWordRect.top,
+        left: inputRect.right - typingWordRect.left,
       }
     } else {
+      let dom
       const dictation = typingWordRef.querySelector(`.dictation`)
-      let elRect: DOMRect | undefined
-      if (dictation) {
-        elRect = dictation.getBoundingClientRect()
-      } else {
-        const letter = typingWordRef.querySelector(`.letter`)
-        elRect = letter?.getBoundingClientRect()
+      if (dictation) dom = dictation
+      else {
+        dom = typingWordRef.querySelector(`.letter`)
       }
+      let elRect = dom?.getBoundingClientRect()
       if (!elRect) return
       cursor = {
-        top: elRect.top + elRect.height - cursorHeight - typingWordRect.top + cursorOffset.top,
-        left: elRect.left - typingWordRect.left + cursorOffset.left,
+        top: elRect.top - typingWordRect.top,
+        left: elRect.left - typingWordRect.left,
       }
     }
   })

@@ -72,6 +72,7 @@ export interface SettingState {
   fsrsHardLimit: number // 小于等于fsrsHardLimit的卡片会评估为Hard
   fsrsParameters: FSRSParameters
 
+  //@deprecated 没有意义
   identifyMethod: IdentifyMethod
   _ignoreWatch: boolean //忽略监听，避免重复保存和上传
   ttsVoiceMap: { key: string; voice: string }[] // 浏览器 TTS 声色映射，key 为 OS+浏览器组合（如 mac+chrome）
