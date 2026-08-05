@@ -689,7 +689,9 @@ function checkWordIsNeedNext(word: Word) {
 
 function skipStep() {
   data.index = data.words.length - 1
-  data.wrongWords = []
+  if (statStore.stage !== WordPracticeStage.IdentifyReview) {
+    data.wrongWords = []
+  }
   next(false, true)
 }
 
