@@ -5,6 +5,7 @@ import { useWindowClick } from '../../hooks/event.ts'
 import { getAudioFileUrl, usePlayAudio } from '../../hooks/sound.ts'
 import { useSettingStore } from '../../stores/setting.ts'
 import { emitter, EventKey } from '../../utils/eventBus'
+import SettingItem from '@/components/setting/SettingItem.vue'
 
 const settingStore = useSettingStore()
 let timer = 0
@@ -56,13 +57,13 @@ function eventCheck(e) {
     <MiniDialog width="18rem" @mouseenter="toggle(true)" @mouseleave="toggle(false)" v-model="show">
       <div class="mini-row-title">音效设置</div>
       <div class="mini-row">
-        <label class="item-title">单词自动发音</label>
+        <label class="item-title">{{ $t('word_auto_pronunciation') }}</label>
         <div class="wrapper">
-          <Switch v-model="settingStore.wordSound" inline-prompt active-text="开" inactive-text="关" />
+          <Switch v-model="settingStore.wordSound" />
         </div>
       </div>
       <div class="mini-row">
-        <label class="item-title">单词发音口音</label>
+        <label class="item-title">{{ $t('pronunciation_accent') }}</label>
         <div class="wrapper">
           <Select v-model="settingStore.soundType" @toggle="selectToggle" placeholder="请选择" size="small">
             <Option label="美音" value="us" />
@@ -70,14 +71,21 @@ function eventCheck(e) {
           </Select>
         </div>
       </div>
+
       <div class="mini-row">
-        <label class="item-title">按键音</label>
+        <label class="item-title">{{ $t('auto_play_first_sentence') }}</label>
         <div class="wrapper">
-          <Switch v-model="settingStore.keyboardSound" inline-prompt active-text="开" inactive-text="关" />
+          <Switch v-model="settingStore.autoPlayFirstSentence" />
         </div>
       </div>
       <div class="mini-row">
-        <label class="item-title">按键音效</label>
+        <label class="item-title">{{ $t('keyboard_sound') }}</label>
+        <div class="wrapper">
+          <Switch v-model="settingStore.keyboardSound" />
+        </div>
+      </div>
+      <div class="mini-row">
+        <label class="item-title">{{ $t('keyboard_sound_effect') }}</label>
         <div class="wrapper">
           <Select v-model="settingStore.keyboardSoundFile" @toggle="selectToggle" placeholder="请选择" size="small">
             <Option v-for="item in SoundFileOptions" :key="item.value" :label="item.label" :value="item.value">
@@ -90,9 +98,9 @@ function eventCheck(e) {
         </div>
       </div>
       <div class="mini-row">
-        <label class="item-title">效果音</label>
+        <label class="item-title">{{ $t('effect_sound') }}</label>
         <div class="wrapper">
-          <Switch v-model="settingStore.effectSound" inline-prompt active-text="开" inactive-text="关" />
+          <Switch v-model="settingStore.effectSound" />
         </div>
       </div>
     </MiniDialog>

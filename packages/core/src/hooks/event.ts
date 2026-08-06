@@ -328,7 +328,7 @@ export function useStartKeyboardEventListener() {
       let shortcutEvent = []
       for (let [k, v] of Object.entries(settingStore.shortcutKeyMap)) {
         if (v === shortcutKey) {
-          // console.log('快捷键', k)
+          // console.log('快捷键', k,emitter.all.has(k))
           //必须是已监听的事件，才拦截并触发
           //因为在自测时，才会监听 1234 四个键，平时如果也拦截会导致无法输入1234
           if (emitter.all.has(k) && emitter.all.get(k)?.length) {

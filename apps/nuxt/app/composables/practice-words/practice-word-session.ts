@@ -41,6 +41,12 @@ export class UnsupportedPracticeCacheVersionError extends Error {
   }
 }
 
+export function addWrongWordKey(target: string[], word: string): boolean {
+  if (!word || target.includes(word)) return false
+  target.push(word)
+  return true
+}
+
 export function resolveNewerRemotePracticeCacheTime(
   meta: { data_version?: number; updated_at?: string } | null,
   knownUpdatedAt: number

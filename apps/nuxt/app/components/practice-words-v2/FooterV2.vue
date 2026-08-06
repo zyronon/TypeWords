@@ -176,9 +176,10 @@ const showSkipStep = computed(() => {
             <div class="name">{{ $t('total_words') }}</div>
           </div>
           <div class="row">
-            <Tooltip title="当前错误数 | 总错误数">
+            <Tooltip title="待巩固错词 | 本次错词">
               <div class="num">
-                {{ format(practiceData.wrongWords.length, '', 0) }} | {{ format(statStore.wrong, '', 0) }}
+                {{ format(practiceData.wrongWords.length, '', 0) }} |
+                {{ format(practiceData.allWrongWords.length, '', 0) }}
               </div>
             </Tooltip>
             <div class="line"></div>
@@ -258,7 +259,7 @@ const showSkipStep = computed(() => {
     padding: 0.2rem var(--space) calc(0.4rem + env(safe-area-inset-bottom, 0px)) var(--space);
 
     .stat {
-      @apply flex justify-around gap-[var(--stat-gap)] mt-2;
+      @apply flex justify-around gap-[var(--stat-gap)] mt-1;
 
       .row {
         @apply flex flex-col items-center gap-1 text-gray;

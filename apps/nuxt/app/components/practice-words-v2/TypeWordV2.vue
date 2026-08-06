@@ -32,7 +32,7 @@ import WordIdentifyPanelV2 from './WordIdentifyPanelV2.vue'
 import WordMetaPanelV2 from './WordMetaPanelV2.vue'
 import { useOnKeyboardEventListener } from '@typewords/core/hooks/event.ts'
 import { WordPlayTrigger } from '@typewords/core/composables/useWordPracticeAudio.ts'
-import { _nextTick } from '@typewords/core'
+import { _nextTick, throttle } from '@typewords/core'
 
 const { t: $t } = useI18n()
 
@@ -217,23 +217,7 @@ function deleteNote() {
   noteInputValue = ''
 }
 
-// ============ 收藏 / 简词 ============
-
-const { isWordSimple, toggleWordSimple } = useWordOptions()
-
-const collectAnchorRef = ref<HTMLElement | null>(null)
-
-function openCollectPicker(e: MouseEvent) {
-  e.stopPropagation()
-  openWordCollectPicker(props.word, e.currentTarget as HTMLElement, {
-    excludeDictId: store.sdict.id ? String(store.sdict.id) : undefined,
-  })
-}
-
-const isSimple = $computed(() => isWordSimple(props.word))
-
 // ============ 自测/WordTest 事件处理 ============
-
 let showNotice = false
 
 function onIdentifyKnow() {
@@ -300,8 +284,6 @@ const notice = $computed(() => {
 
 watch(() => props.word, onResetWord)
 
-useEvents([EventKey.resetWord, onResetWord])
-
 // keyup 时隐藏单词
 useOnKeyboardEventListener(
   () => {},
@@ -320,13 +302,33 @@ function onResetWord() {
   if (wordWrapRef.value) wordWrapRef.value.style.minWidth = 'unset'
 }
 
-// ============ defineExpose ============
+// ============ 收藏 / 简词 ============
 
-defineExpose({
-  showWord,
-  play,
-  getCollectAnchor: () => collectAnchorRef.value,
-})
+const { isWordCollect, toggleWordCollect, isWordSimple, toggleWordSimple } = useWordOptions()
+const collectAnchorRef = ref<HTMLElement | null>(null)
+
+function openCollectPicker(e: MouseEvent) {
+  e?.stopPropagation?.()
+  openWordCollectPicker(props.word, e.currentTarget as HTMLElement, {
+    excludeDictId: store.sdict.id ? String(store.sdict.id) : undefined,
+  })
+}
+
+const isCollect = $computed(() => isWordCollect(props.word))
+const isSimple = $computed(() => isWordSimple(props.word))
+
+function collect() {
+  toggleWordCollect(props.word)
+}
+
+useEvents([
+  [EventKey.resetWord, onResetWord],
+  //当默写时，执行 show 会标记为错误，并更新卡片
+  [ShortcutKey.ShowWord, throttle(showWord, 300)],
+  [ShortcutKey.ToggleCollect, collect],
+  [ShortcutKey.CollectToDict, () => openCollectPicker({ currentTarget: collectAnchorRef.value } as any)],
+  [ShortcutKey.PlayWordPronunciation, play],
+])
 </script>
 
 <template>
@@ -382,7 +384,7 @@ defineExpose({
       </Tooltip>
 
       <!-- 操作按钮行 -->
-      <div class="mt-2 flex gap-4">
+      <div class="mt-1 flex gap-4">
         <BaseIcon
           @click="emit('toggleSimple')"
           :title="
@@ -396,11 +398,21 @@ defineExpose({
         <BaseIcon @click="editNote" :title="editingNote ? '完成编辑笔记' : '编辑笔记'">
           <IconFluentClipboardTextEdit20Regular />
         </BaseIcon>
+        <BaseIcon
+          @click="collect"
+          :title="
+            (!isCollect ? $t('collect') : $t('uncollect')) +
+            `(${settingStore.shortcutKeyMap[ShortcutKey.ToggleCollect]})`
+          "
+        >
+          <IconFluentStar20Regular v-if="!isCollect" />
+          <IconFluentStar20Filled v-else />
+        </BaseIcon>
         <span ref="collectAnchorRef" class="inline-flex">
           <BaseIcon
             class="word-collect-anchor"
             @click="openCollectPicker"
-            :title="`${$t('collect_to_dict')}(${settingStore.shortcutKeyMap[ShortcutKey.ToggleCollect]})`"
+            :title="`${$t('collect_to_dict')}(${settingStore.shortcutKeyMap[ShortcutKey.CollectToDict]})`"
           >
             <IconFluentStarAdd16Regular />
           </BaseIcon>

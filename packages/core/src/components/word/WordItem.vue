@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Word } from '../../types'
 import { usePlayWordAudio } from '../../hooks/sound.ts'
-import { BaseIcon, Tooltip, VolumeIcon } from '@typewords/base'
+import { BaseIcon, VolumeIcon } from '@typewords/base'
 import { useWordOptions } from '../../hooks/dict.ts'
 import { openWordCollectPicker } from '../../hooks/useWordCollectPicker.ts'
 import TranslationList from './TranslationList.vue'
@@ -34,7 +34,7 @@ const props = withDefaults(
 
 const playWordAudio = usePlayWordAudio()
 
-const { isWordSimple, toggleWordSimple } = useWordOptions()
+const { isWordCollect, toggleWordCollect, isWordSimple, toggleWordSimple } = useWordOptions()
 
 function openCollectPicker(e: MouseEvent) {
   openWordCollectPicker(props.item, e.currentTarget as HTMLElement, {
@@ -61,11 +61,12 @@ function openCollectPicker(e: MouseEvent) {
       <slot name="suffix" :item="item"></slot>
       <BaseIcon
         v-if="showCollectIcon"
-        class="collect"
-        @click.stop="openCollectPicker"
-        :title="$t('collect_to_dict')"
+        :class="!isWordCollect(item) ? 'collect' : 'fill'"
+        @click.stop="toggleWordCollect(item)"
+        :title="!isWordCollect(item) ? $t('collect') : $t('uncollect')"
       >
-        <IconFluentStar16Regular />
+        <IconFluentStar16Regular v-if="!isWordCollect(item)" />
+        <IconFluentStar16Filled v-else />
       </BaseIcon>
 
       <BaseIcon

@@ -113,17 +113,6 @@ export const LIB_JS_URL = {
 export const PronunciationApi = 'https://dict.youdao.com/dictvoice?audio='
 export const DefaultShortcutKeyMap = {
   [ShortcutKey.EditArticle]: 'Ctrl+E',
-  [ShortcutKey.ShowWord]: 'Escape',
-  [ShortcutKey.Previous]: 'Ctrl+⬅',
-  [ShortcutKey.Next]: 'Ctrl+➡',
-  [ShortcutKey.Ignore]: 'Tab',
-  [ShortcutKey.ToggleSimple]: '`',
-  [ShortcutKey.ToggleCollect]: 'Enter',
-  [ShortcutKey.PreviousChapter]: 'Alt+⬅',
-  [ShortcutKey.NextChapter]: 'Alt+➡',
-  [ShortcutKey.NextStep]: 'Shift+➡',
-  [ShortcutKey.RepeatChapter]: 'Ctrl+Enter',
-  [ShortcutKey.DictationChapter]: 'Alt+Enter',
   [ShortcutKey.PlayWordPronunciation]: 'Ctrl+P',
   [ShortcutKey.ToggleShowTranslate]: 'Ctrl+Z',
   [ShortcutKey.ToggleDictation]: 'Ctrl+I',
@@ -132,6 +121,20 @@ export const DefaultShortcutKeyMap = {
   [ShortcutKey.ToggleToolbar]: 'Ctrl+B',
   [ShortcutKey.TogglePanel]: 'Ctrl+L',
   [ShortcutKey.RandomWrite]: 'Ctrl+R',
+
+  [ShortcutKey.Previous]: 'Ctrl+⬅',
+  [ShortcutKey.Next]: 'Ctrl+➡',
+  [ShortcutKey.PreviousChapter]: 'Alt+⬅',
+  [ShortcutKey.NextChapter]: 'Alt+➡',
+
+  [ShortcutKey.ShowWord]: 'Escape',
+  [ShortcutKey.Ignore]: 'Tab',
+  [ShortcutKey.ToggleSimple]: '`',
+  [ShortcutKey.ToggleCollect]: 'Enter',
+  [ShortcutKey.CollectToDict]: 'Shift+Enter',
+  [ShortcutKey.NextStep]: 'Shift+➡',
+  [ShortcutKey.RepeatChapter]: 'Ctrl+Enter',
+  [ShortcutKey.DictationChapter]: 'Alt+Enter',
   [ShortcutKey.KnowWord]: '1',
   [ShortcutKey.UnknownWord]: '2',
   [ShortcutKey.MasteredWord]: '3',
@@ -153,10 +156,7 @@ export const DefaultShortcutKeyMap = {
   [ShortcutKey.PlaySentence8]: 'Ctrl+8',
   [ShortcutKey.PlaySentence9]: 'Ctrl+9',
 }
-export const SlideType = {
-  HORIZONTAL: 0,
-  VERTICAL: 1,
-}
+
 export const WordPracticeModeStageMap: Record<WordPracticeMode, WordPracticeStage[]> = {
   [WordPracticeMode.Free]: [WordPracticeStage.FollowWriteNewWord, WordPracticeStage.Complete],
   [WordPracticeMode.IdentifyOnly]: [

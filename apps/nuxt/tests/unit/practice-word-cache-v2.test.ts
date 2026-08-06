@@ -7,9 +7,19 @@ import {
   resolveLegacyPracticeWordCursor,
 } from '@typewords/core/utils/cache.ts'
 import {
+  addWrongWordKey,
   resolveNewerRemotePracticeCacheTime,
   UnsupportedPracticeCacheVersionError,
 } from '../../app/composables/practice-words/practice-word-session.ts'
+
+describe('wrong word keys', () => {
+  it('adds each wrong word only once', () => {
+    const words = ['word']
+    expect(addWrongWordKey(words, 'word')).toBe(false)
+    expect(addWrongWordKey(words, 'Other')).toBe(true)
+    expect(words).toEqual(['word', 'Other'])
+  })
+})
 
 describe('practice cache version selection', () => {
   it('uses the shared practice cache version as the current v2 format', () => {

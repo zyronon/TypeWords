@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useWordOptions } from '../../hooks/dict.ts'
 import { closeWordCollectPicker, wordCollectPickerState } from '../../hooks/useWordCollectPicker.ts'
 import type { Dict } from '../../types'
+import { useDisableEventListener } from '@typewords/utils'
 
 const { t: $t } = useI18n()
 const { getCollectibleDicts, addWordToDict, createCustomDict } = useWordOptions()
@@ -135,6 +136,8 @@ watch(
     if (wordCollectPickerState.visible) adjustPosition()
   }
 )
+
+useDisableEventListener(() => wordCollectPickerState.visible)
 </script>
 
 <template>
@@ -150,12 +153,7 @@ watch(
         <div class="font-medium mb-2 pr-1">{{ $t('collect_to_dict') }}</div>
 
         <div v-if="dictList.length" class="dict-list">
-          <div
-            v-for="(dict, index) in dictList"
-            :key="dict.id"
-            class="dict-item"
-            @click="selectDict(dict)"
-          >
+          <div v-for="(dict, index) in dictList" :key="dict.id" class="dict-item" @click="selectDict(dict)">
             <span class="dict-name">{{ dict.name }}</span>
             <span v-if="index < 9" class="dict-shortcut">{{ $t('shortcut') }} {{ index + 1 }}</span>
           </div>

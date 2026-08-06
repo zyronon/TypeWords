@@ -150,7 +150,7 @@ defineExpose({ startPracticeSentence, playSentence })
   <div class="word-meta">
     <!-- 翻译区 -->
     <template v-if="word?.trans?.length">
-      <div class="translate flex flex-col items-center gap-2 my-3" v-opacity:noAnim="showTranslation">
+      <div class="translate flex flex-col items-center gap-2 my-2" v-opacity:noAnim="showTranslation">
         <TranslationList :word="word" :showFull="!effective.isWordMasked" />
       </div>
     </template>
@@ -158,7 +158,7 @@ defineExpose({ startPracticeSentence, playSentence })
     <!-- 例句列表 -->
     <template v-if="word?.sentences?.length">
       <div v-opacity="showDetails">
-        <div class="line-white my-3"></div>
+        <div class="line-white my-2"></div>
         <div
           class="sentence-typing"
           :class="{
@@ -186,7 +186,7 @@ defineExpose({ startPracticeSentence, playSentence })
     <!-- 短语列表 -->
     <template v-if="word?.phrases?.length">
       <div v-opacity="showDetails">
-        <div class="line-white my-3"></div>
+        <div class="line-white my-2"></div>
         <div class="flex">
           <div class="label">{{ $t('phrases') }}</div>
           <div class="flex flex-col">
@@ -207,7 +207,7 @@ defineExpose({ startPracticeSentence, playSentence })
     <!-- 近义词 -->
     <template v-if="word?.synos?.length">
       <div v-opacity="showDetails">
-        <div class="line-white my-3"></div>
+        <div class="line-white my-2"></div>
         <div class="flex">
           <div class="label">{{ $t('synonyms') }}</div>
           <div class="flex flex-col gap-3">
@@ -234,7 +234,7 @@ defineExpose({ startPracticeSentence, playSentence })
     <template v-if="settingStore.showEtymologyAndRelWords">
       <template v-if="word?.etymology?.length">
         <div v-opacity="showEtymology">
-          <div class="line-white my-3"></div>
+          <div class="line-white my-2"></div>
           <div class="flex">
             <div class="label">{{ $t('etymology') }}</div>
             <div class="">
@@ -249,7 +249,7 @@ defineExpose({ startPracticeSentence, playSentence })
 
       <template v-if="word?.relWords?.root">
         <div v-opacity="showEtymology">
-          <div class="line-white my-3"></div>
+          <div class="line-white my-2"></div>
           <div class="flex">
             <div class="label">{{ $t('related_words') }}</div>
             <div class="flex flex-col gap-3">
@@ -279,7 +279,7 @@ defineExpose({ startPracticeSentence, playSentence })
   width: 100%;
 
   .label {
-    width: 6rem;
+    width: 7rem;
     padding-top: 0.2rem;
     flex-shrink: 0;
   }

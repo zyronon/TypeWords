@@ -10,7 +10,6 @@ import { usePracticeDisplayPolicy } from '~/composables/practice-words/usePracti
 import { createPracticeWordNavigator } from '~/composables/practice-words/usePracticeWordNavigator.ts'
 import useTheme from '@typewords/core/hooks/theme.ts'
 import { useWordOptions } from '@typewords/core/hooks/dict.ts'
-import { openWordCollectPicker } from '@typewords/core/hooks/useWordCollectPicker.ts'
 import {
   _getDictDataByUrl,
   cloneDeep,
@@ -23,7 +22,7 @@ import {
 import { useRoute, useRouter } from 'vue-router'
 import FooterV2 from '~/components/practice-words-v2/FooterV2.vue'
 import Panel from '@typewords/core/components/Panel.vue'
-import { BaseIcon, Dialog, Toast, ToastComponent, Tooltip } from '@typewords/base'
+import { BaseIcon, Dialog, Toast, ToastComponent } from '@typewords/base'
 import WordList from '@typewords/core/components/list/WordList.vue'
 import TypeWordV2 from '~/components/practice-words-v2/TypeWordV2.vue'
 import Empty from '@typewords/core/components/Empty.vue'
@@ -36,6 +35,7 @@ import { AppEnv, DICT_LIST } from '@typewords/core/config/env.ts'
 import { addStat, setUserDictProp } from '@typewords/core/apis'
 import GroupList from '@typewords/core/components/word/GroupList.vue'
 import {
+  addWrongWordKey,
   getDefaultPracticeData,
   type PracticeDataV2,
   type PracticeWordCacheV2,
@@ -44,7 +44,7 @@ import {
 } from '~/composables/practice-words/practice-word-session.ts'
 import { flushStatToStore } from '@typewords/core/composables/usePracticePersistence.ts'
 import { useDataSyncPersistence } from '@typewords/core/composables/useDataSyncPersistence.ts'
-import { ShortcutKey, WordPracticeMode, WordPracticeType } from '@typewords/core/types/enum.ts'
+import { ShortcutKey, WordPracticeMode } from '@typewords/core/types/enum.ts'
 import { createEmptyCard, Rating } from 'ts-fsrs'
 import { useGetGradeByWrongTimes, useNextCard } from '@typewords/core/hooks/fsrs.ts'
 import WordMarkPickList, { type WordMarkPickResult } from '@typewords/core/components/word/WordMarkPickList.vue'
@@ -57,7 +57,7 @@ import {
 import { createStudyTaskV2 } from '~/composables/practice-words/study-task-v2.ts'
 import PrevAndNextWord from '~/components/practice-words-v2/PrevAndNextWord.vue'
 
-const { isWordSimple, toggleWordSimple } = useWordOptions()
+const {  isWordSimple, toggleWordSimple } = useWordOptions()
 const settingStore = useSettingStore()
 const runtimeStore = useRuntimeStore()
 const { toggleTheme } = useTheme()
@@ -69,7 +69,6 @@ const dataSync = useDataSyncPersistence()
 const wordPersistence = usePracticeWordPersistenceV2()
 let { getGradeByWrongTimes } = useGetGradeByWrongTimes()
 let { nextCard } = useNextCard()
-const typingRef: any = $ref()
 const onboardingHostRef = ref<InstanceType<typeof PracticeOnboardingHostV2>>()
 let isComplete = $ref(false)
 let loading = $ref(false)
@@ -160,6 +159,15 @@ watch([() => data.words, () => data.index, currentPracticeType], () => {
   updateQuestion()
   handleResumeTimer()
 })
+
+watch(
+  () => word.word,
+  async (currentWord, previousWord) => {
+    if (!currentWord || currentWord === previousWord) return
+    await nextTick()
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }
+)
 
 function updateQuestion() {
   const word = data.words?.[data.index]
@@ -401,10 +409,17 @@ async function complete() {
   if (!isComplete) {
     let start = Date.now()
     console.log('全完学完了')
+    statStore.wrong = data.allWrongWords.length
     isComplete = true
     settling = true
     runtimeStore.globalLoading = true
     stopTimer()
+
+    // 先让结算弹框及“结算中”状态完成渲染，再执行统计、FSRS 和持久化。
+    // 仅 nextTick 会在浏览器绘制前继续执行微任务；双 rAF 确保至少完成一帧绘制。
+    await nextTick()
+    await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+
     try {
       //如果 shuffle 数组不为空，就说明是复习，不用修改 lastLearnIndex
       if (settingStore.wordPracticeMode !== WordPracticeMode.Shuffle) {
@@ -413,7 +428,7 @@ async function complete() {
         let ignoreList = [store.allIgnoreWords, store.knownWords][settingStore.ignoreSimpleWord ? 0 : 1]
         // 忽略单词数
         const ignoreCount = ignoreList.filter(word =>
-          store.sdict.words.slice(store.sdict.lastLearnIndex).some(w => w.word.toLowerCase() === word)
+          store.sdict.words.slice(store.sdict.lastLearnIndex).some(w => w.word === word)
         ).length
         // 如果lastLearnIndex已经超过可学单词数，则判定完成
         if (store.sdict.lastLearnIndex + ignoreCount >= store.sdict.length) {
@@ -492,7 +507,7 @@ function addExcludeWord() {
 function onWordKnow() {
   console.log('onWordKnow')
   //"我认识“强制更新了Good，因为点”已掌握“才会设置Easy
-  data.ratingMap[word.word.toLowerCase()] = Rating.Good
+  data.ratingMap[word.word] = Rating.Good
   addExcludeWord()
 }
 
@@ -500,16 +515,13 @@ function onTypeWrong() {
   data.wrongTimes++
   //这里的代码暂时不能移动，因为要实时把错词加入到列表里面，从而更新toolbar里面的错词数
   //todo 后续可以优化
-  let temp = word.word.toLowerCase()
-  if (!data.allWrongWords.find(v => v === temp)) {
-    data.allWrongWords.push(temp)
-    statStore.wrong++
-  }
-  if (!store.wrong.words.find((v: Word) => v.word.toLowerCase() === temp)) {
+  let temp = word.word
+  addWrongWordKey(data.allWrongWords, temp)
+  if (!store.wrong.words.find((v: Word) => v.word === temp)) {
     store.wrong.words.push(word)
     store.wrong.length = store.wrong.words.length
   }
-  if (!data.wrongWords.find((v: Word) => v.word.toLowerCase() === temp)) {
+  if (!data.wrongWords.find((v: Word) => v.word === temp)) {
     data.wrongWords.push(word)
   }
   let rIndex = data.excludeWords.findIndex(v => v === word.word)
@@ -572,21 +584,6 @@ function skip() {
   nav.next(false)
 }
 
-function show() {
-  typingRef?.showWord()
-}
-
-function collect() {
-  const anchor = typingRef?.getCollectAnchor?.() as HTMLElement | null | undefined
-  openWordCollectPicker(word, anchor ?? { x: window.innerWidth / 2, y: window.innerHeight / 3 }, {
-    excludeDictId: store.sdict.id ? String(store.sdict.id) : undefined,
-  })
-}
-
-function play() {
-  typingRef?.play()
-}
-
 function toggleWordSimpleWrapper() {
   if (!isWordSimple(word)) {
     setTimeout(() => nav.next(false))
@@ -646,7 +643,7 @@ async function continueStudy() {
       store.sdict.lastLearnIndex = store.sdict.lastLearnIndex + statStore.newWordNumber
       // 忽略单词数
       let ignoreList = [store.allIgnoreWords, store.knownWords][settingStore.ignoreSimpleWord ? 0 : 1]
-      const ignoreCount = ignoreList.filter(word => store.sdict.words.some(w => w.word.toLowerCase() === word)).length
+      const ignoreCount = ignoreList.filter(word => store.sdict.words.some(w => w.word === word)).length
       // 如果lastLearnIndex已经超过可学单词数，则判定完成
       if (store.sdict.lastLearnIndex + ignoreCount >= store.sdict.length) {
         store.sdict.complete = true
@@ -715,7 +712,7 @@ watch(isIniting, n => {
 
 function onWordMarkPickComplete(result: WordMarkPickResult) {
   result.know.map(word => {
-    data.ratingMap[word.word.toLowerCase()] = Rating.Good
+    data.ratingMap[word.word] = Rating.Good
     data.excludeWords.push(word.word)
   })
   result.mastered.map(word => {
@@ -726,9 +723,9 @@ function onWordMarkPickComplete(result: WordMarkPickResult) {
     console.log('当前学完了，但还有错词')
     // 交给当前 Phase 的 onEnd → wrongWordClear action 进入标准错词清空子步骤。
     data.wrongWords = cloneDeep(result.unknown)
-    data.allWrongWords = data.allWrongWords.concat(result.unknown.map(v => v.word.toLowerCase()))
     result.unknown.forEach(v => {
-      data.wrongTimesMap[v.word.toLowerCase()] = Rating.Good
+      addWrongWordKey(data.allWrongWords, v.word)
+      data.wrongTimesMap[v.word] = Rating.Good
     })
   } else {
     data.wrongWords = []
@@ -743,15 +740,10 @@ useEvents([
   [EventKey.onTyping, handleResumeTimer],
   [EventKey.repeatStudy, repeat],
   [EventKey.continueStudy, continueStudy],
-  //当默写时，执行 show 会标记为错误，并更新卡片
-  [ShortcutKey.ShowWord, throttle(show, 300)],
   [ShortcutKey.Previous, nav.prev],
   [ShortcutKey.Next, throttle(() => nav.next(false), 300)],
   [ShortcutKey.Ignore, throttle(skip, 300)],
-  [ShortcutKey.ToggleCollect, collect],
   [ShortcutKey.ToggleSimple, toggleWordSimpleWrapper],
-  [ShortcutKey.PlayWordPronunciation, play],
-
   [ShortcutKey.RepeatChapter, repeat],
   [ShortcutKey.NextChapter, continueStudy],
   [ShortcutKey.NextStep, nav.skipStep],
@@ -801,7 +793,6 @@ useEvents([
             @openNotice="onboardingHostRef?.openConflictNotice2"
           />
           <TypeWordV2
-            ref="typingRef"
             :word="word"
             :question="data.question"
             :practiceType="currentPracticeType"

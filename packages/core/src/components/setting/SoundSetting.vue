@@ -105,14 +105,15 @@ function previewTtsVoice(voiceName: string) {
 
     <!-- 单词发音 -->
     <SettingItem :mainTitle="$t('word_pronunciation')" />
+
+    <SettingItem :title="$t('word_auto_pronunciation')">
+      <Switch v-model="settingStore.wordSound" />
+    </SettingItem>
     <SettingItem :title="$t('pronunciation_accent')" :desc="$t('pronunciation_accent_desc')">
       <Select v-model="settingStore.soundType" :placeholder="$t('please_select')" class="w-50!">
         <Option :label="$t('us_accent')" value="us" />
         <Option :label="$t('uk_accent')" value="uk" />
       </Select>
-    </SettingItem>
-    <SettingItem :title="$t('word_auto_pronunciation')">
-      <Switch v-model="settingStore.wordSound" />
     </SettingItem>
     <SettingItem v-if="showVolumeSubsInSections" :title="$t('volume')">
       <Slider v-model="settingStore.wordSoundVolume" showText showValue unit="%" />

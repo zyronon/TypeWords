@@ -180,6 +180,7 @@ function getShortcutKeyName(key: string): string {
     Ignore: t('shortcut_ignore'),
     ToggleSimple: t('shortcut_toggle_simple'),
     ToggleCollect: t('shortcut_toggle_collect'),
+    CollectToDict: t('collect_to_dict'),
     NextChapter: t('shortcut_next_chapter'),
     PreviousChapter: t('shortcut_previous_chapter'),
     NextStep: t('shortcut_next_step'),
@@ -200,6 +201,10 @@ function getShortcutKeyName(key: string): string {
     ChooseB: t('shortcut_choose_b'),
     ChooseC: t('shortcut_choose_c'),
     ChooseD: t('shortcut_choose_d'),
+    SelfTestingChooseA: t('shortcut_self_testing_choose_a'),
+    SelfTestingChooseB: t('shortcut_self_testing_choose_b'),
+    SelfTestingChooseC: t('shortcut_self_testing_choose_c'),
+    SelfTestingChooseD: t('shortcut_self_testing_choose_d'),
     PlaySentence1: t('shortcut_play_sentence_1'),
     PlaySentence2: t('shortcut_play_sentence_2'),
     PlaySentence3: t('shortcut_play_sentence_3'),
@@ -226,10 +231,7 @@ let configLoading = $ref(false)
 const { loading: exportLoading, exportData, getExportedData } = useExport()
 
 function upgradeImportedPracticeWordCache(data: BackupData['val']) {
-  data[PRACTICE_WORD_CACHE.key] = checkAndUpgradePracticeWordCache(
-    data[PRACTICE_WORD_CACHE.key],
-    data.setting.val
-  )
+  data[PRACTICE_WORD_CACHE.key] = checkAndUpgradePracticeWordCache(data[PRACTICE_WORD_CACHE.key], data.setting.val)
 }
 
 async function importJson(str: string) {
@@ -580,8 +582,8 @@ function removeSbConfig() {
   })
 }
 
-function disable360(){
-  localStorage.setItem('disable360',1)
+function disable360() {
+  localStorage.setItem('disable360', 1)
   Toast.success('已设置')
 }
 </script>
@@ -652,14 +654,16 @@ function disable360(){
               :title="$t('export_data_title')"
               :desc="$t('data_saved_locally') + $t('export_data_desc_suffix', { appName: APP_NAME })"
             >
-              <BaseButton size="large"  :loading="exportLoading" @click="exportData()">{{ $t('export_data_backup') }}</BaseButton>
+              <BaseButton size="large" :loading="exportLoading" @click="exportData()">{{
+                $t('export_data_backup')
+              }}</BaseButton>
             </SettingItem>
             <div class="text-gray text-sm">💾 {{ $t('export_zip_hint') }}</div>
             <div class="line my-3"></div>
 
             <!--            导入数据-->
             <SettingItem :title="$t('import_data_title')">
-              <BaseButton size="large"  @click="openGate('import')" :loading="importLoading">{{
+              <BaseButton size="large" @click="openGate('import')" :loading="importLoading">{{
                 $t('import_data_restore')
               }}</BaseButton>
             </SettingItem>
@@ -670,7 +674,7 @@ function disable360(){
             <template v-if="isNewHost">
               <div class="line my-3"></div>
               <SettingItem :title="$t('migrate_2study_title')">
-                <BaseButton size="large"  @click="openGate('transfer')">{{ $t('migrate_btn') }}</BaseButton>
+                <BaseButton size="large" @click="openGate('transfer')">{{ $t('migrate_btn') }}</BaseButton>
               </SettingItem>
               <i18n-t keypath="migrate_overwrite_warning" tag="span">
                 <strong class="color-red">{{ $t('complete_overflow') }}</strong>
@@ -680,11 +684,17 @@ function disable360(){
             <div class="line my-3"></div>
             <SettingItem :title="$t('other')"> </SettingItem>
             <div class="flex gap-space">
-              <BaseButton size="large"  @click="openHistoryDialog">{{ $t('history_data') }}</BaseButton>
+              <BaseButton size="large" @click="openHistoryDialog">{{ $t('history_data') }}</BaseButton>
               <PopConfirm :title="$t('clear_all_data_confirm')" @confirm="clearAllData">
-                <BaseButton size="large" >{{ $t('clear_all_data') }}</BaseButton>
+                <BaseButton size="large">{{ $t('clear_all_data') }}</BaseButton>
               </PopConfirm>
-              <BaseButton size="large" type="info" @click="disable360" keyboard="不要乱点，点击后会使导出功能失效，仅适用于： Mac 版本 360 极速浏览器">跳过导出</BaseButton>
+              <BaseButton
+                size="large"
+                type="info"
+                @click="disable360"
+                keyboard="不要乱点，点击后会使导出功能失效，仅适用于： Mac 版本 360 极速浏览器"
+                >跳过导出</BaseButton
+              >
             </div>
           </div>
 
@@ -725,10 +735,16 @@ function disable360(){
                 </FormItem>
               </Form>
               <div class="flex justify-end">
-                <BaseButton size="large"  @click="removeSbConfig" :disabled="!canSyncToServe">{{ $t('delete_config') }}</BaseButton>
-                <BaseButton size="large"  @click="openSupabaseSaveGate" :loading="configLoading" :disabled="!canSyncToServe">{{
-                  runtimeStore.isError ? $t('retry') : $t('save_config')
+                <BaseButton size="large" @click="removeSbConfig" :disabled="!canSyncToServe">{{
+                  $t('delete_config')
                 }}</BaseButton>
+                <BaseButton
+                  size="large"
+                  @click="openSupabaseSaveGate"
+                  :loading="configLoading"
+                  :disabled="!canSyncToServe"
+                  >{{ runtimeStore.isError ? $t('retry') : $t('save_config') }}</BaseButton
+                >
               </div>
               <div
                 class="absolute top-0 left-0 w-full h-full bg-white opacity-80 cursor-not-allowed z-10 center rounded-md"
@@ -772,7 +788,7 @@ function disable360(){
             <div class="row">
               <label class="item-title"></label>
               <div class="wrapper">
-                <BaseButton size="large"  @click="resetShortcutKeyMap">{{ $t('restore_default') }}</BaseButton>
+                <BaseButton size="large" @click="resetShortcutKeyMap">{{ $t('restore_default') }}</BaseButton>
               </div>
             </div>
           </div>
@@ -791,13 +807,22 @@ function disable360(){
 
   <BackupGateDialog v-model="showBackupGate">
     <template v-slot="{ disabled }">
-      <BaseButton size="large"  @click="doSaveSbConfig" :disabled="disabled" v-if="pendingNextAction === 'supabase_save'">{{
-        runtimeStore.isError ? $t('retry') : $t('save_config')
-      }}</BaseButton>
-      <BaseButton size="large"  @click="showTransfer = true" :disabled="disabled" v-else-if="pendingNextAction === 'transfer'">{{
-        $t('migrate_btn')
-      }}</BaseButton>
-      <BaseButton size="large"
+      <BaseButton
+        size="large"
+        @click="doSaveSbConfig"
+        :disabled="disabled"
+        v-if="pendingNextAction === 'supabase_save'"
+        >{{ runtimeStore.isError ? $t('retry') : $t('save_config') }}</BaseButton
+      >
+      <BaseButton
+        size="large"
+        @click="showTransfer = true"
+        :disabled="disabled"
+        v-else-if="pendingNextAction === 'transfer'"
+        >{{ $t('migrate_btn') }}</BaseButton
+      >
+      <BaseButton
+        size="large"
         v-else-if="pendingNextAction === 'restore_history'"
         @click="restoreHistoryData"
         :disabled="disabled"
@@ -829,7 +854,7 @@ function disable360(){
             <div class="color-gray">{{ $t('auto_backup_time') }}{{ formatHistoryTime(item.createdAt) }}</div>
           </div>
           <div class="mt-2">
-            <BaseButton size="large"  @click="openHistoryRestoreGate(item)" :disabled="restoreLoading">{{
+            <BaseButton size="large" @click="openHistoryRestoreGate(item)" :disabled="restoreLoading">{{
               $t('restore_this_version')
             }}</BaseButton>
           </div>
@@ -844,10 +869,10 @@ function disable360(){
       <div class="color-gray mt-2">{{ $t('push_local_desc') }}</div>
       <div class="color-gray">{{ $t('pull_remote_desc') }}</div>
       <div class="flex justify-end mt-4">
-        <BaseButton size="large"  :loading="sbSyncChoiceLoading" @click="onSbFirstSyncChoice('push_local')">{{
+        <BaseButton size="large" :loading="sbSyncChoiceLoading" @click="onSbFirstSyncChoice('push_local')">{{
           $t('push_local')
         }}</BaseButton>
-        <BaseButton size="large"  :loading="sbSyncChoiceLoading" @click="onSbFirstSyncChoice('pull_remote')">{{
+        <BaseButton size="large" :loading="sbSyncChoiceLoading" @click="onSbFirstSyncChoice('pull_remote')">{{
           $t('pull_remote')
         }}</BaseButton>
       </div>

@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { BaseIcon, ToastComponent } from '@typewords/base'
 import Logo from '@typewords/core/components/Logo.vue'
-import MigrateDialog from '@typewords/core/components/dialog/MigrateDialog.vue'
 import IeDialog from '@typewords/core/components/dialog/IeDialog.vue'
-import { Origin } from '@typewords/core/config/env'
 import useTheme from '@typewords/core/hooks/theme.ts'
 import { useRuntimeStore } from '@typewords/core/stores/runtime.ts'
 import { useSettingStore } from '@typewords/core/stores/setting.ts'
@@ -31,9 +29,6 @@ function toggleExpand(n: boolean) {
 
 watch(() => settingStore.sideExpand, toggleExpand)
 
-//迁移数据
-let showTransfer = $ref(false)
-
 watch(
   () => settingStore.load,
   n => {
@@ -59,14 +54,6 @@ const showIcon = $computed(() => {
 
 onMounted(() => {
   init()
-
-  if (new URLSearchParams(window.location.search).get('from_old_site') === '1' && location.origin === Origin) {
-    if (localStorage.getItem('__migrated_from_2study_top__')) return
-    setTimeout(() => {
-      showTransfer = true
-    }, 1000)
-  }
-
   window.umami?.track('sync', { check: Supabase.check() })
 })
 </script>
@@ -150,8 +137,6 @@ onMounted(() => {
         <IconFluentChevronUp20Filled v-else />
       </div>
     </div>
-
-    <MigrateDialog v-model="showTransfer" @ok="init" />
 
     <IeDialog />
 

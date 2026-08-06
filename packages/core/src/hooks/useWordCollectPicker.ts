@@ -11,7 +11,7 @@ export const wordCollectPickerState = reactive({
   newDictName: '',
 })
 
-function updatePosition(anchor: HTMLElement | { x: number; y: number }) {
+function updatePosition(anchor: HTMLElement) {
   if (anchor instanceof HTMLElement) {
     const rect = anchor.getBoundingClientRect()
     wordCollectPickerState.x = rect.left + rect.width / 2
@@ -32,7 +32,7 @@ export function closeWordCollectPicker() {
 
 export function openWordCollectPicker(
   word: Word,
-  anchor: HTMLElement | { x: number; y: number },
+  anchor: HTMLElement,
   options?: { excludeDictId?: string }
 ) {
   wordCollectPickerState.word = word

@@ -32,6 +32,7 @@ export enum ShortcutKey {
   Previous = 'Previous',
   ToggleSimple = 'ToggleSimple',
   ToggleCollect = 'ToggleCollect',
+  CollectToDict = 'CollectToDict',
   NextChapter = 'NextChapter',
   PreviousChapter = 'PreviousChapter',
   NextStep = 'NextStep',
