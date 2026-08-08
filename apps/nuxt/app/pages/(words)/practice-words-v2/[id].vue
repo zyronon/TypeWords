@@ -52,6 +52,7 @@ import type { PracticeSessionSnapshot } from '~/composables/practice-words/pract
 import { resolvePracticeQuestion } from '~/composables/practice-words/practice-question.ts'
 import {
   canAutoResumeVisibilityTimer,
+  normalizePracticeTimer,
   usePracticeIdleTimer,
 } from '~/composables/practice-words/usePracticeIdleTimer.ts'
 import { createStudyTaskV2 } from '~/composables/practice-words/study-task-v2.ts'
@@ -141,6 +142,7 @@ function applyPracticeCache(cache: PracticeWordCacheV2): boolean {
   Object.assign(taskWords, cache.taskWords)
   data = getDefaultPracticeData(data, cache.practiceData)
   statStore.$patch(cache.statStoreData)
+  reconcilePracticeTimer()
   if (!restorePracticeSession(cache)) {
     Object.assign(taskWords, previousTaskWords)
     data = getDefaultPracticeData(data, previousData)
@@ -290,12 +292,12 @@ onMounted(async () => {
   document.addEventListener('visibilitychange', onvisibilitychange)
 })
 
-onUnmounted(async () => {
+onUnmounted(() => {
   document.removeEventListener('visibilitychange', onvisibilitychange)
   clearVisibilityResumeTimer()
-  if (!showRemoteReloadDialog) await savePracticeDataIns()
   stopTimer()
   watchRefList.map(v => v?.stop())
+  if (!showRemoteReloadDialog) void savePracticeDataIns()
 })
 
 let allWords: Word[] = []
@@ -404,6 +406,12 @@ function resetSameWordAfterViewUpdate(previousWord: Word) {
   })
 }
 
+function reconcilePracticeTimer() {
+  const normalized = normalizePracticeTimer(statStore.segments, statStore.spend)
+  statStore.segments = normalized.segments
+  statStore.spend = normalized.spend
+}
+
 // 显隐与阶段同步由 Registry applyPhase 负责（Phase 2）
 async function complete() {
   if (!isComplete) {
@@ -441,6 +449,7 @@ async function complete() {
       if (!statStore.timerPaused && statStore.segments.length > 0) {
         statStore.segments[statStore.segments.length - 1][1] = Date.now()
       }
+      reconcilePracticeTimer()
 
       // 按自然日对 segments 分组，每天生成一条 Statistics 记录，落库到 store.sdict.statistics
       flushStatToStore(statStore.$state)
@@ -560,6 +569,7 @@ async function savePracticeDataIns() {
     if (!statStore.timerPaused && statStore.segments.length > 0) {
       statStore.segments[statStore.segments.length - 1][1] = Date.now()
     }
+    reconcilePracticeTimer()
     await wordPersistence.save({
       taskWords,
       practiceData: data,
