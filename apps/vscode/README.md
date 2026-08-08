@@ -67,8 +67,8 @@
 6. 执行`pnpm run generate`打包项目文件
 
 ## 打包插件
-执行以下命令打包成 vsix 文件，会在根目录下生成「typewords-版本号.vsix」文件，然后就可以在 publisher 控制台上传到应用市场了，发布完后要过几分钟才能在应用市场搜索到
-vsce package
+执行 vsce package 命令打包成 vsix 文件，会在根目录下生成「typewords-版本号.vsix」文件，然后就可以在 publisher 控制台上传到应用市场了，发布完后要过几分钟才能在应用市场搜索到
+
  
 ## Cursor\本地安装插件
 点击左侧的「扩展」按钮或快捷键「command + shift + x」来打开扩展

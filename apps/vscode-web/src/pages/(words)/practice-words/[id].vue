@@ -9,7 +9,7 @@ import {
   useOnKeyboardEventListener,
   useStartKeyboardEventListener,
 } from '@typewords/core/hooks/event.ts'
-import { useDisableEventListener } from '@typewords/utils'
+import { useDisableEventListener } from '@/core/hooks/event'
 import useTheme from '@typewords/core/hooks/theme.ts'
 import { getCurrentStudyWord, useWordOptions } from '@typewords/core/hooks/dict.ts'
 import {

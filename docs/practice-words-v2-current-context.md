@@ -193,7 +193,7 @@ v2 是对 v1 的替换实现，不设计 v1/v2 并存和双向兼容。通用缓
 
 ## 8. 测试与验收
 
-单测目录：`apps/nuxt/tests/unit`
+单测目录：`../tests/unit`
 
 - `practice-flow-runtime.test.ts`：v6 严格校验、回退、实例隔离、统计。
 - `practice-word-navigator.test.ts`：7/8/14 词 loop、验证步骤消错、重加错词、Cursor 恢复和空 Node。

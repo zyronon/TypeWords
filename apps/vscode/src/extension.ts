@@ -79,7 +79,7 @@ class ChatPanel {
     </style>
 </head>
 <body>
-    <iframe src="${cdnUrl}/" title="TypeWords"></iframe>
+    <iframe src="${cdnUrl}/words" title="TypeWords"></iframe>
 </body>
 </html>`
   }
