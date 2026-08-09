@@ -39,3 +39,4 @@ report.html
 !.env.example
 public/vscode
 apps/TypeWordsMiniApp
+*.tsbuildinfo

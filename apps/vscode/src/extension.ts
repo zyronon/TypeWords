@@ -53,46 +53,33 @@ class ChatPanel {
     }
   }
 
-  private async _update() {
-    const webview = this._panel.webview
-    this._panel.webview.html = await this._getHtmlForWebview(webview)
+  private _update() {
+    this._panel.webview.html = this._getHtmlForWebview()
   }
 
-  private async _getHtmlForWebview(webview: vscode.Webview) {
-    const cdnUrl = 'https://vs.typewords.cc'
-    const ALLURL = 'https://*.typewords.cc'
-
-    let s = await fetch(`${cdnUrl}/vs.json`)
-    let r:any = await s.json()
-
-    // 生成 nonce 用于 CSP
-    const nonce = Buffer.from(Date.now().toString()).toString('base64')
-
-    // CSP 配置：允许内联脚本（使用 nonce）和外部资源
-    const csp = [
-      `default-src ${ALLURL}`,
-      `script-src 'nonce-${nonce}' ${ALLURL} 'unsafe-inline'`,
-      `style-src ${ALLURL} 'unsafe-inline'`,
-      `connect-src ${ALLURL} https://*.supabase.co`,
-      'img-src data: https:',
-      'media-src https://dict.youdao.com',
-      'font-src data:',
-    ].join('; ');
+  private _getHtmlForWebview() {
+    const cdnUrl = 'https://typewords.cc'
 
     return `<!DOCTYPE html>
-<html lang="zh-CN" style="width: 100%!important; height: 100%!important;">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="${csp}">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src ${cdnUrl}; style-src 'unsafe-inline';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Agent</title>
-
-
-  <script type="module" src="${cdnUrl}/${r.js}"></script>
-  <link rel="stylesheet" href="${cdnUrl}/${r.css}">
+    <title>TypeWords</title>
+    <style>
+      html, body, iframe {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        overflow: hidden;
+      }
+    </style>
 </head>
 <body>
-    <div id="app"></div>
+    <iframe src="${cdnUrl}/words" title="TypeWords"></iframe>
 </body>
 </html>`
   }
