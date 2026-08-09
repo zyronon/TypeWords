@@ -9,6 +9,7 @@ import { SyncDataType } from '../types'
 import type { SubscriptionCallbackMutation } from 'pinia'
 import { onUnmounted } from 'vue'
 // import { startRrwebRecording } from './useRrweb'
+import { checkAndUploadUserCollection } from './useUserCollection'
 
 let unsub = null
 let unsub2 = null
@@ -123,6 +124,9 @@ export function useInit() {
     // runtimeStore.isNew = true
     runtimeStore.isError = Supabase.getStatus().status === 'error'
     window.umami?.track('host', { host: window.location.host })
+
+    // 按学习数据门槛静默检查并上传一次测试数据。
+    void checkAndUploadUserCollection()
 
     // 静默后台录制用户操作，数据保存到 IndexedDB
     // startRrwebRecording().catch(console.error)

@@ -2,8 +2,8 @@ import type { Article, Dict, TaskWords, Word } from '../types'
 import { DictType, getDefaultDict, getDefaultWord } from '../types'
 import { useBaseStore } from '../stores/base.ts'
 import { useSettingStore } from '../stores/setting.ts'
-import { _getDictDataByUrl, cloneDeep, getRandomN, isDictIdMatch, resourceWrap, shuffle, splitIntoN } from '../utils'
-import { onMounted, watch } from 'vue'
+import { _getDictDataByUrl, cloneDeep, isDictIdMatch, resourceWrap, shuffle } from '../utils'
+import { computed, onMounted, watch } from 'vue'
 import { AppEnv, DICT_LIST, DictId } from '../config/env.ts'
 import { addDict, detail } from '../apis'
 import { useRuntimeStore } from '../stores/runtime.ts'
@@ -11,7 +11,6 @@ import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 
-import { computed } from 'vue'
 dayjs.extend(isSameOrBefore)
 
 export function useWordOptions() {

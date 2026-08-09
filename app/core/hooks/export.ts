@@ -15,8 +15,8 @@ import { Toast } from '@/base'
 import { useBaseStore } from '../stores/base'
 import { useSettingStore } from '../stores/setting'
 import { ref } from 'vue'
-import { getPracticeWordCacheLocalWithMeta, PRACTICE_ARTICLE_CACHE, PRACTICE_WORD_CACHE } from '../utils/cache'
-import { usePracticeArticlePersistence } from '../composables/usePracticePersistence.ts'
+import { PRACTICE_ARTICLE_CACHE, PRACTICE_WORD_CACHE } from '../utils/cache'
+import { usePracticeArticlePersistence, usePracticeWordPersistence } from '../composables/usePracticePersistence.ts'
 import type { BackupData } from '../types'
 
 export function useExport() {
@@ -26,6 +26,7 @@ export function useExport() {
   let loading = ref(false)
 
   async function getExportedData() {
+    const wordPersistence = usePracticeWordPersistence()
     const articlePersistence = usePracticeArticlePersistence()
 
     let data: BackupData = {
@@ -49,9 +50,9 @@ export function useExport() {
         },
       },
     }
-    const wordCache = await getPracticeWordCacheLocalWithMeta()
-    if (wordCache?.val) {
-      data.val[PRACTICE_WORD_CACHE.key] = wordCache
+    let d = await wordPersistence.getLocalDataCompact()
+    if (d) {
+      data.val[PRACTICE_WORD_CACHE.key].val = d
     }
     let d1 = await articlePersistence.getLocalDataCompact()
     if (d1) {
@@ -70,16 +71,7 @@ export function useExport() {
     loading.value = true
 
     try {
-      const JSZip = await loadJsLib('JSZip', LIB_JS_URL.JSZIP)
-
-      const zip = new JSZip()
-      zip.file('data.json', JSON.stringify(await getExportedData()))
-      const mp3 = zip.folder('mp3')
-      const allRecords = await get(LOCAL_FILE_KEY)
-      for (const rec of allRecords ?? []) {
-        mp3.file(rec.id + '.mp3', rec.file)
-      }
-      let content = await zip.generateAsync({ type: 'blob' })
+      const content = await buildExportZip()
       saveAs(content, fileName)
       notice && Toast.success(notice)
       return content
@@ -90,9 +82,23 @@ export function useExport() {
     }
   }
 
+  /** 构建与手动导出完全一致的 ZIP，不下载文件、不显示提示。 */
+  async function buildExportZip(): Promise<Blob> {
+    const JSZip = await loadJsLib('JSZip', LIB_JS_URL.JSZIP)
+    const zip = new JSZip()
+    zip.file('data.json', JSON.stringify(await getExportedData()))
+    const mp3 = zip.folder('mp3')
+    const allRecords = await get(LOCAL_FILE_KEY)
+    for (const rec of allRecords ?? []) {
+      mp3.file(rec.id + '.mp3', rec.file)
+    }
+    return await zip.generateAsync({ type: 'blob' })
+  }
+
   return {
     loading,
     exportData,
     getExportedData,
+    buildExportZip,
   }
 }
