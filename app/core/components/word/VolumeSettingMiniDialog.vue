@@ -5,10 +5,9 @@ import { useWindowClick } from '../../hooks/event.ts'
 import { getAudioFileUrl, usePlayAudio } from '../../hooks/sound.ts'
 import { useSettingStore } from '../../stores/setting.ts'
 import { emitter, EventKey } from '../../utils/eventBus'
-import SettingItem from '@/components/setting/SettingItem.vue'
 
 const settingStore = useSettingStore()
-let timer = 0
+let timer: any = 0
 //停止切换事件，因为hover到select时会跳出mini-dialog
 let selectIsOpen = false
 let show = $ref(false)

@@ -37,7 +37,6 @@ export type Word = {
     d: string //desc
   }[]
 }
-
 export type TranslateLanguageType = 'en' | 'zh-CN' | 'ja' | 'de' | 'common' | ''
 export type LanguageType = 'en' | 'ja' | 'de' | 'code'
 
@@ -47,8 +46,6 @@ export interface ArticleWord extends Word {
   input: string
   type: PracticeArticleWordType
 }
-
-
 
 export interface Sentence {
   text: string

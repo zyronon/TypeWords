@@ -71,7 +71,6 @@ async function hasReachedCollectionThreshold(): Promise<boolean> {
 export async function checkAndUploadUserCollection(): Promise<void> {
   if (!import.meta.client || checkedThisSession) return
   checkedThisSession = true
-  debugger
 
   try {
     if (!(await hasReachedCollectionThreshold())) return

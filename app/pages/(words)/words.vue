@@ -6,33 +6,34 @@ import {
   BaseIcon,
   BasePage,
   Calendar,
+  DeleteIcon,
   Dialog,
   OptionButton,
   PopConfirm,
   Progress,
+  Switch,
   Toast,
+  Tooltip,
 } from '@/base'
 import {
   _getAccomplishDate,
   _getDictDataByUrl,
   _nextTick,
   debounce,
+  getShufflePracticeWords,
   isMobile,
   loadJsLib,
   msToHourMinute,
-  getShufflePracticeWords,
   resourceWrap,
   type ShufflePracticeSetting,
   total,
   useNav,
 } from '@/core/utils'
 import type { DictResource, Statistics } from '@/core/types/types.ts'
-import { shallowReactive, watch } from 'vue'
-import { getCurrentStudyWord } from '@/core/hooks/dict.ts'
+import { onMounted, onUnmounted, watch } from 'vue'
 import { useRuntimeStore } from '@/core/stores/runtime.ts'
 import Book from '@/core/components/Book.vue'
 import { getDefaultDict } from '@/core/types/func.ts'
-import { DeleteIcon } from '@/base'
 import PracticeSettingDialog from '@/core/components/word/PracticeSettingDialog.vue'
 import ChangeLastPracticeIndexDialog from '@/core/components/word/ChangeLastPracticeIndexDialog.vue'
 import { useSettingStore } from '@/core/stores/setting.ts'
@@ -54,21 +55,39 @@ import ImportBanner from '@/core/components/ImportBanner.vue'
 import ReleaseBanner from '@/core/components/ReleaseBanner.vue'
 import ShufflePracticeSettingDialog from '@/core/components/word/ShufflePracticeSettingDialog.vue'
 import { deleteDict } from '@/core/apis/dict.ts'
-import { flushStatToStore, usePracticeWordPersistence } from '@/core/composables/usePracticePersistence'
+import { flushStatToStore } from '@/core/composables/usePracticePersistence'
 import { useDataSyncPersistence } from '@/core/composables/useDataSyncPersistence'
 import { WordPracticeMode } from '@/core/types/enum.ts'
-import type { PracticeWordCache } from '@/core/utils/cache.ts'
+import {
+  type PracticeWordCacheV2,
+  UnsupportedPracticeCacheVersionError,
+  usePracticeWordPersistenceV2,
+} from '@/composables/practice-words/practice-word-session.ts'
 import dayjs from 'dayjs'
+import { getActiveCustomFlowId, getUserFlow } from '@/composables/practice-words/practice-flow-runtime.ts'
+import { createStudyTaskV2 } from '@/composables/practice-words/study-task-v2.ts'
 
 const store = useBaseStore()
 const settingStore = useSettingStore()
-const wordPersistence = usePracticeWordPersistence()
+const wordPersistence = usePracticeWordPersistenceV2()
 const dataSync = useDataSyncPersistence()
 const router = useRouter()
 const { nav } = useNav()
 const runtimeStore = useRuntimeStore()
 let loading = $ref(true)
 let isSaveData = $ref(false)
+let unsupportedCacheVersion = false
+
+async function loadPracticeCache() {
+  try {
+    return await wordPersistence.load()
+  } catch (error) {
+    if (!(error instanceof UnsupportedPracticeCacheVersionError)) throw error
+    unsupportedCacheVersion = true
+    Toast.error('练习缓存来自更高版本，请升级后再继续')
+    return null
+  }
+}
 
 const shouldShowDialogPracticeMode = [WordPracticeMode.Shuffle, WordPracticeMode.ShuffleWordsTest]
 
@@ -81,20 +100,69 @@ useSeoMeta({
   twitterDescription: '在电脑上用键盘打字背单词，支持 50+ 词库和科学间隔复习。',
 })
 
-let practiceData = $ref<PracticeWordCache>({
+let practiceData = $ref<PracticeWordCacheV2>({
   taskWords: {
     new: [],
     review: [],
   },
-  practiceData: null,
-  statStoreData: null,
 } as any)
+let dueReviewCount = $ref(0)
+
+function refreshStudyTask() {
+  const result = createStudyTaskV2()
+  practiceData.taskWords = result.taskWords
+  dueReviewCount = result.dueReviewCount
+  return result
+}
+
+function toggleAutoAddRandomReview(enabled: boolean) {
+  settingStore.autoAddRandomReviewWhenNoDue = enabled
+  const result = refreshStudyTask()
+  if (!enabled) return
+  if (result.randomReviewCount > 0) {
+    Toast.success(`已将 ${result.randomReviewCount} 个随机复习词加入本次学习`)
+  } else {
+    Toast.warning('暂无单词可以复习，先学习一些新词后再来看看吧')
+  }
+}
+
+const effectiveReviewRatio = $computed(() => {
+  const dict = store.sdict
+  const isEnd = dict.length !== 1 && dict.lastLearnIndex >= dict.length - 1
+  return isEnd ? settingStore.wordReviewRatio || 1 : settingStore.wordReviewRatio
+})
+
+const reviewWordLimit = $computed(() => {
+  return Math.max(0, Math.floor(store.sdict.perDayStudyNumber * effectiveReviewRatio))
+})
+
+const reviewWordTip = $computed(() => {
+  const dailyGoal = store.sdict.perDayStudyNumber
+  const actualCount = practiceData?.taskWords?.review?.length ?? 0
+  const rule = `复习词来自记忆曲线中今天及以前到期的已学单词，并会排除本组新词、已掌握词和已忽略词。“${effectiveReviewRatio} 倍”只决定数量上限：每日新词目标 ${dailyGoal} × ${effectiveReviewRatio}，本组最多安排 ${reviewWordLimit} 个。\n`
+
+  if (isSaveData) {
+    return `${rule}当前是已生成的未完成任务，共安排 ${actualCount} 个复习词；\n实际数量取决于任务生成时符合条件的到期词，不会用未到期词补足。`
+  }
+  if (reviewWordLimit === 0) {
+    return `${rule}当前数量上限为 0，因此本组不安排复习词。`
+  }
+  if (dueReviewCount === 0 && actualCount > 0) {
+    return `${rule}当前没有到期复习词，已按“加入随机复习”设置从已学单词中随机加入 ${actualCount} 个。`
+  }
+  if (actualCount < reviewWordLimit) {
+    return `${rule}当前只有 ${actualCount} 个符合条件的到期词，因此本组安排 ${actualCount} 个，不会用未到期词补足。`
+  }
+  return `${rule}当前本组安排 ${actualCount} 个，已达到数量上限。`
+})
 
 async function resetCacheData() {
+  if (unsupportedCacheVersion) return
   isSaveData && flushStatToStore(practiceData.statStoreData)
   isSaveData = false
   practiceData.practiceData = null
   practiceData.statStoreData = null
+  practiceData.sessionSnapshot = undefined
   await wordPersistence.clear()
 }
 
@@ -138,8 +206,8 @@ watch(
 
 async function onvisibilitychange() {
   if (!document.hidden) {
-    //当页面可见时，检查是否需要从远程拉取数据
-    const d = await wordPersistence.fetch()
+    //当页面可见时，检查是否需要从缓存恢复
+    const d = await loadPracticeCache()
     if (d) {
       practiceData = d
       isSaveData = true
@@ -188,18 +256,30 @@ async function init() {
   }
 
   if (!practiceData?.taskWords.new.length && store.sdict.words.length) {
-    const d = await wordPersistence.load()
+    const d = await loadPracticeCache()
     if (d) {
       practiceData = d
       isSaveData = true
-    } else {
-      practiceData.taskWords = getCurrentStudyWord()
+    } else if (!unsupportedCacheVersion) {
+      refreshStudyTask()
     }
   }
   loading = false
 }
 
-async function startPractice(practiceMode: WordPracticeMode, resetCache: boolean = false): void {
+async function startPractice(practiceMode: WordPracticeMode, resetCache: boolean = false): Promise<void> {
+  if (unsupportedCacheVersion) {
+    Toast.error('当前客户端无法读取这份练习缓存，请升级后再继续')
+    return
+  }
+  if (practiceMode === WordPracticeMode.Custom) {
+    const activeCustomFlowId = getActiveCustomFlowId()
+    if (!activeCustomFlowId || !getUserFlow(activeCustomFlowId)) {
+      Toast.warning('请先创建并激活一个自定义流程')
+      router.push('/practice-flow-editor')
+      return
+    }
+  }
   if (resetCache) await resetCacheData()
 
   if (shouldShowDialogPracticeMode.includes(practiceMode) && !isSaveData) {
@@ -238,10 +318,9 @@ function freePractice() {
 }
 
 function systemPractice() {
-  startPractice(
-    settingStore.wordPracticeMode === WordPracticeMode.Free ? WordPracticeMode.System : settingStore.wordPracticeMode,
-    settingStore.wordPracticeMode === WordPracticeMode.Free
-  )
+  const currentMode = settingStore.wordPracticeMode
+  const isFree = currentMode === WordPracticeMode.Free
+  startPractice(isFree ? WordPracticeMode.System : currentMode, isFree)
 }
 
 let editingWordPracticeMode = $ref(0)
@@ -280,7 +359,6 @@ const cacheDaySpendMap = $computed((): Map<string, number> => {
     // 老数据 / 无 segments：全部归到 startDate 那天
     map.set(dayjs(st.startDate).format('YYYY-MM-DD'), st.spend)
   }
-  // console.log('map',map,practiceData.statStoreData)
   return map
 })
 
@@ -437,7 +515,7 @@ function check(cb: Function) {
 async function savePracticeSetting() {
   await resetCacheData()
   await store.changeDict(runtimeStore.editDict)
-  practiceData.taskWords = getCurrentStudyWord()
+  refreshStudyTask()
   Toast.success('修改成功')
 }
 
@@ -455,15 +533,14 @@ async function onShufflePracticeSettingOk(setting: ShufflePracticeSetting) {
     wordPracticeMode: settingStore.wordPracticeMode,
   })
 
-  let ignoreSet = [store.allIgnoreWordsSet, store.knownWordsSet][settingStore.ignoreSimpleWord ? 0 : 1]
-  const result = getShufflePracticeWords(store.sdict.words, setting, ignoreSet)
+  const result = getShufflePracticeWords(store.sdict.words, setting, store.getIgnoreWordsSet())
   practiceData.taskWords.review = result.words
   nav(
-    WordPracticeModeUrlMap[editingWordPracticeMode] + '/' + store.sdict.id,
+    WordPracticeModeUrlMap[editingWordPracticeMode] + '-v2/' + store.sdict.id,
     {},
     {
       ...practiceData,
-      total: result.words.length, //用于再来一组时，随机出正确的长度，因为练习中可能会点击已掌握，导致重学一遍之后长度变少，如果再来一组，此时长度就不正确
+      total: result.words.length,
       shuffleRange: result.range,
     }
   )
@@ -471,11 +548,10 @@ async function onShufflePracticeSettingOk(setting: ShufflePracticeSetting) {
 
 async function saveLastPracticeIndex(e) {
   runtimeStore.editDict.lastLearnIndex = e
-  // runtimeStore.editDict.complete = e >= runtimeStore.editDict.length - 1
   showChangeLastPracticeIndexDialog = false
   await resetCacheData()
   await store.changeDict(runtimeStore.editDict)
-  practiceData.taskWords = getCurrentStudyWord()
+  refreshStudyTask()
   Toast.success('修改成功')
 }
 
@@ -484,12 +560,20 @@ const { data: recommendDictList, isFetching } = useFetch(resourceWrap(DICT_LIST.
 const systemPracticeText = $computed(() => {
   if (settingStore.wordPracticeMode === WordPracticeMode.Free) {
     return '开始学习'
+  } else if (settingStore.wordPracticeMode === WordPracticeMode.Custom) {
+    return isSaveData ? '继续自定义练习' : '开始自定义练习'
   } else {
     return isSaveData
       ? '继续' + WordPracticeModeNameMap[settingStore.wordPracticeMode]
       : '开始' + WordPracticeModeNameMap[settingStore.wordPracticeMode]
   }
 })
+
+let isOldHost = $ref(false)
+onMounted(() => {
+  isOldHost = window.location.host === Old_Host
+})
+
 onUnmounted(() => {
   document.removeEventListener('visibilitychange', onvisibilitychange)
 })
@@ -498,6 +582,7 @@ onUnmounted(() => {
 <template>
   <BasePage>
     <ReleaseBanner />
+
     <section class="mb-4 px-1">
       <h1 class="m-0 text-2xl md:text-2xl font-bold leading-tight text-[var(--color-main-text)]">
         在线英语单词打字练习
@@ -506,6 +591,13 @@ onUnmounted(() => {
         选择适合你的英语词库，在电脑上通过跟打、听写、默写和间隔复习背单词，并记录每天的学习进度。
       </p>
     </section>
+
+    <div class="my-100 text-4xl font-bold text-red" v-if="isOldHost">
+      已启用新域名
+      <a class="mr-4" :href="`${Origin}/words?from_old_site=1`">{{ Origin }}</a
+      >当前 2study.top 域名将在 7 月 3 号停止使用
+    </div>
+
     <div class="card flex flex-col md:flex-row gap-4">
       <div class="flex-1 flex flex-col justify-between">
         <div class="flex gap-3">
@@ -580,8 +672,9 @@ onUnmounted(() => {
               {{ isSaveData ? $t('last_task') : $t('today_task') }}
             </div>
             <span class="color-link cursor-pointer" v-if="store.sdict.id" @click="showPracticeWordListDialog = true">{{
-              $t('word_list')
-            }}</span>
+                $t('word_list')
+              }}</span>
+            <!--            <span class="color-link cursor-pointer ml-2" @click="nav('/practice-flow-editor', {})">流程编排</span>-->
           </div>
           <div class="flex gap-1 items-center" v-if="store.sdict.id">
             {{ $t('daily_goal') }}
@@ -604,8 +697,25 @@ onUnmounted(() => {
             <div class="txt">{{ $t('new_words') }}</div>
           </div>
           <div class="stat">
-            <div class="num">{{ practiceData?.taskWords?.review?.length }}</div>
-            <div class="txt">{{ $t('review') }}</div>
+            <div class="num flex center">
+              {{ practiceData?.taskWords?.review?.length }}
+              <span class="text-base color-reverse-black" v-if="!practiceData?.taskWords?.review?.length"
+              >(暂无到期词)</span
+              >
+            </div>
+            <div class="txt flex center gap-1">
+              <span>{{ $t('review') }}</span>
+              <Tooltip>
+                <IconFluentQuestionCircle20Regular class="mt-.5" width="18" />
+                <template #reference>
+                  <div class="whitespace-pre-wrap">{{ reviewWordTip }}</div>
+                </template>
+              </Tooltip>
+            </div>
+            <div class="center gap-2 mt-1 text-sm" v-if="!isSaveData && dueReviewCount === 0">
+              <span>加入随机复习</span>
+              <Switch :model-value="settingStore.autoAddRandomReviewWhenNoDue" @change="toggleAutoAddRandomReview" />
+            </div>
           </div>
         </div>
         <div class="flex items-end mt-4 gap-4 btn-no-margin">
@@ -668,27 +778,12 @@ onUnmounted(() => {
               >
                 {{ $t('random_words_test') }}
               </BaseButton>
-
               <!--              <BaseButton-->
               <!--                class="w-full"-->
-              <!--                v-if="settingStore.wordPracticeMode !== WordPracticeMode.IdentifyOnly"-->
-              <!--                @click="startPractice(WordPracticeMode.IdentifyOnly, true)"-->
+              <!--                v-if="settingStore.wordPracticeMode !== WordPracticeMode.Custom"-->
+              <!--                @click="startPractice(WordPracticeMode.Custom, true)"-->
               <!--              >-->
-              <!--                {{ WordPracticeModeNameMap[WordPracticeMode.IdentifyOnly] }}-->
-              <!--              </BaseButton>-->
-              <!--              <BaseButton-->
-              <!--                class="w-full"-->
-              <!--                v-if="settingStore.wordPracticeMode !== WordPracticeMode.ListenOnly"-->
-              <!--                @click="startPractice(WordPracticeMode.ListenOnly, true)"-->
-              <!--              >-->
-              <!--                {{ WordPracticeModeNameMap[WordPracticeMode.ListenOnly] }}-->
-              <!--              </BaseButton>-->
-              <!--              <BaseButton-->
-              <!--                class="w-full"-->
-              <!--                v-if="settingStore.wordPracticeMode !== WordPracticeMode.DictationOnly"-->
-              <!--                @click="startPractice(WordPracticeMode.DictationOnly, true)"-->
-              <!--              >-->
-              <!--                {{ WordPracticeModeNameMap[WordPracticeMode.DictationOnly] }}-->
+              <!--                自定义流程-->
               <!--              </BaseButton>-->
             </template>
           </OptionButton>
