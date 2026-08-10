@@ -49,11 +49,6 @@ import {
 } from '~/composables/practice-words/usePracticeIdleTimer.ts'
 import { createStudyTask } from '~/composables/practice-words/study-task.ts'
 import PrevAndNextWord from '@/core/components/word/PrevAndNextWord.vue'
-import {
-  captureIdentifyTypingWrong,
-  restoreIdentifyTypingWrong,
-  type IdentifyTypingWrongSnapshot,
-} from '~/composables/practice-words/identify-typing-wrong.ts'
 
 const { isWordSimple, toggleWordSimple } = useWordOptions()
 const settingStore = useSettingStore()
@@ -90,7 +85,7 @@ let taskWords = $ref<TaskWords>({
 //watch 实例列表，用于本地代码修改hrm后，导致重复watch
 let watchRefList = []
 let data = $ref<PracticeData>(getDefaultPracticeData({}))
-let identifyTypingWrongSnapshot: IdentifyTypingWrongSnapshot | null = null
+let identifyTypingWrongRecord: { wordKey: string; existedInStoredWrongWords: boolean } | null = null
 
 const word = $computed<Word>(() => {
   return data.words[data.index] ?? getDefaultWord()
@@ -165,7 +160,7 @@ watch([() => data.words, () => data.index, currentPracticeType], () => {
 watch(
   () => word.word,
   async (currentWord, previousWord) => {
-    identifyTypingWrongSnapshot = null
+    identifyTypingWrongRecord = null
     if (!currentWord || currentWord === previousWord) return
     await nextTick()
     window.scrollTo({ top: 0, behavior: 'auto' })
@@ -523,29 +518,27 @@ function onWordKnow() {
   console.log('onWordKnow')
   //"我认识“强制更新了Good，因为点”已掌握“才会设置Easy
   data.ratingMap[word.word] = Rating.Good
-  addExcludeWord()
+  resolveIdentifyCorrect()
 }
 
 function onTypeWrong(source?: 'identifyTyping') {
   if (source === 'identifyTyping') {
     const wordKey = word.word.toLowerCase()
-    if (!identifyTypingWrongSnapshot || identifyTypingWrongSnapshot.wordKey !== wordKey) {
-      identifyTypingWrongSnapshot = captureIdentifyTypingWrong(word, {
-        wrongTimes: data.wrongTimes,
-        allWrongWords: data.allWrongWords,
-        wrongWords: data.wrongWords,
-        storedWrongWords: store.wrong.words,
-      })
+    if (!identifyTypingWrongRecord || identifyTypingWrongRecord.wordKey !== wordKey) {
+      identifyTypingWrongRecord = {
+        wordKey,
+        existedInStoredWrongWords: store.wrong.words.some(v => v.word.toLowerCase() === wordKey),
+      }
     }
   } else {
-    identifyTypingWrongSnapshot = null
+    identifyTypingWrongRecord = null
   }
   data.wrongTimes++
   //这里的代码暂时不能移动，因为要实时把错词加入到列表里面，从而更新toolbar里面的错词数
   //todo 后续可以优化
   let temp = word.word
   addWrongWordKey(data.allWrongWords, temp)
-  if (!store.wrong.words.find((v: Word) => v.word === temp)) {
+  if (!store.wrong.words.find((v: Word) => v.word.toLowerCase() === temp.toLowerCase())) {
     store.wrong.words.push(word)
     store.wrong.length = store.wrong.words.length
   }
@@ -559,19 +552,24 @@ function onTypeWrong(source?: 'identifyTyping') {
   savePracticeData()
 }
 
-function undoIdentifyTypingWrong() {
-  if (!identifyTypingWrongSnapshot || identifyTypingWrongSnapshot.wordKey !== word.word.toLowerCase()) return
-  const state = {
-    wrongTimes: data.wrongTimes,
-    allWrongWords: data.allWrongWords,
-    wrongWords: data.wrongWords,
-    storedWrongWords: store.wrong.words,
+function resolveIdentifyCorrect() {
+  const wordKey = word.word.toLowerCase()
+  data.wrongWords = data.wrongWords.filter(v => v.word.toLowerCase() !== wordKey)
+  data.allWrongWords = data.allWrongWords.filter(v => v.toLowerCase() !== wordKey)
+  data.wrongTimes = 0
+  addExcludeWord()
+
+  if (identifyTypingWrongRecord?.wordKey === wordKey && !identifyTypingWrongRecord.existedInStoredWrongWords) {
+    store.wrong.words = store.wrong.words.filter(v => v.word.toLowerCase() !== wordKey)
   }
-  restoreIdentifyTypingWrong(identifyTypingWrongSnapshot, state)
-  data.wrongTimes = state.wrongTimes
   store.wrong.length = store.wrong.words.length
-  identifyTypingWrongSnapshot = null
+  identifyTypingWrongRecord = null
   savePracticeData()
+}
+
+function onTypeComplete() {
+  identifyTypingWrongRecord = null
+  nav.next()
 }
 
 //设置单词卡片
@@ -646,6 +644,7 @@ function savePracticeData() {
 }
 
 function skip() {
+  identifyTypingWrongRecord = null
   addExcludeWord()
   nav.next(false)
 }
@@ -661,6 +660,11 @@ function toggleWordSimpleWrapper() {
   } else {
     data.excludeWords.push(word.word)
   }
+}
+
+function onWordMastered() {
+  toggleWordSimpleWrapper()
+  resolveIdentifyCorrect()
 }
 
 function toggleConciseMode() {
@@ -863,10 +867,9 @@ useEvents([
             :question="data.question"
             :practiceType="currentPracticeType"
             :phaseKey="currentPhaseKey"
-            @complete="nav.next"
+            @complete="onTypeComplete"
             @wrong="onTypeWrong"
-            @undo-identify-typing-wrong="undoIdentifyTypingWrong"
-            @mastered="toggleWordSimpleWrapper"
+            @mastered="onWordMastered"
             @know="onWordKnow"
             @skip="skip"
             @quickMark="isQuickMarkWordList = true"

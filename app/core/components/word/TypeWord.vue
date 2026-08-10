@@ -52,7 +52,6 @@ const props = withDefaults(defineProps<IProps>(), {
 const emit = defineEmits<{
   complete: []
   wrong: [source?: 'identifyTyping']
-  undoIdentifyTypingWrong: []
   know: []
   mastered: []
   skip: []
@@ -82,7 +81,6 @@ const effective = useInjectedDisplayPolicy(localReveal)
 
 const typingCoreRef = $ref<InstanceType<typeof WordTypingCore>>()
 const wordMetaPanelRef = $ref<InstanceType<typeof WordMetaPanel>>()
-let hasPendingIdentifyTypingWrong = false
 
 function shouldPlayFirstSentence() {
   return (
@@ -112,7 +110,6 @@ function playWord(trigger: WordPlayTrigger) {
 }
 
 function onTypingCoreComplete() {
-  hasPendingIdentifyTypingWrong = false
   if (
     [WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(props.practiceType) &&
     settingStore.practiceSentence &&
@@ -126,7 +123,6 @@ function onTypingCoreComplete() {
 
 function onTypingCoreWrong() {
   if (props.practiceType === WordPracticeType.Identify) {
-    hasPendingIdentifyTypingWrong = true
     emit('wrong', 'identifyTyping')
     return
   }
@@ -228,22 +224,10 @@ function deleteNote() {
 // ============ 自测/WordTest 事件处理 ============
 let showNotice = false
 
-function undoPendingIdentifyTypingWrong() {
-  if (!hasPendingIdentifyTypingWrong) return
-  emit('undoIdentifyTypingWrong')
-  hasPendingIdentifyTypingWrong = false
-}
-
-function commitPendingIdentifyTypingWrong() {
-  hasPendingIdentifyTypingWrong = false
-}
-
 function onIdentifyKnow() {
   if (!showWordResult) {
-    undoPendingIdentifyTypingWrong()
     showWordResult = true
     onAnswerCorrect()
-    emit('know')
     if (!showNotice) {
       Toast.info($t('know_word_tip'), { duration: 5000 })
       showNotice = true
@@ -252,20 +236,18 @@ function onIdentifyKnow() {
 }
 
 function onAnswerWrong() {
-  commitPendingIdentifyTypingWrong()
   typingCoreRef?.setWordTestResult?.(false, props.word.word)
   emit('wrong')
   playWord(WordPlayTrigger.Typo)
 }
 
 function onAnswerCorrect() {
-  commitPendingIdentifyTypingWrong()
   typingCoreRef?.setWordTestResult?.(true, props.word.word)
+  emit('know')
 }
 
 function onIdentifyUnknown() {
   if (!showWordResult) {
-    commitPendingIdentifyTypingWrong()
     showWordResult = true
     emit('wrong')
     playWord(WordPlayTrigger.Typo)
@@ -273,7 +255,6 @@ function onIdentifyUnknown() {
 }
 
 function onIdentifyMastered() {
-  undoPendingIdentifyTypingWrong()
   emit('mastered')
 }
 
@@ -316,7 +297,6 @@ useOnKeyboardEventListener(
 )
 
 function onResetWord() {
-  hasPendingIdentifyTypingWrong = false
   isTypingWord = true
   showFullWord = false
   isPlayedFirstSentence = false
