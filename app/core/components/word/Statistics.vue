@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { useBaseStore } from '../../stores/base.ts'
-import { BaseButton, Loading, Progress } from '@/base'
-import type { PracticeData } from '../../types'
-import { ShortcutKey, WordPracticeMode } from '../../types'
-import { emitter, EventKey, useEvents } from '../../utils/eventBus'
-import { useSettingStore } from '../../stores/setting.ts'
-import { usePracticeStore } from '../../stores/practice.ts'
+import { useBaseStore } from '@/core/stores/base.ts'
+import { BaseButton, Progress } from '@/base'
+import type { PracticeData } from '~/composables/practice-words/practice-word-session.ts'
+import { ShortcutKey } from '@/core/types/enum.ts'
+import { emitter, useEvents } from '@/core/utils/eventBus.ts'
+import { useSettingStore } from '@/core/stores/setting.ts'
+import { usePracticeStore } from '@/core/stores/practice.ts'
 import dayjs from 'dayjs'
 import isBetween from 'dayjs/plugin/isBetween'
 import { defineAsyncComponent, inject, watch } from 'vue'
 import isoWeek from 'dayjs/plugin/isoWeek'
-import { msToHourMinute } from '../../utils'
-import ChannelIcons from '../channel-icons/ChannelIcons.vue'
+import { msToHourMinute } from '@/core/utils'
+import ChannelIcons from '@/core/components/channel-icons/ChannelIcons.vue'
 import { useI18n } from 'vue-i18n'
 
 dayjs.extend(isoWeek)
@@ -26,8 +26,8 @@ const store = useBaseStore()
 const settingStore = useSettingStore()
 const statStore = usePracticeStore()
 const model = defineModel({ default: false })
-let list = $ref([])
-let practiceData = inject<PracticeData>('practiceData')
+let list = $ref<boolean[]>([])
+const practiceData = inject<PracticeData>('practiceData')!
 
 function calcWeekList() {
   // 获取本周的起止时间
@@ -54,8 +54,8 @@ function calcWeekList() {
 }
 
 // 监听 model 弹窗打开时重新计算
-watch([model, () => props.loading], async newVal => {
-  if (newVal && !props.loading) {
+watch([model, () => props.loading], ([open, loading]) => {
+  if (open && !loading) {
     console.log('计算本周学习记录')
     calcWeekList() // 计算本周学习记录
   }
@@ -67,12 +67,12 @@ useEvents([
   //特意注释掉，因为在练习界面用快捷键下一组时，需要判断是否在结算界面
   // [ShortcutKey.NextChapter, close],
   [ShortcutKey.RepeatChapter, close],
-  [ShortcutKey.DictationChapter, close],
 ])
 
 function options(emitType: string) {
-  emitter.emit(EventKey[emitType])
-  close()
+  emitter.emit(emitType)
+  // “再来一组”由练习页成功初始化下一组后关闭；生成空任务时保留结算弹窗。
+  if (emitType !== ShortcutKey.NextChapter) close()
 }
 
 // 计算学习进度百分比
@@ -99,7 +99,7 @@ const encouragementText = $computed(() => {
 
 <template>
   <Dialog v-model="model" :close-on-click-bg="false" :header="false" :keyboard="false" :show-close="false">
-    <div class="p-8 pr-3 bg-[var(--bg-card-primary)] rounded-2xl">
+    <div class="p-8 pr-3 bg-[var(--bg-card-primary)] min-w-130 rounded-2xl">
       <!-- Header Section -->
       <div class="text-center relative">
         <div
@@ -155,7 +155,7 @@ const encouragementText = $computed(() => {
             </div>
           </div>
 
-          <div class="w-full gap-3 flex">
+          <div class="summary-main w-full gap-3 flex">
             <div class="space-y-6 flex-1">
               <!-- Weekly Progress -->
               <div class="bg-[--bg-card-secend] rounded-xl p-2">
@@ -194,10 +194,10 @@ const encouragementText = $computed(() => {
             <ChannelIcons />
           </div>
           <!-- Action Buttons -->
-          <div class="flex min-w-130 justify-center">
+          <div class="summary-actions flex justify-center flex-wrap">
             <BaseButton
               :keyboard="settingStore.shortcutKeyMap[ShortcutKey.RepeatChapter]"
-              @click="options(EventKey.repeatStudy)"
+              @click="options(ShortcutKey.RepeatChapter)"
             >
               <div class="center gap-2">
                 <IconFluentArrowClockwise20Regular />
@@ -205,13 +205,12 @@ const encouragementText = $computed(() => {
               </div>
             </BaseButton>
             <BaseButton
-              v-if="settingStore.wordPracticeMode !== WordPracticeMode.Review"
               :keyboard="settingStore.shortcutKeyMap[ShortcutKey.NextChapter]"
-              @click="options(EventKey.continueStudy)"
+              @click="options(ShortcutKey.NextChapter)"
             >
               <div class="center gap-2">
                 <IconFluentPlay20Regular />
-                {{ store.sdict.complete ? $t('start_from_beginning') : $t('another_group') }}
+                {{ studyProgress === 100 ? $t('start_from_beginning') : $t('another_group') }}
               </div>
             </BaseButton>
             <BaseButton @click="$router.back">
@@ -232,88 +231,21 @@ const encouragementText = $computed(() => {
   </Dialog>
 </template>
 <style scoped lang="scss">
-
 @media (max-width: 768px) {
-  // 弹窗容器优化
-  .w-140 {
-    width: 90vw !important;
-    max-width: 500px;
-    padding: 1.5rem !important;
-  }
-
-  // 标题优化
-  .center.text-2xl {
-    font-size: 1.3rem;
-    margin-bottom: 1rem;
-  }
-
-  // 统计数据布局
-  .flex .flex-1 {
-    .text-sm {
-      font-size: 0.8rem;
-    }
-
-    .text-4xl {
-      font-size: 2rem;
-    }
-  }
-
-  // 时间显示
-  .text-xl {
-    font-size: 1rem;
-
-    .text-2xl {
-      font-size: 1.5rem;
-    }
-  }
-
-  // 错词/正确统计卡片
-  .flex.justify-center.gap-10 {
-    gap: 1rem;
-    flex-wrap: wrap;
-
-    > div {
-      padding: 0.8rem 2rem;
-
-      .text-3xl {
-        font-size: 1.8rem;
-      }
-    }
-  }
-
-  // 本周学习记录
-  .flex.gap-4 {
-    gap: 0.5rem;
-
-    .w-8.h-8 {
-      width: 2rem;
-      height: 2rem;
-      font-size: 0.9rem;
-    }
-  }
-
-  // 按钮组
-  .flex.justify-center.gap-4 {
+  .summary-main {
     flex-direction: column;
-    gap: 0.5rem;
+  }
 
+  .summary-actions {
+    flex-direction: column;
     .base-button {
       width: 100%;
       min-height: 48px;
     }
   }
-}
 
-@media (max-width: 480px) {
-  .w-140 {
-    width: 95vw !important;
-    padding: 1rem !important;
-  }
-
-  .flex .flex-1 {
-    .text-4xl {
-      font-size: 1.5rem;
-    }
+  :deep(.dialog-body) {
+    max-width: 95vw;
   }
 }
 </style>

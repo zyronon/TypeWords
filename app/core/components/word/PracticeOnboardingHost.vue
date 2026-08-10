@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * PracticeOnboardingHostV2 — 引导 + 通知宿主组件
+ * PracticeOnboardingHost — 引导 + 通知宿主组件
  *
  * 从 [id].vue 模板提取，负责：
  * - ConflictNotice（首次输入法冲突提示）

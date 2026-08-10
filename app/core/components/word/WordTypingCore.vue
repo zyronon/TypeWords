@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * WordTypingCoreV2 — 纯键入引擎
+ * WordTypingCore — 纯键入引擎
  *
  * 负责：
  * - 键入状态管理（input / wrong / inputLock / ...）
@@ -9,20 +9,15 @@
  * - 光标准确定位
  *
  * 不负责：
- * - 音标/翻译/例句等元信息展示 → WordMetaPanelV2
- * - 自测/WordTest UI → WordIdentifyPanelV2
- * - 笔记/收藏/操作按钮 → TypeWordV2 壳
+ * - 音标/翻译/例句等元信息展示 → WordMetaPanel
+ * - 自测/WordTest UI → WordIdentifyPanel
+ * - 笔记/收藏/操作按钮 → TypeWord 壳
  */
 import type { Word } from '@/core/types/types.ts'
 import { getDefaultWord } from '@/core/types/func.ts'
 import { WordPracticeType } from '@/core/types/enum.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
-import {
-  resetActiveWordPlayCount,
-  usePlayBeep,
-  usePlayCorrect,
-  usePlayKeyboardAudio,
-} from '@/core/hooks/sound.ts'
+import { resetActiveWordPlayCount, usePlayBeep, usePlayCorrect, usePlayKeyboardAudio } from '@/core/hooks/sound.ts'
 import { emitter, EventKey } from '@/core/utils/eventBus.ts'
 import { onUnmounted, watch } from 'vue'
 import Space from '@/core/components/article/Space.vue'
@@ -30,6 +25,14 @@ import { _nextTick, last, normalizeWord } from '@/core/utils'
 import { useOnKeyboardEventListener } from '@/core/hooks/event.ts'
 import { WordPlayTrigger } from '@/core/composables/useWordPracticeAudio.ts'
 import { Toast } from '@/base'
+import {
+  getPracticeInputCharacterStates,
+  getWholeInputAfterWrongBackspace,
+  isPracticeCharacterCorrect,
+  isWholePracticeInputComplete,
+  isWholePracticeInputCorrect,
+  normalizePracticeInputCharacter,
+} from '~/composables/practice-words/visible-word-typing.ts'
 
 interface IProps {
   word: Word
@@ -70,6 +73,7 @@ const playKeyboardAudio = usePlayKeyboardAudio()
 // ============ 键入状态 ============
 let input = $ref('')
 let wrong = $ref('')
+let wholeInputAttempt = $ref<boolean | null>(null)
 let inputLock = false
 let wordRepeatCount = 0
 let wordCompletedTime = 0
@@ -92,7 +96,11 @@ let displayWord = $computed(() => {
   return props.word.word.slice(input.length + wrong.length)
 })
 
-const isWordRight = $computed(() => {
+const inputCharacterStates = $computed(() => {
+  return getPracticeInputCharacterStates(input, props.word.word, settingStore.ignoreCase)
+})
+
+const isWordCorrect = $computed(() => {
   let a = input
   let b = props.word.word
   if (props.practiceType === WordPracticeType.Dictation) {
@@ -142,10 +150,24 @@ function repeat() {
     repeatTimer = null
     if (props.word.word !== wordKey) return
     wrong = input = ''
+    wholeInputAttempt = null
     wordRepeatCount++
     inputLock = false
     emit('play', WordPlayTrigger.RepeatWord)
   }, settingStore.waitTimeForChangeWord)
+}
+
+function completeCurrentInput() {
+  wordCompletedTime = Date.now()
+  playCorrect()
+  if ([WordPracticeType.Listen].includes(props.practiceType) && !props.showWordResult) {
+    emitShowWordResult(true)
+  }
+  if ([WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(props.practiceType)) {
+    if (settingStore.autoNextWord) {
+      completeTypeWord(true)
+    }
+  }
 }
 
 // ============ 核心键入逻辑 ============
@@ -176,10 +198,14 @@ async function onTyping(e: KeyboardEvent) {
   const target = props.word.word
   // 输入完成会锁死不能再输入
   if (inputLock) {
+    if (wholeInputAttempt && !isWordCorrect) {
+      Toast.info($t('press_delete_reinput'), { duration: 2000 })
+      return
+    }
     //判断是否是空格键以便切换到下一个
     if (isSpace(e)) {
       //正确时就切换到下一个
-      if (isWordRight) {
+      if (isWordCorrect) {
         clearJumpTimer()
         // 如果单词刚完成（300ms内），忽略空格键，避免同时按下最后一个字母和空格键时跳过
         // 手动模式使用独立的空格冷却时间设置
@@ -203,7 +229,7 @@ async function onTyping(e: KeyboardEvent) {
       }
     } else {
       //当正确时，提醒用户按空格键切下一个
-      if (isWordRight) {
+      if (isWordCorrect) {
         pressNumber++
         if (pressNumber >= 3) {
           Toast.info($t('press_space_continue'), { duration: 2000 })
@@ -228,7 +254,7 @@ async function onTyping(e: KeyboardEvent) {
       //如果输入长度大于单词长度/单词不包含空格，并且输入不为空（开始直接输入空格不行），则显示单词；
       if (input.length && (input.length >= target.length || !target.includes(' '))) {
         //比对是否一致
-        if (isWordRight) {
+        if (isWordCorrect) {
           //如果已显示单词，则发射完成事件，并 return
           if (props.showWordResult) {
             return emit('complete')
@@ -261,45 +287,32 @@ async function onTyping(e: KeyboardEvent) {
       typo(false)
     }
 
-    let isKeyRight = false
-    if (settingStore.ignoreCase) {
-      isKeyRight = letter.toLowerCase() === target[input.length]?.toLowerCase()
-    } else {
-      isKeyRight = letter === target[input.length]
+    if (wholeInputAttempt === null) {
+      wholeInputAttempt = settingStore.visibleWordWholeInput && !props.isWordMasked
     }
-    //针对中文的特殊判断
-    if (
-      e.shiftKey &&
-      (('！' === target[input.length] && e.code === 'Digit1') ||
-        ('￥' === target[input.length] && e.code === 'Digit4') ||
-        ('…' === target[input.length] && e.code === 'Digit6') ||
-        ('（' === target[input.length] && e.code === 'Digit9') ||
-        ('—' === target[input.length] && e.code === 'Minus') ||
-        ('？' === target[input.length] && e.code === 'Slash') ||
-        ('》' === target[input.length] && e.code === 'Period') ||
-        ('《' === target[input.length] && e.code === 'Comma') ||
-        ('“' === target[input.length] && e.code === 'Quote') ||
-        ('”' === target[input.length] && e.code === 'Quote') ||
-        ('：' === target[input.length] && e.code === 'Semicolon') ||
-        ('）' === target[input.length] && e.code === 'Digit0'))
-    ) {
-      isKeyRight = true
-      letter = target[input.length]
+
+    const targetCharacter = target[input.length]
+    const letter = normalizePracticeInputCharacter(e, targetCharacter)
+
+    if (wholeInputAttempt) {
+      input += letter
+      wrong = ''
+      playKeyboardAudio()
+
+      if (isWholePracticeInputComplete(input, target)) {
+        if (isWholePracticeInputCorrect(input, target, settingStore.ignoreCase)) {
+          completeCurrentInput()
+        } else {
+          playBeep()
+          emit('play', WordPlayTrigger.Typo)
+        }
+      } else {
+        inputLock = false
+      }
+      return
     }
-    if (
-      !e.shiftKey &&
-      (('、' === target[input.length] && e.code === 'Slash') ||
-        ('。' === target[input.length] && e.code === 'Period') ||
-        ('，' === target[input.length] && e.code === 'Comma') ||
-        ('‘' === target[input.length] && e.code === 'Quote') ||
-        ('’' === target[input.length] && e.code === 'Quote') ||
-        ('；' === target[input.length] && e.code === 'Semicolon') ||
-        ('【' === target[input.length] && e.code === 'BracketLeft') ||
-        ('】' === target[input.length] && e.code === 'BracketRight'))
-    ) {
-      isKeyRight = true
-      letter = target[input.length]
-    }
+
+    const isKeyRight = isPracticeCharacterCorrect(letter, targetCharacter, settingStore.ignoreCase)
 
     if (isKeyRight) {
       input += letter
@@ -316,21 +329,13 @@ async function onTyping(e: KeyboardEvent) {
         if (props.word.word !== wordKey) return
         if (settingStore.inputWrongClear) input = ''
         wrong = ''
+        if (!input) wholeInputAttempt = null
       }, 500)
     }
 
     //不需要把inputLock设为false，输入完成不能再输入了，只能删除，删除会打开锁
-    if (isWordRight) {
-      wordCompletedTime = Date.now() // 记录单词完成的时间戳
-      playCorrect()
-      if ([WordPracticeType.Listen].includes(props.practiceType) && !props.showWordResult) {
-        emitShowWordResult(true)
-      }
-      if ([WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(props.practiceType)) {
-        if (settingStore.autoNextWord) {
-          completeTypeWord(true)
-        }
-      }
+    if (isWordCorrect) {
+      completeCurrentInput()
     } else {
       inputLock = false
     }
@@ -341,10 +346,7 @@ function del() {
   playKeyboardAudio()
   inputLock = false
   //如果是自测阶段，按删除键代码弄错了，需要标记为错词，同时从excludeWords里排除
-  if (props.practiceType === WordPracticeType.Identify) {
-    input = wrong = ''
-    emitShowWordResult(false)
-  } else if (props.practiceType === WordPracticeType.Dictation && props.showWordResult) {
+  if (props.showWordResult) {
     input = wrong = ''
     emitShowWordResult(false)
   } else {
@@ -354,12 +356,14 @@ function del() {
       input = input.slice(0, -1)
     }
   }
+  if (!input) wholeInputAttempt = null
 }
 
 // ============ 重置状态 ============
 function resetTypingCore(trigger: WordPlayTrigger) {
   clearDeferredTimers()
   wrong = input = ''
+  wholeInputAttempt = null
   wordRepeatCount = 0
   inputLock = false
   wordCompletedTime = 0
@@ -457,13 +461,17 @@ function setWordTestResult(isCorrect: boolean, wordStr: string) {
 }
 
 defineExpose({
-  isWordRight: () => isWordRight,
+  isWordRight: () => isWordCorrect,
   setWordTestResult,
 })
 </script>
 
 <template>
-  <div class="typing-core" ref="typingWordRef" :class="wrong ? 'is-wrong' : ''">
+  <div
+    class="typing-core"
+    ref="typingWordRef"
+    :class="wrong || (wholeInputAttempt && inputLock && !isWordCorrect) ? 'is-wrong' : ''"
+  >
     <!-- 默写模式 -->
     <div v-if="practiceType === WordPracticeType.Dictation">
       <div
@@ -475,18 +483,26 @@ defineExpose({
       <div
         class="mt-2 min-w-120 pb-1 dictation"
         :style="{ minHeight: wordFontSize + 'px' }"
-        :class="showWordResult ? (isWordRight ? 'right' : 'wrong') : ''"
+        :class="showWordResult ? (isWordCorrect ? 'right' : 'wrong') : ''"
       >
         <template v-for="i in input">
           <span class="l" v-if="i !== ' '">{{ i }}</span>
-          <Space class="l" v-else :is-wrong="showWordResult ? !isWordRight : false" :is-wait="!showWordResult" />
+          <Space class="l" v-else :is-wrong="showWordResult ? !isWordCorrect : false" :is-wait="!showWordResult" />
         </template>
       </div>
     </div>
 
     <!-- 非默写模式 -->
     <template v-else>
-      <span class="input" v-if="input">{{ input }}</span>
+      <template v-if="wholeInputAttempt">
+        <template v-for="(item, index) in inputCharacterStates" :key="index">
+          <span v-if="item.character === ' '" class="l">
+            <Space :is-wrong="!item.isCorrect" :is-wait="false" />
+          </span>
+          <span v-else class="l" :class="item.isCorrect ? 'input' : 'wrong'">{{ item.character }}</span>
+        </template>
+      </template>
+      <span class="input" v-else-if="input">{{ input }}</span>
       <span class="wrong" v-if="wrong">{{ wrong }}</span>
       <span class="letter" v-if="isWordMasked && !showFullWord">
         {{

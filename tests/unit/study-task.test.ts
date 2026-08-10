@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { getDefaultWord } from '@typewords/core/types/func.ts'
-import type { TaskWords } from '@typewords/core/types/types.ts'
-import { addRandomReviewWhenNoDue } from '../../apps/nuxt/app/composables/practice-words/study-task-v2.ts'
+import { getDefaultWord } from '@/core/types/func.ts'
+import type { TaskWords } from '@/core/types/types.ts'
+import { addRandomReviewWhenNoDue } from '@/composables/practice-words/study-task.ts'
 
 const word = (value: string) => ({ ...getDefaultWord(), word: value })
 
@@ -21,7 +21,7 @@ const options = {
   enabled: true,
 }
 
-describe('v2 study task random review supplement', () => {
+describe('study task random review supplement', () => {
   it('does not supplement when due reviews exist', () => {
     const result = addRandomReviewWhenNoDue(createTask(['due']), options)
 

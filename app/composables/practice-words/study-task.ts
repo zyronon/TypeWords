@@ -4,7 +4,7 @@ import { useSettingStore } from '@/core/stores/setting.ts'
 import type { TaskWords, Word } from '@/core/types/types.ts'
 import { shuffle } from '@/core/utils'
 
-export interface StudyTaskV2Result {
+export interface StudyTaskResult {
   taskWords: TaskWords
   dueReviewCount: number
   randomReviewCount: number
@@ -19,10 +19,7 @@ interface AddRandomReviewOptions {
   enabled: boolean
 }
 
-export function addRandomReviewWhenNoDue(
-  taskWords: TaskWords,
-  options: AddRandomReviewOptions
-): StudyTaskV2Result {
+export function addRandomReviewWhenNoDue(taskWords: TaskWords, options: AddRandomReviewOptions): StudyTaskResult {
   const dueReviewCount = taskWords.review.length
   if (!options.enabled || dueReviewCount > 0) {
     return { taskWords, dueReviewCount, randomReviewCount: 0 }
@@ -51,7 +48,7 @@ export function addRandomReviewWhenNoDue(
   }
 }
 
-export function createStudyTaskV2(): StudyTaskV2Result {
+export function createStudyTask(): StudyTaskResult {
   const store = useBaseStore()
   const settingStore = useSettingStore()
   return addRandomReviewWhenNoDue(getCurrentStudyWord(), {

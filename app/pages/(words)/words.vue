@@ -59,17 +59,17 @@ import { flushStatToStore } from '@/core/composables/usePracticePersistence'
 import { useDataSyncPersistence } from '@/core/composables/useDataSyncPersistence'
 import { WordPracticeMode } from '@/core/types/enum.ts'
 import {
-  type PracticeWordCacheV2,
+  type PracticeWordCache,
   UnsupportedPracticeCacheVersionError,
-  usePracticeWordPersistenceV2,
+  usePracticeWordPersistence,
 } from '@/composables/practice-words/practice-word-session.ts'
 import dayjs from 'dayjs'
 import { getActiveCustomFlowId, getUserFlow } from '@/composables/practice-words/practice-flow-runtime.ts'
-import { createStudyTaskV2 } from '@/composables/practice-words/study-task-v2.ts'
+import { createStudyTask } from '@/composables/practice-words/study-task.ts'
 
 const store = useBaseStore()
 const settingStore = useSettingStore()
-const wordPersistence = usePracticeWordPersistenceV2()
+const wordPersistence = usePracticeWordPersistence()
 const dataSync = useDataSyncPersistence()
 const router = useRouter()
 const { nav } = useNav()
@@ -100,7 +100,7 @@ useSeoMeta({
   twitterDescription: '在电脑上用键盘打字背单词，支持 50+ 词库和科学间隔复习。',
 })
 
-let practiceData = $ref<PracticeWordCacheV2>({
+let practiceData = $ref<PracticeWordCache>({
   taskWords: {
     new: [],
     review: [],
@@ -109,7 +109,7 @@ let practiceData = $ref<PracticeWordCacheV2>({
 let dueReviewCount = $ref(0)
 
 function refreshStudyTask() {
-  const result = createStudyTaskV2()
+  const result = createStudyTask()
   practiceData.taskWords = result.taskWords
   dueReviewCount = result.dueReviewCount
   return result
@@ -536,7 +536,7 @@ async function onShufflePracticeSettingOk(setting: ShufflePracticeSetting) {
   const result = getShufflePracticeWords(store.sdict.words, setting, store.getIgnoreWordsSet())
   practiceData.taskWords.review = result.words
   nav(
-    WordPracticeModeUrlMap[editingWordPracticeMode] + '-v2/' + store.sdict.id,
+    WordPracticeModeUrlMap[editingWordPracticeMode] + '/' + store.sdict.id,
     {},
     {
       ...practiceData,

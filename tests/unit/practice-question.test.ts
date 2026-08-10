@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { WordPracticeType } from '@typewords/core/types/enum.ts'
-import { getDefaultWord } from '@typewords/core/types/func.ts'
-import { resolvePracticeQuestion } from '../../apps/nuxt/app/composables/practice-words/practice-question.ts'
+import { WordPracticeType } from '@/core/types/enum.ts'
+import { getDefaultWord } from '@/core/types/func.ts'
+import { resolvePracticeQuestion } from '@/composables/practice-words/practice-question.ts'
 
 const makeWord = (word: string, cn: string) => getDefaultWord({
   word,
   trans: [{ pos: 'n.', cn }],
 })
 
-describe('v2 merged Identify question', () => {
+describe('merged Identify question', () => {
   const words = [
     makeWord('alpha', '甲'),
     makeWord('bravo', '乙'),

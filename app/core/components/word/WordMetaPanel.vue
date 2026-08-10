@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * WordMetaPanelV2 — 只读元信息面板
+ * WordMetaPanel — 只读元信息面板
  *
- * 从 TypeWordV2 拆出，负责纯展示（不承载输入逻辑）：
+ * 从 TypeWord 拆出，负责纯展示（不承载输入逻辑）：
  * - 音标行（phonetic0/phonetic1 + 发音 VolumeIcon）
  * - 翻译区（TranslationList）
  * - 例句列表（ClickableEnglishText + VolumeIcon 只读展示）

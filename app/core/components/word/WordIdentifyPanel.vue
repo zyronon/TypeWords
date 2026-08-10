@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * WordIdentifyPanelV2 — 自测 / WordTest UI
+ * WordIdentifyPanel — 自测 / WordTest UI
  *
- * 从 TypeWordV2 拆出，负责：
+ * 从 TypeWord 拆出，负责：
  * - 自评三按钮（认识/不认识/已掌握）+ 快捷键绑定
  * - WordTest 四选项选择 + 快捷键绑定
  * - 选择结果展示

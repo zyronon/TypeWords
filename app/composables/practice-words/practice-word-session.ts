@@ -1,7 +1,7 @@
 import { useBaseStore } from '@/core/stores/base.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import type { PracticeState } from '@/core/stores/practice.ts'
-import type { PracticeData, Question, TaskWords, Word } from '@/core/types/types.ts'
+import type { PracticeData as LegacyPracticeData, Question, TaskWords, Word } from '@/core/types/types.ts'
 import { CompareResult, SyncDataType } from '@/core/types/enum.ts'
 import {
   checkAndUpgradePracticeWordCache,
@@ -14,20 +14,20 @@ import { useDataSyncPersistence } from '@/core/composables/useDataSyncPersistenc
 import { shouldFetchRemote } from '@/core/utils/index.ts'
 import type { PracticeSessionSnapshot } from './practice-flow-types.ts'
 
-export type PracticeDataV2 = Omit<PracticeData, 'isTypingWrongWord' | 'question'> & {
+export type PracticeData = Omit<LegacyPracticeData, 'isTypingWrongWord' | 'question'> & {
   question: Question | null
 }
 
-export type PracticeWordCacheV2 = {
+export type PracticeWordCache = {
   taskWords: TaskWords
-  practiceData?: PracticeDataV2
+  practiceData?: PracticeData
   statStoreData?: PracticeState
   sessionSnapshot?: PracticeSessionSnapshot
 }
 
-export type PracticeWordCacheCompactV2 = {
+export type PracticeWordCacheCompact = {
   taskWordsStr: { new: string[]; review: string[] }
-  practiceData?: Omit<PracticeDataV2, 'words' | 'wrongWords'> & {
+  practiceData?: Omit<PracticeData, 'words' | 'wrongWords'> & {
     wordsStr: string[]
     wrongWordsStr: string[]
   }
@@ -61,10 +61,7 @@ export function resolveNewerRemotePracticeCacheTime(
   return Number.isFinite(remoteUpdatedAt) && remoteUpdatedAt > knownUpdatedAt ? remoteUpdatedAt : null
 }
 
-export function getDefaultPracticeData(
-  origin?: Partial<PracticeDataV2>,
-  val?: Partial<PracticeDataV2>
-): PracticeDataV2 {
+export function getDefaultPracticeData(origin?: Partial<PracticeData>, val?: Partial<PracticeData>): PracticeData {
   return Object.assign(origin ?? {}, {
     index: 0,
     words: [],
@@ -76,7 +73,7 @@ export function getDefaultPracticeData(
     wrongTimes: 0,
     question: null,
     ...val,
-  }) as PracticeDataV2
+  }) as PracticeData
 }
 
 function createWordMap(): Map<string, Word> {
@@ -87,11 +84,11 @@ function createWordMap(): Map<string, Word> {
 function restoreWords(words: unknown, wordMap: Map<string, Word>): Word[] {
   if (!Array.isArray(words)) return []
   return words
-    .map(word => typeof word === 'string' ? wordMap.get(word.toLowerCase()) : undefined)
+    .map(word => (typeof word === 'string' ? wordMap.get(word.toLowerCase()) : undefined))
     .filter((word): word is Word => !!word)
 }
 
-function serializePracticeWordCache(data: PracticeWordCacheV2 | null): PracticeWordCacheCompactV2 | null {
+function serializePracticeWordCache(data: PracticeWordCache | null): PracticeWordCacheCompact | null {
   if (!data) return null
   const taskWordsStr = {
     new: data.taskWords.new.map(word => word.word),
@@ -125,24 +122,20 @@ function isCurrentSnapshot(value: unknown): value is PracticeSessionSnapshot {
     cursor.stepIndex >= 0 &&
     typeof cursor.inWrongWordClear === 'boolean' &&
     (cursor.endActionIndex === null || (Number.isInteger(cursor.endActionIndex) && cursor.endActionIndex >= 0)) &&
-    (cursor.loop === null || (
-      Number.isInteger(cursor.loop.startIndex) &&
-      cursor.loop.startIndex >= 0 &&
-      Number.isInteger(cursor.loop.endIndex) &&
-      cursor.loop.endIndex >= cursor.loop.startIndex &&
-      Number.isInteger(cursor.loop.subStepIndex) &&
-      cursor.loop.subStepIndex >= 0
-    ))
+    (cursor.loop === null ||
+      (Number.isInteger(cursor.loop.startIndex) &&
+        cursor.loop.startIndex >= 0 &&
+        Number.isInteger(cursor.loop.endIndex) &&
+        cursor.loop.endIndex >= cursor.loop.startIndex &&
+        Number.isInteger(cursor.loop.subStepIndex) &&
+        cursor.loop.subStepIndex >= 0))
   )
 }
 
-function restoreCurrentCache(value: unknown): PracticeWordCacheV2 | null {
+function restoreCurrentCache(value: unknown): PracticeWordCache | null {
   if (!value || typeof value !== 'object' || !('taskWordsStr' in value)) return null
-  const data = value as PracticeWordCacheCompactV2
-  if (
-    !Array.isArray(data.taskWordsStr?.new) ||
-    !Array.isArray(data.taskWordsStr?.review)
-  ) return null
+  const data = value as PracticeWordCacheCompact
+  if (!Array.isArray(data.taskWordsStr?.new) || !Array.isArray(data.taskWordsStr?.review)) return null
   const wordMap = createWordMap()
   const taskWords = {
     new: restoreWords(data.taskWordsStr.new, wordMap),
@@ -156,7 +149,8 @@ function restoreCurrentCache(value: unknown): PracticeWordCacheV2 | null {
     !Array.isArray(data.practiceData.wrongWordsStr) ||
     !Number.isInteger(data.practiceData.index) ||
     data.practiceData.index < 0
-  ) return null
+  )
+    return null
   const words = restoreWords(data.practiceData.wordsStr, wordMap)
   const wrongWords = restoreWords(data.practiceData.wrongWordsStr, wordMap)
   const index = words.length ? Math.min(Math.max(data.practiceData.index, 0), words.length - 1) : 0
@@ -169,16 +163,16 @@ function restoreCurrentCache(value: unknown): PracticeWordCacheV2 | null {
   }
 }
 
-export function usePracticeWordPersistenceV2() {
+export function usePracticeWordPersistence() {
   const dataSync = useDataSyncPersistence()
   const settingStore = useSettingStore()
 
-  async function save(data: PracticeWordCacheV2 | null) {
+  async function save(data: PracticeWordCache | null) {
     const compact = serializePracticeWordCache(data)
     return await dataSync.saveLocalAndSync(SyncDataType.practice_word, compact, { pullWhenRemoteNewer: false })
   }
 
-  async function load(): Promise<PracticeWordCacheV2 | null> {
+  async function load(): Promise<PracticeWordCache | null> {
     const [local, remote] = await Promise.all([
       getPracticeWordCacheLocalWithMeta() as Promise<LocalCacheResult<PracticeWordCacheStored> | null>,
       dataSync.getRemoteData(SyncDataType.practice_word),
@@ -191,12 +185,11 @@ export function usePracticeWordPersistenceV2() {
         version: remote.data_version ?? 1,
         updated_at: remote.updated_at,
       }
-      if (!selected || shouldFetchRemote(
-        selected.updated_at,
-        remoteCache.updated_at,
-        remoteCache.version,
-        selected.version
-      ) === CompareResult.RemoteNewer) {
+      if (
+        !selected ||
+        shouldFetchRemote(selected.updated_at, remoteCache.updated_at, remoteCache.version, selected.version) ===
+          CompareResult.RemoteNewer
+      ) {
         selected = remoteCache
       }
     }
@@ -206,11 +199,14 @@ export function usePracticeWordPersistenceV2() {
     }
 
     if (selected.version !== PRACTICE_WORD_CACHE.version) {
-      const upgraded = checkAndUpgradePracticeWordCache({
-        val: selected.val,
-        version: selected.version,
-        updated_at: selected.updated_at,
-      }, settingStore)
+      const upgraded = checkAndUpgradePracticeWordCache(
+        {
+          val: selected.val,
+          version: selected.version,
+          updated_at: selected.updated_at,
+        },
+        settingStore
+      )
       if (upgraded.val == null) {
         await save(null)
         return null

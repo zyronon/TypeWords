@@ -49,7 +49,7 @@ const { locales, setLocale } = useI18n()
 const route = useRoute()
 
 const showIcon = $computed(() => {
-  return ['/words', '/words-v2', '/articles', '/setting', '/help', '/doc', '/feedback'].includes(route.path)
+  return ['/words', '/articles', '/setting', '/help', '/doc', '/feedback'].includes(route.path)
 })
 
 onMounted(() => {

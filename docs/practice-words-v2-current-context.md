@@ -1,23 +1,22 @@
-# 单词练习 v2 当前实现上下文
+# 单词练习当前实现上下文
 
-> 更新时间：2026-08-03
-> 适用范围：`Typewords/apps/nuxt` 的单词练习 v2、Flow、显隐、音频和练习缓存
-> 文档定位：后续开发或审查 v2 时优先阅读的当前事实文档
+> 更新时间：2026-08-10
+> 适用范围：标准 Nuxt 项目 `Typewords/app` 下的正式单词练习、Flow、显隐、音频和练习缓存
+> 文档定位：后续开发或审查正式单词练习时优先阅读的当前事实文档
 
 历史方案记录在 [`practice-words-v2-refactor.md`](./practice-words-v2-refactor.md)。历史文档只用于理解演进过程；与本文冲突时，以本文和当前代码为准。
 
 ## 1. 当前边界
 
-- v1 正式入口仍是 `/words`，v2 测试入口是 `/words-v2`，练习页是 `/practice-words-v2/:id`。
-- v2 尚未上线，因此不兼容开发期间产生的任何旧 v2 Flow 或缓存。
-- `/words-test-v2` 不存在是已知测试入口问题，本轮不处理。
+- 重构版已经晋升为唯一正式实现，入口是 `/words`，练习页是 `/practice-words/:id`，不再保留 v1/v2 并行路由。
+- 线上版本 1 练习缓存仍通过既有的单向迁移升级为版本 2；缓存版本标识不因页面晋升而改名。
 - `/practice-sentences` 是独立实验页，本轮不处理其 session/cache。
-- 不修改 `apps/vscode-web`，也不合并 v1/v2。
+- VSCode 壳项目不在单词练习实现范围内。
 - `TypingSentence` 不转发 `wrong`；只在 `onCompleteSentence` 判断是否打错当前目标词。
 - `TypingSentence` 继续依赖父层 `key` 重建，不监听 `sentence` prop。
 - Footer 进度继续使用 `index / length`，包括首词 0%、末词不到 100% 和 loop 回退的现有表现。
 
-## 2. v2 主链路
+## 2. 正式主链路
 
 ```text
 Flow v6（严格校验）
@@ -34,9 +33,10 @@ Flow v6（严格校验）
 - `app/composables/practice-words/practice-flow-runtime.ts`
 - `app/composables/practice-words/usePracticeWordNavigator.ts`
 - `app/composables/practice-words/usePracticeDisplayPolicy.ts`
-- `app/composables/practice-words/usePracticeWordAudioV2.ts`
 - `app/composables/practice-words/practice-word-session.ts`
-- `app/pages/(words)/practice-words-v2/[id].vue`
+- `app/core/components/word/TypeWord.vue`
+- `app/core/components/word/WordTypingCore.vue`
+- `app/pages/(words)/practice-words/[id].vue`
 
 ## 3. Flow v6
 
@@ -96,7 +96,7 @@ Flow schema、Step、subStep、wrongWordClear、Phase 和 sessionSnapshot 中均
 | Dictation | 遮罩 | 显示 | 隐藏 | 隐藏 |
 | Identify | 由识别面板决定 | 隐藏 | 隐藏 | 隐藏 |
 
-v2 的 Identify 不再区分 `SelfAssessment`、`WordTest` 和 `QuickIdentify` 子类型，而是在同一面板中同时提供自评按钮、直接拼写、选择题和批量标记。进入 Identify 阶段且当前单词存在时始终生成选择题 `question`，切词时重新生成，离开 Identify 阶段时清空；v1 的 `identifyMethod` 设置不影响 v2。
+正式版 Identify 不再区分 `SelfAssessment`、`WordTest` 和 `QuickIdentify` 子类型，而是在同一面板中同时提供自评按钮、直接拼写、选择题和批量标记。进入 Identify 阶段且当前单词存在时始终生成选择题 `question`，切词时重新生成，离开 Identify 阶段时清空；历史 `identifyMethod` 设置不再影响当前练习。
 
 Footer 只维护两个临时状态：
 
@@ -107,13 +107,13 @@ Footer 只维护两个临时状态：
 
 键入算法只由 `practiceType` 决定：仅 Dictation 使用整词输入并在空格时校验，其余类型均为逐字符输入。Footer、随机默写、hover、Esc 和答案揭示只改变 `isWordMasked` 画面状态，不改变键入算法。
 
-## 5. v2 音频
+## 5. 单词音频
 
 单词音频和例句/短语 TTS 分开：
 
-- `usePracticeWordAudioV2` 只负责单词音频、速度规则、取消旧音频和播放结束回调。
-- `WordMetaPanelV2` 独立负责例句/短语 TTS、声色提示和例句高亮。
-- `TypeWordV2` 只在允许串播时调用 `WordMetaPanelV2.playSentence(0)`。
+- `TypeWord` 负责调度单词音频、速度规则、取消旧音频和播放结束回调。
+- `WordMetaPanel` 独立负责例句/短语 TTS、声色提示和例句高亮。
+- `TypeWord` 只在允许串播时调用 `WordMetaPanel.playSentence(0)`。
 
 首句自动串播必须同时满足：
 
@@ -172,7 +172,7 @@ v2 沿用已上线的练习缓存通道：
 - 生成当前 `sessionSnapshot` 和工作词标识；快照不保存或恢复 v1 的 `identifyMethod`。
 - `question` 置空后由页面根据当前 Identify 阶段和单词重新构建，不复用 v1 的旧题目。
 
-v2 是对 v1 的替换实现，不设计 v1/v2 并存和双向兼容。通用缓存配置的当前版本直接为 2；只有读取到已上线的版本 1 数据时才执行一次 v1→v2 转换。
+重构版已经替换旧实现，不再设计 v1/v2 并存和双向兼容。通用缓存配置的当前版本直接为 2；只有读取到已上线的版本 1 数据时才执行一次 v1→v2 转换。
 
 ## 7. 统计与学习进度
 
@@ -183,7 +183,7 @@ v2 是对 v1 的替换实现，不设计 v1/v2 并存和双向兼容。通用缓
 
 ### 7.1 无到期词时加入随机复习
 
-- v2 的正常任务只使用 FSRS 到期复习词，不再为了达到复习比例固定补足历史词。
+- 正式版正常任务只使用 FSRS 到期复习词，不再为了达到复习比例固定补足历史词。
 - `autoAddRandomReviewWhenNoDue` 默认为 `false`；首页和单词设置页共用同一个持久 Switch。
 - 只有补充前的到期复习数为 0 时才显示首页 Switch、执行随机补充；开启后 Switch 保持显示，关闭时重新生成当前任务并移除随机补充词。
 - 随机数量为 `floor(perDayStudyNumber * wordReviewRatio)`，候选仅来自当前学习进度之前的已学词，并排除新词、忽略词、已掌握词和重复词；候选不足时使用实际数量。
@@ -193,19 +193,19 @@ v2 是对 v1 的替换实现，不设计 v1/v2 并存和双向兼容。通用缓
 
 ## 8. 测试与验收
 
-单测目录：`../tests/unit`
+单测目录：`tests/unit`
 
 - `practice-flow-runtime.test.ts`：v6 严格校验、回退、实例隔离、统计。
 - `practice-word-navigator.test.ts`：7/8/14 词 loop、验证步骤消错、重加错词、Cursor 恢复和空 Node。
 - `practice-view-audio.test.ts`：五类显隐默认值与首句串播条件。
 - `practice-word-cache-v2.test.ts`：版本优先级、更新时间选择和 v1 stage→Cursor。
-- `study-task-v2.test.ts`：无到期词随机补充、开关条件、数量与候选排除规则。
+- `study-task.test.ts`：无到期词随机补充、开关条件、数量与候选排除规则。
 
 提交前执行：
 
 ```bash
-pnpm --filter @typewords/nuxt test:unit
-pnpm --filter @typewords/nuxt exec vue-tsc --noEmit
+npm run test:unit
+npx vue-tsc --noEmit
 git diff --check
 ```
 

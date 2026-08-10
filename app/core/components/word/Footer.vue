@@ -1,29 +1,33 @@
 <script setup lang="ts">
-import { usePracticeStore } from '../../stores/practice'
-import { useSettingStore } from '../../stores/setting'
-import type { PracticeData } from '../../types'
-import { ShortcutKey, WordPracticeMode, WordPracticeStage } from '../../types'
+import { usePracticeStore } from '@/core/stores/practice.ts'
+import { useSettingStore } from '@/core/stores/setting.ts'
+import type { PracticeData } from '~/composables/practice-words/practice-word-session.ts'
+import { ShortcutKey } from '@/core/types/enum.ts'
+import type { PracticeFlowConfig, PracticeFlowCursor } from '~/composables/practice-words/practice-flow-types.ts'
 import { BaseIcon, Tooltip } from '@/base'
-import SettingDialog from '../setting/SettingDialog.vue'
-import VolumeSettingMiniDialog from './VolumeSettingMiniDialog.vue'
-import StageProgress from '../StageProgress.vue'
-import { WordPracticeModeNameMap, WordPracticeStageNameMap } from '../../config/env'
+import SettingDialog from '@/core/components/setting/SettingDialog.vue'
+import VolumeSettingMiniDialog from '@/core/components/word/VolumeSettingMiniDialog.vue'
+import StageProgress from '@/core/components/StageProgress.vue'
 import { useI18n } from 'vue-i18n'
+import {
+  useInjectedDisplayActions,
+  useInjectedDisplayPolicy,
+} from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
+import { computed, type Ref } from 'vue'
 
 const statStore = usePracticeStore()
 const settingStore = useSettingStore()
 const { t: $t } = useI18n()
-
-defineProps<{
-  showEdit?: boolean
-}>()
+const displayActions = useInjectedDisplayActions()
+const effective = useInjectedDisplayPolicy()
 
 const emit = defineEmits<{
-  edit: []
   skipStep: []
 }>()
 
 let practiceData = inject<PracticeData>('practiceData')
+const activeCursor = inject<Ref<PracticeFlowCursor>>('practiceFlowCursor')!
+const activeFlowConfig = inject<Ref<PracticeFlowConfig>>('practiceFlowConfig')!
 const bumpPracticeTimerActivity = inject<(() => void) | undefined>('bumpPracticeTimerActivity', undefined)
 
 function onTimerRowClick() {
@@ -39,155 +43,93 @@ function format(val: number, suffix: string = '', check: number = -1) {
   return val === check ? '-' : val + suffix
 }
 
-const status = $computed(() => {
-  if (settingStore.wordPracticeMode === WordPracticeMode.Free) return $t('free_practice')
-  if (practiceData.isTypingWrongWord) return $t('review_wrong_words')
-  return statStore.getStageName
+/**
+ * 当前阶段状态名。
+ * 对齐 v1 Footer：错词时显示「错词复习」，否则显示 node·step。
+ * 单节点单步骤流程（Free/Shuffle 等价）直接显示 flow 名。
+ */
+const status = computed(() => {
+  if (activeCursor.value.loop) return '小组巩固'
+  if (activeCursor.value.inWrongWordClear) return $t('review_wrong_words')
+  const config = activeFlowConfig.value
+  const nodes = config.nodes
+  const cursor = activeCursor.value
+  const node = nodes[cursor.nodeIndex]
+  if (!node) return $t(config.label)
+  const step = node.steps[cursor.stepIndex]
+  const stepLabel = step?.label ?? step?.templateId ?? ''
+  if (nodes.length === 1 && nodes[0].steps.length === 1) return $t(config.label)
+  return $t(node.label) + (stepLabel ? ' · ' + $t(stepLabel) : '')
 })
 
-const stages = $computed(() => {
-  let DEFAULT_BAR = {
-    name: '',
-    ratio: 100,
-    percentage: (practiceData.index / practiceData.words.length) * 100,
-    active: true,
+/**
+ * 进度条数据 — 完全从 registry.nodes + cursor 推导，无任何 WordPracticeMode 硬编码。
+ *
+ * 格式：
+ * - 单 node 单 step → 单进度条（Free/Shuffle 适用）
+ * - 多 node → 多组进度条，每组含子步骤
+ *
+ * 设计：
+ * - 已过去的 node 百分比 = 100
+ * - 当前 node 比例 = 70（活跃）；已过 node = 30；未来 node = 30
+ * - 当前 node 的子步骤也做进度条
+ */
+const stages = computed(() => {
+  const nodes = activeFlowConfig.value.nodes
+  const cursor = activeCursor.value
+  const { nodeIndex, stepIndex } = cursor
+  const currentProgress = practiceData.words.length ? (practiceData.index / practiceData.words.length) * 100 : 0
+
+  // 单 node 单 step → 单进度条
+  if (nodes.length === 1 && nodes[0].steps.length === 1) {
+    return [
+      {
+        name: '',
+        ratio: 100,
+        percentage: currentProgress,
+        active: true,
+      },
+    ]
   }
-  if ([WordPracticeMode.Shuffle, WordPracticeMode.Free].includes(settingStore.wordPracticeMode)) {
-    return [DEFAULT_BAR]
-  } else {
-    // 阶段映射：将 WordPracticeStage 映射到 stageIndex 和 childIndex
-    const stageMap: Partial<Record<WordPracticeStage, { stageIndex: number; childIndex: number }>> = {
-      [WordPracticeStage.FollowWriteNewWord]: { stageIndex: 0, childIndex: 0 },
-      [WordPracticeStage.IdentifyNewWord]: { stageIndex: 0, childIndex: 0 },
-      [WordPracticeStage.ListenNewWord]: { stageIndex: 0, childIndex: 1 },
-      [WordPracticeStage.DictationNewWord]: { stageIndex: 0, childIndex: 2 },
-      [WordPracticeStage.IdentifyReview]: { stageIndex: 1, childIndex: 0 },
-      [WordPracticeStage.ListenReview]: { stageIndex: 1, childIndex: 1 },
-      [WordPracticeStage.DictationReview]: { stageIndex: 1, childIndex: 2 },
+
+  // 多 node 进度条；单 node 多 step 时 nodeRatio = 100，不切分
+  const isSingleNode = nodes.length === 1
+  return nodes.map((node, ni) => {
+    const isCurrentNode = ni === nodeIndex
+    const isCompleted = ni < nodeIndex
+
+    const nodeRatio = isSingleNode ? 100 : isCurrentNode ? 70 : 30
+
+    // 子步骤（仅当前 node 展开）
+    const children =
+      isCurrentNode && node.steps.length > 1
+        ? node.steps.map((step, si) => {
+            const isCurrentStep = si === stepIndex
+            const isCompletedStep = si < stepIndex
+            return {
+              name: $t(step.label ?? step.templateId),
+              ratio: Math.floor(100 / node.steps.length),
+              percentage: isCompletedStep ? 100 : isCurrentStep ? currentProgress : 0,
+              active: isCurrentStep,
+            }
+          })
+        : undefined
+
+    return {
+      name: $t(node.label),
+      ratio: nodeRatio,
+      percentage: isCompleted ? 100 : isCurrentNode ? currentProgress : 0,
+      active: isCurrentNode,
+      children,
     }
+  })
+})
 
-    // console.log('statStore.stage',statStore.stage)
-    // 获取当前阶段的配置
-    const currentStageConfig = stageMap[statStore.stage]
-    if (!currentStageConfig) {
-      return [DEFAULT_BAR]
-    }
-    const { stageIndex, childIndex } = currentStageConfig
-    const currentProgress = (practiceData.index / practiceData.words.length) * 100
-
-    if (
-      [WordPracticeMode.IdentifyOnly, WordPracticeMode.DictationOnly, WordPracticeMode.ListenOnly].includes(
-        settingStore.wordPracticeMode
-      )
-    ) {
-      const stages = [
-        {
-          name: `新词：${WordPracticeModeNameMap[settingStore.wordPracticeMode]}`,
-          ratio: 49,
-          percentage: 0,
-          active: false,
-        },
-        {
-          name: `复习：${WordPracticeModeNameMap[settingStore.wordPracticeMode]}`,
-          ratio: 49,
-          percentage: 0,
-          active: false,
-        },
-      ]
-
-      // 设置已完成阶段的百分比和比例
-      for (let i = 0; i < stageIndex; i++) {
-        stages[i].percentage = 100
-        stages[i].ratio = 49
-      }
-
-      // 设置当前激活的阶段
-      stages[stageIndex].active = true
-      stages[stageIndex].percentage = (practiceData.index / practiceData.words.length) * 100
-      return stages
-    } else {
-      // 阶段配置：定义每个阶段组的基础信息
-      const stageConfigs = [
-        {
-          name: '新词',
-          ratio: 70,
-          children: [
-            { name: WordPracticeStageNameMap[WordPracticeStage.FollowWriteNewWord] },
-            { name: WordPracticeStageNameMap[WordPracticeStage.ListenNewWord] },
-            { name: WordPracticeStageNameMap[WordPracticeStage.DictationNewWord] },
-          ],
-        },
-        {
-          name: '复习',
-          ratio: 30,
-          children: [
-            { name: WordPracticeStageNameMap[WordPracticeStage.IdentifyReview] },
-            { name: WordPracticeStageNameMap[WordPracticeStage.ListenReview] },
-            { name: WordPracticeStageNameMap[WordPracticeStage.DictationReview] },
-          ],
-        },
-      ]
-
-      // 初始化 stages
-      const stages = stageConfigs.map(config => ({
-        name: config.name,
-        percentage: 0,
-        ratio: config.ratio,
-        active: false,
-        children: config.children.map(child => ({
-          name: child.name,
-          percentage: 0,
-          ratio: 33,
-          active: false,
-        })),
-      }))
-
-      // 设置已完成阶段的百分比和比例
-      for (let i = 0; i < stageIndex; i++) {
-        stages[i].percentage = 100
-        stages[i].ratio = 30
-      }
-
-      // 设置当前激活的阶段
-      stages[stageIndex].ratio = 70
-      stages[stageIndex].active = true
-
-      // 根据类型设置子阶段的进度
-      const currentStageChildren = stages[stageIndex].children
-
-      if (childIndex === 0) {
-        // 跟写/自测：只激活第一个子阶段
-        currentStageChildren[0].active = true
-        currentStageChildren[0].percentage = currentProgress
-      } else if (childIndex === 1) {
-        // 听写：第一个完成，第三个未开始，第二个进行中
-        currentStageChildren[0].active = false
-        currentStageChildren[1].active = true
-        currentStageChildren[2].active = false
-        currentStageChildren[0].percentage = 100
-        currentStageChildren[1].percentage = currentProgress
-        currentStageChildren[2].percentage = 0
-      } else if (childIndex === 2) {
-        // 默写：前两个完成，第三个进行中
-        currentStageChildren[0].active = false
-        currentStageChildren[1].active = false
-        currentStageChildren[2].active = true
-        currentStageChildren[0].percentage = 100
-        currentStageChildren[1].percentage = 100
-        currentStageChildren[2].percentage = currentProgress
-      }
-
-      if (settingStore.wordPracticeMode === WordPracticeMode.System) {
-        return stages
-      }
-      if (settingStore.wordPracticeMode === WordPracticeMode.Review) {
-        stages.shift()
-        if (stageIndex === 1) stages[0].ratio = 100
-        return stages
-      }
-    }
-  }
-  return [DEFAULT_BAR]
+/** 是否显示「跳过当前阶段」按钮（多 step 或多 node 流程才显示） */
+const showSkipStep = computed(() => {
+  const nodes = activeFlowConfig.value.nodes
+  if (nodes.length === 0) return false
+  return nodes.length > 1 || nodes[0].steps.length > 1
 })
 </script>
 
@@ -210,8 +152,12 @@ const stages = $computed(() => {
       <div class="flex justify-between items-center">
         <div class="stat">
           <div class="row">
-            <Tooltip title="进度 / 单词数">
-              <div class="num">{{ `${practiceData.index + 1} / ${practiceData.words.length}` }}</div>
+            <Tooltip title="进度 / 错误数 / 单词数">
+              <div class="shrink-0">
+                <span> {{ practiceData.index + 1 }}</span> /
+                <span class="color-red"> {{ format(practiceData.wrongWords.length, '', 0) }}</span> /
+                <span>{{ practiceData.words.length }}</span>
+              </div>
             </Tooltip>
             <div class="line"></div>
             <div class="name">{{ status }}</div>
@@ -222,28 +168,18 @@ const stages = $computed(() => {
                 <template v-if="statStore.timerPaused">
                   <IconFluentPause20Regular width="18" height="18" class="inline-block align-middle" />
                 </template>
-                <template v-else>
-                  {{ Math.floor(statStore.spend / 1000 / 60) }}{{ $t('minutes') }}
-                  <!--                  {{statStore.spend /1000}}-->
-                </template>
+                <template v-else> {{ Math.floor(statStore.spend / 1000 / 60) }}{{ $t('minutes') }} </template>
               </div>
             </Tooltip>
             <div class="line"></div>
             <div class="name">{{ $t('time') }}</div>
           </div>
           <div class="row">
-            <div class="num">{{ statStore.total }}</div>
-            <div class="line"></div>
-            <div class="name">{{ $t('total_words') }}</div>
-          </div>
-          <div class="row">
-            <Tooltip title="当前错误数 | 总错误数">
-              <div class="num">
-                {{ format(practiceData.wrongWords.length, '', 0) }} | {{ format(statStore.wrong, '', 0) }}
-              </div>
+            <Tooltip title="总错词数 | 总词数">
+              <div class="num">{{ format(practiceData.allWrongWords.length, '', 0) }} | {{ statStore.total }}</div>
             </Tooltip>
             <div class="line"></div>
-            <div class="name">{{ $t('errors') }}</div>
+            <div class="name">{{ $t('total_words') }}</div>
           </div>
         </div>
         <div class="flex gap-2 justify-center items-center" id="toolbar-icons">
@@ -252,26 +188,26 @@ const stages = $computed(() => {
           <VolumeSettingMiniDialog />
 
           <BaseIcon
-            v-if="settingStore.wordPracticeMode !== WordPracticeMode.Free"
+            v-if="showSkipStep"
             @click="emit('skipStep')"
-            :title="`${$t('skip_to_next_stage')}:${WordPracticeStageNameMap[statStore.nextStage]}(${settingStore.shortcutKeyMap[ShortcutKey.NextStep]})`"
+            :title="`${$t('skip_to_next_stage')}(${settingStore.shortcutKeyMap[ShortcutKey.NextStep]})`"
           >
             <IconFluentArrowRight16Regular />
           </BaseIcon>
 
           <BaseIcon
-            @click="settingStore.dictation = !settingStore.dictation"
+            @click="displayActions.toggleDictation()"
             :title="`${$t('toggle_dictation_mode')}(${settingStore.shortcutKeyMap[ShortcutKey.ToggleDictation]})`"
           >
-            <IconFluentEyeOff16Regular v-if="settingStore.dictation" />
+            <IconFluentEyeOff16Regular v-if="effective.isWordMasked" />
             <IconFluentEye16Regular v-else />
           </BaseIcon>
 
           <BaseIcon
             :title="`${$t('toggle_translation')}(${settingStore.shortcutKeyMap[ShortcutKey.ToggleShowTranslate]})`"
-            @click="settingStore.translate = !settingStore.translate"
+            @click="displayActions.toggleTranslate()"
           >
-            <IconPhTranslate v-if="settingStore.translate" />
+            <IconPhTranslate v-if="effective.isShowTranslate" />
             <IconFluentTranslateOff16Regular v-else />
           </BaseIcon>
 
@@ -319,28 +255,15 @@ const stages = $computed(() => {
     padding: 0.2rem var(--space) calc(0.4rem + env(safe-area-inset-bottom, 0px)) var(--space);
 
     .stat {
-      @apply flex justify-around gap-[var(--stat-gap)] mt-2;
+      @apply flex justify-around gap-[var(--stat-gap)] mt-1;
 
       .row {
         @apply flex flex-col items-center gap-1 text-gray;
-
-        width: 4rem;
-        padding: 0 0 0.5rem 0;
 
         .line {
           height: 1px;
           width: 100%;
           background: var(--color-sub-gray);
-        }
-
-        .num {
-          line-height: 1;
-          height: 1rem;
-        }
-
-        .name {
-          line-height: 1;
-          height: 1rem;
         }
       }
     }
@@ -348,7 +271,7 @@ const stages = $computed(() => {
 
   .progress-wrap {
     width: var(--toolbar-width);
-    transition: all 0.3s;
+    transition: bottom 0.3s ease;
     padding: 0 0.6rem;
     box-sizing: border-box;
     position: fixed;
@@ -361,7 +284,9 @@ const stages = $computed(() => {
     top: -40%;
     left: 50%;
     cursor: pointer;
-    transition: all 0.5s;
+    transition:
+      top 0.5s ease,
+      transform 0.5s ease;
     transform: rotate(-90deg);
     padding: 0.5rem;
     font-size: 1.2rem;
@@ -372,7 +297,6 @@ const stages = $computed(() => {
     }
   }
 }
-
 
 @media (max-width: 768px) {
   .footer {
@@ -478,6 +402,13 @@ const stages = $computed(() => {
       padding: 0 0.3rem;
       bottom: 0.3rem;
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer .progress-wrap,
+  .footer .arrow {
+    transition-duration: 0.01ms;
   }
 }
 </style>

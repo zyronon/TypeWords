@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, provide, ref, watch } from 'vue'
-import StatisticsV2 from '~/components/practice-words-v2/StatisticsV2.vue'
+import Statistics from '@/core/components/word/Statistics.vue'
 import { emitter, EventKey, useEvents } from '@/core/utils/eventBus.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import { useRuntimeStore } from '@/core/stores/runtime.ts'
@@ -12,27 +12,27 @@ import useTheme from '@/core/hooks/theme.ts'
 import { useWordOptions } from '@/core/hooks/dict.ts'
 import { _getDictDataByUrl, cloneDeep, getShufflePracticeWords, resourceWrap, shuffle, throttle } from '@/core/utils'
 import { useRoute, useRouter } from 'vue-router'
-import FooterV2 from '~/components/practice-words-v2/FooterV2.vue'
+import Footer from '@/core/components/word/Footer.vue'
 import Panel from '@/core/components/Panel.vue'
 import { BaseIcon, Dialog, Toast, ToastComponent } from '@/base'
 import WordList from '@/core/components/list/WordList.vue'
-import TypeWordV2 from '~/components/practice-words-v2/TypeWordV2.vue'
+import TypeWord from '@/core/components/word/TypeWord.vue'
 import Empty from '@/core/components/Empty.vue'
 import { useBaseStore } from '@/core/stores/base.ts'
 import { usePracticeStore } from '@/core/stores/practice.ts'
 import { getDefaultDict, getDefaultWord } from '@/core/types/func.ts'
 import PracticeLayout from '@/core/components/PracticeLayout.vue'
-import PracticeOnboardingHostV2 from '~/components/practice-words-v2/PracticeOnboardingHostV2.vue'
+import PracticeOnboardingHost from '@/core/components/word/PracticeOnboardingHost.vue'
 import { AppEnv, DICT_LIST } from '@/core/config/env.ts'
 import { addStat, setUserDictProp } from '@/core/apis'
 import GroupList from '@/core/components/word/GroupList.vue'
 import {
   addWrongWordKey,
   getDefaultPracticeData,
-  type PracticeDataV2,
-  type PracticeWordCacheV2,
+  type PracticeData,
+  type PracticeWordCache,
   UnsupportedPracticeCacheVersionError,
-  usePracticeWordPersistenceV2,
+  usePracticeWordPersistence,
 } from '~/composables/practice-words/practice-word-session.ts'
 import { flushStatToStore } from '@/core/composables/usePracticePersistence.ts'
 import { useDataSyncPersistence } from '@/core/composables/useDataSyncPersistence.ts'
@@ -47,8 +47,13 @@ import {
   normalizePracticeTimer,
   usePracticeIdleTimer,
 } from '~/composables/practice-words/usePracticeIdleTimer.ts'
-import { createStudyTaskV2 } from '~/composables/practice-words/study-task-v2.ts'
-import PrevAndNextWord from '~/components/practice-words-v2/PrevAndNextWord.vue'
+import { createStudyTask } from '~/composables/practice-words/study-task.ts'
+import PrevAndNextWord from '@/core/components/word/PrevAndNextWord.vue'
+import {
+  captureIdentifyTypingWrong,
+  restoreIdentifyTypingWrong,
+  type IdentifyTypingWrongSnapshot,
+} from '~/composables/practice-words/identify-typing-wrong.ts'
 
 const { isWordSimple, toggleWordSimple } = useWordOptions()
 const settingStore = useSettingStore()
@@ -59,10 +64,10 @@ const route = useRoute()
 const store = useBaseStore()
 const statStore = usePracticeStore()
 const dataSync = useDataSyncPersistence()
-const wordPersistence = usePracticeWordPersistenceV2()
+const wordPersistence = usePracticeWordPersistence()
 let { getGradeByWrongTimes } = useGetGradeByWrongTimes()
 let { nextCard } = useNextCard()
-const onboardingHostRef = ref<InstanceType<typeof PracticeOnboardingHostV2>>()
+const onboardingHostRef = ref<InstanceType<typeof PracticeOnboardingHost>>()
 let isComplete = $ref(false)
 let loading = $ref(false)
 let settling = $ref(false)
@@ -84,7 +89,8 @@ let taskWords = $ref<TaskWords>({
 
 //watch 实例列表，用于本地代码修改hrm后，导致重复watch
 let watchRefList = []
-let data = $ref<PracticeDataV2>(getDefaultPracticeData({}))
+let data = $ref<PracticeData>(getDefaultPracticeData({}))
+let identifyTypingWrongSnapshot: IdentifyTypingWrongSnapshot | null = null
 
 const word = $computed<Word>(() => {
   return data.words[data.index] ?? getDefaultWord()
@@ -124,7 +130,7 @@ function restorePracticeSession(cache: { sessionSnapshot?: PracticeSessionSnapsh
 }
 
 /** 将完整缓存恢复到当前响应式会话对象。 */
-function applyPracticeCache(cache: PracticeWordCacheV2): boolean {
+function applyPracticeCache(cache: PracticeWordCache): boolean {
   if (!cache.practiceData || !cache.statStoreData) return false
 
   // 远端运行中恢复也会走这里；快照无效时必须保留当前内存会话，不能只恢复一半。
@@ -159,6 +165,7 @@ watch([() => data.words, () => data.index, currentPracticeType], () => {
 watch(
   () => word.word,
   async (currentWord, previousWord) => {
+    identifyTypingWrongSnapshot = null
     if (!currentWord || currentWord === previousWord) return
     await nextTick()
     window.scrollTo({ top: 0, behavior: 'auto' })
@@ -228,7 +235,7 @@ async function checkRemotePracticeUpdate(): Promise<boolean> {
     if (error instanceof UnsupportedPracticeCacheVersionError) {
       Toast.error('远端练习缓存来自更高版本，请升级后再继续')
     } else {
-      console.error('[practice-v2] 检查远端练习进度失败', error)
+      console.error('[practice] 检查远端练习进度失败', error)
     }
     return false
   } finally {
@@ -256,7 +263,7 @@ async function reloadRemotePracticeSession(): Promise<boolean> {
     pendingRemoteUpdatedAt = 0
     if (!cache) {
       Toast.warning('远端练习已结束或缓存已清空')
-      await router.push('/words-v2')
+      await router.push('/words')
       return true
     }
     if (!applyPracticeCache(cache)) {
@@ -270,7 +277,7 @@ async function reloadRemotePracticeSession(): Promise<boolean> {
     if (error instanceof UnsupportedPracticeCacheVersionError) {
       Toast.error('远端练习缓存来自更高版本，请升级后再继续')
     } else {
-      console.error('[practice-v2] 加载远端练习进度失败', error)
+      console.error('[practice] 加载远端练习进度失败', error)
       Toast.error('远端进度加载失败，请稍后重试')
     }
     return false
@@ -340,12 +347,12 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
       } catch (error) {
         if (!(error instanceof UnsupportedPracticeCacheVersionError)) throw error
         Toast.error('练习缓存来自更高版本，请升级后再继续')
-        await router.push('/words-v2')
+        await router.push('/words')
         return
       }
     }
     if (!d) {
-      initData(createStudyTaskV2().taskWords)
+      initData(createStudyTask().taskWords)
       return
     }
     if (!applyPracticeCache(d)) {
@@ -394,7 +401,7 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
 }
 
 /**
- * 会话切换后，新的 Word 引用会由 TypeWordV2 的 props watcher 自动重置。
+ * 会话切换后，新的 Word 引用会由 TypeWord 的 props watcher 自动重置。
  * 若切换前后仍是同一个引用（如“重学一遍”），则等新会话 props 刷新后补发重置事件。
  */
 function resetSameWordAfterViewUpdate(previousWord: Word) {
@@ -476,7 +483,7 @@ async function complete() {
         }
         await dataSync.saveDictState(store.$state, { pullWhenRemoteNewer: false })
       } catch (error) {
-        console.error('[practice-v2] 远端结算同步失败', error)
+        console.error('[practice] 远端结算同步失败', error)
         Toast.error('本地结算已完成，远端同步失败，可稍后重试')
       }
 
@@ -495,7 +502,7 @@ async function complete() {
       trackData.str = `name:${trackData.name},per:${trackData.per},spend:${trackData.spend},index:${trackData.index},funSpend:${trackData.funSpend}`
       window.umami?.track('endStudyWord', trackData)
     } catch (error) {
-      console.error('[practice-v2] 本地结算失败', error)
+      console.error('[practice] 本地结算失败', error)
       Toast.error('结算失败，请重试')
     } finally {
       settling = false
@@ -519,7 +526,20 @@ function onWordKnow() {
   addExcludeWord()
 }
 
-function onTypeWrong() {
+function onTypeWrong(source?: 'identifyTyping') {
+  if (source === 'identifyTyping') {
+    const wordKey = word.word.toLowerCase()
+    if (!identifyTypingWrongSnapshot || identifyTypingWrongSnapshot.wordKey !== wordKey) {
+      identifyTypingWrongSnapshot = captureIdentifyTypingWrong(word, {
+        wrongTimes: data.wrongTimes,
+        allWrongWords: data.allWrongWords,
+        wrongWords: data.wrongWords,
+        storedWrongWords: store.wrong.words,
+      })
+    }
+  } else {
+    identifyTypingWrongSnapshot = null
+  }
   data.wrongTimes++
   //这里的代码暂时不能移动，因为要实时把错词加入到列表里面，从而更新toolbar里面的错词数
   //todo 后续可以优化
@@ -536,6 +556,21 @@ function onTypeWrong() {
   if (rIndex > -1) {
     data.excludeWords.splice(rIndex, 1)
   }
+  savePracticeData()
+}
+
+function undoIdentifyTypingWrong() {
+  if (!identifyTypingWrongSnapshot || identifyTypingWrongSnapshot.wordKey !== word.word.toLowerCase()) return
+  const state = {
+    wrongTimes: data.wrongTimes,
+    allWrongWords: data.allWrongWords,
+    wrongWords: data.wrongWords,
+    storedWrongWords: store.wrong.words,
+  }
+  restoreIdentifyTypingWrong(identifyTypingWrongSnapshot, state)
+  data.wrongTimes = state.wrongTimes
+  store.wrong.length = store.wrong.words.length
+  identifyTypingWrongSnapshot = null
   savePracticeData()
 }
 
@@ -582,7 +617,7 @@ async function savePracticeDataIns() {
       })
       knownCacheUpdatedAt = Math.max(knownCacheUpdatedAt, Date.now())
     } catch (error) {
-      console.error('[practice-v2] 保存练习缓存失败', error)
+      console.error('[practice] 保存练习缓存失败', error)
       Toast.error('练习进度保存失败，请稍后重试')
     } finally {
       runtimeStore.globalLoading = false
@@ -683,7 +718,7 @@ async function continueStudy() {
     } else {
       console.log('学完了，正常下一组')
     }
-    temp = createStudyTaskV2().taskWords
+    temp = createStudyTask().taskWords
   }
   if (!temp.new.length && !temp.review.length) {
     Toast.warning('当前没有可学习的单词')
@@ -706,7 +741,7 @@ async function jumpToGroup(group: number) {
   wordPersistence.clear()
   console.log('没学完，强行跳过', group)
   store.sdict.lastLearnIndex = (group - 1) * store.sdict.perDayStudyNumber
-  await initData(createStudyTaskV2().taskWords)
+  await initData(createStudyTask().taskWords)
   resetSameWordAfterViewUpdate(previousWord)
   if (AppEnv.CAN_REQUEST) {
     let res = await setUserDictProp(null, { ...store.sdict, type: 'word' })
@@ -823,13 +858,14 @@ useEvents([
             @prev="nav.prev"
             @openNotice="onboardingHostRef?.openConflictNotice2"
           />
-          <TypeWordV2
+          <TypeWord
             :word="word"
             :question="data.question"
             :practiceType="currentPracticeType"
             :phaseKey="currentPhaseKey"
             @complete="nav.next"
             @wrong="onTypeWrong"
+            @undo-identify-typing-wrong="undoIdentifyTypingWrong"
             @mastered="toggleWordSimpleWrapper"
             @know="onWordKnow"
             @skip="skip"
@@ -881,11 +917,11 @@ useEvents([
       </Panel>
     </template>
     <template v-slot:footer>
-      <FooterV2 @skipStep="nav.skipStep" />
+      <Footer @skipStep="nav.skipStep" />
     </template>
   </PracticeLayout>
-  <StatisticsV2 v-model="isComplete" :loading="settling" />
-  <PracticeOnboardingHostV2
+  <Statistics v-model="isComplete" :loading="settling" />
+  <PracticeOnboardingHost
     ref="onboardingHostRef"
     :ready="data.words.length > 0"
     :dict-id="String(route.params.id ?? '')"

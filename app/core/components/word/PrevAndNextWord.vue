@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import type { Word } from '@/core/types/types.ts'
-import type { PracticeDataV2 } from '~/composables/practice-words/practice-word-session.ts'
+import type { PracticeData } from '~/composables/practice-words/practice-word-session.ts'
 import { ShortcutKey } from '@/core'
 import { Tooltip } from '@/base'
 import { useSettingStore } from '@/core/stores/setting.ts'
 
 const props = defineProps<{
-  data: PracticeDataV2
+  data: PracticeData
   isWordMasked: boolean
 }>()
 

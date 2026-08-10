@@ -11,7 +11,7 @@
  */
 import { computed, nextTick, ref } from 'vue'
 import type { TaskWords, Word } from '@/core/types/types.ts'
-import type { PracticeDataV2 } from './practice-word-session.ts'
+import type { PracticeData } from './practice-word-session.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import { usePracticeStore } from '@/core/stores/practice.ts'
 import { WordPracticeMode } from '@/core/types/enum.ts'
@@ -33,7 +33,7 @@ import type {
 import { Toast } from '@/base'
 
 export type NavigatorDeps = {
-  getPracticeData: () => PracticeDataV2
+  getPracticeData: () => PracticeData
   getTaskWords: () => TaskWords
   getCurrentWord: () => Word
   checkWordIsNeedNext: (word: Word) => boolean
@@ -45,7 +45,7 @@ export type NavigatorDeps = {
 function resolveWordsFromSource(
   source: PracticeWordsSource,
   taskWords: TaskWords,
-  data: PracticeDataV2
+  data: PracticeData
 ): Word[] {
   switch (source) {
     case 'taskNew':    return taskWords.new
@@ -436,7 +436,7 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     return runStepAdvance()
   }
 
-  function atListEnd(data: PracticeDataV2): boolean {
+  function atListEnd(data: PracticeData): boolean {
     // loop 子步骤中，词表范围是 [loop.startIndex, loop.endIndex]
     const cur = activeCursor.value
     if (cur.loop !== null) {
