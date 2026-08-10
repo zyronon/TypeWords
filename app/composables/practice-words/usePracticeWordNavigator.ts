@@ -458,7 +458,7 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
         return
       }
 
-      const temp = word.word.toLowerCase()
+      const temp = word.word
       const preTimes = data.wrongTimesMap[temp] ?? 0
       const phase = currentPhase.value
       const loop = activeCursor.value.loop
@@ -466,9 +466,9 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
         ? phase.wordAdvance.subSteps?.[loop.subStepIndex]
         : undefined
       if (loopSubStep?.clearWrongOnSuccess && data.wrongTimes === 0) {
-        const rIndex = data.wrongWords.findIndex(v => v.word.toLowerCase() === temp)
+        const rIndex = data.wrongWords.findIndex(v => v.word === temp)
         if (rIndex >= 0) {
-          Toast.success(temp + ' 已自动从错词列表移除！原因：跟写时错误，但拼写时正确')
+          Toast.info(temp + ' 已从错词列表移除！原因：跟写时错误，但拼写时正确')
           data.wrongWords.splice(rIndex, 1)
         }
       }

@@ -156,7 +156,7 @@ const text = $computed(() => {
     </BaseButton>
 
     <div class="flex gap-2 center absolute! right-0">
-      <Tooltip :title="`${settingStore.showWordQuestion ? '关闭' : '开启'}单词选项`">
+      <Tooltip :title="`${settingStore.showWordQuestion ? '关闭' : '开启'}答案选项`">
         <Switch type="info" v-model="settingStore.showWordQuestion" />
       </Tooltip>
       <BaseButton type="text" keyboard="批量标记" class="" @click="emit('quickMark')">

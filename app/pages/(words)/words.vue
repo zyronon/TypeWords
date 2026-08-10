@@ -298,11 +298,11 @@ async function startPractice(practiceMode: WordPracticeMode, resetCache: boolean
 
     window.umami?.track('startStudyWord', {
       name: store.sdict.name,
-      index: store.sdict.lastLearnIndex,
-      perDayStudyNumber: store.sdict.perDayStudyNumber,
+      index: String(store.sdict.lastLearnIndex),
+      perDayStudyNumber: String(store.sdict.perDayStudyNumber),
       custom: store.sdict.custom,
       complete: store.sdict.complete,
-      wordPracticeMode: settingStore.wordPracticeMode,
+      wordPracticeMode: String(settingStore.wordPracticeMode),
     })
     //把是否是第一次设置为false
     if (settingStore.first) settingStore.first = false
@@ -672,8 +672,8 @@ onUnmounted(() => {
               {{ isSaveData ? $t('last_task') : $t('today_task') }}
             </div>
             <span class="color-link cursor-pointer" v-if="store.sdict.id" @click="showPracticeWordListDialog = true">{{
-                $t('word_list')
-              }}</span>
+              $t('word_list')
+            }}</span>
             <!--            <span class="color-link cursor-pointer ml-2" @click="nav('/practice-flow-editor', {})">流程编排</span>-->
           </div>
           <div class="flex gap-1 items-center" v-if="store.sdict.id">
@@ -700,7 +700,7 @@ onUnmounted(() => {
             <div class="num flex center">
               {{ practiceData?.taskWords?.review?.length }}
               <span class="text-base color-reverse-black" v-if="!practiceData?.taskWords?.review?.length"
-              >(暂无到期词)</span
+                >(暂无到期词)</span
               >
             </div>
             <div class="txt flex center gap-1">

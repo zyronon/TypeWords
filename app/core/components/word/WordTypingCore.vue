@@ -345,8 +345,7 @@ async function onTyping(e: KeyboardEvent) {
 function del() {
   playKeyboardAudio()
   inputLock = false
-  //如果是自测阶段，按删除键代码弄错了，需要标记为错词，同时从excludeWords里排除
-  if (props.showWordResult) {
+  if (props.practiceType === WordPracticeType.Dictation && props.showWordResult) {
     input = wrong = ''
     emitShowWordResult(false)
   } else {

@@ -85,7 +85,7 @@ let taskWords = $ref<TaskWords>({
 //watch 实例列表，用于本地代码修改hrm后，导致重复watch
 let watchRefList = []
 let data = $ref<PracticeData>(getDefaultPracticeData({}))
-let identifyTypingWrongRecord: { wordKey: string; existedInStoredWrongWords: boolean } | null = null
+let identifyTypingWrongIndex = -1
 
 const word = $computed<Word>(() => {
   return data.words[data.index] ?? getDefaultWord()
@@ -157,15 +157,12 @@ watch([() => data.words, () => data.index, currentPracticeType], () => {
   handleResumeTimer()
 })
 
-watch(
-  () => word.word,
-  async (currentWord, previousWord) => {
-    identifyTypingWrongRecord = null
-    if (!currentWord || currentWord === previousWord) return
-    await nextTick()
-    window.scrollTo({ top: 0, behavior: 'auto' })
-  }
-)
+watch([() => word.word, currentPhaseKey], async ([currentWord], [previousWord]) => {
+  identifyTypingWrongIndex = -1
+  if (!currentWord || currentWord === previousWord) return
+  await nextTick()
+  window.scrollTo({ top: 0, behavior: 'auto' })
+})
 
 function updateQuestion() {
   const word = data.words?.[data.index]
@@ -522,24 +519,18 @@ function onWordKnow() {
 }
 
 function onTypeWrong(source?: 'identifyTyping') {
-  if (source === 'identifyTyping') {
-    const wordKey = word.word.toLowerCase()
-    if (!identifyTypingWrongRecord || identifyTypingWrongRecord.wordKey !== wordKey) {
-      identifyTypingWrongRecord = {
-        wordKey,
-        existedInStoredWrongWords: store.wrong.words.some(v => v.word.toLowerCase() === wordKey),
-      }
-    }
-  } else {
-    identifyTypingWrongRecord = null
-  }
   data.wrongTimes++
   //这里的代码暂时不能移动，因为要实时把错词加入到列表里面，从而更新toolbar里面的错词数
   //todo 后续可以优化
   let temp = word.word
   addWrongWordKey(data.allWrongWords, temp)
-  if (!store.wrong.words.find((v: Word) => v.word.toLowerCase() === temp.toLowerCase())) {
+  const storedWrongIndex = store.wrong.words.findIndex((v: Word) => v.word === temp)
+  if (storedWrongIndex < 0) {
     store.wrong.words.push(word)
+    if (source === 'identifyTyping') {
+      //标记是否加到了错词里面有，供后续用户反悔操作（我认识）删除
+      identifyTypingWrongIndex = store.wrong.words.length - 1
+    }
     store.wrong.length = store.wrong.words.length
   }
   if (!data.wrongWords.find((v: Word) => v.word === temp)) {
@@ -553,22 +544,30 @@ function onTypeWrong(source?: 'identifyTyping') {
 }
 
 function resolveIdentifyCorrect() {
-  const wordKey = word.word.toLowerCase()
-  data.wrongWords = data.wrongWords.filter(v => v.word.toLowerCase() !== wordKey)
-  data.allWrongWords = data.allWrongWords.filter(v => v.toLowerCase() !== wordKey)
+  let rIndex = data.wrongWords.findIndex(v => v.word === word.word)
+  if (rIndex > -1) {
+    Toast.info(word.word + ' 已从错词列表移除，原因：用户已认识')
+    data.wrongWords.splice(rIndex, 1)
+  }
+  data.allWrongWords = data.allWrongWords.filter(v => v !== word.word)
   data.wrongTimes = 0
   addExcludeWord()
 
-  if (identifyTypingWrongRecord?.wordKey === wordKey && !identifyTypingWrongRecord.existedInStoredWrongWords) {
-    store.wrong.words = store.wrong.words.filter(v => v.word.toLowerCase() !== wordKey)
+  //如果在错词里面有，则删除
+  if (identifyTypingWrongIndex >= 0) {
+    let storedWrongIndex = identifyTypingWrongIndex
+    if (store.wrong.words[storedWrongIndex]?.word !== word.word) {
+      storedWrongIndex = store.wrong.words.findIndex(v => v.word === word.word)
+    }
+    if (storedWrongIndex >= 0) {
+      store.wrong.words.splice(storedWrongIndex, 1)
+    }
   }
   store.wrong.length = store.wrong.words.length
-  identifyTypingWrongRecord = null
   savePracticeData()
 }
 
 function onTypeComplete() {
-  identifyTypingWrongRecord = null
   nav.next()
 }
 
@@ -644,7 +643,6 @@ function savePracticeData() {
 }
 
 function skip() {
-  identifyTypingWrongRecord = null
   addExcludeWord()
   nav.next(false)
 }

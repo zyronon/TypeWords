@@ -1,26 +1,10 @@
 <script setup lang="ts">
 import { defineAsyncComponent, nextTick, ref, watch } from 'vue'
-import { getDefaultSettingState, useSettingStore } from '@/core/stores/setting'
+import { useSettingStore } from '@/core/stores/setting'
 import { getShortcutKey, useEventListener } from '@/core/hooks/event'
-import {
-  checkAndUpgradeSaveDict,
-  checkAndUpgradeSaveSetting,
-  cloneDeep,
-  isEmpty,
-  loadJsLib,
-} from '@/core/utils'
-import {
-  BaseButton,
-  BaseInput,
-  BasePage,
-  Form,
-  FormItem,
-  type FormType,
-  PopConfirm,
-  Toast,
-  UploadButton,
-} from '@/base'
-import { getDefaultBaseState, useBaseStore } from '@/core/stores/base'
+import { checkAndUpgradeSaveDict, checkAndUpgradeSaveSetting, cloneDeep, isEmpty, loadJsLib } from '@/core/utils'
+import { BaseButton, BaseInput, BasePage, Form, FormItem, type FormType, PopConfirm, Toast, UploadButton } from '@/base'
+import { useBaseStore } from '@/core/stores/base'
 import {
   APP_NAME,
   APP_VERSION,
@@ -29,13 +13,11 @@ import {
   DictId,
   LIB_JS_URL,
   LOCAL_FILE_KEY,
-  Old_Host,
   Origin,
 } from '@/core/config/env'
 import { get, set } from 'idb-keyval'
 import { useRuntimeStore } from '@/core/stores/runtime'
 import { useExport } from '@/core/hooks/export'
-import MigrateDialog from '@/core/components/dialog/MigrateDialog.vue'
 import Log from '@/core/components/setting/Log.vue'
 import About from '@/core/components/About.vue'
 import CommonSetting from '@/core/components/setting/CommonSetting.vue'
@@ -43,11 +25,7 @@ import FsrsSetting from '@/core/components/setting/FsrsSetting.vue'
 import ArticleSetting from '@/core/components/setting/ArticleSetting.vue'
 import WordSetting from '@/core/components/setting/WordSetting.vue'
 import SoundSetting from '@/core/components/setting/SoundSetting.vue'
-import {
-  checkAndUpgradePracticeWordCache,
-  PRACTICE_ARTICLE_CACHE,
-  PRACTICE_WORD_CACHE,
-} from '@/core/utils/cache'
+import { checkAndUpgradePracticeWordCache, PRACTICE_ARTICLE_CACHE, PRACTICE_WORD_CACHE } from '@/core/utils/cache'
 import { useDataSyncPersistence } from '@/core/composables/useDataSyncPersistence'
 import SettingItem from '@/core/components/setting/SettingItem.vue'
 import { Supabase } from '@/core/utils/supabase.ts'
@@ -334,11 +312,9 @@ async function importData(e) {
   importLoading = false
 }
 
-let isNewHost = $ref(false)
-let showTransfer = $ref(false)
 let showBackupGate = $ref(false)
 let showHistoryDialog = $ref(false)
-let pendingNextAction = $ref<'import' | 'supabase_save' | 'restore_history' | 'transfer' | ''>('')
+let pendingNextAction = $ref<'import' | 'supabase_save' | 'restore_history' | ''>('')
 let historyBackups = $ref<HistoryBackupMeta[]>([])
 let restoreTarget = $ref<HistoryBackupMeta | null>(null)
 let restoreLoading = $ref(false)
@@ -453,10 +429,6 @@ async function onSbFirstSyncChoice(action: 'push_local' | 'pull_remote') {
     sbSyncChoiceLoading = false
   }
 }
-
-onMounted(() => {
-  isNewHost = window.location.host !== Old_Host
-})
 
 function transferOk() {
   setTimeout(() => {
@@ -670,16 +642,6 @@ function disable360() {
             <i18n-t keypath="import_overwrite_warning" tag="span">
               <strong class="color-red">{{ $t('complete_overflow') }}</strong>
             </i18n-t>
-            <!--            新网站同步-->
-            <template v-if="isNewHost">
-              <div class="line my-3"></div>
-              <SettingItem :title="$t('migrate_2study_title')">
-                <BaseButton size="large" @click="openGate('transfer')">{{ $t('migrate_btn') }}</BaseButton>
-              </SettingItem>
-              <i18n-t keypath="migrate_overwrite_warning" tag="span">
-                <strong class="color-red">{{ $t('complete_overflow') }}</strong>
-              </i18n-t>
-            </template>
 
             <div class="line my-3"></div>
             <SettingItem :title="$t('other')"> </SettingItem>
@@ -816,13 +778,6 @@ function disable360() {
       >
       <BaseButton
         size="large"
-        @click="showTransfer = true"
-        :disabled="disabled"
-        v-else-if="pendingNextAction === 'transfer'"
-        >{{ $t('migrate_btn') }}</BaseButton
-      >
-      <BaseButton
-        size="large"
         v-else-if="pendingNextAction === 'restore_history'"
         @click="restoreHistoryData"
         :disabled="disabled"
@@ -878,8 +833,6 @@ function disable360() {
       </div>
     </div>
   </Dialog>
-
-  <MigrateDialog v-model="showTransfer" @ok="transferOk" />
 </template>
 
 <style scoped lang="scss">
