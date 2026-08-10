@@ -245,6 +245,8 @@
 	"show_prev_next_word": "Show previous/next word",
 	"show_prev_next_word_desc": "When enabled, the previous/next word will be shown at the top during practice.",
 	"clear_input_on_error": "Clear entered content when input is wrong",
+	"visible_word_whole_input": "Use whole-word input when visible",
+	"visible_word_whole_input_desc": "When enabled, visible words show each character as correct or incorrect and are evaluated after the full word is entered",
 	"word_repeat_setting": "Word loop setting (only applies in tracing mode)",
 	"repeat_count": "Repeat count",
 	"review_ratio": "Review ratio",

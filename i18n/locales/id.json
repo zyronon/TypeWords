@@ -245,6 +245,8 @@
 	"show_prev_next_word": "Tampilkan kata sebelumnya/berikutnya",
 	"show_prev_next_word_desc": "Saat diaktifkan, kata sebelumnya/berikutnya akan ditampilkan di bagian atas saat latihan.",
 	"clear_input_on_error": "Hapus konten yang dimasukkan saat input salah",
+	"visible_word_whole_input": "Gunakan input kata penuh saat kata terlihat",
+	"visible_word_whole_input_desc": "Jika diaktifkan, setiap karakter pada kata yang terlihat ditandai benar atau salah dan kata dinilai setelah selesai dimasukkan",
 	"word_repeat_setting": "Pengaturan perulangan kata (hanya berlaku untuk mode mencontek)",
 	"repeat_count": "Jumlah pengulangan",
 	"review_ratio": "Rasio ulangan",

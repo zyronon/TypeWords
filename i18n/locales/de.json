@@ -245,6 +245,8 @@
 	"show_prev_next_word": "Vorheriges/nächstes Wort anzeigen",
 	"show_prev_next_word_desc": "Wenn aktiviert, wird das vorherige/nächste Wort während der Übung oben angezeigt.",
 	"clear_input_on_error": "Bei falscher Eingabe den eingegebenen Inhalt löschen",
+	"visible_word_whole_input": "Bei sichtbarem Wort vollständig eingeben",
+	"visible_word_whole_input_desc": "Wenn aktiviert, wird jedes Zeichen sichtbarer Wörter als richtig oder falsch markiert und das Wort nach vollständiger Eingabe bewertet",
 	"word_repeat_setting": "Wortschleifen-Einstellung (gilt nur im Nachschreibmodus)",
 	"repeat_count": "Wiederholungsanzahl",
 	"review_ratio": "Wiederholungsverhältnis",
