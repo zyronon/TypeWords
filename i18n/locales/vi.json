@@ -245,8 +245,6 @@
 	"show_prev_next_word": "Hiển thị từ trước/tiếp theo",
 	"show_prev_next_word_desc": "Khi bật, từ trước/tiếp theo sẽ hiển thị ở phía trên trong lúc luyện tập.",
 	"clear_input_on_error": "Xóa nội dung đã nhập khi nhập sai",
-	"visible_word_whole_input": "Nhập toàn bộ từ khi từ đang hiển thị",
-	"visible_word_whole_input_desc": "Khi bật, từng ký tự của từ đang hiển thị sẽ được đánh dấu đúng hoặc sai và từ được đánh giá sau khi nhập đầy đủ",
 	"word_repeat_setting": "Cài đặt lặp từ (chỉ áp dụng cho chế độ viết theo)",
 	"repeat_count": "Số lần lặp",
 	"review_ratio": "Tỉ lệ ôn tập",

@@ -245,8 +245,6 @@
 	"show_prev_next_word": "이전/다음 단어 표시",
 	"show_prev_next_word_desc": "켜면 연습 중 상단에 이전/다음 단어가 표시됩니다。",
 	"clear_input_on_error": "입력 오류 시 입력한 내용 지우기",
-	"visible_word_whole_input": "단어가 보일 때 전체 입력 사용",
-	"visible_word_whole_input_desc": "활성화하면 보이는 단어의 각 글자 정오를 표시하고 전체 단어를 입력한 뒤 판정합니다",
 	"word_repeat_setting": "단어 반복 설정(받아쓰기 모드에서만 적용)",
 	"repeat_count": "반복 횟수",
 	"review_ratio": "복습 비율",

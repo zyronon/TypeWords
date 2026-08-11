@@ -382,7 +382,7 @@ export async function _getDictDataByUrl(val: DictResource, type: DictType = Dict
 
 //从字符串里面转换为Word格式
 export function convertToWord(raw: any) {
-  const safeString = str => (typeof str === 'string' ? str.trim() : '')
+  const safeString = str => (typeof str === 'string' ? str.replace(/\r\n?/g, '\n').trim() : '')
   const safeSplit = (str, sep) => (safeString(str) ? safeString(str).split(sep).filter(Boolean) : [])
 
   // 1. trans

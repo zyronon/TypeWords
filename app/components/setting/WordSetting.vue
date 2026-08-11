@@ -17,9 +17,6 @@ const settingStore = useSettingStore()
       <Switch v-model="settingStore.inputWrongClear" />
     </SettingItem>
 
-    <SettingItem :title="$t('visible_word_whole_input')" :desc="$t('visible_word_whole_input_desc')">
-      <Switch v-model="settingStore.visibleWordWholeInput" />
-    </SettingItem>
 
     <SettingItem :title="$t('word_repeat_setting')" class="gap-0!">
       <RadioGroup v-model="settingStore.repeatCount">

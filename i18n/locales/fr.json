@@ -245,8 +245,6 @@
 	"show_prev_next_word": "Afficher le mot précédent/suivant",
 	"show_prev_next_word_desc": "Lorsqu'il est activé, le mot précédent/suivant s'affiche en haut pendant l'entraînement.",
 	"clear_input_on_error": "Effacer le contenu saisi lorsque l'entrée est incorrecte",
-	"visible_word_whole_input": "Saisir le mot entier lorsqu'il est visible",
-	"visible_word_whole_input_desc": "Lorsque cette option est activée, chaque caractère d'un mot visible est marqué comme correct ou incorrect et le mot est évalué après sa saisie complète",
 	"word_repeat_setting": "Paramètre de boucle de mots (s'applique uniquement au mode de calque)",
 	"repeat_count": "Nombre de répétitions",
 	"review_ratio": "Ratio de révision",

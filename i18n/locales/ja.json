@@ -245,8 +245,6 @@
 	"show_prev_next_word": "前/次の単語を表示",
 	"show_prev_next_word_desc": "有効にすると、練習中に上部に前/次の単語が表示されます。",
 	"clear_input_on_error": "入力ミス時に、入力済みの内容をクリア",
-	"visible_word_whole_input": "単語が表示されているときは単語全体を入力",
-	"visible_word_whole_input_desc": "有効にすると、表示中の単語は文字ごとに正誤を表示し、単語全体の入力後に判定します",
 	"word_repeat_setting": "単語ループ設定（トレースモードのみ有効）",
 	"repeat_count": "ループ回数",
 	"review_ratio": "復習比率",

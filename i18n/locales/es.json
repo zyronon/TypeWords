@@ -245,8 +245,6 @@
 	"show_prev_next_word": "Mostrar palabra anterior/siguiente",
 	"show_prev_next_word_desc": "Cuando está activado, se mostrará la palabra anterior/siguiente en la parte superior durante la práctica.",
 	"clear_input_on_error": "Borrar el contenido introducido cuando la entrada es incorrecta",
-	"visible_word_whole_input": "Introducir la palabra completa cuando sea visible",
-	"visible_word_whole_input_desc": "Al activarlo, cada carácter de una palabra visible se marca como correcto o incorrecto y la palabra se evalúa al terminar de escribirla",
 	"word_repeat_setting": "Configuración de repetición de palabras (solo aplica al modo de calco)",
 	"repeat_count": "Número de repeticiones",
 	"review_ratio": "Proporción de repaso",

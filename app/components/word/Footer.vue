@@ -14,6 +14,7 @@ import {
   useInjectedDisplayPolicy,
 } from '@/core/composables/practice-words/usePracticeDisplayPolicy.ts'
 import { computed, type Ref } from 'vue'
+import { getPracticeFlowDisplayState } from '@/core/composables/practice-words/practice-flow-display.ts'
 
 const statStore = usePracticeStore()
 const settingStore = useSettingStore()
@@ -43,94 +44,18 @@ function format(val: number, suffix: string = '', check: number = -1) {
   return val === check ? '-' : val + suffix
 }
 
-/**
- * 当前阶段状态名。
- * 对齐 v1 Footer：错词时显示「错词复习」，否则显示 node·step。
- * 单节点单步骤流程（Free/Shuffle 等价）直接显示 flow 名。
- */
-const status = computed(() => {
-  if (activeCursor.value.loop) return '小组巩固'
-  if (activeCursor.value.inWrongWordClear) return $t('review_wrong_words')
-  const config = activeFlowConfig.value
-  const nodes = config.nodes
-  const cursor = activeCursor.value
-  const node = nodes[cursor.nodeIndex]
-  if (!node) return $t(config.label)
-  const step = node.steps[cursor.stepIndex]
-  const stepLabel = step?.label ?? step?.templateId ?? ''
-  if (nodes.length === 1 && nodes[0].steps.length === 1) return $t(config.label)
-  return $t(node.label) + (stepLabel ? ' · ' + $t(stepLabel) : '')
-})
-
-/**
- * 进度条数据 — 完全从 registry.nodes + cursor 推导，无任何 WordPracticeMode 硬编码。
- *
- * 格式：
- * - 单 node 单 step → 单进度条（Free/Shuffle 适用）
- * - 多 node → 多组进度条，每组含子步骤
- *
- * 设计：
- * - 已过去的 node 百分比 = 100
- * - 当前 node 比例 = 70（活跃）；已过 node = 30；未来 node = 30
- * - 当前 node 的子步骤也做进度条
- */
-const stages = computed(() => {
-  const nodes = activeFlowConfig.value.nodes
-  const cursor = activeCursor.value
-  const { nodeIndex, stepIndex } = cursor
-  const currentProgress = practiceData.words.length ? (practiceData.index / practiceData.words.length) * 100 : 0
-
-  // 单 node 单 step → 单进度条
-  if (nodes.length === 1 && nodes[0].steps.length === 1) {
-    return [
-      {
-        name: '',
-        ratio: 100,
-        percentage: currentProgress,
-        active: true,
-      },
-    ]
-  }
-
-  // 多 node 进度条；单 node 多 step 时 nodeRatio = 100，不切分
-  const isSingleNode = nodes.length === 1
-  return nodes.map((node, ni) => {
-    const isCurrentNode = ni === nodeIndex
-    const isCompleted = ni < nodeIndex
-
-    const nodeRatio = isSingleNode ? 100 : isCurrentNode ? 70 : 30
-
-    // 子步骤（仅当前 node 展开）
-    const children =
-      isCurrentNode && node.steps.length > 1
-        ? node.steps.map((step, si) => {
-            const isCurrentStep = si === stepIndex
-            const isCompletedStep = si < stepIndex
-            return {
-              name: $t(step.label ?? step.templateId),
-              ratio: Math.floor(100 / node.steps.length),
-              percentage: isCompletedStep ? 100 : isCurrentStep ? currentProgress : 0,
-              active: isCurrentStep,
-            }
-          })
-        : undefined
-
-    return {
-      name: $t(node.label),
-      ratio: nodeRatio,
-      percentage: isCompleted ? 100 : isCurrentNode ? currentProgress : 0,
-      active: isCurrentNode,
-      children,
-    }
+const flowDisplay = computed(() =>
+  getPracticeFlowDisplayState({
+    config: activeFlowConfig.value,
+    cursor: activeCursor.value,
+    wordIndex: practiceData.index,
+    wordCount: practiceData.words.length,
+    translate: $t,
   })
-})
-
-/** 是否显示「跳过当前阶段」按钮（多 step 或多 node 流程才显示） */
-const showSkipStep = computed(() => {
-  const nodes = activeFlowConfig.value.nodes
-  if (nodes.length === 0) return false
-  return nodes.length > 1 || nodes[0].steps.length > 1
-})
+)
+const status = computed(() => flowDisplay.value.status)
+const stages = computed(() => flowDisplay.value.stages)
+const showSkipStep = computed(() => flowDisplay.value.showSkipStep)
 </script>
 
 <template>

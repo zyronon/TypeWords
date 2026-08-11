@@ -62,7 +62,6 @@ export interface SettingState {
   wordPracticeType: WordPracticeType // 单词练习类型
   autoNextWord: boolean // 自动切换下一个单词
   inputWrongClear: boolean // 单词输入错误，清空已输入内容
-  visibleWordWholeInput: boolean // 单词可见时逐字符输入完整单词后再判错
   mobileNavCollapsed: boolean // 移动端底部导航栏收缩状态
   ignoreSymbol: boolean // 过滤符号
   practiceSentence: boolean // 练习例句
@@ -136,7 +135,6 @@ export const getDefaultSettingState = (): SettingState => ({
   wordPracticeType: WordPracticeType.FollowWrite,
   autoNextWord: true,
   inputWrongClear: false,
-  visibleWordWholeInput: false,
   mobileNavCollapsed: false,
   ignoreSymbol: true,
   practiceSentence: false,

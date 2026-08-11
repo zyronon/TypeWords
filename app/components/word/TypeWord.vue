@@ -31,8 +31,8 @@ import WordTypingCore from './WordTypingCore.vue'
 import WordIdentifyPanel from './WordIdentifyPanel.vue'
 import WordMetaPanel from './WordMetaPanel.vue'
 import { useOnKeyboardEventListener } from '@/core/hooks/event.ts'
-import { shouldChainPracticeFirstSentence } from '@/core/composables/practice-words/practice-audio.ts'
 import { _nextTick, throttle } from '@/core'
+import { usePracticeTypeWordController } from '@/core/composables/practice-words/usePracticeTypeWordController.ts'
 
 const { t: $t } = useI18n()
 
@@ -67,11 +67,24 @@ const playWordAudio = usePlayWordAudio()
 
 const volumeIconRef: any = $ref()
 let isTypingWord = $ref(true)
-let isPlayedFirstSentence = false
 
-// ============ 共享状态 ============
-let showFullWord = $ref(false)
-let showWordResult = $ref(false)
+const typingCoreRef = $ref<InstanceType<typeof WordTypingCore>>()
+const wordMetaPanelRef = $ref<InstanceType<typeof WordMetaPanel>>()
+
+const typeWordController = usePracticeTypeWordController({
+  getWord: () => props.word,
+  getPracticeType: () => props.practiceType,
+  getPhaseKey: () => props.phaseKey,
+  getIsWordMasked: () => effective.value.isWordMasked,
+  getAutoPlayFirstSentence: () => settingStore.autoPlayFirstSentence,
+  onWrong: source => emit('wrong', source),
+  playWordAudio: (word, manual, onEnd) =>
+    playWordAudio(word, manual, onEnd, () => {
+      volumeIconRef?.animate(true)
+    }),
+  playFirstSentence: () => wordMetaPanelRef?.playSentence(0, { highlight: true }),
+})
+let { showFullWord, showWordResult } = $(typeWordController)
 
 const localReveal = computed(() => ({
   showFullWord,
@@ -79,36 +92,8 @@ const localReveal = computed(() => ({
 }))
 const effective = useInjectedDisplayPolicy(localReveal)
 
-const typingCoreRef = $ref<InstanceType<typeof WordTypingCore>>()
-const wordMetaPanelRef = $ref<InstanceType<typeof WordMetaPanel>>()
-
-function shouldPlayFirstSentence(trigger: WordPlayTrigger) {
-  return shouldChainPracticeFirstSentence({
-    trigger,
-    practiceType: props.practiceType,
-    autoPlayFirstSentence: settingStore.autoPlayFirstSentence,
-    isWordMasked: effective.value.isWordMasked,
-    hasFirstSentence: !!props.word.sentences?.[0]?.c,
-    hasPlayedFirstSentence: isPlayedFirstSentence,
-  })
-}
-
 function playWord(trigger: WordPlayTrigger) {
-  const handle = trigger === WordPlayTrigger.Manual
-  if (handle || settingStore.wordSound) {
-    const chainWord = shouldPlayFirstSentence(trigger) ? props.word.word : ''
-    const onEnd = chainWord
-      ? () => {
-          if (props.word.word === chainWord) {
-            isPlayedFirstSentence = true
-            wordMetaPanelRef?.playSentence(0, { highlight: true })
-          }
-        }
-      : undefined
-    playWordAudio(props.word.word, handle, onEnd, () => {
-      volumeIconRef?.animate(true)
-    })
-  }
+  if (trigger === WordPlayTrigger.Manual || settingStore.wordSound) typeWordController.playWord(trigger)
 }
 
 function onTypingCoreComplete() {
@@ -154,30 +139,12 @@ function play() {
   volumeIconRef?.play()
 }
 
-//一个 phase 一个单词，仅可通过 reveal 单词计算一次错误，避免多次 reveal 多次计算
-let revealWordsSet = new Set()
-watch(
-  () => props.phaseKey,
-  () => {
-    console.log('revealWordsSet', revealWordsSet.values())
-    revealWordsSet = new Set()
-  }
-)
-
 function showWord() {
-  console.log('showWord')
-  // 如果不是跟写模式，查看单词一律标记为错词
-  if (props.practiceType !== WordPracticeType.FollowWrite || effective.value.isWordMasked) {
-    if (!showWordResult && !revealWordsSet.has(props.word.word)) {
-      revealWordsSet.add(props.word.word)
-      emit('wrong')
-    }
-  }
-  showFullWord = true
+  typeWordController.showWord()
 }
 
 function hideWord() {
-  showFullWord = false
+  typeWordController.hideWord()
 }
 
 const wordWrapRef = useTemplateRef('word-wrap')
@@ -288,7 +255,7 @@ const notice = $computed(() => {
 
 // ============ 重置：单词切换时 reset identify / note 状态 ============
 
-watch(() => props.word, onResetWord)
+watch([() => props.word, () => props.phaseKey], onResetWord)
 
 // keyup 时隐藏单词
 useOnKeyboardEventListener(
@@ -300,9 +267,7 @@ useOnKeyboardEventListener(
 
 function onResetWord() {
   isTypingWord = true
-  showFullWord = false
-  isPlayedFirstSentence = false
-  showWordResult = false
+  typeWordController.reset()
   editingNote = false
   noteInputValue = ''
   if (wordWrapRef.value) wordWrapRef.value.style.minWidth = 'unset'

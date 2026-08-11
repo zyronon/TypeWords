@@ -245,8 +245,6 @@
 	"show_prev_next_word": "顯示上一個/下一個單詞",
 	"show_prev_next_word_desc": "開啟後，練習中會在上方顯示上一個/下一個單詞",
 	"clear_input_on_error": "輸入錯誤時，清空已輸入內容",
-	"visible_word_whole_input": "單詞可見時使用完整輸入",
-	"visible_word_whole_input_desc": "開啟後，單詞可見時會逐字元顯示對錯，並在輸入完整單詞後統一判定",
 	"word_repeat_setting": "單詞循環設定(僅跟寫生效)",
 	"repeat_count": "循環次數",
 	"review_ratio": "複習比",
