@@ -10,7 +10,7 @@ import type { User } from '@/core/apis/user.ts'
 import { changeEmailApi, changePhoneApi, setPassword, updateUserInfoApi } from '@/core/apis/user.ts'
 import { codeRules, emailRules, passwordRules, phoneRules } from '@/core/utils/validation.ts'
 import { cloneDeep, jump2Feedback } from '@/core/utils'
-import Code from '@/core/components/user/Code.vue'
+import Code from '@/components/user/Code.vue'
 import { MessageBox } from '@/core/utils/MessageBox.tsx'
 import { CodeType } from '@/core/types/enum.ts'
 

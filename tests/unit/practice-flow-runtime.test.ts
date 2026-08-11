@@ -7,9 +7,9 @@ import {
   isValidFlowConfig,
   resolveFlowConfigOrSystem,
   saveUserFlow,
-} from '@/composables/practice-words/practice-flow-runtime.ts'
-import { BUILTIN_FLOWS, CURRENT_FLOW_VERSION } from '@/composables/practice-words/practice-flow-config.ts'
-import type { PracticeFlowConfig } from '@/composables/practice-words/practice-flow-types.ts'
+} from '@/core/composables/practice-words/practice-flow-runtime.ts'
+import { BUILTIN_FLOWS, CURRENT_FLOW_VERSION } from '@/core/composables/practice-words/practice-flow-config.ts'
+import type { PracticeFlowConfig } from '@/core/composables/practice-words/practice-flow-types.ts'
 
 class MemoryStorage implements Storage {
   private data = new Map<string, string>()

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { WordPracticeType } from '@/core/types/enum.ts'
 import { getDefaultWord } from '@/core/types/func.ts'
-import { resolvePracticeQuestion } from '@/composables/practice-words/practice-question.ts'
+import { resolvePracticeQuestion } from '@/core/composables/practice-words/practice-question.ts'
 
 const makeWord = (word: string, cn: string) => getDefaultWord({
   word,

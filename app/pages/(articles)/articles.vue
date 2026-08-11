@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { myDictList } from '@/core/apis'
 import { BaseButton, BaseIcon, BasePage, DeleteIcon, PopConfirm, Progress, Toast } from '@/base'
-import Book from '@/core/components/Book.vue'
+import Book from '@/components/Book.vue'
 import { APP_NAME, AppEnv, DICT_LIST, LIB_JS_URL, Old_Host, Origin, TourConfig } from '@/core/config/env.ts'
 import { useBaseStore } from '@/core/stores/base.ts'
 import { useRuntimeStore } from '@/core/stores/runtime.ts'
@@ -26,8 +26,8 @@ import { watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { DictType } from '@/core/types/enum.ts'
 import { usePracticeArticlePersistence } from '@/core/composables/usePracticePersistence.ts'
-import ImportBanner from '@/core/components/ImportBanner.vue'
-import ReleaseBanner from '@/core/components/ReleaseBanner.vue'
+import ImportBanner from '@/components/ImportBanner.vue'
+import ReleaseBanner from '@/components/ReleaseBanner.vue'
 
 dayjs.extend(isoWeek)
 dayjs.extend(isBetween)

@@ -32,10 +32,10 @@ import {
 import type { DictResource, Statistics } from '@/core/types/types.ts'
 import { onMounted, onUnmounted, watch } from 'vue'
 import { useRuntimeStore } from '@/core/stores/runtime.ts'
-import Book from '@/core/components/Book.vue'
+import Book from '@/components/Book.vue'
 import { getDefaultDict } from '@/core/types/func.ts'
-import PracticeSettingDialog from '@/core/components/word/PracticeSettingDialog.vue'
-import ChangeLastPracticeIndexDialog from '@/core/components/word/ChangeLastPracticeIndexDialog.vue'
+import PracticeSettingDialog from '@/components/word/PracticeSettingDialog.vue'
+import ChangeLastPracticeIndexDialog from '@/components/word/ChangeLastPracticeIndexDialog.vue'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import { useFetch } from '@vueuse/core'
 import {
@@ -50,10 +50,10 @@ import {
   WordPracticeModeUrlMap,
 } from '@/core/config/env.ts'
 import { myDictList } from '@/core/apis'
-import PracticeWordListDialog from '@/core/components/word/PracticeWordListDialog.vue'
-import ImportBanner from '@/core/components/ImportBanner.vue'
-import ReleaseBanner from '@/core/components/ReleaseBanner.vue'
-import ShufflePracticeSettingDialog from '@/core/components/word/ShufflePracticeSettingDialog.vue'
+import PracticeWordListDialog from '@/components/word/PracticeWordListDialog.vue'
+import ImportBanner from '@/components/ImportBanner.vue'
+import ReleaseBanner from '@/components/ReleaseBanner.vue'
+import ShufflePracticeSettingDialog from '@/components/word/ShufflePracticeSettingDialog.vue'
 import { deleteDict } from '@/core/apis/dict.ts'
 import { flushStatToStore } from '@/core/composables/usePracticePersistence'
 import { useDataSyncPersistence } from '@/core/composables/useDataSyncPersistence'
@@ -62,10 +62,10 @@ import {
   type PracticeWordCache,
   UnsupportedPracticeCacheVersionError,
   usePracticeWordPersistence,
-} from '@/composables/practice-words/practice-word-session.ts'
+} from '@/core/composables/practice-words/practice-word-session.ts'
 import dayjs from 'dayjs'
-import { getActiveCustomFlowId, getUserFlow } from '@/composables/practice-words/practice-flow-runtime.ts'
-import { createStudyTask } from '@/composables/practice-words/study-task.ts'
+import { getActiveCustomFlowId, getUserFlow } from '@/core/composables/practice-words/practice-flow-runtime.ts'
+import { createStudyTask } from '@/core/composables/practice-words/study-task.ts'
 
 const store = useBaseStore()
 const settingStore = useSettingStore()

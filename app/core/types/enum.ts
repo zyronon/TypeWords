@@ -107,6 +107,19 @@ export enum WordPracticeMode {
 }
 
 //练习类型
+export enum WordPlayTrigger {
+  NewWord = 'newWord',
+  RepeatWord = 'repeatWord',
+  ResetSameWord = 'resetSameWord',
+  RevealUnknown = 'revealUnknown',
+  DictationReveal = 'dictationReveal',
+  IdentifyWrongKey = 'identifyWrongKey',
+  Typo = 'typo',
+  DelRetry = 'delRetry',
+  Manual = 'manual',
+  Shortcut = 'shortcut',
+}
+
 export enum WordPracticeType {
   FollowWrite, //跟写
   Spell,

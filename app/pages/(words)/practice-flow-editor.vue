@@ -4,12 +4,12 @@ import { APP_NAME } from '@/core/config/env.ts'
 import { WordPracticeMode } from '@/core/types/enum.ts'
 import { onMounted, onUnmounted } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
-import type { PracticeFlowConfig } from '~/composables/practice-words/practice-flow-types.ts'
+import type { PracticeFlowConfig } from '@/core/composables/practice-words/practice-flow-types.ts'
 import {
   CURRENT_FLOW_VERSION,
   getAllBuiltinFlowIds,
   getFlowConfig,
-} from '~/composables/practice-words/practice-flow-config.ts'
+} from '@/core/composables/practice-words/practice-flow-config.ts'
 import {
   deleteUserFlow,
   getActiveCustomFlowId,
@@ -17,7 +17,7 @@ import {
   listUserFlows,
   saveUserFlow,
   setActiveCustomFlowId,
-} from '~/composables/practice-words/practice-flow-runtime.ts'
+} from '@/core/composables/practice-words/practice-flow-runtime.ts'
 
 useHead({ title: APP_NAME + ' 流程编排' })
 

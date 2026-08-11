@@ -28,15 +28,19 @@ Flow v6（严格校验）
 
 核心文件：
 
-- `app/composables/practice-words/practice-flow-types.ts`
-- `app/composables/practice-words/practice-flow-config.ts`
-- `app/composables/practice-words/practice-flow-runtime.ts`
-- `app/composables/practice-words/usePracticeWordNavigator.ts`
-- `app/composables/practice-words/usePracticeDisplayPolicy.ts`
-- `app/composables/practice-words/practice-word-session.ts`
-- `app/core/components/word/TypeWord.vue`
-- `app/core/components/word/WordTypingCore.vue`
+- `app/core/composables/practice-words/practice-flow-types.ts`
+- `app/core/composables/practice-words/practice-flow-config.ts`
+- `app/core/composables/practice-words/practice-flow-runtime.ts`
+- `app/core/composables/practice-words/usePracticeWordNavigator.ts`
+- `app/core/composables/practice-words/usePracticeDisplayPolicy.ts`
+- `app/core/composables/practice-words/practice-word-session.ts`
+- `app/core/composables/practice-words/usePracticeWordSession.ts`
+- `app/core/composables/practice-words/practice-audio.ts`
+- `app/components/word/TypeWord.vue`
+- `app/components/word/WordTypingCore.vue`
 - `app/pages/(words)/practice-words/[id].vue`
+
+其中 `usePracticeWordSession` 是跨端会话边界，统一负责 Flow、缓存恢复、题目、错词、FSRS 本地结算以及重学/下一组任务；页面仅保留路由、平台生命周期、远端交互提示和 UI 编排。`app/core` 不包含 UI 组件，也不反向依赖 `app/components`。
 
 ## 3. Flow v6
 

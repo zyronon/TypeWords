@@ -4,19 +4,9 @@ import { Toast } from '@/base'
 import type { Word } from '../types'
 import { getBrowserKey, cancelWordPracticeAudio, usePlayWordAudio, useTTsPlayAudio } from '../hooks/sound'
 import { useSettingStore } from '../stores/setting'
+import { WordPlayTrigger } from '../types/enum'
 
-export enum WordPlayTrigger {
-  NewWord = 'newWord',
-  RepeatWord = 'repeatWord',
-  ResetSameWord = 'resetSameWord',
-  RevealUnknown = 'revealUnknown',
-  DictationReveal = 'dictationReveal',
-  IdentifyWrongKey = 'identifyWrongKey',
-  Typo = 'typo',
-  DelRetry = 'delRetry',
-  Manual = 'manual',
-  Shortcut = 'shortcut',
-}
+export { WordPlayTrigger } from '../types/enum'
 
 const CHAIN_FIRST_SENTENCE_TRIGGERS = new Set([
   WordPlayTrigger.NewWord,

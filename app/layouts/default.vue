@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { BaseIcon, ToastComponent } from '@/base'
-import Logo from '@/core/components/Logo.vue'
-import IeDialog from '@/core/components/dialog/IeDialog.vue'
+import Logo from '@/components/Logo.vue'
+import IeDialog from '@/components/dialog/IeDialog.vue'
 import useTheme from '@/core/hooks/theme.ts'
 import { useRuntimeStore } from '@/core/stores/runtime.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
@@ -13,7 +13,7 @@ import { useInit } from '@/core/composables/useInit.ts'
 import { useI18n } from 'vue-i18n'
 import { Supabase } from '@/core/utils/supabase.ts'
 import MiniProgram from '@/components/MiniProgram.vue'
-import WordCollectPopover from '@/core/components/word/WordCollectPopover.vue'
+import WordCollectPopover from '@/components/word/WordCollectPopover.vue'
 
 const router = useRouter()
 const { toggleTheme, getTheme, setTheme } = useTheme()

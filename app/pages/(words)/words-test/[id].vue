@@ -12,7 +12,7 @@ import { useStartKeyboardEventListener } from '@/core/hooks/event.ts'
 import { ShortcutKey } from '@/core/types/enum'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import { buildQuestion } from '@/core/utils/word-test'
-import TranslationList from '@/core/components/word/TranslationList.vue'
+import TranslationList from '@/components/word/TranslationList.vue'
 
 const route = useRoute()
 const router = useRouter()

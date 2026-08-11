@@ -59,7 +59,7 @@
 
 ### 硬性约束（Constraints）
 
-1. **复制再改**：凡 v1 有的组件/逻辑，在 `apps/nuxt/app/components/practice-words-v2/` 或 `apps/nuxt/app/composables/practice-words/` 新建副本
+1. **复制再改**：凡 v1 有的组件/逻辑，在 `apps/nuxt/app/components/practice-words-v2/` 或 `apps/nuxt/app/core/composables/practice-words/` 新建副本
 2. **独立缓存**：新 localStorage key `PracticeSaveWordV2`（**不要**复用 v1 的 `PracticeSaveWord` / `PRACTICE_WORD_CACHE`）
 3. **显隐策略**：所有模式统一走 `sessionDisplay` + `displayOverride`； settingStore.dictation / translate 字段只做暂时显隐
 4. **例句自动播放**：`autoPlayFirstSentence && effective.showSentences`（与模板同一数据源）
@@ -101,7 +101,7 @@ apps/nuxt/app/components/practice-flow/                  # Phase 3
   FlowEditor.vue
   PhaseBlockCard.vue
   FlowPreview.vue
-apps/nuxt/app/composables/practice-words/
+apps/nuxt/app/core/composables/practice-words/
   usePracticeWordSession.ts
   usePracticeWordInit.ts
   usePracticeWordNavigator.ts
@@ -145,7 +145,7 @@ v2 页面 **禁止** import `@typewords/core/.../TypeWord.vue`（须用 `TypeWor
 ### 计划内矛盾处（以零侵入为准）
 
 - 二、例句专项中「Step 1 改 TypingArticle」→ **Phase 4 改为仅复制逻辑到 nuxt**，不改 core 原文
-- Registry 注释写 `packages/core` → **v2 首轮放** **`apps/nuxt/app/composables/practice-words/`**
+- Registry 注释写 `packages/core` → **v2 首轮放** **`apps/nuxt/app/core/composables/practice-words/`**
 
 ***
 
@@ -196,7 +196,7 @@ flowchart LR
     FlowEditor.vue
     PhaseBlockCard.vue
     FlowPreview.vue
-  app/composables/practice-words/
+  app/core/composables/practice-words/
     usePracticeWordSession.ts
     phase-templates.ts
     builtin-flows.ts
@@ -520,7 +520,7 @@ flowchart TB
   app/pages/(words)/practice-words-v2/[id].vue
   app/pages/(words)/practice-sentences/[id].vue          # Phase 5，亦为新路由
   app/components/practice-words-v2/                      # 见「零侵入原则」
-  app/composables/practice-words/
+  app/core/composables/practice-words/
 ```
 
 ***
@@ -540,7 +540,7 @@ flowchart TB
 不用 XState，用**一张声明式注册表**统一描述「每个阶段是什么、显示什么、怎么导航」：
 
 ```ts
-// apps/nuxt/app/composables/practice-words/practice-phase-registry.ts（v2 首轮放 nuxt，不下沉 core）
+// apps/nuxt/app/core/composables/practice-words/practice-phase-registry.ts（v2 首轮放 nuxt，不下沉 core）
 
 /** 一次练习「相位」的完整定义 — 阶段 + 子类型 + 特殊标记 的唯一解 */
 interface PracticePhaseKey {
@@ -1204,9 +1204,9 @@ sequenceDiagram
 
 > **背景**：Phase 2.5 将流程配置升级为 `nodes[{ source, steps[] }]` 三层模型，引入 Cursor 导航。但当时的类型设计有两个遗留问题，阻碍更灵活的编排：
 >
-> 1. **`wordLoop`** **硬编码为 Spell + 注册表单例**：`wordAdvance: { type: 'wordLoop', groupSize: 7 }` 语义是"跟写 N 词一组 → 拼写同一组"，但 Spell 子相位定义是运行时从第一个 `wordLoop` phase 派生的全局 `registry.spellInGroup`（见 [`flow-compiler.ts:L114`](../apps/nuxt/app/composables/practice-words/flow-compiler.ts#L114) 和 [`phase-templates.ts:L121`](../apps/nuxt/app/composables/practice-words/phase-templates.ts#L121)），无法支持"每组后 Listen"或"每组后依次 Spell → Dictation"的编排。
-> 2. **错词清空不可配置**：`requireWrongWordClear: true` 仅是一个布尔开关（见 [`registry-types.ts:L76`](../apps/nuxt/app/composables/practice-words/registry-types.ts#L76)），运行时由 `buildWrongWordReviewFromParent(parent)` 派生为 FollowWrite + 继承 parent 的 wordAdvance（见 [`phase-templates.ts:L135`](../apps/nuxt/app/composables/practice-words/phase-templates.ts#L135)）。这导致错词清空不可独立配置练习类型、不可配置 subSteps、且无法与错误单词收藏/报告生成等后续动作串行。
-> 3. **cursor 使用业务专用布尔值**：`spellSubStep` 和 `wrongRetry`（见 [`registry-types.ts:L100-L106`](../apps/nuxt/app/composables/practice-words/registry-types.ts#L100-L106)）绑定了 Spell 这一种子练习类型，不通用；`wrongRetry` 优先级高于 `spellSubStep`（见 [`practice-phase-registry.ts:L56-L65`](../apps/nuxt/app/composables/practice-words/practice-phase-registry.ts#L56-L65)），错词清空期间即使有 wordLoop 子步骤也无法正确切入。
+> 1. **`wordLoop`** **硬编码为 Spell + 注册表单例**：`wordAdvance: { type: 'wordLoop', groupSize: 7 }` 语义是"跟写 N 词一组 → 拼写同一组"，但 Spell 子相位定义是运行时从第一个 `wordLoop` phase 派生的全局 `registry.spellInGroup`（见 [`flow-compiler.ts:L114`](../apps/nuxt/app/core/composables/practice-words/flow-compiler.ts#L114) 和 [`phase-templates.ts:L121`](../apps/nuxt/app/core/composables/practice-words/phase-templates.ts#L121)），无法支持"每组后 Listen"或"每组后依次 Spell → Dictation"的编排。
+> 2. **错词清空不可配置**：`requireWrongWordClear: true` 仅是一个布尔开关（见 [`registry-types.ts:L76`](../apps/nuxt/app/core/composables/practice-words/registry-types.ts#L76)），运行时由 `buildWrongWordReviewFromParent(parent)` 派生为 FollowWrite + 继承 parent 的 wordAdvance（见 [`phase-templates.ts:L135`](../apps/nuxt/app/core/composables/practice-words/phase-templates.ts#L135)）。这导致错词清空不可独立配置练习类型、不可配置 subSteps、且无法与错误单词收藏/报告生成等后续动作串行。
+> 3. **cursor 使用业务专用布尔值**：`spellSubStep` 和 `wrongRetry`（见 [`registry-types.ts:L100-L106`](../apps/nuxt/app/core/composables/practice-words/registry-types.ts#L100-L106)）绑定了 Spell 这一种子练习类型，不通用；`wrongRetry` 优先级高于 `spellSubStep`（见 [`practice-phase-registry.ts:L56-L65`](../apps/nuxt/app/core/composables/practice-words/practice-phase-registry.ts#L56-L65)），错词清空期间即使有 wordLoop 子步骤也无法正确切入。
 
 #### 目标
 

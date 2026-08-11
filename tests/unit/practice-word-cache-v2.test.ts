@@ -10,7 +10,7 @@ import {
   addWrongWordKey,
   resolveNewerRemotePracticeCacheTime,
   UnsupportedPracticeCacheVersionError,
-} from '@/composables/practice-words/practice-word-session.ts'
+} from '@/core/composables/practice-words/practice-word-session.ts'
 
 describe('wrong word keys', () => {
   it('adds each wrong word only once', () => {

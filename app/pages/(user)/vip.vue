@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/core/stores/user.ts'
 import type { User } from '@/core/apis/user.ts'
 import { onMounted, onUnmounted, watch } from 'vue'
-import Header from '@/core/components/Header.vue'
+import Header from '@/components/Header.vue'
 import type { CouponInfo, LevelBenefits } from '@/core/apis/member.ts'
 import {
   alipayQuery,

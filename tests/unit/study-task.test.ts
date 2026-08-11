@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { getDefaultWord } from '@/core/types/func.ts'
 import type { TaskWords } from '@/core/types/types.ts'
-import { addRandomReviewWhenNoDue } from '@/composables/practice-words/study-task.ts'
+import { addRandomReviewWhenNoDue } from '@/core/composables/practice-words/study-task.ts'
 
 const word = (value: string) => ({ ...getDefaultWord(), word: value })
 

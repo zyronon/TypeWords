@@ -6,7 +6,7 @@ import {
   isWholePracticeInputComplete,
   isWholePracticeInputCorrect,
   normalizePracticeInputCharacter,
-} from '../../app/composables/practice-words/visible-word-typing.ts'
+} from '../../app/core/composables/practice-words/visible-word-typing.ts'
 
 describe('visible word whole-input rules', () => {
   it('reports every character independently', () => {

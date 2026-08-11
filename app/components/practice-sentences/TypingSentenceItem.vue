@@ -8,7 +8,7 @@
  * 可单独使用（练习单句），也可由父组件组装 N 个（练习文章）。
  */
 import { nextTick, onUnmounted, watch } from 'vue'
-import Space from '@/core/components/article/Space.vue'
+import Space from '@/components/article/Space.vue'
 import TypingArticleWord from './TypingArticleWord.vue'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import { usePlayBeep, usePlayKeyboardAudio, usePlayWordAudio } from '@/core/hooks/sound.ts'

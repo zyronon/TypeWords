@@ -4,7 +4,7 @@ import { BaseButton } from '@/base'
 import dayjs from 'dayjs'
 import isToday from 'dayjs/plugin/isToday' // ES 2015
 import utc from 'dayjs/plugin/utc'
-import Header from '@/core/components/Header.vue'
+import Header from '@/components/Header.vue'
 
 dayjs.extend(isToday)
 dayjs.extend(utc)

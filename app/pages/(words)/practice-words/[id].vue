@@ -1,56 +1,41 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, provide, ref, watch } from 'vue'
-import Statistics from '@/core/components/word/Statistics.vue'
+import Statistics from '@/components/word/Statistics.vue'
 import { emitter, EventKey, useEvents } from '@/core/utils/eventBus.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import { useRuntimeStore } from '@/core/stores/runtime.ts'
 import type { Dict, TaskWords, Word } from '@/core/types/types.ts'
 import { useStartKeyboardEventListener } from '@/core/hooks/event.ts'
-import { usePracticeDisplayPolicy } from '~/composables/practice-words/usePracticeDisplayPolicy.ts'
-import { createPracticeWordNavigator } from '~/composables/practice-words/usePracticeWordNavigator.ts'
 import useTheme from '@/core/hooks/theme.ts'
-import { useWordOptions } from '@/core/hooks/dict.ts'
-import { _getDictDataByUrl, cloneDeep, getShufflePracticeWords, resourceWrap, shuffle, throttle } from '@/core/utils'
+import { _getDictDataByUrl, resourceWrap, shuffle, throttle } from '@/core/utils'
 import { useRoute, useRouter } from 'vue-router'
-import Footer from '@/core/components/word/Footer.vue'
-import Panel from '@/core/components/Panel.vue'
+import Footer from '@/components/word/Footer.vue'
+import Panel from '@/components/Panel.vue'
 import { BaseIcon, Dialog, Toast, ToastComponent } from '@/base'
-import WordList from '@/core/components/list/WordList.vue'
-import TypeWord from '@/core/components/word/TypeWord.vue'
-import Empty from '@/core/components/Empty.vue'
+import WordList from '@/components/list/WordList.vue'
+import TypeWord from '@/components/word/TypeWord.vue'
+import Empty from '@/components/Empty.vue'
 import { useBaseStore } from '@/core/stores/base.ts'
 import { usePracticeStore } from '@/core/stores/practice.ts'
 import { getDefaultDict, getDefaultWord } from '@/core/types/func.ts'
-import PracticeLayout from '@/core/components/PracticeLayout.vue'
-import PracticeOnboardingHost from '@/core/components/word/PracticeOnboardingHost.vue'
+import PracticeLayout from '@/components/PracticeLayout.vue'
+import PracticeOnboardingHost from '@/components/word/PracticeOnboardingHost.vue'
 import { AppEnv, DICT_LIST } from '@/core/config/env.ts'
 import { addStat, setUserDictProp } from '@/core/apis'
-import GroupList from '@/core/components/word/GroupList.vue'
-import {
-  addWrongWordKey,
-  getDefaultPracticeData,
-  type PracticeData,
-  type PracticeWordCache,
-  UnsupportedPracticeCacheVersionError,
-  usePracticeWordPersistence,
-} from '~/composables/practice-words/practice-word-session.ts'
-import { flushStatToStore } from '@/core/composables/usePracticePersistence.ts'
+import GroupList from '@/components/word/GroupList.vue'
+import { getDefaultPracticeData, type PracticeData, UnsupportedPracticeCacheVersionError, usePracticeWordPersistence } from '@/core/composables/practice-words/practice-word-session.ts'
 import { useDataSyncPersistence } from '@/core/composables/useDataSyncPersistence.ts'
 import { ShortcutKey, WordPracticeMode } from '@/core/types/enum.ts'
-import { createEmptyCard, Rating } from 'ts-fsrs'
-import { useGetGradeByWrongTimes, useNextCard } from '@/core/hooks/fsrs.ts'
-import WordMarkPickList, { type WordMarkPickResult } from '@/core/components/word/WordMarkPickList.vue'
-import type { PracticeSessionSnapshot } from '~/composables/practice-words/practice-flow-types.ts'
-import { resolvePracticeQuestion } from '~/composables/practice-words/practice-question.ts'
+import WordMarkPickList, { type WordMarkPickResult } from '@/components/word/WordMarkPickList.vue'
 import {
   canAutoResumeVisibilityTimer,
-  normalizePracticeTimer,
   usePracticeIdleTimer,
-} from '~/composables/practice-words/usePracticeIdleTimer.ts'
-import { createStudyTask } from '~/composables/practice-words/study-task.ts'
-import PrevAndNextWord from '@/core/components/word/PrevAndNextWord.vue'
+} from '@/core/composables/practice-words/usePracticeIdleTimer.ts'
+import { createStudyTask } from '@/core/composables/practice-words/study-task.ts'
+import PrevAndNextWord from '@/components/word/PrevAndNextWord.vue'
+import type { PracticeNotifier } from '@/core/composables/practice-words/practice-flow-types.ts'
+import { usePracticeWordSession } from '@/core/composables/practice-words/usePracticeWordSession.ts'
 
-const { isWordSimple, toggleWordSimple } = useWordOptions()
 const settingStore = useSettingStore()
 const runtimeStore = useRuntimeStore()
 const { toggleTheme } = useTheme()
@@ -60,9 +45,10 @@ const store = useBaseStore()
 const statStore = usePracticeStore()
 const dataSync = useDataSyncPersistence()
 const wordPersistence = usePracticeWordPersistence()
-let { getGradeByWrongTimes } = useGetGradeByWrongTimes()
-let { nextCard } = useNextCard()
 const onboardingHostRef = ref<InstanceType<typeof PracticeOnboardingHost>>()
+const notifyPractice: PracticeNotifier = (level, message) => {
+  Toast[level](message)
+}
 let isComplete = $ref(false)
 let loading = $ref(false)
 let settling = $ref(false)
@@ -85,32 +71,28 @@ let taskWords = $ref<TaskWords>({
 //watch 实例列表，用于本地代码修改hrm后，导致重复watch
 let watchRefList = []
 let data = $ref<PracticeData>(getDefaultPracticeData({}))
-let identifyTypingWrongIndex = -1
 
 const word = $computed<Word>(() => {
   return data.words[data.index] ?? getDefaultWord()
 })
 
-const nav = createPracticeWordNavigator({
+const session = usePracticeWordSession({
   getPracticeData: () => data,
+  setPracticeData: value => (data = value),
   getTaskWords: () => taskWords,
-  getCurrentWord: () => data.words[data.index] ?? getDefaultWord(),
-  checkWordIsNeedNext: (word: Word) => {
-    if (!word.word) return false
-    const rIndex = data.excludeWords.findIndex(v => v === word.word)
-    return isWordSimple(word) || rIndex > -1
-  },
+  getAllWords: () => allWords,
   complete,
+  scheduleSave: savePracticeData,
+  notify: notifyPractice,
 })
+const { nav } = session
 const { activeFlowConfig, activeCursor, currentPhase, currentPracticeType, currentPhaseKey } = nav
-const { effective, toggleDictation, toggleTranslate, setWordMasked } = usePracticeDisplayPolicy(
-  currentPracticeType,
-  currentPhaseKey
-)
+const { effective, toggleDictation, toggleTranslate } = session
 
 const { bumpActivity, handleResumeTimer, startTimer, stopTimer } = usePracticeIdleTimer({
   isFocus,
   statStore,
+  notify: notifyPractice,
 })
 
 provide('practiceData', data)
@@ -119,55 +101,17 @@ provide('practiceFlowCursor', activeCursor)
 provide('practiceFlowConfig', activeFlowConfig)
 provide('bumpPracticeTimerActivity', bumpActivity)
 
-function restorePracticeSession(cache: { sessionSnapshot?: PracticeSessionSnapshot }): boolean {
-  if (!cache.sessionSnapshot) return false
-  return nav.restoreSessionSnapshot(cache.sessionSnapshot)
-}
-
-/** 将完整缓存恢复到当前响应式会话对象。 */
-function applyPracticeCache(cache: PracticeWordCache): boolean {
-  if (!cache.practiceData || !cache.statStoreData) return false
-
-  // 远端运行中恢复也会走这里；快照无效时必须保留当前内存会话，不能只恢复一半。
-  const previousTaskWords = cloneDeep(taskWords)
-  const previousData = cloneDeep(data)
-  const previousStatStoreData = cloneDeep(statStore.$state)
-  const previousSessionSnapshot = nav.buildSessionSnapshot()
-
-  Object.assign(taskWords, cache.taskWords)
-  data = getDefaultPracticeData(data, cache.practiceData)
-  statStore.$patch(cache.statStoreData)
-  reconcilePracticeTimer()
-  if (!restorePracticeSession(cache)) {
-    Object.assign(taskWords, previousTaskWords)
-    data = getDefaultPracticeData(data, previousData)
-    statStore.$patch(previousStatStoreData)
-    nav.restoreSessionSnapshot(previousSessionSnapshot)
-    return false
-  }
-  if (!statStore.timerPaused) {
-    const now = Date.now()
-    statStore.segments.push([now, now])
-  }
-  return true
-}
-
 watch([() => data.words, () => data.index, currentPracticeType], () => {
-  updateQuestion()
+  session.updateQuestion()
   handleResumeTimer()
 })
 
 watch([() => word.word, currentPhaseKey], async ([currentWord], [previousWord]) => {
-  identifyTypingWrongIndex = -1
+  session.resetCurrentWordState()
   if (!currentWord || currentWord === previousWord) return
   await nextTick()
   window.scrollTo({ top: 0, behavior: 'auto' })
 })
-
-function updateQuestion() {
-  const word = data.words?.[data.index]
-  data.question = resolvePracticeQuestion(currentPracticeType.value, word, allWords)
-}
 
 watch(
   [() => store.load, () => loading],
@@ -258,7 +202,7 @@ async function reloadRemotePracticeSession(): Promise<boolean> {
       await router.push('/words')
       return true
     }
-    if (!applyPracticeCache(cache)) {
+    if (!session.applyPracticeCache(cache)) {
       Toast.error('远端练习进度无效，无法重新加载')
       return false
     }
@@ -347,7 +291,7 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
       initData(createStudyTask().taskWords)
       return
     }
-    if (!applyPracticeCache(d)) {
+    if (!session.applyPracticeCache(d)) {
       initData(d.taskWords)
       return
     }
@@ -355,27 +299,11 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
   } else {
     console.log('initData')
     //不能直接赋值，会导致 inject 的数据为默认值
-    taskWords = Object.assign(taskWords, initVal)
-    try {
-      const start = nav.resolveFlowStart(settingStore.wordPracticeMode, taskWords)
-      data = getDefaultPracticeData(data, { words: start.words })
-      statStore.total = start.total
-      statStore.newWordNumber = start.newWordNumber
-      statStore.reviewWordNumber = start.reviewWordNumber
-      // resolveFlowStart 会跳过没有可练单词的 node，必须使用它返回的真实起点。
-      activeCursor.value = { ...start.cursor }
-      nav.initializeNodeWords(start.words)
-    } catch {
+    if (!session.initializeTask(initVal)) {
       Toast.warning('没有可学习的单词！')
       router.push('/words')
       return
     }
-    statStore.startDate = Date.now()
-    statStore.inputWordNumber = 0
-    statStore.wrong = 0
-    statStore.spend = 0
-    statStore.segments = []
-    statStore.resumeTimer() // 同时 push 第一条片段 [now, now]
   }
 
   // 初始化 Question
@@ -384,7 +312,7 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
   if (!d) d = store.sdict
   if (!d?.id) return router.push('/words')
   allWords = shuffle(d.words)
-  updateQuestion()
+  session.updateQuestion()
 
   startTimer()
   knownCacheUpdatedAt = Math.max(knownCacheUpdatedAt, Date.now())
@@ -404,12 +332,6 @@ function resetSameWordAfterViewUpdate(previousWord: Word) {
   })
 }
 
-function reconcilePracticeTimer() {
-  const normalized = normalizePracticeTimer(statStore.segments, statStore.spend)
-  statStore.segments = normalized.segments
-  statStore.spend = normalized.spend
-}
-
 // 显隐与阶段同步由 Registry applyPhase 负责（Phase 2）
 async function complete() {
   if (!isComplete) {
@@ -427,40 +349,7 @@ async function complete() {
     await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
 
     try {
-      //如果 shuffle 数组不为空，就说明是复习，不用修改 lastLearnIndex
-      if (settingStore.wordPracticeMode !== WordPracticeMode.Shuffle) {
-        store.sdict.lastLearnIndex = store.sdict.lastLearnIndex + statStore.newWordNumber
-        // 检查已忽略的单词数量，是否全部完成
-        let ignoreList = [store.allIgnoreWords, store.knownWords][settingStore.ignoreSimpleWord ? 0 : 1]
-        // 忽略单词数
-        const ignoreCount = ignoreList.filter(word =>
-          store.sdict.words.slice(store.sdict.lastLearnIndex).some(w => w.word === word)
-        ).length
-        // 如果lastLearnIndex已经超过可学单词数，则判定完成
-        if (store.sdict.lastLearnIndex + ignoreCount >= store.sdict.length) {
-          store.sdict.complete = true
-          store.sdict.lastLearnIndex = store.sdict.length
-        }
-      }
-
-      // 结算前先将最后一条片段的 end 定格为当前时刻（segments 已是最新，无需临时快照）
-      if (!statStore.timerPaused && statStore.segments.length > 0) {
-        statStore.segments[statStore.segments.length - 1][1] = Date.now()
-      }
-      reconcilePracticeTimer()
-
-      // 按自然日对 segments 分组，每天生成一条 Statistics 记录，落库到 store.sdict.statistics
-      flushStatToStore(statStore.$state)
-
-      for (const [word, wrongTimes] of Object.entries(data.wrongTimesMap)) {
-        let rating = data.ratingMap[word]
-        if (rating !== undefined) {
-          setWordCard(rating, word)
-        } else {
-          // 则根据错误次数生成评级
-          setWordCard(getGradeByWrongTimes(wrongTimes), word, wrongTimes)
-        }
-      }
+      session.settleLocalPractice()
 
       try {
         if (AppEnv.CAN_REQUEST) {
@@ -503,84 +392,6 @@ async function complete() {
   }
 }
 
-function addExcludeWord() {
-  //标记模式时，用户认识的单词加入到排除里面，后续不再复习
-  let rIndex = data.excludeWords.findIndex(v => v === word.word)
-  if (rIndex < 0) {
-    data.excludeWords.push(word.word)
-  }
-}
-
-function onWordKnow() {
-  console.log('onWordKnow')
-  //"我认识“强制更新了Good，因为点”已掌握“才会设置Easy
-  data.ratingMap[word.word] = Rating.Good
-  resolveIdentifyCorrect()
-}
-
-function onTypeWrong(source?: 'identifyTyping') {
-  data.wrongTimes++
-  //这里的代码暂时不能移动，因为要实时把错词加入到列表里面，从而更新toolbar里面的错词数
-  //todo 后续可以优化
-  let temp = word.word
-  addWrongWordKey(data.allWrongWords, temp)
-  const storedWrongIndex = store.wrong.words.findIndex((v: Word) => v.word === temp)
-  if (storedWrongIndex < 0) {
-    store.wrong.words.push(word)
-    if (source === 'identifyTyping') {
-      //标记是否加到了错词里面有，供后续用户反悔操作（我认识）删除
-      identifyTypingWrongIndex = store.wrong.words.length - 1
-    }
-    store.wrong.length = store.wrong.words.length
-  }
-  if (!data.wrongWords.find((v: Word) => v.word === temp)) {
-    data.wrongWords.push(word)
-  }
-  let rIndex = data.excludeWords.findIndex(v => v === word.word)
-  if (rIndex > -1) {
-    data.excludeWords.splice(rIndex, 1)
-  }
-  savePracticeData()
-}
-
-function resolveIdentifyCorrect() {
-  let rIndex = data.wrongWords.findIndex(v => v.word === word.word)
-  if (rIndex > -1) {
-    Toast.info(word.word + ' 已从错词列表移除，原因：用户已认识')
-    data.wrongWords.splice(rIndex, 1)
-  }
-  data.allWrongWords = data.allWrongWords.filter(v => v !== word.word)
-  data.wrongTimes = 0
-  addExcludeWord()
-
-  //如果在错词里面有，则删除
-  if (identifyTypingWrongIndex >= 0) {
-    let storedWrongIndex = identifyTypingWrongIndex
-    if (store.wrong.words[storedWrongIndex]?.word !== word.word) {
-      storedWrongIndex = store.wrong.words.findIndex(v => v.word === word.word)
-    }
-    if (storedWrongIndex >= 0) {
-      store.wrong.words.splice(storedWrongIndex, 1)
-    }
-  }
-  store.wrong.length = store.wrong.words.length
-  savePracticeData()
-}
-
-function onTypeComplete() {
-  nav.next()
-}
-
-//设置单词卡片
-function setWordCard(rating: number, wordStr = word.word, times?: number) {
-  let card = store.fsrsData[wordStr]
-  if (!card) {
-    card = createEmptyCard()
-  }
-  card = nextCard(card, rating)
-  store.fsrsData[wordStr] = card
-}
-
 async function savePracticeDataIns() {
   // cursor 在初始位置且 index=0 且还是跟写 → 尚未开始练习
   if (
@@ -603,7 +414,7 @@ async function savePracticeDataIns() {
       if (!statStore.timerPaused && statStore.segments.length > 0) {
         statStore.segments[statStore.segments.length - 1][1] = Date.now()
       }
-      reconcilePracticeTimer()
+      session.reconcilePracticeTimer()
       await wordPersistence.save({
         taskWords,
         practiceData: data,
@@ -642,29 +453,6 @@ function savePracticeData() {
   }, 500)
 }
 
-function skip() {
-  addExcludeWord()
-  nav.next(false)
-}
-
-function toggleWordSimpleWrapper() {
-  if (!isWordSimple(word)) {
-    setTimeout(() => nav.next(false))
-  }
-  toggleWordSimple(word)
-  let rIndex = data.excludeWords.findIndex(v => v === word.word)
-  if (rIndex > -1) {
-    data.excludeWords.splice(rIndex, 1)
-  } else {
-    data.excludeWords.push(word.word)
-  }
-}
-
-function onWordMastered() {
-  toggleWordSimpleWrapper()
-  resolveIdentifyCorrect()
-}
-
 function toggleConciseMode() {
   settingStore.showToolbar = !settingStore.showToolbar
   settingStore.showPanel = settingStore.showToolbar
@@ -674,54 +462,14 @@ async function repeat() {
   const previousWord = word
   console.log('重学一遍')
   wordPersistence.clear()
-  let temp = cloneDeep(taskWords)
-  let ignoreSet = [store.allIgnoreWordsSet, store.knownWordsSet][settingStore.ignoreSimpleWord ? 0 : 1]
-  //随机练习单独处理
-  if (settingStore.wordPracticeMode === WordPracticeMode.Shuffle) {
-    temp.review = shuffle(temp.review.filter(v => !ignoreSet.has(v.word)))
-  } else {
-    //将学习进度减回去
-    store.sdict.lastLearnIndex = store.sdict.lastLearnIndex - statStore.newWordNumber
-    //排除已掌握单词
-    temp.new = temp.new.filter(v => !ignoreSet.has(v.word))
-    temp.review = temp.review.filter(v => !ignoreSet.has(v.word))
-  }
-  await initData(temp)
+  await initData(session.createRepeatTask())
   resetSameWordAfterViewUpdate(previousWord)
 }
 
 async function continueStudy() {
   const previousWord = word
   wordPersistence.clear()
-  let temp = cloneDeep(taskWords)
-  //随机练习单独处理
-  if (settingStore.wordPracticeMode === WordPracticeMode.Shuffle) {
-    temp.review = getShufflePracticeWords(
-      store.sdict.words,
-      {
-        total: runtimeStore.routeData?.total ?? temp.review.length,
-        range: runtimeStore.routeData?.shuffleRange ?? { start: 0, end: store.sdict.lastLearnIndex },
-      },
-      store.getIgnoreWordsSet()
-    ).words
-  } else {
-    //这里判断是否显示结算弹框，如果显示了结算弹框的话，就不用加进度了
-    if (!isComplete) {
-      console.log('没学完，强行跳过')
-      store.sdict.lastLearnIndex = store.sdict.lastLearnIndex + statStore.newWordNumber
-      // 忽略单词数
-      let ignoreList = [store.allIgnoreWords, store.knownWords][settingStore.ignoreSimpleWord ? 0 : 1]
-      const ignoreCount = ignoreList.filter(word => store.sdict.words.some(w => w.word === word)).length
-      // 如果lastLearnIndex已经超过可学单词数，则判定完成
-      if (store.sdict.lastLearnIndex + ignoreCount >= store.sdict.length) {
-        store.sdict.complete = true
-        store.sdict.lastLearnIndex = store.sdict.length
-      }
-    } else {
-      console.log('学完了，正常下一组')
-    }
-    temp = createStudyTask().taskWords
-  }
+  const temp = session.createNextTask(isComplete)
   if (!temp.new.length && !temp.review.length) {
     Toast.warning('当前没有可学习的单词')
     return
@@ -742,8 +490,7 @@ async function jumpToGroup(group: number) {
   window?.umami?.track('jumpToGroup')
   wordPersistence.clear()
   console.log('没学完，强行跳过', group)
-  store.sdict.lastLearnIndex = (group - 1) * store.sdict.perDayStudyNumber
-  await initData(createStudyTask().taskWords)
+  await initData(session.createTaskFromGroup(group))
   resetSameWordAfterViewUpdate(previousWord)
   if (AppEnv.CAN_REQUEST) {
     let res = await setUserDictProp(null, { ...store.sdict, type: 'word' })
@@ -756,9 +503,7 @@ async function jumpToGroup(group: number) {
 function randomWrite() {
   window?.umami?.track('randomWrite')
   console.log('随机默写')
-  data.words = shuffle(data.words)
-  data.index = 0
-  setWordMasked(true)
+  session.randomWrite()
 }
 
 watch(isIniting, n => {
@@ -779,27 +524,8 @@ watch(isIniting, n => {
 })
 
 function onWordMarkPickComplete(result: WordMarkPickResult) {
-  result.know.map(word => {
-    data.ratingMap[word.word] = Rating.Good
-    data.excludeWords.push(word.word)
-  })
-  result.mastered.map(word => {
-    data.excludeWords.push(word.word)
-  })
-  console.log(result)
-  if (result.unknown.length > 0) {
-    console.log('当前学完了，但还有错词')
-    // 交给当前 Phase 的 onEnd → wrongWordClear action 进入标准错词清空子步骤。
-    data.wrongWords = cloneDeep(result.unknown)
-    result.unknown.forEach(v => {
-      addWrongWordKey(data.allWrongWords, v.word)
-      data.wrongTimesMap[v.word] = Rating.Good
-    })
-  } else {
-    data.wrongWords = []
-  }
+  session.onWordMarkPickComplete(result)
   isQuickMarkWordList = false
-  nav.completeCurrentList()
 }
 
 useStartKeyboardEventListener()
@@ -810,8 +536,8 @@ useEvents([
   [EventKey.continueStudy, continueStudy],
   [ShortcutKey.Previous, nav.prev],
   [ShortcutKey.Next, throttle(() => nav.next(false), 300)],
-  [ShortcutKey.Ignore, throttle(skip, 300)],
-  [ShortcutKey.ToggleSimple, toggleWordSimpleWrapper],
+  [ShortcutKey.Ignore, throttle(session.skip, 300)],
+  [ShortcutKey.ToggleSimple, session.toggleWordSimpleForCurrent],
   [ShortcutKey.RepeatChapter, repeat],
   [ShortcutKey.NextChapter, continueStudy],
   [ShortcutKey.NextStep, nav.skipStep],
@@ -865,13 +591,13 @@ useEvents([
             :question="data.question"
             :practiceType="currentPracticeType"
             :phaseKey="currentPhaseKey"
-            @complete="onTypeComplete"
-            @wrong="onTypeWrong"
-            @mastered="onWordMastered"
-            @know="onWordKnow"
-            @skip="skip"
+            @complete="nav.next"
+            @wrong="session.onTypeWrong"
+            @mastered="session.onWordMastered"
+            @know="session.onWordKnow"
+            @skip="session.skip"
             @quickMark="isQuickMarkWordList = true"
-            @toggle-simple="toggleWordSimpleWrapper"
+            @toggle-simple="session.toggleWordSimpleForCurrent"
           />
         </div>
       </div>

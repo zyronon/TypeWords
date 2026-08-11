@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { BasePage } from '@/base'
-import About from '@/core/components/About.vue'
+import About from '@/components/About.vue'
 import { APP_NAME, Origin } from '@/core/config/env.ts'
 
 let route = useRoute()

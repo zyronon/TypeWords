@@ -5,17 +5,10 @@ import { IdentifyMethod, WordPracticeMode } from '@/core/types/enum.ts'
 import { getDefaultWord } from '@/core/types/func.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import { emitter, EventKey } from '@/core/utils/eventBus.ts'
-import { createPracticeWordNavigator } from '@/composables/practice-words/usePracticeWordNavigator.ts'
-import { saveUserFlow } from '@/composables/practice-words/practice-flow-runtime.ts'
-import { CURRENT_FLOW_VERSION } from '@/composables/practice-words/practice-flow-config.ts'
-import type { PracticeFlowConfig, PracticeStepTemplateId } from '@/composables/practice-words/practice-flow-types.ts'
-
-vi.mock('@/base', () => ({
-  Toast: {
-    info: vi.fn(),
-    success: vi.fn(),
-  },
-}))
+import { createPracticeWordNavigator } from '@/core/composables/practice-words/usePracticeWordNavigator.ts'
+import { saveUserFlow } from '@/core/composables/practice-words/practice-flow-runtime.ts'
+import { CURRENT_FLOW_VERSION } from '@/core/composables/practice-words/practice-flow-config.ts'
+import type { PracticeFlowConfig, PracticeStepTemplateId } from '@/core/composables/practice-words/practice-flow-types.ts'
 
 class MemoryStorage {
   private data = new Map<string, string>()
@@ -72,7 +65,7 @@ function addStandardWrongWordClear(config: PracticeFlowConfig) {
   return config
 }
 
-function setupNavigator(config: PracticeFlowConfig, count: number) {
+function setupNavigator(config: PracticeFlowConfig, count: number, notify = vi.fn()) {
   saveUserFlow(config.id, config, config.label)
   const words = Array.from({ length: count }, (_, i) => makeWord(`w${i}`))
   const data: any = {
@@ -95,12 +88,13 @@ function setupNavigator(config: PracticeFlowConfig, count: number) {
     complete: () => {
       completed = true
     },
+    notify,
   })
   navigator.restoreSessionSnapshot({
     flowId: config.id,
     cursor: { nodeIndex: 0, stepIndex: 0, inWrongWordClear: false, loop: null, endActionIndex: null },
   })
-  return { navigator, data, words, completed: () => completed }
+  return { navigator, data, words, notify, completed: () => completed }
 }
 
 beforeEach(() => {
@@ -109,6 +103,23 @@ beforeEach(() => {
 })
 
 describe('Navigator wordLoop cursor', () => {
+  it('delegates user messages to the host notifier', () => {
+    const { navigator, notify } = setupNavigator(makeFlow('host-notifier', []), 1)
+    navigator.prev()
+    expect(notify).toHaveBeenCalledWith('warning', '已经是第一个了~')
+  })
+
+  it('restores working words by their exact source text', () => {
+    const flow = makeFlow('exact-word-identity', [])
+    const { navigator } = setupNavigator(flow, 1)
+    expect(navigator.restoreSessionSnapshot({
+      flowId: flow.id,
+      cursor: { nodeIndex: 0, stepIndex: 0, inWrongWordClear: false, loop: null, endActionIndex: null },
+      nodeWorkingWordKeys: ['W0'],
+    })).toBe(true)
+    expect(navigator.buildSessionSnapshot().nodeWorkingWordKeys).toEqual([])
+  })
+
   it('resets a same-word loop only after Vue props refreshes', async () => {
     const { navigator } = setupNavigator(makeFlow('same-word-loop-reset', [{ templateId: 'spell' }]), 1)
     let resetCount = 0

@@ -2,7 +2,7 @@
 import { computed, defineAsyncComponent, ref } from 'vue'
 import { BaseButton, BasePage } from '@/base'
 import QRCode from 'qrcode'
-import ResourceCard from '@/core/components/ResourceCard.vue'
+import ResourceCard from '@/components/ResourceCard.vue'
 import { APP_NAME, Origin } from '@/core/config/env.ts'
 import type { Resource } from '@/core'
 
