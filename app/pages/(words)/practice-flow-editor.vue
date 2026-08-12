@@ -185,7 +185,7 @@ function normalizeBeforeSave(): PracticeFlowConfig | null {
                 groupSize: Math.max(1, Number(step.wordAdvance.groupSize || 7)),
                 subSteps: step.wordAdvance.subSteps?.length
                   ? step.wordAdvance.subSteps
-                  : [{ templateId: 'spell', clearWrongOnSuccess: true }],
+                  : [{ templateId: 'spell' }],
               }
             : step.wordAdvance,
       })),

@@ -462,18 +462,6 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
       const temp = word.word
       const preTimes = data.wrongTimesMap[temp] ?? 0
       const phase = currentPhase.value
-      const loop = activeCursor.value.loop
-      const loopSubStep = loop
-        ? phase.wordAdvance.subSteps?.[loop.subStepIndex]
-        : undefined
-      if (loopSubStep?.clearWrongOnSuccess && data.wrongTimes === 0) {
-        const rIndex = data.wrongWords.findIndex(v => v.word === temp)
-        if (rIndex >= 0) {
-          deps.notify?.('info', temp + ' 已从错词列表移除！原因：跟写时错误，但拼写时正确')
-          data.wrongWords.splice(rIndex, 1)
-        }
-      }
-
       data.wrongTimesMap[temp] = preTimes + data.wrongTimes
       data.wrongTimes = 0
       if (countAsTyping) statStore.inputWordNumber++

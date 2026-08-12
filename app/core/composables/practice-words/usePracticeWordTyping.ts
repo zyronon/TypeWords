@@ -137,8 +137,11 @@ export function usePracticeWordTyping(options: PracticeWordTypingOptions) {
     if (options.getPracticeType() === WordPracticeType.Listen && !options.getShowWordResult()) {
       options.setShowWordResult(true)
     }
-    if ([WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(options.getPracticeType())) {
-      if (options.getSettings().autoNextWord) completeTypeWord(true)
+    if (
+      [WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(options.getPracticeType()) &&
+      options.getSettings().autoNextWord
+    ) {
+      completeTypeWord(true)
     }
   }
 
@@ -158,9 +161,14 @@ export function usePracticeWordTyping(options: PracticeWordTypingOptions) {
       }
       if (isSpace(event)) {
         if (isWordCorrect.value) {
+          if (
+            [WordPracticeType.FollowWrite, WordPracticeType.Spell].includes(options.getPracticeType()) &&
+            options.getSettings().autoNextWord
+          ) {
+            return
+          }
           clearJumpTimer()
-          const cooldown = settings.autoNextWord ? settings.waitTimeForChangeWord : settings.spaceCooldownTime
-          if (wordCompletedTime.value && now() - wordCompletedTime.value < cooldown) return
+          if (wordCompletedTime.value && now() - wordCompletedTime.value < settings.spaceCooldownTime) return
           completeTypeWord(false)
           inputLock.value = false
         } else if (options.getShowWordResult()) {

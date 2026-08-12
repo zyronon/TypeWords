@@ -111,7 +111,7 @@ export const getDefaultSettingState = (): SettingState => ({
   ignoreCase: true,
   allowWordTip: true,
   waitTimeForChangeWord: 300,
-  spaceCooldownTime: 300,
+  spaceCooldownTime: 0,
   fontSize: {
     articleForeignFontSize: 48,
     articleTranslateFontSize: 20,

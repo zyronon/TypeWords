@@ -36,7 +36,7 @@ export function materializeWordAdvance(config?: PracticeWordAdvanceConfig): Word
 const WORD_LOOP_WITH_SPELL: PracticeWordAdvanceConfig = {
   type: 'wordLoop',
   groupSize: GROUP_SIZE,
-  subSteps: [{ templateId: 'spell', clearWrongOnSuccess: true }],
+  subSteps: [{ templateId: 'spell' }],
 }
 
 /** 标准错词清空 action：FollowWrite + wordLoop(Spell)，与 v1 行为对齐 */
