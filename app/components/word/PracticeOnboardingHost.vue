@@ -9,13 +9,12 @@
  * - Shepherd Tour 初始化
  */
 import { watchOnce } from '@vueuse/core'
-import ConflictNotice from '@/components/dialog/ConflictNotice.vue'
 import CollectNotice from '@/components/dialog/CollectNotice.vue'
 import ConflictNotice2 from '@/components/dialog/ConflictNotice2.vue'
 import { useRoute } from 'vue-router'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import { LIB_JS_URL, TourConfig } from '@/core/config/env.ts'
-import { _nextTick, isMobile, loadJsLib } from '@/core/utils'
+import { _nextTick, isMobile, loadJsLib, sleep } from '@/core/utils'
 
 interface IProps {
   /** 是否已加载完数据，有了 words 之后再初始化 Tour */
@@ -31,7 +30,6 @@ void props.dictId
 const route = useRoute()
 const settingStore = useSettingStore()
 
-let showConflictNotice = $ref(false)
 let showCollectNotice = $ref(false)
 let showConflictNotice2 = $ref(false)
 
@@ -45,7 +43,6 @@ defineExpose({
 
 // 首次加载时显示提示
 if (!route.query.guide) {
-  showConflictNotice = true
   setTimeout(() => {
     showCollectNotice = true
   }, 10000)
@@ -75,16 +72,13 @@ watchOnce(
                 settingStore.first = false
                 tour.next()
                 setTimeout(() => {
-                  showConflictNotice = true
-                }, 1500)
-                setTimeout(() => {
                   showCollectNotice = true
                 }, 10000)
               },
             },
           ],
         })
-        await new Promise(r => setTimeout(r, 500))
+        await sleep(500)
         tour.start()
       }
     }, 500)
@@ -93,7 +87,6 @@ watchOnce(
 </script>
 
 <template>
-  <ConflictNotice v-if="showConflictNotice" />
   <CollectNotice v-model="showCollectNotice" />
   <ConflictNotice2 v-model="showConflictNotice2" />
 </template>

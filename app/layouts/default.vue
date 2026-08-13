@@ -24,10 +24,8 @@ const init = useInit()
 
 function toggleExpand(n: boolean) {
   expand = n
-  document.documentElement.style.setProperty('--aside-width', n ? '12rem' : '4.5rem')
+  document.documentElement.style.setProperty('--aside-width', n ? '14rem' : '4.5rem')
 }
-
-watch(() => settingStore.sideExpand, toggleExpand)
 
 watch(
   () => settingStore.load,
@@ -56,15 +54,35 @@ onMounted(() => {
   init()
   window.umami?.track('sync', { check: Supabase.check() })
 })
+
+function onMouseEnter() {
+  !settingStore.sideExpand && toggleExpand(true)
+}
+
+function onMouseLeave() {
+  !settingStore.sideExpand && toggleExpand(false)
+}
 </script>
 
 <template>
   <div class="layout anim">
     <!--    第一个aside 占位用-->
     <div class="aside space"></div>
-    <div class="aside anim fixed">
-      <div class="top" :class="!expand && 'hidden-span'">
-        <Logo v-if="expand" />
+    <div class="aside fixed" :class="!expand && 'hidden-span'" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">
+      <div class="top p-4">
+        <div v-if="expand" class="flex justify-between">
+          <Logo />
+          <BaseIcon
+            class="transform-scale-80 border border-1 border-solid border-gray"
+            @click="settingStore.sideExpand = !settingStore.sideExpand"
+          >
+            <IconFluentPin24Filled
+              v-if="settingStore.sideExpand"
+              class="flex-shrink-0 -transform-rotate-45 color-gray"
+            />
+            <IconFluentPin20Regular v-else class="flex-shrink-0 -transform-rotate-45" />
+          </BaseIcon>
+        </div>
         <NuxtLink to="/words" class="row">
           <IconFluentTextUnderlineDouble20Regular />
           <span>{{ $t('words') }}</span>
@@ -72,11 +90,6 @@ onMounted(() => {
         <NuxtLink id="article" to="/articles" class="row">
           <IconFluentBookLetter20Regular />
           <span>{{ $t('articles') }}</span>
-        </NuxtLink>
-        <NuxtLink to="/setting" class="row">
-          <IconFluentSettings20Regular />
-          <span>{{ $t('setting') }}</span>
-          <div class="red-point" :class="!settingStore.sideExpand && 'top-1 right-0'" v-if="runtimeStore.isError"></div>
         </NuxtLink>
         <NuxtLink to="/feedback" class="row">
           <IconFluentCommentEdit20Regular />
@@ -95,11 +108,12 @@ onMounted(() => {
         <!--          <span >用户</span>-->
         <!--        </div>-->
       </div>
-      <div class="bottom flex justify-evenly">
-        <BaseIcon @click="settingStore.sideExpand = !settingStore.sideExpand">
-          <IconFluentChevronLeft20Filled v-if="expand" />
-          <IconFluentChevronLeft20Filled class="transform-rotate-180" v-else />
-        </BaseIcon>
+      <div class="px-4 pb-2 border-0 border-t-1 border-solid border-[var(--color-line)]">
+        <NuxtLink to="/setting" class="row">
+          <IconFluentSettings20Regular />
+          <span>{{ $t('setting') }}</span>
+          <div class="red-point" :class="!settingStore.sideExpand && 'top-1 right-0'" v-if="runtimeStore.isError"></div>
+        </NuxtLink>
       </div>
     </div>
 
@@ -191,18 +205,19 @@ onMounted(() => {
 .aside {
   background: var(--color-second);
   height: 100vh;
-  padding: 1rem 1rem;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   box-shadow: rgb(0 0 0 / 3%) 0px 0px 12px 0px;
   width: var(--aside-width);
+  transition: all 0.3s;
   z-index: 2;
+  overflow: hidden;
 
-  .hidden-span {
+  &.hidden-span {
     span {
-      display: none;
+      opacity: 0;
     }
   }
   .row {
@@ -216,6 +231,9 @@ onMounted(() => {
 
     svg {
       @apply shrink-0 text-lg;
+    }
+    span {
+      @apply shrink-0;
     }
   }
 }

@@ -1,7 +1,7 @@
 # 单词练习当前实现上下文
 
-> 更新时间：2026-08-10
-> 适用范围：标准 Nuxt 项目 `Typewords/app` 下的正式单词练习、Flow、显隐、音频和练习缓存
+> 更新时间：2026-08-13
+> 适用范围：标准 Nuxt 项目 `Typewords/app` 下的正式单词练习、Flow、显隐、音频和练习缓存，以及小程序同步时已确认的平台差异
 > 文档定位：后续开发或审查正式单词练习时优先阅读的当前事实文档
 
 历史方案记录在 [`practice-words-v2-refactor.md`](./practice-words-v2-refactor.md)。历史文档只用于理解演进过程；与本文冲突时，以本文和当前代码为准。
@@ -15,6 +15,17 @@
 - `TypingSentence` 不转发 `wrong`；只在 `onCompleteSentence` 判断是否打错当前目标词。
 - `TypingSentence` 继续依赖父层 `key` 重建，不监听 `sentence` prop。
 - Footer 进度继续使用 `index / length`，包括首词 0%、末词不到 100% 和 loop 回退的现有表现。
+
+### 1.1 小程序同步边界
+
+小程序继续以 PC 业务逻辑为标准，但以下差异属于已确认的平台产品设计，不作为“逻辑未同步”处理：
+
+- 小程序的单词练习只展示例句并支持例句发音，不提供例句输入；PC 的 `practiceSentence` 设置不得在小程序中触发例句键入流程或阻断单词完成。
+- PC 的“切换收藏当前单词”和“收藏到其他词典”是两个按钮；小程序受可用空间限制，只提供一个收藏入口，由同一入口承载这两项能力，不拆成两个工具栏按钮。
+- 小程序可以使用 `view`、`text` 等平台组件重写模板，并保留现有输入事件、焦点和软键盘适配；除这些平台差异外，显示条件、状态和业务事件结果应与 PC 保持一致。
+- 小程序不提供 Custom Flow 入口或编辑器：普通设置读到 `Custom` 时只在运行层按 System 展示，打开小程序不会回写 PC 同步设置；缓存快照引用自定义 Flow 时原样保护并引导到 PC，只有用户确认放弃后才能清除并开始 System。
+- 小程序 Identify 默认保持失焦，初次进入、切词、选择答案、播放音频、恢复计时、关闭列表、批量标记完成和“下一个”都不得主动拉起软键盘；仅用户点击单词输入区时聚焦。其他练习类型继续自动维持输入焦点。
+- 小程序收藏入口位于底部工具栏，打开半屏面板统一承载收藏/取消当前词、加入其他自定义词典及创建词典；笔记使用独立半屏编辑面板。默认收藏词典不在“其他词典”列表重复出现。
 
 ## 2. 正式主链路
 
@@ -76,15 +87,13 @@ interface PracticeFlowCursor {
 }
 ```
 
-### 3.3 错词验证步骤
+### 3.3 跟写与错词记录
 
-`PracticeLoopSubStep.clearWrongOnSuccess?: boolean` 表示该 subStep 是错词验证步骤：
+`PracticeLoopSubStep.clearWrongOnSuccess` 已从 Flow 类型、内置配置和 Navigator 中删除，不再属于 V2 schema，也不应在后续同步中恢复：
 
-- 仅在 loop 内、开关为 `true` 且当前词本次错误数为 0 时，从待复练 `wrongWords` 移除。
-- 与 `practiceType` 无关，Spell、Listen、Dictation 都可以成为验证步骤。
-- 不依据累计 `wrongTimesMap`；累计错误仍保留给统计和 FSRS。
-- 清除后若后续步骤再次输错，沿用正常错误逻辑重新加入。
-- 内置 Spell loop 和编辑器新建 Spell loop 显式设置为 `true`。
+- 可见单词采用完整输入规则，跟写过程中出现错误字符只提供视觉反馈，不累计普通拼写错误，也不会因此把单词加入待复练 `wrongWords`。
+- 因此不存在“跟写误触产生错词，再由后续 Spell 验证步骤清除”的场景，Spell loop 不再承担清除跟写错词的职责。
+- Spell、Listen、Dictation 等阶段自身产生的有效错误继续沿用正常错词记录和复练逻辑。
 
 ## 4. 显隐和输入模式
 
@@ -110,6 +119,9 @@ Footer 只维护两个临时状态：
 这些覆盖在 Phase 变化时复位，不进入 Flow，也不进入 sessionSnapshot。随机默写只洗牌并临时开启单词遮罩。
 
 键入算法由 `practiceType` 与当前有效遮罩共同决定：Dictation 保持自由整词输入并在空格时校验；非 Dictation 单词可见时默认允许完整拼写，途中只显示字符正误、不累计拼写错误，输入完整后统一判定；单词被遮罩时保持逐字符判错。临时查看只改变当前显示状态，不提供持久设置开关。
+
+- `visibleWordWholeInput` 只是 V2 开发期间使用过的临时设置项。由于 V2 尚未上线，该字段、设置开关和文案已经直接删除，不需要保留兼容读取或迁移逻辑；可见单词完整输入现为无条件默认行为。
+- `spaceCooldownTime` 保留为手动切词时的可配置冷却时间，默认值为 `0`，即默认不额外忽略完成单词后的空格；它不用于控制可见单词完整输入规则。
 
 ## 5. 单词音频
 
@@ -200,7 +212,7 @@ v2 沿用已上线的练习缓存通道：
 单测目录：`tests/unit`
 
 - `practice-flow-runtime.test.ts`：v6 严格校验、回退、实例隔离、统计。
-- `practice-word-navigator.test.ts`：7/8/14 词 loop、验证步骤消错、重加错词、Cursor 恢复和空 Node。
+- `practice-word-navigator.test.ts`：验收范围为 7/8/14 词 loop、正常错词复练、Cursor 恢复和空 Node；已删除失效的 `clearWrongOnSuccess` 配置与测试。
 - `practice-view-audio.test.ts`：五类显隐默认值与首句串播条件。
 - `practice-word-cache-v2.test.ts`：版本优先级、更新时间选择和 v1 stage→Cursor。
 - `study-task.test.ts`：无到期词随机补充、开关条件、数量与候选排除规则。

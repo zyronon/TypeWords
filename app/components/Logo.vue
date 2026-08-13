@@ -19,7 +19,7 @@ function goHome() {
 </script>
 
 <template>
-  <div class="center mb-2" @click="goHome">
+  <div class="center" @click="goHome">
     <img v-show="settingStore.theme === 'dark'" :src="lightLogoSrc" alt="" />
     <img v-show="settingStore.theme !== 'dark'" :src="darkLogoSrc" alt="" />
   </div>

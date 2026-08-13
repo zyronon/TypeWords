@@ -32,6 +32,8 @@ export interface PracticeWordSessionOptions {
   complete: () => void
   scheduleSave: () => void
   notify?: PracticeNotifier
+  /** 平台可按运行能力提供有效模式，不会回写用户的持久设置。 */
+  getPracticeMode?: () => WordPracticeMode
 }
 
 export interface PracticeWordMarkPickResult {
@@ -55,6 +57,7 @@ export function usePracticeWordSession(options: PracticeWordSessionOptions) {
   const { getGradeByWrongTimes } = useGetGradeByWrongTimes()
   const { nextCard } = useNextCard()
   let identifyTypingWrongIndex = -1
+  const getPracticeMode = () => options.getPracticeMode?.() ?? settingStore.wordPracticeMode
 
   const currentWord = computed(() => {
     const data = options.getPracticeData()
@@ -129,7 +132,7 @@ export function usePracticeWordSession(options: PracticeWordSessionOptions) {
   function initializeTask(taskWords: TaskWords): boolean {
     Object.assign(options.getTaskWords(), taskWords)
     try {
-      const start = nav.resolveFlowStart(settingStore.wordPracticeMode, options.getTaskWords())
+      const start = nav.resolveFlowStart(getPracticeMode(), options.getTaskWords())
       options.setPracticeData(getDefaultPracticeData(options.getPracticeData(), { words: start.words }))
       statStore.total = start.total
       statStore.newWordNumber = start.newWordNumber
@@ -248,7 +251,7 @@ export function usePracticeWordSession(options: PracticeWordSessionOptions) {
   }
 
   function updateCompletedDictProgress(ignoreScope: 'remaining' | 'all') {
-    if (settingStore.wordPracticeMode === WordPracticeMode.Shuffle) return
+    if (getPracticeMode() === WordPracticeMode.Shuffle) return
     store.sdict.lastLearnIndex += statStore.newWordNumber
     const ignoreList = [store.allIgnoreWords, store.knownWords][settingStore.ignoreSimpleWord ? 0 : 1]
     const wordsToCheck = ignoreScope === 'remaining'
@@ -281,7 +284,7 @@ export function usePracticeWordSession(options: PracticeWordSessionOptions) {
   function createRepeatTask(): TaskWords {
     const taskWords = cloneDeep(options.getTaskWords())
     const ignoreSet = [store.allIgnoreWordsSet, store.knownWordsSet][settingStore.ignoreSimpleWord ? 0 : 1]
-    if (settingStore.wordPracticeMode === WordPracticeMode.Shuffle) {
+    if (getPracticeMode() === WordPracticeMode.Shuffle) {
       taskWords.review = shuffle(taskWords.review.filter(word => !ignoreSet.has(word.word)))
     } else {
       store.sdict.lastLearnIndex -= statStore.newWordNumber
@@ -292,7 +295,7 @@ export function usePracticeWordSession(options: PracticeWordSessionOptions) {
   }
 
   function createNextTask(wasComplete: boolean): TaskWords {
-    if (settingStore.wordPracticeMode === WordPracticeMode.Shuffle) {
+    if (getPracticeMode() === WordPracticeMode.Shuffle) {
       return {
         new: [],
         review: getShufflePracticeWords(

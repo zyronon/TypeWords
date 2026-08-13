@@ -1,30 +1,37 @@
-import nlp from 'compromise/three'
+import { queryWord } from '../apis/words.ts'
+import type { Word } from '../types/types.ts'
+
+const lookupCache = new Map<string, Word | null>()
+
+export interface WordLookupResolution {
+  query: string
+  candidates: string[]
+  data: Word | null
+}
 
 export function stripWordPunctuation(word: string): string {
   return word.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '')
 }
 
 export function normalizeWordForLookup(raw: string): string[] {
-  const cleaned = stripWordPunctuation(raw.trim())
-  if (!cleaned) return []
+  const query = raw.trim()
+  return query ? [query] : []
+}
 
-  const candidates = new Set<string>()
-  candidates.add(cleaned)
-  candidates.add(cleaned.toLowerCase())
+/** 平台无关的查词入口：严格按用户点击的原词查询一次，不做大小写或词形转换。 */
+export async function resolveWordLookup(rawWord: string): Promise<WordLookupResolution> {
+  const query = rawWord.trim()
+  const candidates = normalizeWordForLookup(rawWord)
+  if (!query) return { query: '', candidates, data: null }
 
-  try {
-    const doc = nlp(cleaned)
-    if (doc.verbs().found) {
-      candidates.add(doc.verbs().toInfinitive().text())
-    }
-    if (doc.nouns().found) {
-      candidates.add(doc.nouns().toSingular().text())
-    }
-  } catch {
-    // compromise 解析失败时仅使用原始候选
+  if (lookupCache.has(query)) {
+    return { query, candidates, data: lookupCache.get(query) ?? null }
   }
 
-  return Array.from(candidates).filter(Boolean)
+  const res = await queryWord({ word: query })
+  const data = res.success && res.data ? res.data : null
+  lookupCache.set(query, data)
+  return { query, candidates, data }
 }
 
 export function splitEnglishText(text: string): { text: string; isWord: boolean }[] {

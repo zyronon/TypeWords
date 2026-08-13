@@ -75,10 +75,10 @@ function setFlowStorage(data: PracticeFlowStorageData) {
 function isValidSubStep(value: unknown): value is PracticeLoopSubStep {
   if (!isRecord(value)) return false
   return (
+    Object.keys(value).every(key => key === 'templateId' || key === 'label') &&
     typeof value.templateId === 'string' &&
     VALID_TEMPLATE_IDS_SET.has(value.templateId) &&
-    (value.label === undefined || typeof value.label === 'string') &&
-    (value.clearWrongOnSuccess === undefined || typeof value.clearWrongOnSuccess === 'boolean')
+    (value.label === undefined || typeof value.label === 'string')
   )
 }
 
@@ -87,7 +87,12 @@ function isValidWordAdvance(value: unknown): value is PracticeWordAdvanceConfig 
   if (!isRecord(value)) return false
   if (value.type === 'increment') return true
   if (value.type !== 'wordLoop') return false
-  if (!Number.isFinite(value.groupSize) || !Number.isInteger(value.groupSize) || value.groupSize < 1) {
+  if (
+    typeof value.groupSize !== 'number' ||
+    !Number.isFinite(value.groupSize) ||
+    !Number.isInteger(value.groupSize) ||
+    value.groupSize < 1
+  ) {
     return false
   }
   return Array.isArray(value.subSteps) && value.subSteps.every(isValidSubStep)
@@ -97,6 +102,7 @@ function isValidEndAction(value: unknown): value is PracticeEndAction {
   if (!isRecord(value)) return false
   if (value.type === 'wrongWordClear') {
     return (
+      typeof value.templateId === 'string' &&
       VALID_TEMPLATE_IDS_SET.has(value.templateId) &&
       isValidWordAdvance(value.wordAdvance)
     )

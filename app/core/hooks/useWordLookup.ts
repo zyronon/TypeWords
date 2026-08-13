@@ -1,9 +1,6 @@
 import { reactive } from 'vue'
-import { queryWord } from '../apis/words.ts'
 import type { Word } from '../types'
-import { normalizeWordForLookup, stripWordPunctuation } from '../utils/wordLookup.ts'
-
-const cache = new Map<string, Word | null>()
+import { resolveWordLookup, stripWordPunctuation } from '../utils/wordLookup.ts'
 
 export const wordLookupState = reactive({
   visible: false,
@@ -22,39 +19,17 @@ function updatePosition(target: HTMLElement) {
 }
 
 async function fetchWordData(rawWord: string) {
-  const stripped = stripWordPunctuation(rawWord)
-  if (!stripped) {
+  const result = await resolveWordLookup(rawWord)
+  if (!result.query) {
     wordLookupState.notFound = true
     wordLookupState.loading = false
     wordLookupState.data = null
     return
   }
 
-  wordLookupState.queryWord = stripped
-
-  if (cache.has(stripped)) {
-    const cached = cache.get(stripped) ?? null
-    wordLookupState.data = cached
-    wordLookupState.notFound = !cached
-    wordLookupState.loading = false
-    return
-  }
-
-  const candidates = normalizeWordForLookup(rawWord)
-  for (const candidate of candidates) {
-    const res = await queryWord({ word: candidate })
-    if (res.success && res.data) {
-      cache.set(stripped, res.data)
-      wordLookupState.data = res.data
-      wordLookupState.notFound = false
-      wordLookupState.loading = false
-      return
-    }
-  }
-
-  cache.set(stripped, null)
-  wordLookupState.data = null
-  wordLookupState.notFound = true
+  wordLookupState.queryWord = result.query
+  wordLookupState.data = result.data
+  wordLookupState.notFound = !result.data
   wordLookupState.loading = false
 }
 

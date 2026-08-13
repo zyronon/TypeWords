@@ -71,7 +71,7 @@ function makeLoop(groupSize = 7) {
   return {
     type: 'wordLoop' as const,
     groupSize: Math.max(1, Number(groupSize || 7)),
-    subSteps: [{ templateId: 'spell' as const, clearWrongOnSuccess: true }],
+    subSteps: [{ templateId: 'spell' as const }],
   }
 }
 

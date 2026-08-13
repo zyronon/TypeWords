@@ -27,7 +27,7 @@ const makeWord = (value: string) => ({ ...getDefaultWord(), word: value })
 
 function makeFlow(
   id: string,
-  subSteps: { templateId: PracticeStepTemplateId; clearWrongOnSuccess?: boolean }[]
+  subSteps: { templateId: PracticeStepTemplateId }[]
 ): PracticeFlowConfig {
   return {
     id,
@@ -58,7 +58,7 @@ function addStandardWrongWordClear(config: PracticeFlowConfig) {
       wordAdvance: {
         type: 'wordLoop',
         groupSize: 7,
-        subSteps: [{ templateId: 'spell', clearWrongOnSuccess: true }],
+        subSteps: [{ templateId: 'spell' }],
       },
     },
   ]
@@ -170,7 +170,7 @@ describe('Navigator wordLoop cursor', () => {
 
   it('runs the owner Step onEnd after the final loop subStep', () => {
     const { navigator, data, words } = setupNavigator(
-      addStandardWrongWordClear(makeFlow('loop-owner-on-end', [{ templateId: 'spell', clearWrongOnSuccess: true }])),
+      addStandardWrongWordClear(makeFlow('loop-owner-on-end', [{ templateId: 'spell' }])),
       1
     )
 
@@ -208,7 +208,7 @@ describe('Navigator wordLoop cursor', () => {
   it('keeps retrying wrongWordClear and then resumes the remaining flow', () => {
     const { navigator, data, words, completed } = setupNavigator(
       addStandardWrongWordClear(
-        makeFlow('multi-round-wrong-clear', [{ templateId: 'spell', clearWrongOnSuccess: true }])
+        makeFlow('multi-round-wrong-clear', [{ templateId: 'spell' }])
       ),
       1
     )
@@ -236,53 +236,7 @@ describe('Navigator wordLoop cursor', () => {
   })
 })
 
-describe('clearWrongOnSuccess', () => {
-  it('does not clear on a subStep without the switch', () => {
-    const { navigator, data, words } = setupNavigator(makeFlow('no-clear', [{ templateId: 'spell' }]), 1)
-    data.wrongWords = [words[0]]
-    navigator.activeCursor.value.loop = { startIndex: 0, endIndex: 0, subStepIndex: 0 }
-    navigator.next()
-    expect(data.wrongWords).toEqual([words[0]])
-  })
-
-  it.each(['spell', 'listen', 'dictation'] as const)('clears a zero-error %s verification subStep', templateId => {
-    const { navigator, data, words } = setupNavigator(
-      makeFlow(`clear-${templateId}`, [{ templateId, clearWrongOnSuccess: true }]),
-      1
-    )
-    data.wrongWords = [words[0]]
-    data.wrongTimesMap.w0 = 3
-    navigator.activeCursor.value.loop = { startIndex: 0, endIndex: 0, subStepIndex: 0 }
-    navigator.next()
-    expect(data.wrongWords).toEqual([])
-    expect(data.wrongTimesMap.w0).toBe(3)
-  })
-
-  it('keeps an error on verification and allows a later error to re-add a cleared word', () => {
-    const { navigator, data, words } = setupNavigator(
-      makeFlow('clear-readd', [
-        { templateId: 'spell', clearWrongOnSuccess: true },
-        { templateId: 'listen', clearWrongOnSuccess: true },
-      ]),
-      1
-    )
-    data.wrongWords = [words[0]]
-    data.wrongTimes = 1
-    navigator.activeCursor.value.loop = { startIndex: 0, endIndex: 0, subStepIndex: 0 }
-    navigator.next()
-    expect(data.wrongWords).toEqual([words[0]])
-
-    data.wrongTimes = 0
-    navigator.next()
-    expect(data.wrongWords).toEqual([])
-
-    data.wrongWords.push(words[0])
-    data.wrongTimes = 1
-    navigator.activeCursor.value.loop = { startIndex: 0, endIndex: 0, subStepIndex: 1 }
-    navigator.next()
-    expect(data.wrongWords).toEqual([words[0]])
-  })
-
+describe('Navigator session recovery', () => {
   it('rejects an invalid restored loop cursor', () => {
     const { navigator } = setupNavigator(makeFlow('bad-cursor', [{ templateId: 'spell' }]), 1)
     const restored = navigator.restoreSessionSnapshot({
