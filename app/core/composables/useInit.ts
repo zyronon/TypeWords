@@ -10,7 +10,6 @@ import type { SubscriptionCallbackMutation } from 'pinia'
 import { onUnmounted } from 'vue'
 import { checkAndUploadUserCollection } from './useUserCollection'
 // import { startRrwebRecording } from './useRrweb'
-import { checkAndUploadUserCollection } from './useUserCollection'
 
 let unsub = null
 let unsub2 = null
