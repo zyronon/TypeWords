@@ -2,9 +2,9 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { BaseButton, Toast } from '@/base'
-import PracticeLayout from '@/core/components/PracticeLayout.vue'
-import Panel from '@/core/components/Panel.vue'
-import Empty from '@/core/components/Empty.vue'
+import PracticeLayout from '@/components/PracticeLayout.vue'
+import Panel from '@/components/Panel.vue'
+import Empty from '@/components/Empty.vue'
 import TypingSentence from '@/components/practice-sentences/TypingSentence.vue'
 import { useBaseStore } from '@/core/stores/base.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
@@ -20,7 +20,7 @@ import {
 import { usePracticeSentencePersistence } from '~/composables/practice-sentences/usePracticeSentencePersistence.ts'
 import { usePracticeSentenceSession } from '~/composables/practice-sentences/usePracticeSentenceSession.ts'
 import { getDefaultArticle, getDefaultDict, getDefaultWord } from '@/core/types/func.ts'
-import WordLookupPopover from '@/core/components/word/WordLookupPopover.vue'
+import WordLookupPopover from '@/components/word/WordLookupPopover.vue'
 
 const route = useRoute()
 const router = useRouter()

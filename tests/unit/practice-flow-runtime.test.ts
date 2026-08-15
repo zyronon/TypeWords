@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { WordPracticeMode } from '@typewords/core/types/enum.ts'
-import { getDefaultWord } from '@typewords/core/types/func.ts'
+import { WordPracticeMode } from '@/core/types/enum.ts'
+import { getDefaultWord } from '@/core/types/func.ts'
 import {
   createPracticeFlowRuntime,
   getUserFlow,
   isValidFlowConfig,
   resolveFlowConfigOrSystem,
   saveUserFlow,
-} from '../../apps/nuxt/app/composables/practice-words/practice-flow-runtime.ts'
-import { BUILTIN_FLOWS, CURRENT_FLOW_VERSION } from '../../apps/nuxt/app/composables/practice-words/practice-flow-config.ts'
-import type { PracticeFlowConfig } from '../../apps/nuxt/app/composables/practice-words/practice-flow-types.ts'
+} from '@/core/composables/practice-words/practice-flow-runtime.ts'
+import { BUILTIN_FLOWS, CURRENT_FLOW_VERSION } from '@/core/composables/practice-words/practice-flow-config.ts'
+import type { PracticeFlowConfig } from '@/core/composables/practice-words/practice-flow-types.ts'
 
 class MemoryStorage implements Storage {
   private data = new Map<string, string>()

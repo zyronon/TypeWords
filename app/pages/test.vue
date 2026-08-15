@@ -3,8 +3,8 @@ import { BaseIcon, BasePage, PopConfirm } from '@/base'
 import { ref } from 'vue'
 import axios from 'axios'
 import {DeleteIcon} from '@/base'
-import BaseTable from '@/core/components/BaseTable.vue'
-import WordItem from '@/core/components/word/WordItem.vue'
+import BaseTable from '@/components/BaseTable.vue'
+import WordItem from '@/components/word/WordItem.vue'
 
 let list = $ref([])
 let selectedFile = $ref(null)

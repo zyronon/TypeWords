@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { BasePage, Collapse } from '@/base'
-import WeChat from '@/core/components/channel-icons/WeChat.vue'
+import WeChat from '@/components/channel-icons/WeChat.vue'
 import { APP_NAME, GITHUB, Origin } from '@/core/config/env.ts'
-import ConflictNoticeText from '@/core/components/dialog/ConflictNoticeText.vue'
+import ConflictNoticeText from '@/components/dialog/ConflictNoticeText.vue'
 
 let title = APP_NAME + ' 常见问题解答'
 let route = useRoute()

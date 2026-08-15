@@ -11,7 +11,6 @@ const nonIndexableRoutePrefixes = [
   '/practice-articles',
   '/practice-sentences',
   '/practice-words',
-  '/practice-words-v2',
   '/rrweb',
   '/setting',
   '/test',

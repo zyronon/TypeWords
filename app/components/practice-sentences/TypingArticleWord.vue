@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import { useSettingStore } from '@/core/stores/setting.ts'
-import Space from '@/core/components/article/Space.vue'
+import Space from '@/components/article/Space.vue'
 
 import { PracticeArticleWordType } from '@/core/types/enum.ts'
 import type { ArticleWord } from '@/core/types/types.ts'

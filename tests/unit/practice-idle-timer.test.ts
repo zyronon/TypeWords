@@ -3,7 +3,7 @@ import {
   canAutoResumeVisibilityTimer,
   getIdlePauseTime,
   normalizePracticeTimer,
-} from '../../apps/nuxt/app/composables/practice-words/usePracticeIdleTimer.ts'
+} from '@/core/composables/practice-words/usePracticeIdleTimer.ts'
 
 describe('practice visibility timer resume', () => {
   it('only allows a pending callback to resume an auto-visibility pause', () => {

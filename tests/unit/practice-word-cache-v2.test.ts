@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { CompareResult, IdentifyMethod, WordPracticeMode, WordPracticeStage, WordPracticeType } from '@typewords/core/types/enum.ts'
-import { shouldFetchRemote } from '@typewords/core/utils'
+import { CompareResult, IdentifyMethod, WordPracticeMode, WordPracticeStage, WordPracticeType } from '@/core/types/enum.ts'
+import { shouldFetchRemote } from '@/core/utils'
 import {
   checkAndUpgradePracticeWordCache,
   PRACTICE_WORD_CACHE,
   resolveLegacyPracticeWordCursor,
-} from '@typewords/core/utils/cache.ts'
+} from '@/core/utils/cache.ts'
 import {
   addWrongWordKey,
   resolveNewerRemotePracticeCacheTime,
   UnsupportedPracticeCacheVersionError,
-} from '../../apps/nuxt/app/composables/practice-words/practice-word-session.ts'
+} from '@/core/composables/practice-words/practice-word-session.ts'
 
 describe('wrong word keys', () => {
   it('adds each wrong word only once', () => {

@@ -7,8 +7,8 @@ import type {
   PracticeFlowStep,
   PracticeStepTemplateId,
   PracticeWordsSource,
-} from '~/composables/practice-words/practice-flow-types.ts'
-import { STEP_TEMPLATE_META } from '~/composables/practice-words/practice-flow-config.ts'
+} from '@/core/composables/practice-words/practice-flow-types.ts'
+import { STEP_TEMPLATE_META } from '@/core/composables/practice-words/practice-flow-config.ts'
 
 const props = defineProps<{
   config: PracticeFlowConfig
@@ -71,7 +71,7 @@ function makeLoop(groupSize = 7) {
   return {
     type: 'wordLoop' as const,
     groupSize: Math.max(1, Number(groupSize || 7)),
-    subSteps: [{ templateId: 'spell' as const, clearWrongOnSuccess: true }],
+    subSteps: [{ templateId: 'spell' as const }],
   }
 }
 

@@ -2,7 +2,7 @@
 import { APP_NAME, GITHUB, Origin } from '@/core/config/env.ts'
 import { BaseIcon } from '@/base'
 import { getSystemTheme, listenToSystemThemeChange, setTheme, swapTheme } from '@/core/hooks/theme.ts'
-import ChannelIcons from '@/core/components/channel-icons/ChannelIcons.vue'
+import ChannelIcons from '@/components/channel-icons/ChannelIcons.vue'
 import { usePlayBeep, usePlayCorrect, usePlayKeyboardAudio } from '@/core/hooks/sound.ts'
 
 definePageMeta({ layout: 'empty' })

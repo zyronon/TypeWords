@@ -4,7 +4,7 @@ import { APP_NAME, APP_VERSION, Origin } from '@/core/config/env'
 import { RELEASE_NOTES, type ReleaseFeatureType } from '@/core/config/releaseNotes'
 import { useReleaseNotification } from '@/core/composables/useReleaseNotification'
 import { onMounted } from 'vue'
-import Header from '@/core/components/Header.vue'
+import Header from '@/components/Header.vue'
 
 const route = useRoute()
 const { t } = useI18n()

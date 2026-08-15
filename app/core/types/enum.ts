@@ -103,11 +103,23 @@ export enum WordPracticeMode {
   // words-test
   ShuffleWordsTest = 7, // 单词测试模式
   ReviewWordsTest = 8, // 单词测试模式
-  // v2 custom
-  Custom = 9, // 自定义流程（v2 Phase 3）
+  Custom = 9, // 自定义流程
 }
 
 //练习类型
+export enum WordPlayTrigger {
+  NewWord = 'newWord',
+  RepeatWord = 'repeatWord',
+  ResetSameWord = 'resetSameWord',
+  RevealUnknown = 'revealUnknown',
+  DictationReveal = 'dictationReveal',
+  IdentifyWrongKey = 'identifyWrongKey',
+  Typo = 'typo',
+  DelRetry = 'delRetry',
+  Manual = 'manual',
+  Shortcut = 'shortcut',
+}
+
 export enum WordPracticeType {
   FollowWrite, //跟写
   Spell,

@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { BaseButton, BasePage, Toast } from '@/base'
-import Book from '@/core/components/Book.vue'
-import Empty from '@/core/components/Empty.vue'
+import Book from '@/components/Book.vue'
+import Empty from '@/components/Empty.vue'
 import { useBaseStore } from '@/core/stores/base.ts'
 import type { DictResource } from '@/core/types/types.ts'
 

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import Empty from '@/core/components/Empty.vue'
-import ArticleList from '@/core/components/list/ArticleList.vue'
+import Empty from '@/components/Empty.vue'
+import ArticleList from '@/components/list/ArticleList.vue'
 import { useBaseStore } from '@/core/stores/base.ts'
 import type { Article, Dict, Sentence, Statistics } from '@/core/types/types.ts'
 import { useRuntimeStore } from '@/core/stores/runtime.ts'
 import { BackIcon, BaseButton, BaseIcon, Switch, Toast, VolumeIcon } from '@/base'
 import { useRoute, useRouter } from 'vue-router'
-import EditBook from '@/core/components/article/EditBook.vue'
+import EditBook from '@/components/article/EditBook.vue'
 import { computed, onMounted, onUnmounted, watch } from 'vue'
 import {
   _dateFormat,
@@ -20,7 +20,7 @@ import {
   useNav,
 } from '@/core/utils'
 import { getDefaultArticle, getDefaultDict } from '@/core/types/func.ts'
-import ArticleAudio from '@/core/components/article/ArticleAudio.vue'
+import ArticleAudio from '@/components/article/ArticleAudio.vue'
 import { MessageBox } from '@/core/utils/MessageBox.tsx'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import { useFetch } from '@vueuse/core'
@@ -30,9 +30,9 @@ import { DictType, PracticeArticleWordType } from '@/core/types/enum.ts'
 import { usePracticeWordPersistence } from '@/core/composables/usePracticePersistence.ts'
 import { getPracticeArticleCacheLocal } from '@/core/utils/cache.ts'
 import { genArticleSectionData, usePlayArticleTextAudio, usePlaySentenceAudio } from '@/core/hooks/article.ts'
-import ClickableEnglishText from '@/core/components/word/ClickableEnglishText.vue'
-import ClickableWord from '@/core/components/word/ClickableWord.vue'
-import WordLookupPopover from '@/core/components/word/WordLookupPopover.vue'
+import ClickableEnglishText from '@/components/word/ClickableEnglishText.vue'
+import ClickableWord from '@/components/word/ClickableWord.vue'
+import WordLookupPopover from '@/components/word/WordLookupPopover.vue'
 import TypingSentence from '~/components/practice-sentences/TypingSentence.vue'
 
 const { t } = useI18n()

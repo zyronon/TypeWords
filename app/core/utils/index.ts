@@ -382,7 +382,7 @@ export async function _getDictDataByUrl(val: DictResource, type: DictType = Dict
 
 //从字符串里面转换为Word格式
 export function convertToWord(raw: any) {
-  const safeString = str => (typeof str === 'string' ? str.trim() : '')
+  const safeString = str => (typeof str === 'string' ? str.replace(/\r\n?/g, '\n').trim() : '')
   const safeSplit = (str, sep) => (safeString(str) ? safeString(str).split(sep).filter(Boolean) : [])
 
   // 1. trans
@@ -559,7 +559,7 @@ export function last<T>(array: T[]): T | undefined {
   return array.length > 0 ? array[array.length - 1] : undefined
 }
 
-export function debounce<T extends (...args: any[]) => void>(func: T, wait: number) {
+export function debounce<T extends (...args: any[]) => void>(func: T, wait: number = 0) {
   let timer: ReturnType<typeof setTimeout> | null = null
   return function (this: ThisParameterType<T>, ...args: Parameters<T>) {
     if (timer) clearTimeout(timer)
