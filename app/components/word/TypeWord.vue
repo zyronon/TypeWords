@@ -249,6 +249,9 @@ const notice = $computed(() => {
         : $t('press_delete_reinput')
       : '按空格键完成默写'
     show = true
+  } else {
+    text = '输入完成后按空格键继续'
+    show = true
   }
   return { show, text }
 })

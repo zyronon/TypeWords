@@ -133,7 +133,7 @@ export const getDefaultSettingState = (): SettingState => ({
   ignoreSimpleWord: false,
   wordPracticeMode: WordPracticeMode.System,
   wordPracticeType: WordPracticeType.FollowWrite,
-  autoNextWord: true,
+  autoNextWord: false,
   inputWrongClear: false,
   mobileNavCollapsed: false,
   ignoreSymbol: true,
