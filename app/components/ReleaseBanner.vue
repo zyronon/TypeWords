@@ -69,8 +69,8 @@ function dismiss() {
               {{ t(featureTypeLabel[feature.type]) }}
             </span>
             <span>
-              <span class="font-600">{{ feature.title }}</span>
-              <span v-if="feature.desc"> — {{ feature.desc }} </span>
+              <span class="font-600" v-if="feature.title">{{ feature.title }} — </span>
+              <span v-if="feature.desc">{{ feature.desc }} </span>
             </span>
           </li>
         </ul>
