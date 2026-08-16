@@ -63,10 +63,8 @@ export function useExport() {
 
   async function exportData(
     notice = '导出成功！',
-    fileName = `${APP_NAME}-User-Data-${dayjs().format('YYYY-MM-DD HH-mm-ss')}.zip`
+    fileName = `${APP_NAME}-User-Data-${dayjs().format('YYYY-MM-DD HH-mm-ss')}.zip`,
   ) {
-    let disabled = localStorage.getItem('disable360')
-    if (disabled) return Toast.success('已跳过导出')
     if (loading.value) return
     loading.value = true
 

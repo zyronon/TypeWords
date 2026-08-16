@@ -555,8 +555,14 @@ function removeSbConfig() {
 }
 
 function disable360() {
-  localStorage.setItem('disable360', 1)
-  Toast.success('已设置')
+  let disabled = localStorage.getItem('disable360')
+  if (disabled) {
+    localStorage.removeItem('disable360')
+    Toast.success('已清除')
+  } else {
+    localStorage.setItem('disable360', '1')
+    Toast.success('已设置')
+  }
 }
 </script>
 
@@ -650,13 +656,12 @@ function disable360() {
               <PopConfirm :title="$t('clear_all_data_confirm')" @confirm="clearAllData">
                 <BaseButton size="large">{{ $t('clear_all_data') }}</BaseButton>
               </PopConfirm>
-              <BaseButton
-                size="large"
-                type="info"
-                @click="disable360"
-                keyboard="不要乱点，点击后会使导出功能失效，仅适用于： Mac 版本 360 极速浏览器"
-                >跳过导出</BaseButton
+              <PopConfirm
+                title="不要乱点，点击后会使导出功能失效，仅适用于： Mac 版本 360 极速浏览器"
+                @confirm="disable360"
               >
+                <BaseButton size="large" type="info">跳过导出</BaseButton>
+              </PopConfirm>
             </div>
           </div>
 
