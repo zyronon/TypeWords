@@ -2,8 +2,6 @@
   "name": "typewords",
   "private": true,
   "scripts": {
-    "build-vscode-web": "pnpm -F @typewords/vscode-web build",
-    "dev-vscode-web": "pnpm -F @typewords/vscode-web dev",
     "dev": "nuxt dev",
     "start": "nuxt dev",
     "build": "nuxt build",

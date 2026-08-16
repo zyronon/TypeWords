@@ -19,7 +19,7 @@ RUN pnpm run docker-build
 FROM nginx:alpine
 
 # Copy built application from builder
-COPY --from=builder /app/apps/nuxt/.output/public /usr/share/nginx/html
+COPY --from=builder /app/.output/public /usr/share/nginx/html
 
 # Expose port
 EXPOSE 80
