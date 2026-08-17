@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { BaseIcon, MiniDialog, Option, Select, Switch, VolumeIcon } from '@/base'
-import { SoundFileOptions } from '@/core/config/env.ts'
+import { ENV, SoundFileOptions } from '@/core/config/env.ts'
 import { useWindowClick } from '@/core/hooks/event.ts'
 import { getAudioFileUrl, usePlayAudio } from '@/core/hooks/sound.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
@@ -90,7 +90,7 @@ function eventCheck(e) {
             <Option v-for="item in SoundFileOptions" :key="item.value" :label="item.label" :value="item.value">
               <div class="el-option-row">
                 <span>{{ item.label }}</span>
-                <VolumeIcon :time="100" @click="usePlayAudio(getAudioFileUrl(item.value)[0])" />
+                <VolumeIcon :time="100" @click="usePlayAudio(ENV.RESOURCE_URL + getAudioFileUrl(item.value)[0])" />
               </div>
             </Option>
           </Select>
