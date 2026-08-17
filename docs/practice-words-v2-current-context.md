@@ -1,6 +1,6 @@
 # 单词练习当前实现上下文
 
-> 更新时间：2026-08-13
+> 更新时间：2026-08-17
 > 适用范围：标准 Nuxt 项目 `Typewords/app` 下的正式单词练习、Flow、显隐、音频和练习缓存，以及小程序同步时已确认的平台差异
 > 文档定位：后续开发或审查正式单词练习时优先阅读的当前事实文档
 
@@ -92,6 +92,7 @@ interface PracticeFlowCursor {
 `PracticeLoopSubStep.clearWrongOnSuccess` 已从 Flow 类型、内置配置和 Navigator 中删除，不再属于 V2 schema，也不应在后续同步中恢复：
 
 - 可见单词采用完整输入规则，跟写过程中出现错误字符只提供视觉反馈，不累计普通拼写错误，也不会因此把单词加入待复练 `wrongWords`。
+- 自由练习会把可见完整输入中的误拼另存为本次练习总结数据；这份记录不改变上述错词本、`wrongWords` 或 FSRS 行为。
 - 因此不存在“跟写误触产生错词，再由后续 Spell 验证步骤清除”的场景，Spell loop 不再承担清除跟写错词的职责。
 - Spell、Listen、Dictation 等阶段自身产生的有效错误继续沿用正常错词记录和复练逻辑。
 
@@ -119,6 +120,10 @@ Footer 只维护两个临时状态：
 这些覆盖在 Phase 变化时复位，不进入 Flow，也不进入 sessionSnapshot。随机默写只洗牌并临时开启单词遮罩。
 
 键入算法由 `practiceType` 与当前有效遮罩共同决定：Dictation 保持自由整词输入并在空格时校验；非 Dictation 单词可见时默认允许完整拼写，途中只显示字符正误、不累计拼写错误，输入完整后统一判定；单词被遮罩时保持逐字符判错。临时查看只改变当前显示状态，不提供持久设置开关。
+
+自由练习额外提供持久设置 `freePracticeWholeWordCheck`，默认关闭：仅当自由练习临时开启单词遮罩时生效。开启后不再逐字判错，而是允许完整输入，第一次按空格统一核对；失败的一次完整输入按一次错误记录，退格后重新输入，正确后再次按空格继续。自动切词和重复次数继续沿用跟写设置。关闭时保持原有逐字即时纠错。
+
+自由练习结算中的“常见拼写错误”按单词分组：同一单词的全部错误形式放在同一卡片内，网页按错误总次数仅展示前 10 个单词；TXT 与 Markdown 导出不得截断，必须包含本次练习的全部单词和全部错误形式。
 
 - `visibleWordWholeInput` 只是 V2 开发期间使用过的临时设置项。由于 V2 尚未上线，该字段、设置开关和文案已经直接删除，不需要保留兼容读取或迁移逻辑；可见单词完整输入现为无条件默认行为。
 - `spaceCooldownTime` 保留为手动切词时的可配置冷却时间，默认值为 `0`，即默认不额外忽略完成单词后的空格；它不用于控制可见单词完整输入规则。
@@ -177,6 +182,7 @@ v2 沿用已上线的练习缓存通道：
 - `taskWords`
 - 当前 `words/index`
 - `wrongWords/allWrongWords/wrongTimesMap/wrongTimes`
+- 自由练习总结使用的 `spellingMistakes`
 - `ratingMap`、排除词和计时统计
 - 其余有效 `PracticeData` 与 `PracticeState`
 
@@ -215,6 +221,7 @@ v2 沿用已上线的练习缓存通道：
 - `practice-word-navigator.test.ts`：验收范围为 7/8/14 词 loop、正常错词复练、Cursor 恢复和空 Node；已删除失效的 `clearWrongOnSuccess` 配置与测试。
 - `practice-view-audio.test.ts`：五类显隐默认值与首句串播条件。
 - `practice-word-cache-v2.test.ts`：版本优先级、更新时间选择和 v1 stage→Cursor。
+- `practice-summary.test.ts`：总结门槛、完整误拼聚合、常见错误描述以及 TXT/Markdown 内容。
 - `study-task.test.ts`：无到期词随机补充、开关条件、数量与候选排除规则。
 
 提交前执行：

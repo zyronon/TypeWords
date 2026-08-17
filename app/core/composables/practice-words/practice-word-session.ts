@@ -71,6 +71,7 @@ export function getDefaultPracticeData(origin?: Partial<PracticeData>, val?: Par
     wrongTimesMap: {},
     ratingMap: {},
     wrongTimes: 0,
+    spellingMistakes: [],
     question: null,
     ...val,
   }) as PracticeData

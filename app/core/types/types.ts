@@ -159,7 +159,22 @@ export interface PracticeData {
   wrongTimesMap: Record<string, number>
   wrongTimes: number
   ratingMap: Record<string, Rating>
+  /** 自由练习中的拼写错误输入，仅用于本次练习总结，不改变错词本和复习调度。 */
+  spellingMistakes: PracticeSpellingMistake[]
   question: Question
+}
+
+export type PracticeSpellingCheckMode = 'instant' | 'wholeWord'
+
+export interface PracticeSpellingMistake {
+  word: string
+  expected: string
+  actual: string
+  mode: PracticeSpellingCheckMode
+  /** 逐字即时核对时的错误位置；整词核对时不设置。 */
+  position?: number
+  expectedCharacter?: string
+  actualCharacter?: string
 }
 
 export interface TaskWords {

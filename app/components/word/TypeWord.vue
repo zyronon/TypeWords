@@ -13,9 +13,9 @@
  * - WordIdentifyPanel：自测 / WordTest UI
  * - WordMetaPanel：音标 / 翻译 / 例句 / 短语 / 词源
  */
-import type { Question, Word } from '@/core/types/types.ts'
+import type { PracticeSpellingMistake, Question, Word } from '@/core/types/types.ts'
 import { getDefaultWord } from '@/core/types/func.ts'
-import { ShortcutKey, WordPlayTrigger, WordPracticeType } from '@/core/types/enum.ts'
+import { ShortcutKey, WordPlayTrigger, WordPracticeMode, WordPracticeType } from '@/core/types/enum.ts'
 import { useBaseStore } from '@/core/stores/base.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import { usePlayWordAudio } from '@/core/hooks/sound.ts'
@@ -52,6 +52,7 @@ const props = withDefaults(defineProps<IProps>(), {
 const emit = defineEmits<{
   complete: []
   wrong: [source?: 'identifyTyping']
+  mistake: [mistake: PracticeSpellingMistake]
   know: []
   mastered: []
   skip: []
@@ -90,7 +91,15 @@ const localReveal = computed(() => ({
   showFullWord,
   showWordResult,
 }))
+const baseEffective = useInjectedDisplayPolicy()
 const effective = useInjectedDisplayPolicy(localReveal)
+const checkWholeWordOnSpace = computed(
+  () =>
+    settingStore.wordPracticeMode === WordPracticeMode.Free &&
+    props.practiceType === WordPracticeType.FollowWrite &&
+    baseEffective.value.isWordMasked &&
+    settingStore.freePracticeWholeWordCheck
+)
 
 function playWord(trigger: WordPlayTrigger) {
   if (trigger === WordPlayTrigger.Manual || settingStore.wordSound) typeWordController.playWord(trigger)
@@ -349,10 +358,12 @@ useEvents([
             :isWordMasked="effective.isWordMasked"
             v-model:showWordResult="showWordResult"
             :showFullWord="showFullWord"
+            :checkWholeWordOnSpace="checkWholeWordOnSpace"
             :wordFontSize="settingStore.fontSize.wordForeignFontSize"
             @play="playWord"
             @complete="onTypingCoreComplete"
             @wrong="onTypingCoreWrong"
+            @mistake="mistake => emit('mistake', mistake)"
           />
         </div>
       </Tooltip>

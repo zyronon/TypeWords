@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { WordPlayTrigger, WordPracticeType } from '../../types/enum.ts'
-import type { Word } from '../../types/types.ts'
+import type { PracticeSpellingMistake, Word } from '../../types/types.ts'
 import { normalizeWord } from '../../utils/index.ts'
 import {
   getPracticeInputCharacterStates,
@@ -31,9 +31,12 @@ export interface PracticeWordTypingOptions {
   getIsWordMasked: () => boolean
   getShowWordResult: () => boolean
   getSettings: () => PracticeTypingSettings
+  /** 自由练习临时默写时，是否改为按空格后整词核对。 */
+  getCheckWholeWordOnSpace?: () => boolean
   setShowWordResult: (value: boolean) => void
   onComplete: () => void
   onWrong: () => void
+  onMistake?: (mistake: PracticeSpellingMistake) => void
   onPlay: (trigger: WordPlayTrigger) => void
   onNotice?: (notice: PracticeTypingNotice) => void
   playBeep: () => void
@@ -97,6 +100,19 @@ export function usePracticeWordTyping(options: PracticeWordTypingOptions) {
   function typo(needPlay = true) {
     options.onWrong()
     if (needPlay) options.onPlay(WordPlayTrigger.Typo)
+  }
+
+  function usesConfirmWholeWordCheck() {
+    return options.getPracticeType() === WordPracticeType.Dictation || !!options.getCheckWholeWordOnSpace?.()
+  }
+
+  function recordWholeWordMistake(target: string) {
+    options.onMistake?.({
+      word: options.getWord().word,
+      expected: target,
+      actual: input.value,
+      mode: 'wholeWord',
+    })
   }
 
   function shouldRepeat() {
@@ -194,16 +210,24 @@ export function usePracticeWordTyping(options: PracticeWordTypingOptions) {
     }
 
     inputLock.value = true
-    if (options.getPracticeType() === WordPracticeType.Dictation) {
+    const confirmWholeWordCheck = usesConfirmWholeWordCheck()
+    if (confirmWholeWordCheck) {
+      if (options.getCheckWholeWordOnSpace?.()) wholeInputAttempt.value = true
+      if (options.getCheckWholeWordOnSpace?.() && isSpace(event) && !input.value) {
+        inputLock.value = false
+        return
+      }
       if (isSpace(event) && input.value && (input.value.length >= target.length || !target.includes(' '))) {
         if (isWordCorrect.value) {
           if (options.getShowWordResult()) return options.onComplete()
           options.setShowWordResult(true)
-          options.playCorrect()
+          if (options.getCheckWholeWordOnSpace?.()) completeCurrentInput()
+          else options.playCorrect()
           options.onPlay(WordPlayTrigger.DictationReveal)
         } else {
           options.playBeep()
           options.setShowWordResult(true)
+          recordWholeWordMistake(target)
           typo()
         }
         return
@@ -235,6 +259,7 @@ export function usePracticeWordTyping(options: PracticeWordTypingOptions) {
         if (isWholePracticeInputCorrect(input.value, target, settings.ignoreCase)) completeCurrentInput()
         else {
           options.playBeep()
+          recordWholeWordMistake(target)
           options.onPlay(WordPlayTrigger.Typo)
         }
       } else {
@@ -249,6 +274,15 @@ export function usePracticeWordTyping(options: PracticeWordTypingOptions) {
       options.playKeyboardAudio()
     } else {
       options.playBeep()
+      options.onMistake?.({
+        word: options.getWord().word,
+        expected: target,
+        actual: input.value + letter,
+        mode: 'instant',
+        position: input.value.length,
+        expectedCharacter: targetCharacter,
+        actualCharacter: letter,
+      })
       typo()
       wrong.value = letter
       if (wrongClearTimer) clearTimer(wrongClearTimer)
@@ -273,7 +307,7 @@ export function usePracticeWordTyping(options: PracticeWordTypingOptions) {
   function backspace(nextValue?: string) {
     options.playKeyboardAudio()
     inputLock.value = false
-    if (options.getPracticeType() === WordPracticeType.Dictation && options.getShowWordResult()) {
+    if (usesConfirmWholeWordCheck() && options.getShowWordResult()) {
       input.value = wrong.value = ''
     } else if (wrong.value) {
       wrong.value = ''

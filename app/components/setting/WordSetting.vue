@@ -49,6 +49,22 @@ const settingStore = useSettingStore()
     </SettingItem>
 
     <div class="line"></div>
+    <SettingItem mainTitle="自由练习总结" />
+    <SettingItem
+      title="默写时整词核对"
+      desc="仅作用于自由练习中临时开启的默写。开启后可完整输入单词，按空格时再统一核对；关闭时保持逐字即时纠错。"
+    >
+      <Switch v-model="settingStore.freePracticeWholeWordCheck" />
+    </SettingItem>
+    <SettingItem
+      title="总结错误次数门槛"
+      desc="练习总结会列出拼写错误次数大于或等于该数值的单词"
+    >
+      <InputNumber v-model="settingStore.freePracticeSummaryWrongThreshold" :min="1" :max="20" />
+      <span>次</span>
+    </SettingItem>
+
+    <div class="line"></div>
     <SettingItem :mainTitle="`例句设置`" />
     <SettingItem :title="$t('practice_sentence')">
       <Switch v-model="settingStore.practiceSentence" />

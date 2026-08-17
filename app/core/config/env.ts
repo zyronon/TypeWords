@@ -76,7 +76,7 @@ export const SAVE_DICT_KEY = {
 }
 export const SAVE_SETTING_KEY = {
   key: 'typing-word-setting',
-  version: 23,
+  version: 24,
 }
 
 //5版本，不再单独保存 app version字段

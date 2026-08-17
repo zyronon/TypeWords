@@ -2,7 +2,7 @@
 import { useBaseStore } from '@/core/stores/base.ts'
 import { BaseButton, Progress } from '@/base'
 import type { PracticeData } from '@/core/composables/practice-words/practice-word-session.ts'
-import { ShortcutKey } from '@/core/types/enum.ts'
+import { ShortcutKey, WordPracticeMode } from '@/core/types/enum.ts'
 import { emitter, useEvents } from '@/core/utils/eventBus.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import { usePracticeStore } from '@/core/stores/practice.ts'
@@ -13,6 +13,12 @@ import isoWeek from 'dayjs/plugin/isoWeek'
 import { msToHourMinute } from '@/core/utils'
 import ChannelIcons from '@/components/channel-icons/ChannelIcons.vue'
 import { useI18n } from 'vue-i18n'
+import saveAs from 'file-saver'
+import {
+  buildFreePracticeSummary,
+  renderFreePracticeSummaryMarkdown,
+  renderFreePracticeSummaryText,
+} from '@/core/composables/practice-words/practice-summary.ts'
 
 dayjs.extend(isoWeek)
 dayjs.extend(isBetween)
@@ -28,6 +34,33 @@ const statStore = usePracticeStore()
 const model = defineModel({ default: false })
 let list = $ref<boolean[]>([])
 const practiceData = inject<PracticeData>('practiceData')!
+const isFreePractice = $computed(() => settingStore.wordPracticeMode === WordPracticeMode.Free)
+const practiceSummary = $computed(() =>
+  buildFreePracticeSummary(practiceData.spellingMistakes, settingStore.freePracticeSummaryWrongThreshold)
+)
+
+const summaryDocumentInfo = $computed(() => ({
+  dictName: store.sdict.name,
+  startedAt: dayjs(statStore.startDate).format('YYYY-MM-DD HH:mm:ss'),
+  duration: msToHourMinute(statStore.spend, true),
+  totalWords: statStore.total,
+  newWords: statStore.newWordNumber,
+  reviewWords: statStore.reviewWordNumber,
+}))
+
+function sanitizeFileName(value: string): string {
+  return value.replace(/[\\/:*?"<>|]/g, '-').trim() || '未命名词典'
+}
+
+function exportPracticeSummary(format: 'txt' | 'md') {
+  const content =
+    format === 'md'
+      ? renderFreePracticeSummaryMarkdown(practiceSummary, summaryDocumentInfo)
+      : renderFreePracticeSummaryText(practiceSummary, summaryDocumentInfo)
+  const type = format === 'md' ? 'text/markdown;charset=utf-8' : 'text/plain;charset=utf-8'
+  const fileName = `自由练习总结-${sanitizeFileName(store.sdict.name)}-${dayjs().format('YYYY-MM-DD-HH-mm-ss')}.${format}`
+  saveAs(new Blob(['\uFEFF', content], { type }), fileName)
+}
 
 function calcWeekList() {
   // 获取本周的起止时间
@@ -99,7 +132,7 @@ const encouragementText = $computed(() => {
 
 <template>
   <Dialog v-model="model" :close-on-click-bg="false" :header="false" :keyboard="false" :show-close="false">
-    <div class="p-8 pr-3 bg-[var(--bg-card-primary)] min-w-130 rounded-2xl">
+    <div class="p-8 pr-3 bg-[var(--bg-card-primary)] min-w-130 max-h-[90vh] overflow-y-auto rounded-2xl">
       <!-- Header Section -->
       <div class="text-center relative">
         <div
@@ -152,6 +185,68 @@ const encouragementText = $computed(() => {
                 {{ item[0] }}
                 {{ item[1] }}次
               </span>
+            </div>
+          </div>
+
+          <div v-if="isFreePractice" class="bg-[var(--bg-card-secend)] rounded-xl p-4 space-y-4">
+            <div class="text-center">
+              <div class="font-semibold text-xl">自由练习总结</div>
+              <div class="text-sm text-[var(--color-font-3)] mt-1">
+                本次共记录 {{ practiceSummary.totalMistakes }} 次拼写错误；以下错词门槛为
+                {{ practiceSummary.threshold }} 次
+              </div>
+            </div>
+
+            <div>
+              <div class="font-medium mb-2">错误达到 {{ practiceSummary.threshold }} 次的单词</div>
+              <div v-if="practiceSummary.wrongWords.length" class="flex gap-space flex-wrap">
+                <span
+                  v-for="item in practiceSummary.wrongWords"
+                  :key="item.word"
+                  class="bg-[var(--bg-card-primary)] py-1 px-2 rounded-md"
+                >
+                  {{ item.word }} {{ item.count }}次
+                </span>
+              </div>
+              <div v-else class="text-sm text-[var(--color-font-3)]">本次没有达到门槛的单词</div>
+            </div>
+
+            <div>
+              <div class="font-medium mb-2">常见拼写错误</div>
+              <div v-if="practiceSummary.spellingWordGroups.length" class="space-y-3">
+                <div
+                  v-for="group in practiceSummary.spellingWordGroups.slice(0, 10)"
+                  :key="group.word"
+                  class="bg-[var(--bg-card-primary)] rounded-lg px-3 py-3 text-sm"
+                >
+                  <div class="flex justify-between gap-4 mb-2">
+                    <span class="font-semibold text-base">{{ group.word }}</span>
+                    <span class="whitespace-nowrap font-medium">共 {{ group.totalCount }}次</span>
+                  </div>
+                  <div class="space-y-1.5">
+                    <div
+                      v-for="item in group.patterns"
+                      :key="item.key"
+                      class="flex justify-between gap-4 border-t border-[var(--color-input-border)] pt-1.5"
+                    >
+                      <span>{{ item.detail }}</span>
+                      <span class="whitespace-nowrap">{{ item.count }}次</span>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  v-if="practiceSummary.spellingWordGroups.length > 10"
+                  class="text-sm text-center text-[var(--color-font-3)]"
+                >
+                  网页仅展示错误次数最高的 10 个单词，导出文件包含全部内容
+                </div>
+              </div>
+              <div v-else class="text-sm text-[var(--color-font-3)]">本次没有记录到拼写错误</div>
+            </div>
+
+            <div class="flex justify-end flex-wrap gap-2">
+              <BaseButton :disabled="loading" @click="exportPracticeSummary('txt')">导出 TXT</BaseButton>
+              <BaseButton :disabled="loading" @click="exportPracticeSummary('md')">导出 Markdown</BaseButton>
             </div>
           </div>
 

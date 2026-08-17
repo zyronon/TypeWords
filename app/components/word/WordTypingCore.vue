@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Word } from '@/core/types/types.ts'
+import type { PracticeSpellingMistake, Word } from '@/core/types/types.ts'
 import { getDefaultWord } from '@/core/types/func.ts'
 import { WordPlayTrigger, WordPracticeType } from '@/core/types/enum.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
@@ -19,6 +19,7 @@ interface IProps {
   showWordResult: boolean
   showFullWord: boolean
   wordFontSize: number
+  checkWholeWordOnSpace?: boolean
   active?: boolean
 }
 
@@ -35,6 +36,7 @@ const emit = defineEmits<{
   'update:showWordResult': [value: boolean]
   complete: []
   wrong: []
+  mistake: [mistake: PracticeSpellingMistake]
   play: [trigger: WordPlayTrigger]
 }>()
 
@@ -49,9 +51,11 @@ const typing = usePracticeWordTyping({
   getIsWordMasked: () => props.isWordMasked,
   getShowWordResult: () => props.showWordResult,
   getSettings: () => settingStore,
+  getCheckWholeWordOnSpace: () => !!props.checkWholeWordOnSpace,
   setShowWordResult: value => emit('update:showWordResult', value),
   onComplete: () => emit('complete'),
   onWrong: () => emit('wrong'),
+  onMistake: mistake => emit('mistake', mistake),
   onPlay: trigger => emit('play', trigger),
   onNotice: notice =>
     Toast.info($t(notice.type === 'delete-reinput' ? 'press_delete_reinput' : 'press_space_continue'), {
@@ -186,6 +190,25 @@ defineExpose({
         </template>
       </div>
     </div>
+
+    <!-- 自由练习临时默写：先完整输入，按空格后再统一显示结果 -->
+    <template v-else-if="checkWholeWordOnSpace">
+      <div>
+        <div class="letter text-align-center w-full inline-block" v-opacity:noAnim="showWordResult || showFullWord">
+          {{ word.word }}
+        </div>
+        <div
+          class="mt-2 min-w-120 pb-1 dictation"
+          :style="{ minHeight: wordFontSize + 'px' }"
+          :class="showWordResult ? (isWordCorrect ? 'right' : 'wrong') : ''"
+        >
+          <template v-for="i in input">
+            <span class="l" v-if="i !== ' '">{{ i }}</span>
+            <Space class="l" v-else :is-wrong="showWordResult ? !isWordCorrect : false" :is-wait="!showWordResult" />
+          </template>
+        </div>
+      </div>
+    </template>
 
     <!-- 非默写模式 -->
     <template v-else>

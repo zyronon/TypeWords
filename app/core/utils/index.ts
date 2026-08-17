@@ -227,6 +227,11 @@ export async function checkAndUpgradeSaveSetting(val: any) {
         updateLocalData = true
       }
 
+      // 自由练习总结与整词核对设置由默认值补齐。
+      if (version <= 23) {
+        updateLocalData = true
+      }
+
       // @ts-ignore
       delete state.shortcutKeyMap
       checkRiskKey(defaultState, state)

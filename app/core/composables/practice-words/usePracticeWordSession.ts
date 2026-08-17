@@ -4,7 +4,7 @@ import { useBaseStore } from '@/core/stores/base.ts'
 import { usePracticeStore } from '@/core/stores/practice.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import { useRuntimeStore } from '@/core/stores/runtime.ts'
-import type { TaskWords, Word } from '@/core/types/types.ts'
+import type { PracticeSpellingMistake, TaskWords, Word } from '@/core/types/types.ts'
 import { WordPracticeMode } from '@/core/types/enum.ts'
 import { getDefaultWord } from '@/core/types/func.ts'
 import { cloneDeep, getShufflePracticeWords, shuffle } from '@/core/utils'
@@ -178,6 +178,12 @@ export function usePracticeWordSession(options: PracticeWordSessionOptions) {
     options.scheduleSave()
   }
 
+  function onSpellingMistake(mistake: PracticeSpellingMistake) {
+    if (getPracticeMode() !== WordPracticeMode.Free || !mistake.word) return
+    options.getPracticeData().spellingMistakes.push({ ...mistake })
+    options.scheduleSave()
+  }
+
   function resolveIdentifyCorrect() {
     const data = options.getPracticeData()
     const word = currentWord.value
@@ -333,6 +339,7 @@ export function usePracticeWordSession(options: PracticeWordSessionOptions) {
     applyPracticeCache,
     initializeTask,
     onTypeWrong,
+    onSpellingMistake,
     onWordKnow,
     onWordMastered,
     toggleWordSimpleForCurrent,

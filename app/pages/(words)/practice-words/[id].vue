@@ -593,6 +593,7 @@ useEvents([
             :phaseKey="currentPhaseKey"
             @complete="nav.next"
             @wrong="session.onTypeWrong"
+            @mistake="session.onSpellingMistake"
             @mastered="session.onWordMastered"
             @know="session.onWordKnow"
             @skip="session.skip"

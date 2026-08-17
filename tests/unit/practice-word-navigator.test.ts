@@ -75,6 +75,7 @@ function setupNavigator(config: PracticeFlowConfig, count: number, notify = vi.f
     wrongWords: [],
     allWrongWords: [],
     wrongTimesMap: {},
+    spellingMistakes: [],
     ratingMap: {},
     excludeWords: [],
     question: null,
