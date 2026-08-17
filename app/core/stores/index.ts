@@ -1,5 +1,4 @@
 export * from './base'
-export * from './user'
 export * from './runtime'
 export * from './setting'
 export * from './practice'

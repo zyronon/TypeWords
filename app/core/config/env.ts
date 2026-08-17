@@ -15,36 +15,20 @@ const common = {
 }
 const map = {
   DEV: {
-    // API: 'http://localhost/',
-    API: 'https://api.typewords.cc/',
-    // RESOURCE_URL: 'https://dicts.2study.top/',
-    // RESOURCE_URL: '/',
-    RESOURCE_URL: 'https://files.typewords.cc/',
-    // RESOURCE_URL: 'http://localhost/static/',
-    LIBS_URL: 'https://libs.typewords.cc/',
+    API: 'http://localhost/',
+    RESOURCE_URL: '',
+    LIBS_URL: '/libs/',
   },
 }
 
 export const ENV = Object.assign(map['DEV'], common)
 
 export let AppEnv = {
-  // TOKEN: localStorage.getItem('token') ?? '',
   TOKEN: '',
   IS_OFFICIAL: false,
   IS_LOGIN: false,
   CAN_REQUEST: false,
 }
-
-if (import.meta.client) {
-  AppEnv.TOKEN = localStorage.getItem('token') ?? ''
-  // AppEnv.IS_OFFICIAL = IS_DEV || [Host,Old_Host].includes(window.location.host)
-}
-
-AppEnv.IS_LOGIN = !!AppEnv.TOKEN
-AppEnv.CAN_REQUEST = AppEnv.IS_LOGIN && AppEnv.IS_OFFICIAL
-// AppEnv.IS_OFFICIAL = true
-// AppEnv.CAN_REQUEST = true
-// console.log('AppEnv.CAN_REQUEST',AppEnv.CAN_REQUEST)
 
 export const RESOURCE_PATH = ENV.API + 'static'
 

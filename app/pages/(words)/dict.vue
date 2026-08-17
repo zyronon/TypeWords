@@ -12,15 +12,13 @@ import {
   Textarea,
   Toast,
 } from '@/base'
-import { detail } from '@/core/apis'
-import { copyOfficialDict } from '@/core/apis/dict.ts'
-import { wordDelete, queryWord } from '@/core/apis/words.ts'
+import { queryWord } from '@/core/apis/words.ts'
 import EditBook from '@/components/article/EditBook.vue'
 import BaseTable from '@/components/BaseTable.vue'
 import PracticeSettingDialog from '@/components/word/PracticeSettingDialog.vue'
 import WordItem from '@/components/word/WordItem.vue'
 import { flushStatToStore, usePracticeWordPersistence } from '@/core/composables/usePracticePersistence'
-import { AppEnv, DICT_LIST, LIB_JS_URL, TourConfig } from '@/core/config/env.ts'
+import { DICT_LIST, LIB_JS_URL, TourConfig } from '@/core/config/env.ts'
 import { getCurrentStudyWord } from '@/core/hooks/dict.ts'
 import { useBaseStore } from '@/core/stores/base.ts'
 import { useRuntimeStore } from '@/core/stores/runtime.ts'
@@ -135,10 +133,6 @@ async function searchOfficialWord() {
     Toast.warning('请输入单词')
     return
   }
-  if (!AppEnv.IS_OFFICIAL) {
-    // Toast.warning('查询失败')
-    // return
-  }
   wordSearchLoading = true
   try {
     const res = await queryWord({ word })
@@ -234,39 +228,7 @@ async function batchDel(ids: string[]) {
     tableRef.value.getData()
     syncDictInMyStudyList()
   }
-
-  let cloudHandle = async dictId => {
-    let res = await wordDelete(null, {
-      wordIds: ids,
-      dictId,
-    })
-    if (res.success) {
-      tableRef.value.getData()
-    } else {
-      return Toast.error(res.msg ?? '删除失败')
-    }
-  }
-
-  if (AppEnv.CAN_REQUEST) {
-    if (dict.custom) {
-      if (dict.sync) {
-        await cloudHandle(dict.id)
-      } else {
-        localHandle()
-      }
-    } else {
-      let r = await copyOfficialDict(null, { id: dict.id })
-      if (r.success) {
-        await cloudHandle(r.data.id)
-        getDetail(r.data.id)
-      } else {
-        //todo 权限判断，能否复制
-        return Toast.error(r.msg)
-      }
-    }
-  } else {
-    localHandle()
-  }
+  localHandle()
 }
 
 //把word对象的字段全转成字符串
@@ -358,11 +320,6 @@ onMounted(async () => {
         }
         runtimeStore.editDict.length = dict.words.length
       }
-      if (base.word.bookList.find(book => book.id === runtimeStore.editDict.id)) {
-        if (AppEnv.CAN_REQUEST) {
-          getDetail(runtimeStore.editDict.id)
-        }
-      }
       loading = false
     }
   }
@@ -370,14 +327,6 @@ onMounted(async () => {
   allList = runtimeStore.editDict.words
   tableRef.value.getData()
 })
-
-async function getDetail(id) {
-  //todo 优化：这里只返回详情
-  let res = await detail({ id })
-  if (res.success) {
-    runtimeStore.editDict = res.data
-  }
-}
 
 function formClose() {
   if (isEdit) {
@@ -585,44 +534,26 @@ async function requestList({ pageNo, pageSize, searchKey }) {
     return getLocalList({ pageNo, pageSize, searchKey })
   } else {
     // 自定义词典
-
-    //如果登录了,则请求后端数据
-    if (AppEnv.CAN_REQUEST) {
-      //todo 加上sync标记
-      if (dict.sync || true) {
-        //todo 优化：这里应该只返回列表
-        let res = await detail({ id: dict.id, pageNo, pageSize })
-        if (res.success) {
-          return { list: res.data.words, total: res.data.length }
-        }
-        return { list: [], total: 0 }
-      }
-    } else {
-      //未登录则用本地保存的数据
-      allList = dict.words
-    }
+    allList = dict.words
     return getLocalList({ pageNo, pageSize, searchKey })
   }
 }
 
 function onSort(type: Sort, pageNo: number, pageSize: number) {
-  if (AppEnv.CAN_REQUEST) {
-  } else {
-    let fun = reverse
-    if ([Sort.reverse, Sort.reverseAll].includes(type)) {
-      fun = reverse
-    } else if ([Sort.random, Sort.randomAll].includes(type)) {
-      fun = shuffle
-    }
-    allList = allList
-      .slice(0, pageSize * (pageNo - 1))
-      .concat(fun(allList.slice(pageSize * (pageNo - 1), pageSize * (pageNo - 1) + pageSize)))
-      .concat(allList.slice(pageSize * (pageNo - 1) + pageSize))
-    runtimeStore.editDict.words = allList
-    Toast.success('操作成功')
-    tableRef.value.getData()
-    syncDictInMyStudyList()
+  let fun = reverse
+  if ([Sort.reverse, Sort.reverseAll].includes(type)) {
+    fun = reverse
+  } else if ([Sort.random, Sort.randomAll].includes(type)) {
+    fun = shuffle
   }
+  allList = allList
+    .slice(0, pageSize * (pageNo - 1))
+    .concat(fun(allList.slice(pageSize * (pageNo - 1), pageSize * (pageNo - 1) + pageSize)))
+    .concat(allList.slice(pageSize * (pageNo - 1) + pageSize))
+  runtimeStore.editDict.words = allList
+  Toast.success('操作成功')
+  tableRef.value.getData()
+  syncDictInMyStudyList()
 }
 
 const editable = $computed(() => runtimeStore.editDict.custom || runtimeStore.editDict.system)
@@ -890,7 +821,6 @@ defineRender(() => {
 .mobile-hidden {
   display: none;
 }
-
 
 @media (max-width: 768px) {
   .dict-detail-card {

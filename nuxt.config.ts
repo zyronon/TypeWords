@@ -58,64 +58,7 @@ export default defineNuxtConfig({
       htmlAttrs: {
         lang: 'zh-CN',
       },
-      meta: [
-        { charset: 'UTF-8' },
-        //百度站长HTML标签验证
-        { name: 'baidu-site-verification', content: 'codeva-NoSMtV313P' },
-        //搜索引擎描述
-        {
-          name: 'description',
-          content:
-            'Type Words 官方网站 - 在线英语练习平台，支持单词、文章跟打练习，提升英语学习效率，电脑上背单词。Practice English, one strike, one step forward',
-        },
-        //关键词（可选，搜索引擎基本不用，但能补充信息）
-        {
-          name: 'keywords',
-          content:
-            'Type Words, Typing Word, Type Words 官网, 电脑上背单词 , 英语打字练习, 单词跟打, 文章跟打, 键盘练习, 英语学习, 文章学习, 打字练习软件, 单词记忆工具, 英语学习软件, 背单词神器, 英语肌肉记忆, 键盘工作者, 免费英语学习, 音标发音, 默写练习, 在线学英语, CET-4, CET-6, TOEFL, IELTS, GRE, GMAT, SAT, 考研英语, 专四专八, 程序员英语, JavaScript API, Node.js API, Java API, Linux命令, 编程词汇, 技术英语, VSCode插件, 开源项目, GitHub趋势榜, V2EX热搜, Gitee GVP, 少数派推荐, 英语打字训练, WPM统计, 准确率分析, 商务英语, BEC, 雅思听力, 日语学习, 多语言学习, 英语口语练习, 单词拼写训练',
-        },
-        { name: 'author', content: 'zyronon' },
-        //Open Graph（用于社交媒体分享，微信/QQ/知乎/Facebook 等）
-        { property: 'og:title', content: 'Type Words 官网 - 英语打字练习平台' },
-        {
-          property: 'og:description',
-          content:
-            'Type Words 官方网站 - 在线英语练习平台，支持单词、文章跟打练习，提升英语学习效率，电脑上背单词。Practice English, one strike, one step forward',
-        },
-        { property: 'og:type', content: 'website' },
-        { property: 'og:url', content: 'https://typewords.cc/' },
-        { property: 'og:image', content: 'https://typewords.cc/imgs/og-image.png' },
-        { property: 'og:image:width', content: '1200' },
-        { property: 'og:image:height', content: '630' },
-
-        // Twitter Card（用于 Twitter 分享）
-        { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: 'Type Words 官网 - 英语打字练习平台' },
-        {
-          name: 'twitter:description',
-          content:
-            'Type Words 官方网站 - 在线英语练习平台，支持单词、文章跟打练习，提升英语学习效率，电脑上背单词。Practice English, one strike, one step forward',
-        },
-        { name: 'twitter:image', content: 'https://typewords.cc/imgs/og-image.png' },
-
-        //设置浏览器地址栏颜色（在 Android Chrome 特别明显
-        { name: 'theme-color', content: '#818CF8' },
-        // 阻止 iOS 自动把数字识别为电话号码
-        // HandheldFriendly 和 MobileOptimized 是旧手机浏览器的优化提示（现在作用不大）。
-        { name: 'format-detection', content: 'telephone=no' },
-        { name: 'HandheldFriendly', content: 'True' },
-        { name: 'MobileOptimized', content: '320' },
-        // referrer 控制请求来源信息
-        { name: 'referrer', content: 'origin-when-cross-origin' },
-        // color-scheme 告诉浏览器支持亮/暗模式
-        { name: 'color-scheme', content: 'light dark' },
-      ],
-      link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-        //苹果设备（iOS Safari）在用户添加到主屏时显示的图标
-        { rel: 'apple-touch-icon', sizes: '180x180', href: '/favicon.ico' },
-        { rel: 'manifest', href: '/manifest.json' },
-      ],
+      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
     },
   },
   // ssr: false,
@@ -123,7 +66,6 @@ export default defineNuxtConfig({
     '/words': { ssr: false },
     '/articles': { ssr: false },
     '/setting': { ssr: false },
-    '/rrweb': { ssr: false },
     '/book/nce1': { prerender: true },
     '/book/nce2': { prerender: true },
     '/book/nce3': { prerender: true },

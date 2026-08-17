@@ -364,9 +364,9 @@ export async function sleep(time: number) {
 
 export async function _getDictDataByUrl(val: DictResource, type: DictType = DictType.word): Promise<Dict> {
   // await sleep(2000);
-  let dictResourceUrl = ENV.RESOURCE_URL + `dicts/${val.language}/word/${val.url}`
+  let dictResourceUrl = ENV.RESOURCE_URL + `/dicts/${val.language}/word/${val.url}`
   if (type === DictType.article) {
-    dictResourceUrl = ENV.RESOURCE_URL + `dicts/${val.language}/article/${val.url}`
+    dictResourceUrl = ENV.RESOURCE_URL + `/dicts/${val.language}/article/${val.url}`
   }
   let s = await fetch(resourceWrap(dictResourceUrl, val.version)).then(r => r.json())
   if (s) {
@@ -659,15 +659,6 @@ export function total(arr: any[], key: string) {
 }
 
 export function resourceWrap(resource: string, version?: number) {
-  if (AppEnv.IS_OFFICIAL) {
-    if (resource.includes('.json')) resource = resource.replace('.json', '')
-    if (!resource.includes('http')) resource = RESOURCE_PATH + resource
-    if (version === undefined) {
-      const store = useBaseStore()
-      return `${resource}_v${store.dictListVersion}.json`
-    }
-    return `${resource}_v${version}.json`
-  }
   return withAppBaseURL(resource)
 }
 

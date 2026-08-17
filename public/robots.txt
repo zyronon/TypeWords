@@ -1,4 +1,2 @@
 User-agent: *
-Disallow:
-
-Sitemap: https://typewords.cc/sitemap.xml
+Disallow: /

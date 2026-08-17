@@ -1,0 +1,343 @@
+[
+    {
+        "id": 553,
+        "title": "Excuse me!",
+        "titleTranslate": "对不起！",
+        "text": "Excuse me! \n\nYes? \n\nIs this your handbag? \n\nPardon? \n\nIs this your handbag? \n\nYes, it is. \n\nThank you very much.",
+        "textTranslate": "对不起 \n\n什么事？ \n\n这是您的手提包吗？ \n\n对不起，请再说一遍。 \n\n这是您的手提包吗？ \n\n是的，是我的。 \n\n非常感谢！",
+        "audioSrc": "\/sound\/article\/nce1\/001&002－Excuse_Me.mp3",
+        "lrcPosition": [
+            [
+                15,
+                16.55
+            ],
+            [
+                16.66,
+                18.26
+            ],
+            [
+                18.26,
+                21.44
+            ],
+            [
+                21.44,
+                23.17
+            ],
+            [
+                18.26,
+                21.44
+            ],
+            [
+                26.73,
+                29.49
+            ],
+            [
+                29.49,
+                31.95
+            ]
+        ],
+        "question": null,
+        "nameList": null,
+        "quote": null,
+        "userId": null
+    },
+    {
+        "id": 554,
+        "title": "Sorry, sir.",
+        "titleTranslate": "对不起，先生",
+        "text": "My coat and my umbrella please.\n\nHere is my ticket.\n\nThank you, sir.\n\nNumber five.\n\nHere's your umbrella and your coat.\n\nThis is not my umbrella.\n\nSorry sir.\n\nIs this your umbrella?\n\nNo, it isn't\n\nIs this it?\n\nYes, it is.\n\nThank you very much.",
+        "textTranslate": "请把我的大衣和伞拿给我。 \n\n这是我（寄存东西）的牌子。 \n\n谢谢，先生。 \n\n是5号。 \n\n这是您的伞和大衣 \n\n这不是我的伞。 \n\n对不起，先生。 \n\n这把伞是您的吗？ \n\n不，不是！ \n\n这把是吗？ \n\n是，是这把 \n\n非常感谢",
+        "audioSrc": "\/sound\/article\/nce1\/003&004-Sorry,Sir.mp3",
+        "lrcPosition": [
+            [
+                17.56,
+                22
+            ],
+            [
+                22,
+                25.03
+            ],
+            [
+                25.03,
+                26.86
+            ],
+            [
+                26.86,
+                29.09
+            ],
+            [
+                29.09,
+                33.72
+            ],
+            [
+                33.72,
+                37.39
+            ],
+            [
+                2.98,
+                5.75
+            ],
+            [
+                39.67,
+                42.56
+            ],
+            [
+                42.56,
+                45.69
+            ],
+            [
+                45.69,
+                47.76
+            ],
+            [
+                47.76,
+                50.53
+            ],
+            [
+                50.53,
+                -1
+            ]
+        ],
+        "question": null,
+        "nameList": null,
+        "quote": null,
+        "userId": null
+    },
+    {
+        "id": 555,
+        "title": "Nice to meet you",
+        "titleTranslate": "很高兴见到你。",
+        "text": "MR. BLAKE:Good morning.\n\nSTUDENTS:Good morning, Mr. Blake.\n\nMR. BLAKE:This is Miss Sophie Dupont.\n\nSophie is a new student.\n\nShe is French.\n\nMR. BLAKE:Sophie, this is Hans.\n\nHe is German.\n\nHANS:Nice to meet you.\n\nMR. BLAKE:And this is Naoko.\n\nShe's Japanese.\n\nNAOKO:Nice to meet you.\n\nMR. BLAKE:And this is Chang-woo.\n\nHe's Korean.\n\nCHANG-WOO:Nice to meet you.\n\nMR. BLAKE:And this is Luming.\n\nHe is Chinese.\n\nLUMNG:Nice to meet you.\n\nMR. BLAKE:And this is Xiaohui.\n\nShe's Chinese, too.\n\nXIAOHUI:Nice to meet you.",
+        "textTranslate": "布莱克先生：早上好。 \n\n学 生：早上好，布莱克先生。 \n\n布莱克先生：这位是索菲娅.杜邦小姐。 \n\n索菲娅是个新学生。 \n\n她是法国人。 \n\n布莱克先生：索菲娅，这位是汉斯。 \n\n他是德国人。 \n\n汉 斯：很高兴见到你。 \n\n布莱克先生：这位是直子。 \n\n她是日本人。 \n\n直 子：很高兴见到你。 \n\n布莱克先生：这位是昌宇。 \n\n他是韩国人。 \n\n昌 宇：很高兴见到你。 \n\n布莱克先生：这位是鲁明。 \n\n他是中国人。 \n\n鲁 明：很高兴见到你。 \n\n布莱克先生：这位是晓惠。 \n\n她也是中国人。 \n\n晓 惠：很高兴见到你。",
+        "audioSrc": "\/sound\/article\/nce1\/005&006-Nice-to-Meet-You.mp3",
+        "lrcPosition": [
+            [
+                14.21,
+                15.32
+            ],
+            [
+                16.07,
+                19.72
+            ],
+            [
+                19.72,
+                23.61
+            ],
+            [
+                23.61,
+                26.55
+            ],
+            [
+                26.55,
+                28.99
+            ],
+            [
+                28.99,
+                32.31
+            ],
+            [
+                32.54,
+                34.56
+            ],
+            [
+                34.56,
+                36.26
+            ],
+            [
+                36.26,
+                39.78
+            ],
+            [
+                39.99,
+                42.25
+            ],
+            [
+                42.25,
+                44.21
+            ],
+            [
+                44.81,
+                47.49
+            ],
+            [
+                47.49,
+                48.86
+            ],
+            [
+                48.86,
+                51.04
+            ],
+            [
+                51.34,
+                54.29
+            ],
+            [
+                54.14,
+                56.2
+            ],
+            [
+                56.2,
+                57.74
+            ],
+            [
+                57.74,
+                61.25
+            ],
+            [
+                61.25,
+                63.72
+            ],
+            [
+                63.72,
+                65.92
+            ]
+        ],
+        "question": null,
+        "nameList": [
+            "MR. BLAKE",
+            "STUDENTS",
+            "Sophie Dupont",
+            "Sophie",
+            "Hans",
+            "Naoko",
+            "Chang-woo",
+            "Luming",
+            "Xiaohui",
+            "LUMNG"
+        ],
+        "quote": null,
+        "userId": null
+    },
+    {
+        "id": 556,
+        "title": "Are you a teacher?",
+        "titleTranslate": "你是教师吗?",
+        "text": "ROBERT:I am a new student. My name's Robert.\n\nSOPHIE:Nice to meet you. My name's Sophie.\n\nROBERT:Are you French?\n\nSOPHIE:Yes, I am.\n\nSOPHIE:Are you French too?\n\nROBERT:No, I am not.\n\nSOPHIE:What nationality are you?\n\nROBERT:I'm Italian.\n\nROBERT:Are you a teacher?\n\nSOPHIE:No, I'm not.\n\nROBERT:What's your job?\n\nSOPHIE:I'm a keyboard operator.\n\nSOPHIE:What's your job?\n\nROBERT:I'm an engineer.",
+        "textTranslate": "罗伯特：我是个新学生，我的名字叫罗伯特。 \n\n索菲娅：很高兴见到你。我的名字叫索菲娅。 \n\n罗伯特：你是法国人吗？ \n\n索菲娅：是的，我是法国人。 \n\n索菲娅：你也是法国人吗？ \n\n罗伯特：不，我不是。 \n\n索菲娅：你是哪国人？ \n\n罗伯特：我是意大利人。 \n\n罗伯特：你是教师吗？ \n\n索菲娅：不，我不是。 \n\n罗伯特：你是做什么工作的？ \n\n索菲娅：我是电脑录入员。 \n\n索菲娅：你是做什么工作的？ \n\n罗伯特：我是工程师。",
+        "audioSrc": "\/sound\/article\/nce1\/007-008-Are You a Teacher.mp3",
+        "lrcPosition": [
+            [
+                15.36,
+                20.41
+            ],
+            [
+                20.41,
+                24.79
+            ],
+            [
+                25.39,
+                27.77
+            ],
+            [
+                27.77,
+                29.96
+            ],
+            [
+                30.38,
+                33.22
+            ],
+            [
+                33.22,
+                36.02
+            ],
+            [
+                36.24,
+                39.6
+            ],
+            [
+                39.6,
+                42.08
+            ],
+            [
+                42.98,
+                46.08
+            ],
+            [
+                46.08,
+                47.94
+            ],
+            [
+                48.45,
+                50.64
+            ],
+            [
+                50.44,
+                53.57
+            ],
+            [
+                53.68,
+                55.68
+            ],
+            [
+                56.14,
+                58.65
+            ]
+        ],
+        "question": null,
+        "nameList": [
+            "ROBERT",
+            "SOPHIE"
+        ],
+        "quote": null,
+        "userId": null
+    },
+    {
+        "id": 557,
+        "title": "How are you today?",
+        "titleTranslate": "今天好吗？",
+        "text": "STEVEN:Hello, HELEN.\n\nHELEN:Hi, Steven.\n\nSTEVEN:How are you today?\n\nHELEN:I'm very well, thank you. And you?\n\nSTEVEN:I'm fine, thanks.\n\nSTEVEN:How is Tony?\n\nHELEN:He's fine, thanks. How's Emma?\n\nSTEVEN:She's very well, too, Helen.\n\nSTEVEN:Goodbye, Helen.Nice to see you.\n\nHELEN:Nice to see you, too, Steven. Goodbye.",
+        "textTranslate": "史蒂文：你好，海伦 \n\n海 伦：你好，史蒂文 \n\n史蒂文：你今天好吗？ \n\n海 伦：很好，谢谢你。你好吗？ \n\n史蒂文：很好，谢谢。 \n\n史蒂文：托尼好吗？ \n\n海 伦：他很好，谢谢。埃玛好吗？ \n\n史蒂文：她也很好，海伦。 \n\n史蒂文：再见，海伦。见到你真高兴。 \n\n海 伦：我见到你也很高兴，史蒂文。再见。",
+        "audioSrc": "\/sound\/article\/nce1\/009&010－How Are You Today.mp3",
+        "lrcPosition": [
+            [
+                15.21,
+                16.8
+            ],
+            [
+                16.8,
+                18.7
+            ],
+            [
+                18.7,
+                21.52
+            ],
+            [
+                21.52,
+                25.6
+            ],
+            [
+                25.6,
+                28.4
+            ],
+            [
+                28.4,
+                30.95
+            ],
+            [
+                30.95,
+                34.87
+            ],
+            [
+                34.87,
+                38.78
+            ],
+            [
+                38.78,
+                42.54
+            ],
+            [
+                42.54,
+                47.55
+            ]
+        ],
+        "question": null,
+        "nameList": [
+            "STEVEN",
+            "HELEN",
+            "Emma",
+            "Tony"
+        ],
+        "quote": null,
+        "userId": null
+    }
+]

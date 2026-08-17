@@ -20,10 +20,14 @@ import { usePracticeStore } from '@/core/stores/practice.ts'
 import { getDefaultDict, getDefaultWord } from '@/core/types/func.ts'
 import PracticeLayout from '@/components/PracticeLayout.vue'
 import PracticeOnboardingHost from '@/components/word/PracticeOnboardingHost.vue'
-import { AppEnv, DICT_LIST } from '@/core/config/env.ts'
-import { addStat, setUserDictProp } from '@/core/apis'
+import { DICT_LIST } from '@/core/config/env.ts'
 import GroupList from '@/components/word/GroupList.vue'
-import { getDefaultPracticeData, type PracticeData, UnsupportedPracticeCacheVersionError, usePracticeWordPersistence } from '@/core/composables/practice-words/practice-word-session.ts'
+import {
+  getDefaultPracticeData,
+  type PracticeData,
+  UnsupportedPracticeCacheVersionError,
+  usePracticeWordPersistence,
+} from '@/core/composables/practice-words/practice-word-session.ts'
 import { useDataSyncPersistence } from '@/core/composables/useDataSyncPersistence.ts'
 import { ShortcutKey, WordPracticeMode } from '@/core/types/enum.ts'
 import WordMarkPickList, { type WordMarkPickResult } from '@/components/word/WordMarkPickList.vue'
@@ -352,16 +356,6 @@ async function complete() {
       session.settleLocalPractice()
 
       try {
-        if (AppEnv.CAN_REQUEST) {
-          let res = await addStat({
-            ...data,
-            type: 'word',
-            perDayStudyNumber: store.sdict.perDayStudyNumber,
-            lastLearnIndex: store.sdict.lastLearnIndex,
-            complete: store.sdict.complete,
-          })
-          if (!res.success) Toast.error(res.msg)
-        }
         await dataSync.saveDictState(store.$state, { pullWhenRemoteNewer: false })
       } catch (error) {
         console.error('[practice] 远端结算同步失败', error)
@@ -476,13 +470,6 @@ async function continueStudy() {
   }
   await initData(temp)
   resetSameWordAfterViewUpdate(previousWord)
-
-  if (AppEnv.CAN_REQUEST) {
-    let res = await setUserDictProp(null, { ...store.sdict, type: 'word' })
-    if (!res.success) {
-      Toast.error(res.msg)
-    }
-  }
 }
 
 async function jumpToGroup(group: number) {
@@ -492,12 +479,6 @@ async function jumpToGroup(group: number) {
   console.log('没学完，强行跳过', group)
   await initData(session.createTaskFromGroup(group))
   resetSameWordAfterViewUpdate(previousWord)
-  if (AppEnv.CAN_REQUEST) {
-    let res = await setUserDictProp(null, { ...store.sdict, type: 'word' })
-    if (!res.success) {
-      Toast.error(res.msg)
-    }
-  }
 }
 
 function randomWrite() {

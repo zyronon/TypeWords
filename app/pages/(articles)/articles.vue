@@ -1,23 +1,13 @@
 <script setup lang="ts">
-import { myDictList } from '@/core/apis'
 import { BaseButton, BaseIcon, BasePage, DeleteIcon, PopConfirm, Progress, Toast } from '@/base'
 import Book from '@/components/Book.vue'
-import { APP_NAME, AppEnv, DICT_LIST, LIB_JS_URL, Old_Host, Origin, TourConfig } from '@/core/config/env.ts'
+import { APP_NAME, DICT_LIST } from '@/core/config/env.ts'
 import { useBaseStore } from '@/core/stores/base.ts'
 import { useRuntimeStore } from '@/core/stores/runtime.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import { getDefaultDict } from '@/core/types/func.ts'
 import type { DictResource } from '@/core/types/types.ts'
-import {
-  _getDictDataByUrl,
-  _nextTick,
-  isMobile,
-  loadJsLib,
-  msToHourMinute,
-  resourceWrap,
-  total,
-  useNav,
-} from '@/core/utils'
+import { _getDictDataByUrl, msToHourMinute, resourceWrap, total, useNav } from '@/core/utils'
 import { useFetch } from '@vueuse/core'
 import dayjs from 'dayjs'
 import isBetween from 'dayjs/plugin/isBetween'
@@ -26,8 +16,6 @@ import { watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { DictType } from '@/core/types/enum.ts'
 import { usePracticeArticlePersistence } from '@/core/composables/usePracticePersistence.ts'
-import ImportBanner from '@/components/ImportBanner.vue'
-import ReleaseBanner from '@/components/ReleaseBanner.vue'
 
 dayjs.extend(isoWeek)
 dayjs.extend(isBetween)
@@ -77,13 +65,6 @@ onUnmounted(() => {
 async function init() {
   document.removeEventListener('visibilitychange', onvisibilitychange)
   document.addEventListener('visibilitychange', onvisibilitychange)
-
-  if (AppEnv.CAN_REQUEST) {
-    let res = await myDictList({ type: 'article' })
-    if (res.success) {
-      store.setState(Object.assign(store.$state, res.data))
-    }
-  }
   let studyIndex = store.article.studyIndex
   if (studyIndex >= 1) {
     if (!store.sbook.custom && !store.sbook.articles.length) {
@@ -229,17 +210,6 @@ const { data: recommendBookList, isFetching } = useFetch(resourceWrap(DICT_LIST.
 
 <template>
   <BasePage>
-    <ReleaseBanner />
-
-    <section class="mb-4 px-1">
-      <h1 class="m-0 text-2xl md:text-2xl font-bold leading-tight text-[var(--color-main-text)]">
-        英语文章跟打与精听练习
-      </h1>
-      <p class="mt-2 mb-0 max-w-[65rem] text-base leading-relaxed text-[var(--color-sub-text)]">
-        在电脑上逐句跟打英语文章，结合音频、释义和键盘输入，在真实语境中练习阅读、听力与拼写。
-      </p>
-    </section>
-
     <div class="card flex flex-col md:flex-row justify-between gap-space p-4 md:p-6">
       <div class="">
         <Book
@@ -309,12 +279,6 @@ const { data: recommendBookList, isFetching } = useFetch(resourceWrap(DICT_LIST.
         </div>
       </div>
     </div>
-
-    <ImportBanner
-      title="导入自己的文章"
-      desc="支持 json/xlsx 文件导入，或者手动输入文章导入"
-      @click="nav('/import', { type: 'article' })"
-    />
 
     <div class="card flex flex-col">
       <div class="flex justify-between">
