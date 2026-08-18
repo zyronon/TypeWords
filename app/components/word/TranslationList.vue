@@ -21,6 +21,9 @@ watch(
   }
 )
 
+let posList = $ref<{ pos: string; trans: { cn: string; frequency?: number }[]; totalFreq: number }[]>([])
+let noposTrans = $ref<{ cn: string; frequency?: number }[]>([])
+
 function init() {
   const trans = props.word.trans
   let posMap = new Map<string, { pos: string; cn: string; frequency?: number }[]>()
@@ -51,9 +54,6 @@ function init() {
   noposTrans = emptyPos
 }
 
-let posList = $ref<{ pos: string; trans: { cn: string; frequency?: number }[]; totalFreq: number }[]>([])
-let noposTrans = $ref<{ cn: string; frequency?: number }[]>([])
-
 onMounted(() => {
   init()
 })
@@ -62,11 +62,8 @@ onMounted(() => {
   <div>
     <div class="flex gap-3 flex-wrap items-end">
       <span v-for="tran in noposTrans">
-        <span v-if="tran.frequency != undefined" :class="['rare', 'uncommon', 'common'][tran.frequency]">
-          {{ tran.cn }}
-        </span>
         <SentenceHightLightWord
-          v-else
+          :class="['rare', 'uncommon', 'common'][tran.frequency ?? 2]"
           :text="tran.cn"
           :word="word.word"
           :dictation="!props.showFull"
@@ -78,11 +75,8 @@ onMounted(() => {
       <div class="shrink-0 pos" :class="!posSpace && 'min-w-unset pr-0'">{{ pos.pos }}&nbsp;</div>
       <div class="flex gap-3 flex-wrap items-end">
         <span v-for="tran in pos.trans">
-          <span v-if="tran.frequency != undefined" :class="['rare', 'uncommon', 'common'][tran.frequency]">
-            {{ tran.cn }}
-          </span>
           <SentenceHightLightWord
-            v-else
+            :class="['rare', 'uncommon', 'common'][tran.frequency ?? 2]"
             :text="tran.cn"
             :word="word.word"
             :dictation="!props.showFull"
@@ -106,6 +100,6 @@ onMounted(() => {
 
 .common {
   opacity: 1;
-  font-weight: 500;
+  //font-weight: 500;
 }
 </style>

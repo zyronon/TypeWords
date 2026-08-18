@@ -1,15 +1,12 @@
-import { APP_VERSION, AppEnv } from '../config/env'
+import { APP_VERSION } from '../config/env'
 import { debounce } from '../utils'
-import { syncSetting } from '../apis'
-import { useBaseStore, useRuntimeStore, useSettingStore, useUserStore } from '../stores'
 import type { BaseState, SettingState } from '../stores'
+import { useBaseStore, useRuntimeStore, useSettingStore } from '../stores'
 import { Supabase } from '../utils/supabase'
 import { ensureHashGuardBeforeInit, useDataSyncPersistence } from './useDataSyncPersistence'
 import { SyncDataType } from '../types'
 import type { SubscriptionCallbackMutation } from 'pinia'
 import { onUnmounted } from 'vue'
-import { checkAndUploadUserCollection } from './useUserCollection'
-// import { startRrwebRecording } from './useRrweb'
 
 let unsub = null
 let unsub2 = null
@@ -18,7 +15,6 @@ export function useInit() {
   const store = useBaseStore()
   const settingStore = useSettingStore()
   const runtimeStore = useRuntimeStore()
-  // const userStore = useUserStore()
   const dataSync = useDataSyncPersistence()
   let initializing = false // 标记是否正在初始化
   let focus = true
@@ -114,9 +110,6 @@ export function useInit() {
         } finally {
           fetching2 = false
         }
-        if (AppEnv.CAN_REQUEST) {
-          syncSetting(null, settingStore.$state)
-        }
       }, 1000)
     )
 
@@ -124,12 +117,6 @@ export function useInit() {
     // runtimeStore.isNew = true
     runtimeStore.isError = Supabase.getStatus().status === 'error'
     window.umami?.track('host', { host: window.location.host })
-
-    // 按学习数据门槛静默检查并上传一次测试数据。
-    void checkAndUploadUserCollection()
-
-    // 静默后台录制用户操作，数据保存到 IndexedDB
-    // startRrwebRecording().catch(console.error)
   }
 
   return init

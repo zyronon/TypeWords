@@ -72,8 +72,6 @@ Designed to meet most users' vocabulary learning needs. Community contributions 
 
 #### Note: This project can run standalone with data saved locally. Manual backup is required when switching devices; this does not affect normal usage.
 
-### Option 1: Running from Source
-
 This project is built with `Nuxt` and requires a Node.js environment.
 
 1. Install NodeJS, refer to the [official documentation](https://nodejs.org/en/download)
@@ -82,40 +80,6 @@ This project is built with `Nuxt` and requires a Node.js environment.
 4. Run `pnpm run dev` to start the project. The default address is [`http://localhost:5567`](http://localhost:5567)
 5. Open [`http://localhost:5567`](http://localhost:5567) in your browser to access the project.
 6. Run `pnpm run generate` to build the project files.
-
-### Option 2: Using Docker
-
-The easiest way to run TypeWords is using Docker:
-
-```bash
-# Pull the image from Docker Hub
-docker pull zyronon/typewords:latest
-
-# Run the container
-docker run -d -p 3000:80 --name typewords zyronon/typewords:latest
-```
-
-Then open [`http://localhost:3000`](http://localhost:3000) in your browser to access the project.
-
-Or use Docker Compose:
-
-```bash
-# Start with docker-compose
-docker-compose up -d
-
-# Stop the service
-docker-compose down
-```
-
-Or build and run locally:
-
-```bash
-# Build the Docker image
-docker build -t typewords .
-
-# Run the container
-docker run -d -p 3000:80 --name typewords typewords
-```
 
 ## Features and Suggestions
 

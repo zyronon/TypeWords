@@ -4,8 +4,7 @@ import { useBaseStore } from '../stores/base.ts'
 import { useSettingStore } from '../stores/setting.ts'
 import { _getDictDataByUrl, cloneDeep, isDictIdMatch, resourceWrap, shuffle } from '../utils'
 import { computed, onMounted, watch } from 'vue'
-import { AppEnv, DICT_LIST, DictId } from '../config/env.ts'
-import { addDict, detail } from '../apis'
+import { DICT_LIST, DictId } from '../config/env.ts'
 import { useRuntimeStore } from '../stores/runtime.ts'
 import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
@@ -95,11 +94,6 @@ export function useWordOptions() {
       custom: true,
     })
     data.type = DictType.word
-    if (AppEnv.CAN_REQUEST) {
-      const res = await addDict(null, data)
-      if (!res.success) return { ok: false, reason: 'api' }
-      data = getDefaultDict(res.data)
-    }
     store.word.bookList.push(cloneDeep(data))
     return { ok: true, dict: data }
   }
@@ -288,15 +282,6 @@ export function useGetDict() {
         runtimeStore.editDict = r
       }
       if (store.article.bookList.find(book => book.id === runtimeStore.editDict.id)) {
-        if (AppEnv.CAN_REQUEST) {
-          let res = await detail({ id: runtimeStore.editDict.id })
-          if (res.success) {
-            runtimeStore.editDict.statistics = res.data.statistics
-            if (res.data.articles.length) {
-              runtimeStore.editDict.articles = res.data.articles
-            }
-          }
-        }
       }
     } else {
       router.push('/articles')

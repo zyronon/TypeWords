@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { addStat, setUserDictProp } from '@/core/apis'
 import { BaseIcon, Toast, Tooltip } from '@/base'
 import ConflictNotice from '@/components/dialog/ConflictNotice.vue'
 import ArticleList from '@/components/list/ArticleList.vue'
 import Panel from '@/components/Panel.vue'
 import PracticeLayout from '@/components/PracticeLayout.vue'
 import SettingDialog from '@/components/setting/SettingDialog.vue'
-import { AppEnv, DICT_LIST } from '@/core/config/env.ts'
+import { DICT_LIST } from '@/core/config/env.ts'
 import { genArticleSectionData, usePlayArticleTextAudio, usePlaySentenceAudio } from '@/core/hooks/article.ts'
 import { useArticleOptions } from '@/core/hooks/dict.ts'
 import { useOnKeyboardEventListener, useStartKeyboardEventListener } from '@/core/hooks/event.ts'
@@ -294,17 +293,6 @@ async function complete() {
   if (store.sbook.lastLearnIndex >= store.sbook.length - 1) {
     store.sdict.complete = true
   }
-  if (AppEnv.CAN_REQUEST) {
-    let res = await addStat({
-      ...data,
-      type: 'article',
-      complete: store.sdict.complete,
-    })
-    if (!res.success) {
-      Toast.error(res.msg)
-    }
-  }
-
   store.sbook.statistics.push(data as any)
 
   //重置
@@ -375,13 +363,6 @@ async function changeArticle(val: ArticleItem) {
   if (rIndex > -1) {
     store.sbook.lastLearnIndex = rIndex
     getCurrentPractice()
-
-    if (AppEnv.CAN_REQUEST) {
-      let res = await setUserDictProp(null, store.sbook)
-      if (!res.success) {
-        Toast.error(res.msg)
-      }
-    }
   }
   initAudio()
   lock = false
@@ -409,8 +390,7 @@ function onKeyUp() {
   typingArticleRef?.hideSentence()
 }
 
-async function onKeyDown(e: KeyboardEvent) {
-}
+async function onKeyDown(e: KeyboardEvent) {}
 
 useOnKeyboardEventListener(onKeyDown, onKeyUp)
 
@@ -644,7 +624,6 @@ provide('currentPractice', currentPractice)
     }
   }
 }
-
 
 @media (max-width: 768px) {
   // 优化练习区域布局

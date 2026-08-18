@@ -15,7 +15,7 @@ withDefaults(
 </script>
 
 <template>
-  <div class="close" @click="$emit('click')">
+  <div class="close" @click="$emit('click',$event)">
     <Tooltip :title="$t(tooltip)">
       <IconFluentDismiss20Regular v-if="!circle" />
       <IconFluentDismissCircle16Regular v-else />

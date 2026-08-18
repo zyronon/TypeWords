@@ -87,8 +87,6 @@
 
 #### 注：本项目可单独运行，数据保存在本地，换设备需手动备份数据，不影响正常使用；
 
-### 方式一：从源码运行
-
 本项目是基于`Nuxt`开发的，需要 node 环境来运行。
 
 1. 安装 NodeJS，参考[官方文档](https://nodejs.org/en/download)
@@ -98,41 +96,7 @@
 4. 执行`pnpm run dev`来启动项目，项目默认地址为[`http://localhost:5567`](http://localhost:5567)
 5. 在浏览器中打开[`http://localhost:5567`](http://localhost:5567)  来访问项目。
 6. 执行`pnpm run generate`打包项目文件
-
-### 方式二：使用 Docker
-
-使用 Docker 是最简单的运行方式：
-
-```bash
-# 从 Docker Hub 拉取镜像
-docker pull zyronon/typewords:latest
-
-# 运行容器
-docker run -d -p 3000:80 --name typewords zyronon/typewords:latest
-```
-
-然后在浏览器中打开 [`http://localhost:3000`](http://localhost:3000) 来访问项目。
-
-或者使用 Docker Compose：
-
-```bash
-# 使用 docker-compose 启动
-docker-compose up -d
-
-# 停止服务
-docker-compose down
-```
-
-或者本地构建并运行：
-
-```bash
-# 构建 Docker 镜像
-docker build -t typewords .
-
-# 运行容器
-docker run -d -p 3000:80 --name typewords typewords
-```
-
+ 
 ## 功能与建议
 
 目前项目处于开发初期，新功能正在持续添加中，如果你对软件有任何功能与建议，欢迎在 `Issues` 中提出

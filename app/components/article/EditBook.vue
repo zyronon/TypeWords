@@ -1,15 +1,11 @@
 <script setup lang="ts">
 import type { Dict } from '@/core/types'
+import { DictType, getDefaultDict } from '@/core/types'
 import { cloneDeep, ensureCustomDictCopy } from '@/core/utils'
 import { onMounted, reactive } from 'vue'
 import { useRuntimeStore } from '@/core/stores/runtime.ts'
 import { useBaseStore } from '@/core/stores/base.ts'
-import { BaseButton, BaseInput, Form, FormItem, Option, Select, Toast, Textarea } from '@/base'
-import { getDefaultDict } from '@/core/types'
-
-import { addDict } from '@/core/apis'
-import { AppEnv } from '@/core/config/env.ts'
-import { DictType } from '@/core/types'
+import { BaseButton, BaseInput, Form, FormItem, Option, Select, Textarea, Toast } from '@/base'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
@@ -77,16 +73,6 @@ async function onSubmit() {
           Toast.warning($t('name_already_exists'))
           return
         } else {
-          if (AppEnv.CAN_REQUEST) {
-            loading = true
-            let res = await addDict(null, data)
-            loading = false
-            if (res.success) {
-              data = getDefaultDict(res.data)
-            } else {
-              return Toast.error(res.msg)
-            }
-          }
           source.bookList.push(cloneDeep(data))
           runtimeStore.editDict = data
           emit('submit', data)

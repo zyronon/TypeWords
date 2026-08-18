@@ -1,11 +1,9 @@
 import { defineStore } from 'pinia'
-import { getDefaultDict, type Dict, type SaveData, type Word } from '../types'
+import { type Dict, getDefaultDict, type SaveData, type Word } from '../types'
 import { _getStudyProgress, checkAndUpgradeSaveDict, isSameDictResource, parseJsonStr } from '../utils'
 import { shallowReactive } from 'vue'
 import { get } from 'idb-keyval'
-import { AppEnv, DictId, IS_DEV, SAVE_DICT_KEY } from '../config/env'
-import { add2MyDict, dictListVersion, myDictList } from '../apis'
-import { Toast } from '@/base'
+import { DictId, IS_DEV, SAVE_DICT_KEY } from '../config/env'
 import type { Card } from 'ts-fsrs'
 import { useSettingStore } from './setting.ts'
 
@@ -87,7 +85,9 @@ export const getDefaultBaseState = (): BaseState => ({
     studyIndex: -1,
   },
   article: {
-    bookList: [getDefaultDict({ id: DictId.articleCollect, enName: DictId.articleCollect, name: '收藏', system: true })],
+    bookList: [
+      getDefaultDict({ id: DictId.articleCollect, enName: DictId.articleCollect, name: '收藏', system: true }),
+    ],
     studyIndex: -1,
   },
   dictListVersion: 1,
@@ -191,22 +191,6 @@ export const useBaseStore = defineStore('base', {
           let jsonStr: string = await get(SAVE_DICT_KEY.key)
           if (jsonStr) {
             let result = await parseJsonStr(jsonStr, checkAndUpgradeSaveDict)
-            if (AppEnv.IS_OFFICIAL) {
-              let r = await dictListVersion()
-              if (r.success) {
-                result.val.dictListVersion = r.data
-              }
-            }
-            if (AppEnv.CAN_REQUEST) {
-              let res = await myDictList()
-              if (res.success) {
-                //只保留未同步的
-                result.val.word.bookList = result.val.word.bookList.filter(v => !v.sync)
-                result.val.article.bookList = result.val.article.bookList.filter(v => !v.sync)
-                //这里看看是否要 shallowReactive
-                Object.assign(result.val, res.data)
-              }
-            }
             // console.log('data', data)
             this.setState(result.val)
             resolve(result)
@@ -220,16 +204,6 @@ export const useBaseStore = defineStore('base', {
     },
     //改变词典
     async changeDict(val: Dict) {
-      if (AppEnv.CAN_REQUEST) {
-        let r = await add2MyDict({
-          id: val.id,
-          perDayStudyNumber: val.perDayStudyNumber,
-          lastLearnIndex: val.lastLearnIndex,
-          complete: val.complete,
-        })
-        if (!r.success) return Toast.error(r.msg)
-        else val.userDictId = r.data
-      }
       //把其他的词典的单词数据都删掉，全保存在内存里太卡了
       this.word.bookList.slice(3).map(v => {
         if (!v.custom) {
@@ -264,17 +238,6 @@ export const useBaseStore = defineStore('base', {
     },
     //改变书籍
     async changeBook(val: Dict) {
-      if (AppEnv.CAN_REQUEST) {
-        let r = await add2MyDict({
-          id: val.id,
-          perDayStudyNumber: val.perDayStudyNumber,
-          lastLearnIndex: val.lastLearnIndex,
-          complete: val.complete,
-        })
-        if (!r.success) {
-          return Toast.error(r.msg)
-        }
-      }
       //把其他的书籍里面的文章数据都删掉，全保存在内存里太卡了
       this.article.bookList.slice(1).map(v => {
         if (!v.custom) {

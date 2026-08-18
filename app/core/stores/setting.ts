@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia'
-import { checkAndUpgradeSaveDict, checkAndUpgradeSaveSetting, cloneDeep, parseJsonStr } from '../utils'
+import { checkAndUpgradeSaveSetting, cloneDeep, parseJsonStr } from '../utils'
 import { get, set } from 'idb-keyval'
-import { APP_VERSION, AppEnv, DefaultShortcutKeyMap, SAVE_SETTING_KEY } from '../config/env'
-import { getSetting } from '../apis'
+import { APP_VERSION, DefaultShortcutKeyMap, SAVE_SETTING_KEY } from '../config/env'
 import { IdentifyMethod, type SaveData, WordPracticeMode, WordPracticeType } from '../types'
 import type { FSRSParameters } from 'ts-fsrs'
 
@@ -187,13 +186,6 @@ export const useSettingStore = defineStore('setting', {
             delete (result.val as any)?.__updateLocalData
             if (shouldRefreshUpdatedAt) {
               await set(SAVE_SETTING_KEY.key, JSON.stringify(result))
-            }
-
-            if (AppEnv.CAN_REQUEST) {
-              let res = await getSetting()
-              if (res.success) {
-                Object.assign(result.val, res.data)
-              }
             }
             this.setState(result.val)
             resolve(result)

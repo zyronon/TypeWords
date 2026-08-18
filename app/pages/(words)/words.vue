@@ -40,7 +40,6 @@ import { useSettingStore } from '@/core/stores/setting.ts'
 import { useFetch } from '@vueuse/core'
 import {
   APP_NAME,
-  AppEnv,
   DICT_LIST,
   LIB_JS_URL,
   Old_Host,
@@ -49,12 +48,8 @@ import {
   WordPracticeModeNameMap,
   WordPracticeModeUrlMap,
 } from '@/core/config/env.ts'
-import { myDictList } from '@/core/apis'
 import PracticeWordListDialog from '@/components/word/PracticeWordListDialog.vue'
-import ImportBanner from '@/components/ImportBanner.vue'
-import ReleaseBanner from '@/components/ReleaseBanner.vue'
 import ShufflePracticeSettingDialog from '@/components/word/ShufflePracticeSettingDialog.vue'
-import { deleteDict } from '@/core/apis/dict.ts'
 import { flushStatToStore } from '@/core/composables/usePracticePersistence'
 import { useDataSyncPersistence } from '@/core/composables/useDataSyncPersistence'
 import { WordPracticeMode } from '@/core/types/enum.ts'
@@ -216,13 +211,6 @@ async function onvisibilitychange() {
 }
 
 async function init() {
-  if (AppEnv.CAN_REQUEST) {
-    let res = await myDictList({ type: 'word' })
-    if (res.success) {
-      store.setState(Object.assign(store.$state, res.data))
-    }
-  }
-
   document.removeEventListener('visibilitychange', onvisibilitychange)
   document.addEventListener('visibilitychange', onvisibilitychange)
 
@@ -464,29 +452,20 @@ let isManageDict = $ref(false)
 let selectIds = $ref([])
 
 async function handleBatchDel() {
-  if (AppEnv.CAN_REQUEST) {
-    let res = await deleteDict(null, selectIds)
-    if (res.success) {
-      init()
-    } else {
-      Toast.error(res.msg)
-    }
-  } else {
-    selectIds.forEach(id => {
-      let r = store.word.bookList.findIndex(v => v.id === id)
-      if (r !== -1) {
-        if (store.word.studyIndex === r) {
-          store.word.studyIndex = -1
-        }
-        if (store.word.studyIndex > r) {
-          store.word.studyIndex--
-        }
-        store.word.bookList.splice(r, 1)
+  selectIds.forEach(id => {
+    let r = store.word.bookList.findIndex(v => v.id === id)
+    if (r !== -1) {
+      if (store.word.studyIndex === r) {
+        store.word.studyIndex = -1
       }
-    })
-    selectIds = []
-    Toast.success('删除成功！')
-  }
+      if (store.word.studyIndex > r) {
+        store.word.studyIndex--
+      }
+      store.word.bookList.splice(r, 1)
+    }
+  })
+  selectIds = []
+  Toast.success('删除成功！')
 }
 
 function toggleSelect(item) {
@@ -581,17 +560,6 @@ onUnmounted(() => {
 
 <template>
   <BasePage>
-    <ReleaseBanner />
-
-    <section class="mb-4 px-1">
-      <h1 class="m-0 text-2xl md:text-2xl font-bold leading-tight text-[var(--color-main-text)]">
-        在线英语单词打字练习
-      </h1>
-      <p class="mt-2 mb-0 max-w-[65rem] text-base leading-relaxed text-[var(--color-sub-text)]">
-        选择适合你的英语词库，在电脑上通过跟打、听写、默写和间隔复习背单词，并记录每天的学习进度。
-      </p>
-    </section>
-
     <div class="my-100 text-4xl font-bold text-red" v-if="isOldHost">
       已启用新域名
       <a class="mr-4" :href="`${Origin}/words?from_old_site=1`">{{ Origin }}</a
@@ -647,8 +615,6 @@ onUnmounted(() => {
                 </div>
               </BaseButton>
             </PopConfirm>
-
-            <BaseButton type="info" size="small" @click="router.push('/fsrs')"> 学习记录</BaseButton>
           </div>
         </template>
 
@@ -778,13 +744,6 @@ onUnmounted(() => {
               >
                 {{ $t('random_words_test') }}
               </BaseButton>
-              <!--              <BaseButton-->
-              <!--                class="w-full"-->
-              <!--                v-if="settingStore.wordPracticeMode !== WordPracticeMode.Custom"-->
-              <!--                @click="startPractice(WordPracticeMode.Custom, true)"-->
-              <!--              >-->
-              <!--                自定义流程-->
-              <!--              </BaseButton>-->
             </template>
           </OptionButton>
 
@@ -837,12 +796,6 @@ onUnmounted(() => {
         </Calendar>
       </div>
     </div>
-
-    <ImportBanner
-      title="导入自己的单词"
-      desc="支持 txt/json/xlsx 文件导入，或者手动输入单词导入"
-      @click="nav('/import', { type: 'word' })"
-    />
 
     <div class="card flex flex-col">
       <div class="flex justify-between">

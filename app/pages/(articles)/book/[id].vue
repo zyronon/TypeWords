@@ -65,7 +65,6 @@ function handleCheckedChange(val) {
   }
 }
 
-
 async function startPractice() {
   let sbook = runtimeStore.editDict
   if (!sbook.articles.length) {
@@ -357,12 +356,6 @@ function play(sentence: Sentence, onEnd: () => void) {
               type="info"
               @click="isEdit = true"
               >{{ $t('edit') }}</BaseButton
-            >
-            <BaseButton
-              v-if="runtimeStore.editDict.custom || runtimeStore.editDict.system"
-              type="info"
-              @click="router.push('/batch-edit-article')"
-              >{{ $t('article_management') }}</BaseButton
             >
             <BaseButton :loading="studyLoading || loading" @click="startPractice">{{ $t('learn') }}</BaseButton>
           </div>

@@ -10,7 +10,6 @@ export const axiosInstance: AxiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   config => {
     config.baseURL = ENV.API
-    if (AppEnv.CAN_REQUEST) config.headers.token = AppEnv.TOKEN
     return config
   },
   error => Promise.reject(error)

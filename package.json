@@ -5,11 +5,7 @@
     "dev": "nuxt dev",
     "start": "nuxt dev",
     "build": "nuxt build",
-    "test:unit": "vitest run",
-    "docker-build": "nuxt generate",
-    "static": "nuxt generate",
-    "build-web": "nuxt generate && node scripts/do.js && node scripts/deploy-eo-pages.js --dir .output/public --name type-words-deploy",
-    "build-dev-web": "nuxt generate && node scripts/do.js && node scripts/prepareDevDist.js && node scripts/deploy-eo-pages.js --dir .output/public --name dev-typeword",
+    "generate": "nuxt generate",
     "preview": "nuxt preview",
     "i18n:write": "gulp i18nWrite",
     "test": ""
@@ -101,7 +97,6 @@
     "vite-plugin-externals": "^0.6.2",
     "vue-macros": "^3.1.1",
     "vue-tsc": "^3.0.1",
-    "xlsx": "^0.18.5",
-    "vitest": "^3.2.4"
+    "xlsx": "^0.18.5"
   }
 }
