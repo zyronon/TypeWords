@@ -2,6 +2,11 @@ import {onDeactivated, onMounted, onUnmounted, watch, type WatchSource} from 'vu
 import {emitter, EventKey} from '../utils/eventBus'
 import {useSettingStore} from '../stores'
 import {isMobile} from '../utils'
+import {
+  confirmCharacterInserted,
+  isDeadKeyEvent,
+  shouldIgnoreDeadKeyCompositionSpace,
+} from '../utils/dead-key-composition'
 import {Toast} from '@/base'
 
 const CODE_TO_CHAR: Record<string, string> = {
@@ -179,6 +184,7 @@ export function useEventListener(type: string, listener: EventListenerOrEventLis
 
       const handleCompositionEnd = (event: CompositionEvent) => {
         isComposing = false
+        confirmCharacterInserted()
         if (!event.data) {
           hiddenInput.value = ' '
           return
@@ -199,6 +205,7 @@ export function useEventListener(type: string, listener: EventListenerOrEventLis
         if (isComposing) return
         const target = event.target as HTMLInputElement | null
         if (!target) return
+        confirmCharacterInserted()
         let char = ''
         let keyCode = -1
         if (event.inputType === 'deleteContentBackward') {
@@ -317,6 +324,16 @@ export function useStartKeyboardEventListener() {
   const settingStore = useSettingStore()
 
   useEventListener('keydown', (e: KeyboardEvent) => {
+    // 死键布局（西班牙语/US-Intl）中 ' 的 keydown 是组合起点，组合空格的终结在此吞掉
+    if (shouldIgnoreDeadKeyCompositionSpace(e)) {
+      e.preventDefault()
+      return
+    }
+    // 死键本身不产生字符，字符由系统组合后经隐藏输入框 input 事件送入（自适应客户端布局）
+    if (isDeadKeyEvent(e)) {
+      e.preventDefault()
+      return
+    }
     // console.log('keydown', e)
     // debugger
     //解决无法复制、全选的问题
