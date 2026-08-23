@@ -2,11 +2,7 @@ import {onDeactivated, onMounted, onUnmounted, watch, type WatchSource} from 'vu
 import {emitter, EventKey} from '../utils/eventBus'
 import {useSettingStore} from '../stores'
 import {isMobile} from '../utils'
-import {
-  confirmCharacterInserted,
-  isDeadKeyEvent,
-  shouldIgnoreDeadKeyCompositionSpace,
-} from '../utils/dead-key-composition'
+import {shouldIgnoreDeadKeyCompositionSpace} from '../utils/dead-key-composition'
 import {Toast} from '@/base'
 
 const CODE_TO_CHAR: Record<string, string> = {
@@ -84,6 +80,9 @@ export function useWindowClick(cb: (e: PointerEvent) => void) {
   onDeactivated(remove)
 }
 
+// 组合状态（IME/死键）共享给全局 keydown 处理：组合进行中时空格是终结符而非分词符
+let isComposing = false
+
 export function useEventListener(type: string, listener: EventListenerOrEventListenerObject) {
   const invokeListener = (event: KeyboardEvent) => {
     if (typeof listener === 'function') {
@@ -150,7 +149,6 @@ export function useEventListener(type: string, listener: EventListenerOrEventLis
       }
 
       const hiddenInput = ensureMobileInput()
-      let isComposing = false
 
       const createSyntheticEvent = (payload: { key: string; code?: string; keyCode: number }) => {
         const base = {
@@ -179,12 +177,15 @@ export function useEventListener(type: string, listener: EventListenerOrEventLis
       const handleCompositionStart = () => {
         // console.log('handleCompositionStart',Date.now())
         isComposing = true
-        Toast.warning('请切换到英文输入')
       }
 
       const handleCompositionEnd = (event: CompositionEvent) => {
         isComposing = false
-        confirmCharacterInserted()
+        // 死键（´、`、^…）组合也走 composition 事件，但它们不是 IME；只有产出 CJK/全角
+        // 文本才是真正的输入法，此时才提示切换到英文，避免死键每次都弹警告
+        if (event.data && /[\u4e00-\u9fff\u3040-\u30ff\uac00-\ud7af\uff00-\uffef]/.test(event.data)) {
+          Toast.warning('请切换到英文输入')
+        }
         if (!event.data) {
           hiddenInput.value = ' '
           return
@@ -203,9 +204,11 @@ export function useEventListener(type: string, listener: EventListenerOrEventLis
       const handleInput = (event: InputEvent) => {
         // console.log('handleInput',event,Date.now())
         if (isComposing) return
+        // Firefox 的 input 事件晚于 compositionend 到达，此时输入框已被重置为哨兵 ' '，
+        // slice(-1) 会把哨兵空格派发成幽灵空格；组合字符已由 handleCompositionEnd 派发过
+        if (event.inputType === 'insertCompositionText' || event.inputType === 'insertFromComposition') return
         const target = event.target as HTMLInputElement | null
         if (!target) return
-        confirmCharacterInserted()
         let char = ''
         let keyCode = -1
         if (event.inputType === 'deleteContentBackward') {
@@ -324,13 +327,18 @@ export function useStartKeyboardEventListener() {
   const settingStore = useSettingStore()
 
   useEventListener('keydown', (e: KeyboardEvent) => {
+    // 组合进行中（死键/IME）的空格是"终结/取消"组合的键，不是分词空格，必须吞掉
+    if (isComposing && e.code === 'Space' && e.key === ' ') {
+      e.preventDefault()
+      return
+    }
     // 死键布局（西班牙语/US-Intl）中 ' 的 keydown 是组合起点，组合空格的终结在此吞掉
     if (shouldIgnoreDeadKeyCompositionSpace(e)) {
       e.preventDefault()
       return
     }
-    // 死键本身不产生字符，字符由系统组合后经隐藏输入框 input 事件送入（自适应客户端布局）
-    if (isDeadKeyEvent(e)) {
+    // 死键本身不产生字符，字符由系统组合后经隐藏输入框 input 事件送入
+    if (e.key === 'Dead') {
       e.preventDefault()
       return
     }
