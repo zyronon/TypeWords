@@ -13,7 +13,7 @@ COPY . .
 RUN pnpm install --frozen-lockfile
 
 # Build the application
-RUN pnpm run docker-build
+RUN pnpm run generate
 
 # Production stage
 FROM nginx:alpine
