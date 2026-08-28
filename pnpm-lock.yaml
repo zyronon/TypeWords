@@ -255,9 +255,6 @@ importers:
       vite-plugin-externals:
         specifier: ^0.6.2
         version: 0.6.2(vite@7.3.6(@types/node@26.2.0)(jiti@2.7.0)(lightningcss@1.33.0)(sass@1.102.0)(terser@5.49.2)(yaml@2.9.0))
-      vitest:
-        specifier: ^3.2.4
-        version: 3.2.7(@types/node@26.2.0)(jiti@2.7.0)(lightningcss@1.33.0)(sass@1.102.0)(terser@5.49.2)(yaml@2.9.0)
       vue-macros:
         specifier: ^3.1.1
         version: 3.1.4(@vueuse/core@14.4.0(vue@3.5.41(typescript@5.9.3)))(esbuild@0.19.12)(rolldown@1.2.3)(rollup@4.62.4)(typescript@5.9.3)(vite@7.3.6(@types/node@26.2.0)(jiti@2.7.0)(lightningcss@1.33.0)(sass@1.102.0)(terser@5.49.2)(yaml@2.9.0))(vue-tsc@3.3.9(typescript@5.9.3))(vue@3.5.41(typescript@5.9.3))(webpack@5.109.2(esbuild@0.19.12)(lightningcss@1.33.0)(postcss@8.5.26))
