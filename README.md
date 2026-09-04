@@ -23,9 +23,9 @@
   <b>Learn English, one keystroke at a time; smarter memorization, more efficient learning - an open-source word and article practice tool</b>
 </p>
 
-## Project Description
+## Project Introduction
 
-<https://www.bilibili.com/video/BV1NBbF6EE8L/>
+<https://www.bilibili.com/video/BV1NBbF6EE8L>
 
 ## Online Access
 

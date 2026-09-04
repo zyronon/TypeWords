@@ -24,6 +24,10 @@
   <b>学习英语，一次敲击，一点进步；记忆不再盲目，学习更高效，开源单词与文章练习工具</b>
 </p>
 
+## 项目介绍
+
+<https://www.bilibili.com/video/BV1NBbF6EE8L>
+
 <!-- <p align="center">
   <a href="https://github.com/zyronon/type-word/blob/master/LICENSE"><img src="https://img.shields.io/github/license/zyronon/type-word" alt="License"></a>
   <a><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg"/></a>

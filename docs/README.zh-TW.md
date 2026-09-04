@@ -24,6 +24,10 @@
   <b>學習英語，一次敲擊，一點進步；記憶不再盲目，學習更高效，開源單詞與文章練習工具</b>
 </p>
 
+## 項目介紹
+
+<https://www.bilibili.com/video/BV1NBbF6EE8L>
+
 ## 線上訪問
 
 [https://typewords.cc](https://typewords.cc)

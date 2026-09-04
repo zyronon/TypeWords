@@ -24,6 +24,11 @@
   <b>Apprenez l'anglais, une touche à la fois ; mémorisation plus intelligente, apprentissage plus efficace - outil open source pour pratiquer les mots et les articles</b>
 </p>
 
+## Présentation du projet
+
+<https://www.bilibili.com/video/BV1NBbF6EE8L>
+
+
 ## Accès en ligne
 
 [https://typewords.cc](https://typewords.cc)

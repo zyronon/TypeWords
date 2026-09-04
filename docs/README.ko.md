@@ -24,6 +24,11 @@
   <b>영어 학습, 한 번의 타이핑으로 한 걸음 전진; 더 이상 막연한 암기가 아닌, 더 효율적인 학습 - 오픈소스 단어 및 문장 연습 도구</b>
 </p>
 
+## 프로젝트 소개
+
+<https://www.bilibili.com/video/BV1NBbF6EE8L>
+
+
 ## 온라인 접속
 
 [https://typewords.cc](https://typewords.cc)

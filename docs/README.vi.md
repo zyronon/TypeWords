@@ -24,6 +24,11 @@
   <b>Học tiếng Anh, từng lần gõ phím; ghi nhớ thông minh hơn, học tập hiệu quả hơn - công cụ mã nguồn mở để luyện từ vựng và bài viết</b>
 </p>
 
+## Giới thiệu dự án
+
+<https://www.bilibili.com/video/BV1NBbF6EE8L>
+
+
 ## Truy cập trực tuyến
 
 [https://typewords.cc](https://typewords.cc)

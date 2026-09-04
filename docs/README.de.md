@@ -24,6 +24,11 @@
   <b>Englisch lernen, ein Tastendruck nach dem anderen; intelligenteres Auswendiglernen, effizienteres Lernen - Open-Source-Tool zum Üben von Wörtern und Artikeln</b>
 </p>
 
+## Projektvorstellung
+
+<https://www.bilibili.com/video/BV1NBbF6EE8L>
+
+
 ## Online-Zugang
 
 [https://typewords.cc](https://typewords.cc)

@@ -24,6 +24,11 @@
   <b>Belajar bahasa Inggris, satu ketukan pada satu waktu; menghafal lebih cerdas, belajar lebih efisien - alat open source untuk berlatih kata dan artikel</b>
 </p>
 
+## Pengenalan Proyek
+
+<https://www.bilibili.com/video/BV1NBbF6EE8L>
+
+
 ## Akses Online
 
 [https://typewords.cc](https://typewords.cc)

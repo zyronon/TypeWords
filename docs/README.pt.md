@@ -24,6 +24,11 @@
   <b>Aprenda inglês, uma tecla de cada vez; memorização mais inteligente, aprendizado mais eficiente - ferramenta de código aberto para praticar palavras e artigos</b>
 </p>
 
+## Apresentação do projeto
+
+<https://www.bilibili.com/video/BV1NBbF6EE8L>
+
+
 ## Acesso online
 
 [https://typewords.cc](https://typewords.cc)

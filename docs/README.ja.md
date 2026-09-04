@@ -23,6 +23,11 @@
   <b>英語学習、一打一歩前進；記憶はもう闇雲ではなく、より効率的な学習を - オープンソースの単語・文章練習ツール</b>
 </p>
 
+## プロジェクト紹介
+
+<https://www.bilibili.com/video/BV1NBbF6EE8L>
+
+
 ## オンラインアクセス
 
 [https://typewords.cc](https://typewords.cc)

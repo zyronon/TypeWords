@@ -23,6 +23,11 @@
   <b>Aprende inglés, una pulsación a la vez; memorización más inteligente, aprendizaje más eficiente - herramienta de código abierto para practicar palabras y artículos</b>
 </p>
 
+## Presentación del proyecto
+
+<https://www.bilibili.com/video/BV1NBbF6EE8L>
+
+
 ## Acceso en línea
 
 [https://typewords.cc](https://typewords.cc)
