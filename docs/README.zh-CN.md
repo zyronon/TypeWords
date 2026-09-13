@@ -26,7 +26,7 @@
 
 ## 项目介绍
 
-<https://www.bilibili.com/video/BV1NBbF6EE8L>
+<https://www.bilibili.com/video/BV1QwYv6eEAS>
 
 <!-- <p align="center">
   <a href="https://github.com/zyronon/type-word/blob/master/LICENSE"><img src="https://img.shields.io/github/license/zyronon/type-word" alt="License"></a>

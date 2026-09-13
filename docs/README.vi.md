@@ -26,7 +26,7 @@
 
 ## Giới thiệu dự án
 
-<https://www.bilibili.com/video/BV1NBbF6EE8L>
+<https://www.bilibili.com/video/BV1QwYv6eEAS>
 
 
 ## Truy cập trực tuyến

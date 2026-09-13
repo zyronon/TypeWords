@@ -26,7 +26,7 @@
 
 ## Опис проєкту
 
-<https://www.bilibili.com/video/BV1NBbF6EE8L>
+<https://www.bilibili.com/video/BV1QwYv6eEAS>
 
 
 ## Онлайн-доступ
