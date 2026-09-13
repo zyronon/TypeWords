@@ -77,6 +77,7 @@ export interface SettingState {
   ttsVoiceMap: { key: string; voice: string }[] // 浏览器 TTS 声色映射，key 为 OS+浏览器组合（如 mac+chrome）
   showEtymologyAndRelWords: boolean // 显示词源和相关词
   showWordQuestion: boolean //显示单词选项
+  alwaysShowNote: boolean //显示单词选项
 }
 
 export const getDefaultSettingState = (): SettingState => ({
@@ -160,6 +161,7 @@ export const getDefaultSettingState = (): SettingState => ({
   ttsVoiceMap: [],
   showEtymologyAndRelWords: false,
   showWordQuestion: true,
+  alwaysShowNote: true,
 })
 
 export const useSettingStore = defineStore('setting', {

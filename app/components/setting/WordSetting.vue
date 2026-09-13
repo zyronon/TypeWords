@@ -17,7 +17,6 @@ const settingStore = useSettingStore()
       <Switch v-model="settingStore.inputWrongClear" />
     </SettingItem>
 
-
     <SettingItem :title="$t('word_repeat_setting')" class="gap-0!">
       <RadioGroup v-model="settingStore.repeatCount">
         <Radio :value="1" size="default">1</Radio>
@@ -46,6 +45,10 @@ const settingStore = useSettingStore()
 
     <SettingItem title="显示练习引导">
       <Switch v-model="settingStore.showUsageTips" />
+    </SettingItem>
+
+    <SettingItem title="总是显示笔记" desc="关闭后，只会在跟写时显示">
+      <Switch v-model="settingStore.alwaysShowNote" />
     </SettingItem>
 
     <div class="line"></div>
