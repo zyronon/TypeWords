@@ -229,7 +229,6 @@ const list = $computed(() => {
 
 let showTranslate = $ref(true)
 let startPlay = $ref(false)
-let showDisplayMode = $ref(false)
 let displayMode = $ref<'card' | 'inline' | 'line'>('inline')
 let articleWrapperRef = $ref<HTMLElement>()
 
@@ -403,30 +402,6 @@ function play(sentence: Sentence, onEnd: () => void) {
                         </span>
                         <span class="ml-6 text-2xl" v-if="showTranslate">{{ selectArticle.titleTranslate }}</span>
                       </span>
-                      <div class="flex items-center gap-2 mr-4">
-                        <BaseIcon :title="$t('toggle_translation')" @click="showTranslate = !showTranslate">
-                          <IconPhTranslate v-if="showTranslate" />
-                          <IconFluentTranslateOff16Regular v-else />
-                        </BaseIcon>
-                        <BaseIcon
-                          :title="$t('switch_display_mode')"
-                          @click="showDisplayMode = !showDisplayMode"
-                        >
-                          <IconFluentTextAlignLeft16Regular />
-                        </BaseIcon>
-                      </div>
-                    </div>
-
-                    <div class="flex gap-1 mr-4 justify-end" v-if="showDisplayMode">
-                      <BaseIcon :title="$t('line_by_line')" @click="displayMode = 'inline'">
-                        <IconFluentTextPositionThrough20Regular />
-                      </BaseIcon>
-                      <BaseIcon :title="$t('single_line')" @click="displayMode = 'line'">
-                        <IconFluentTextAlignLeft16Regular />
-                      </BaseIcon>
-                      <BaseIcon :title="$t('comparison')" @click="displayMode = 'card'">
-                        <IconFluentAlignSpaceFitVertical20Regular />
-                      </BaseIcon>
                     </div>
 
                     <div class="mt-2 text-2xl" v-if="selectArticle?.question?.text">
@@ -561,9 +536,26 @@ function play(sentence: Sentence, onEnd: () => void) {
                     :autoplay="settingStore.articleAutoPlayNext && startPlay"
                     @ended="next"
                   />
-                  <div class="flex items-center gap-1">
+                  <div class="flex items-center gap-2">
                     <span>{{ $t('play_next_after_end') }}</span>
                     <Switch v-model="settingStore.articleAutoPlayNext" />
+                    <BaseIcon :title="$t('toggle_translation')" @click="showTranslate = !showTranslate">
+                      <IconPhTranslate v-if="showTranslate" />
+                      <IconFluentTranslateOff16Regular v-else />
+                    </BaseIcon>
+                    <BaseIcon
+                      :title="$t('line_by_line')"
+                      :active="displayMode === 'inline'"
+                      @click="displayMode = 'inline'"
+                    >
+                      <IconFluentTextPositionThrough20Regular />
+                    </BaseIcon>
+                    <BaseIcon :title="$t('single_line')" :active="displayMode === 'line'" @click="displayMode = 'line'">
+                      <IconFluentTextAlignLeft16Regular />
+                    </BaseIcon>
+                    <BaseIcon :title="$t('comparison')" :active="displayMode === 'card'" @click="displayMode = 'card'">
+                      <IconFluentAlignSpaceFitVertical20Regular />
+                    </BaseIcon>
                   </div>
                 </div>
               </template>
@@ -658,5 +650,11 @@ $article-lh: 2.4;
   color: var(--color-font-3);
   font-family: var(--zh-article-family);
   word-break: break-word;
+}
+
+.tall {
+  :deep(.sentence-item) {
+    line-height: 2;
+  }
 }
 </style>

@@ -4,6 +4,7 @@ import Tooltip from './Tooltip.vue'
 defineProps<{
   title?: string
   disabled?: boolean
+  active?: boolean
   noBg?: boolean
 }>()
 
@@ -12,7 +13,12 @@ const emit = defineEmits(['click'])
 
 <template>
   <Tooltip :title="title">
-    <div v-bind="$attrs" @click="e => !disabled && emit('click', e)" class="icon-wrapper" :class="{ disabled, noBg }">
+    <div
+      v-bind="$attrs"
+      @click="e => !disabled && emit('click', e)"
+      class="icon-wrapper"
+      :class="{ disabled, noBg, active }"
+    >
       <slot />
     </div>
   </Tooltip>
@@ -39,6 +45,10 @@ $w: 1.4rem;
   &.disabled {
     cursor: not-allowed;
     opacity: 0.3;
+  }
+
+  &.active {
+    background: var(--color-fourth);
   }
 
   :deep(svg) {
