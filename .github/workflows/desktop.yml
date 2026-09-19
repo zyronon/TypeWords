@@ -1,0 +1,63 @@
+# TypeWords desktop Windows gate.
+# This workflow is a static/regression check on windows-latest.
+# It does not launch a native WebView.
+# It does not build or run an installer, EXE, or NSIS package.
+# It does not run typecheck and does not treat typecheck as passing
+# (typecheck-green is not claimed; baseline remains exit 2 / 62 diagnostics).
+# It does not run test:desktop:clean-install or serial Web/Desktop frontend
+# builds; those stay a documented local replay because they copy a tree,
+# reinstall from the lockfile, and generate .nuxt/.output.
+# Linux or macOS runners are not used as Windows verification.
+# CARGO_TARGET_DIR is left unset so cargo writes src-tauri/target.
+
+name: Desktop
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop-node:
+    name: Node regression and resources
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install from lockfile
+        run: pnpm install --frozen-lockfile
+      - name: Desktop Node tests
+        run: pnpm run test:desktop
+      - name: Desktop resource audit
+        run: pnpm run desktop:check-resources
+
+  desktop-rust:
+    name: Windows Rust locked checks
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Rustfmt
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
+      - name: Cargo check locked
+        run: cargo check --locked --manifest-path src-tauri/Cargo.toml
+      - name: Cargo test locked
+        run: cargo test --locked --manifest-path src-tauri/Cargo.toml
+      - name: Clippy locked
+        run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings

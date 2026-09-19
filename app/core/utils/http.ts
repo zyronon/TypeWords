@@ -1,6 +1,6 @@
 import axios from 'axios'
 import type { AxiosInstance } from 'axios'
-import { AppEnv, ENV } from '../config/env.ts'
+import { ENV } from '../config/env.ts'
 import { Toast } from '@/base'
 
 export const axiosInstance: AxiosInstance = axios.create({
@@ -9,7 +9,30 @@ export const axiosInstance: AxiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   config => {
-    config.baseURL = ENV.API
+    const runtime = useRuntimeConfig().public
+    if (runtime.isDesktop) {
+      // Static desktop builds have no Nitro proxy or implicit localhost API.
+      let endpoint: URL | undefined
+      try {
+        endpoint = new URL(String(runtime.desktopApiBase || '').trim())
+      } catch {}
+      if (
+        !endpoint ||
+        endpoint.protocol !== 'https:' ||
+        /^(localhost\.?|127(?:\.\d+){3}|\[::1\])$/i.test(endpoint.hostname) ||
+        endpoint.username ||
+        endpoint.password ||
+        endpoint.search ||
+        endpoint.hash
+      ) {
+        throw Object.assign(new Error('桌面在线查询 API 未配置有效的 HTTPS 服务，当前功能未启用'), {
+          code: 'DESKTOP_API_UNAVAILABLE',
+        })
+      }
+      config.baseURL = endpoint.href.replace(/\/?$/, '/')
+    } else {
+      config.baseURL = ENV.API
+    }
     return config
   },
   error => Promise.reject(error)
@@ -43,6 +66,10 @@ axiosInstance.interceptors.response.use(
   },
   // 请求出错的处理
   error => {
+    if (error.code === 'DESKTOP_API_UNAVAILABLE') {
+      Toast.warning(error.message)
+      return Promise.resolve({ code: 503, msg: error.message, data: null, success: false })
+    }
     if (error.response === undefined && error.status === undefined) {
       return Promise.resolve({
         code: 500,

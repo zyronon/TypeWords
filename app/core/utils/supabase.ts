@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { Toast } from '@/base'
 import { useRuntimeStore } from '../stores'
+import { createSyncClient, validatedSyncUrl } from '../platform/sync'
 
 export const SUPABASE_CONFIG_KEY = 'supabase_config'
 
@@ -53,26 +54,53 @@ export class Supabase {
   static supabaseKey = ''
   static errorCount = 0
 
-  /** 是否允许执行同步：仅当 config 存在、url/key 有值且 status === 'success' 时返回 true */
-  static check(): boolean {
+  static isEnabled(): boolean {
+    return !useRuntimeConfig().public.isDesktop
+  }
+
+  /** 写入仍要求 success；失败后的只读重试须由调用方显式允许。 */
+  static check(allowReadRetry = false): boolean {
+    if (!this.isEnabled()) return false
     const c = getConfig()
     if (!c?.url || !c?.key) return false
-    if (c.status !== 'success') return false
-    this.supabaseUrl = c.url
-    this.supabaseKey = c.key
+    if (c.status !== 'success' && !(allowReadRetry && c.status === 'error')) return false
+    try {
+      validatedSyncUrl(c.url, Boolean(useRuntimeConfig().public.isDesktop))
+    } catch (error) {
+      this.setStatus('error', (error as Error).message)
+      return false
+    }
     return true
   }
 
   static saveConfig(url: string, key: string): void {
     setConfig({ url, key })
+    this.instance = null
   }
 
   static removeConfig(): void {
     localStorage.removeItem(SUPABASE_CONFIG_KEY)
+    this.instance = null
+    this.supabaseUrl = ''
+    this.supabaseKey = ''
   }
 
   /** 拿到客户端；仅根据 url/key 建连，不依赖 status（供设置页保存配置时验表使用） */
   static getInstance(): ReturnType<typeof createClient> {
+    if (!this.isEnabled()) throw new Error('本地桌面版暂不提供云同步')
+    const config = getConfig()
+    // Never retain a client for credentials replaced or removed in another settings flow.
+    if (config?.url !== this.supabaseUrl || config?.key !== this.supabaseKey) this.instance = null
+    if (useRuntimeConfig().public.isDesktop) {
+      if (!config) throw new Error('尚未配置桌面同步')
+      const url = validatedSyncUrl(config.url, true)
+      if (!this.instance) {
+        this.instance = createSyncClient(url, config.key, true)
+        this.supabaseUrl = config.url
+        this.supabaseKey = config.key
+      }
+      return this.instance
+    }
     if (!Supabase.instance) {
       const c = getConfig()
       if (c?.url && c?.key) {
@@ -108,6 +136,7 @@ export class Supabase {
   }
 
   static getStatus(): { status: SupabaseStatus; statusMessage?: string } {
+    if (!this.isEnabled()) return { status: 'idle' }
     const c = getConfig()
     return {
       status: c?.status ?? 'idle',
@@ -116,6 +145,7 @@ export class Supabase {
   }
 
   static setStatus(status: SupabaseStatus, statusMessage?: string): void {
+    if (!this.isEnabled()) return
     if (status === 'error') {
       // debugger
       //如果是请求错误，则可重试3次再报错，因为会有很多误判
@@ -130,6 +160,6 @@ export class Supabase {
     }
     const runtimeStore = useRuntimeStore()
     runtimeStore.isError = status === 'error'
-    setConfig({ status, statusMessage })
+    setConfig({ status, statusMessage: statusMessage ?? (status === 'success' ? '' : undefined) })
   }
 }

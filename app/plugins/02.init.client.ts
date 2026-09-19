@@ -4,7 +4,9 @@ import { ENV } from '@/core/config/env.ts'
 import { withAppBaseURL } from '@/core/utils/base-url'
 
 export default defineNuxtPlugin(async nuxtApp => {
+  const isDesktop = useRuntimeConfig().public.isDesktop
   if (
+    !isDesktop &&
     !location.href.includes('localhost') &&
     !location.href.includes('192.168') &&
     !location.href.includes('172.16') &&
@@ -17,7 +19,7 @@ export default defineNuxtPlugin(async nuxtApp => {
     })()
   }
 
-  if ('serviceWorker' in navigator) {
+  if (!isDesktop && 'serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker
         .register(withAppBaseURL('/service-worker.js'))

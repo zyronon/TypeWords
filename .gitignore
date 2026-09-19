@@ -40,3 +40,8 @@ report.html
 public/vscode
 apps/TypeWordsMiniApp
 *.tsbuildinfo
+.ua
+docs/plans
+# Tauri generated build outputs (keep Cargo.lock)
+/src-tauri/target/
+/src-tauri/gen/schemas/

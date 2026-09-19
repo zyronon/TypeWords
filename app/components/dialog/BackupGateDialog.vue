@@ -2,26 +2,33 @@
 import { watch } from 'vue'
 import { BaseButton, Dialog } from '@/base'
 import { useExport } from '@/core/hooks/export'
-import { IS_DEV } from '@/core/config/env.ts'
 import { Toast } from '~/base'
 
 const model = defineModel()
+const isDesktop = useRuntimeConfig().public.isDesktop
 
 const { loading: backupLoading, exportData } = useExport()
 
 let backupTriggered = $ref(false)
+let backupRequest = 0
 
 watch(model, visible => {
-  if (!visible) backupTriggered = false
+  if (!visible) {
+    backupRequest++
+    backupTriggered = false
+  }
 })
 
 async function onBackup() {
-  backupTriggered = true
-  let disabled = localStorage.getItem('disable360')
+  const request = ++backupRequest
+  backupTriggered = false
+  const disabled = !isDesktop && localStorage.getItem('disable360')
   if (disabled) {
+    backupTriggered = true
     return Toast.success('已跳过导出')
   }
-  await exportData('已自动备份数据', 'TypeWords数据备份.zip')
+  const backup = await exportData('已自动备份数据', 'TypeWords数据备份.zip')
+  if (request === backupRequest) backupTriggered = !!model.value && backup instanceof Blob
 }
 </script>
 

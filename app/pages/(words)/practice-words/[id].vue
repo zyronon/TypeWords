@@ -7,7 +7,7 @@ import { useRuntimeStore } from '@/core/stores/runtime.ts'
 import type { Dict, TaskWords, Word } from '@/core/types/types.ts'
 import { useStartKeyboardEventListener } from '@/core/hooks/event.ts'
 import useTheme from '@/core/hooks/theme.ts'
-import { _getDictDataByUrl, resourceWrap, shuffle, throttle } from '@/core/utils'
+import { _getDictDataByUrl, isDictIdMatch, resourceWrap, shuffle, throttle } from '@/core/utils'
 import { useRoute, useRouter } from 'vue-router'
 import Footer from '@/components/word/Footer.vue'
 import Panel from '@/components/Panel.vue'
@@ -26,6 +26,7 @@ import {
   getDefaultPracticeData,
   type PracticeData,
   UnsupportedPracticeCacheVersionError,
+  RemoteDataValidationError,
   usePracticeWordPersistence,
 } from '@/core/composables/practice-words/practice-word-session.ts'
 import { useDataSyncPersistence } from '@/core/composables/useDataSyncPersistence.ts'
@@ -254,10 +255,10 @@ async function loadDict() {
   let dictId = route.params.id
   if (dictId) {
     //先在自己的词典列表里面找，如果没有再在资源列表里面找
-    dict = store.word.bookList.find(v => v.id === dictId)
+    dict = store.word.bookList.find(v => isDictIdMatch(v, dictId))
     let r = await fetch(resourceWrap(DICT_LIST.WORD.ALL))
     let dict_list = await r.json()
-    if (!dict) dict = dict_list.flat().find(v => v.id === dictId) as Dict
+    if (!dict) dict = dict_list.flat().find(v => isDictIdMatch(v, dictId)) as Dict
     if (dict && dict.id) {
       //如果是不是自定义词典，就请求数据
       if (!dict.custom) dict = await _getDictDataByUrl(dict)
@@ -285,8 +286,13 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
       try {
         d = await wordPersistence.load()
       } catch (error) {
-        if (!(error instanceof UnsupportedPracticeCacheVersionError)) throw error
-        Toast.error('练习缓存来自更高版本，请升级后再继续')
+        if (!(error instanceof UnsupportedPracticeCacheVersionError) && !(error instanceof RemoteDataValidationError))
+          throw error
+        Toast.error(
+          error instanceof UnsupportedPracticeCacheVersionError
+            ? '练习缓存来自更高版本，请升级后再继续'
+            : '远端练习缓存损坏，已停止加载，请修复同步数据后重试'
+        )
         await router.push('/words')
         return
       }
@@ -312,7 +318,7 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
 
   // 初始化 Question
   let dictId: any = route.params.id
-  let d = store.word.bookList.find(v => v.id === dictId)
+  let d = store.word.bookList.find(v => isDictIdMatch(v, dictId))
   if (!d) d = store.sdict
   if (!d?.id) return router.push('/words')
   allWords = shuffle(d.words)

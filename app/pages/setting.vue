@@ -2,12 +2,13 @@
 import { defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import { useSettingStore } from '@/core/stores/setting'
 import { getShortcutKey, useEventListener } from '@/core/hooks/event'
-import { checkAndUpgradeSaveDict, checkAndUpgradeSaveSetting, cloneDeep, isEmpty, loadJsLib } from '@/core/utils'
+import { cloneDeep, loadJsLib } from '@/core/utils'
 import { BaseButton, BaseInput, BasePage, Form, FormItem, type FormType, PopConfirm, Toast, UploadButton } from '@/base'
 import { useBaseStore } from '@/core/stores/base'
 import {
   APP_NAME,
   APP_VERSION,
+  EXPORT_DATA_KEY,
   BACKUP_INDEX_KEY,
   DefaultShortcutKeyMap,
   DictId,
@@ -25,13 +26,14 @@ import FsrsSetting from '@/components/setting/FsrsSetting.vue'
 import ArticleSetting from '@/components/setting/ArticleSetting.vue'
 import WordSetting from '@/components/setting/WordSetting.vue'
 import SoundSetting from '@/components/setting/SoundSetting.vue'
-import { checkAndUpgradePracticeWordCache, PRACTICE_ARTICLE_CACHE, PRACTICE_WORD_CACHE } from '@/core/utils/cache'
+import { PRACTICE_ARTICLE_CACHE, PRACTICE_WORD_CACHE } from '@/core/utils/cache'
 import { useDataSyncPersistence } from '@/core/composables/useDataSyncPersistence'
+import { prepareBackupImport, readBackupZip, type ImportAudio } from '@/core/composables/backupImport'
 import SettingItem from '@/components/setting/SettingItem.vue'
 import { Supabase } from '@/core/utils/supabase.ts'
 import BackupGateDialog from '@/components/dialog/BackupGateDialog.vue'
 
-import { createClient } from '@supabase/supabase-js'
+import { createSyncClient } from '@/core/platform/sync'
 import { useRoute } from 'vue-router'
 import type { BackupData, Snapshot } from '@/core'
 
@@ -60,7 +62,8 @@ useSeoMeta({
   twitterDescription: title,
 })
 
-const tabIndex = $ref(Number(route?.query?.index ?? 0))
+const requestedTab = Number(route?.query?.index ?? 0)
+const tabIndex = $ref(useRuntimeConfig().public.isDesktop && requestedTab === 6 ? 5 : requestedTab)
 const settingStore = useSettingStore()
 const runtimeStore = useRuntimeStore()
 const store = useBaseStore()
@@ -208,108 +211,52 @@ let configLoading = $ref(false)
 
 const { loading: exportLoading, exportData, getExportedData } = useExport()
 
-function upgradeImportedPracticeWordCache(data: BackupData['val']) {
-  data[PRACTICE_WORD_CACHE.key] = checkAndUpgradePracticeWordCache(data[PRACTICE_WORD_CACHE.key], data.setting.val)
-}
-
-async function importJson(str: string) {
+async function importJson(str: string, audio?: ImportAudio) {
   importLoading = true
-  let obj: BackupData = {
-    version: -1,
-    val: {
-      setting: {},
-      dict: {},
-      [PRACTICE_WORD_CACHE.key]: null,
-      [PRACTICE_ARTICLE_CACHE.key]: null,
-      // @deprecated 大版本5废弃
-      [APP_VERSION.key]: null,
-    },
-  }
+  const previousLoading = runtimeStore.globalLoading
+  runtimeStore.globalLoading = true
   try {
-    debugger
-    obj = JSON.parse(str)
-    let data = obj.val
-    data.dict.val = await checkAndUpgradeSaveDict(data.dict)
-    data.setting.val = await checkAndUpgradeSaveSetting(data.setting)
-    upgradeImportedPracticeWordCache(data)
-    //老版本兼容逻辑
-    if (obj.version === 4) {
-      if (!isEmpty(data?.[APP_VERSION.key])) {
-        data.setting.val.webAppVersion = data?.[APP_VERSION.key]
-      }
-    }
-    //需在调同步方法前面，同步方法可能报错
-    let hasRemote = Supabase.check()
-    runtimeStore.globalLoading = true
-    const pushOk = await dataSyncPersistence.forcePushLocalDataToRemote(data)
-    runtimeStore.globalLoading = false
+    const data = await prepareBackupImport(str, audio ?? (await get(LOCAL_FILE_KEY)) ?? [])
+    const hasRemote = Supabase.check()
+    const pushOk = await dataSyncPersistence.forcePushLocalDataToRemote(data, undefined, audio)
     if (pushOk) {
       Toast.success(t('import_success_overwrite_remote'))
     } else {
       Toast.success(hasRemote ? t('import_success_push_failed') : t('import_success'))
     }
     runtimeStore.isNew = APP_VERSION.version > Number(data.setting?.val?.webAppVersion ?? APP_VERSION.version)
-    data.setting.val.load = true
-    settingStore.setState(data.setting.val)
-    data.dict.val.load = true
-    store.setState(data.dict.val)
     showBackupGate = false
   } catch (err) {
-    return Toast.error(t('import_failed'))
+    Toast.error(t('import_failed') + ': ' + ((err as Error)?.message ?? String(err)))
   } finally {
+    await nextTick()
+    runtimeStore.globalLoading = previousLoading
     importLoading = false
   }
 }
 
 async function importData(e) {
+  if (importLoading) return
   importLoading = true
-  let file = e.target.files[0]
-  if (!file) return (importLoading = false)
-  if (file.name.endsWith('.json')) {
-    let reader = new FileReader()
-    reader.onload = function (v) {
-      let str: any = v.target.result
-      if (str) {
-        importJson(str)
-      }
-    }
-    reader.readAsText(file)
-  } else if (file.name.endsWith('.zip')) {
-    try {
+  const file = e.target.files?.[0]
+  try {
+    if (!file) return
+    if (file.name.toLowerCase().endsWith('.json')) {
+      await importJson(await file.text())
+    } else if (file.name.toLowerCase().endsWith('.zip')) {
       const JSZip = await loadJsLib('JSZip', LIB_JS_URL.JSZIP)
-      const zip = await JSZip.loadAsync(file)
-
-      const dataFile = zip.file('data.json')
-      if (!dataFile) {
-        return Toast.error(t('missing_data_json'))
-      }
-
-      const mp3Folder = zip.folder('mp3')
-      if (mp3Folder) {
-        const records: { id: string; file: Blob }[] = []
-        for (const filename in zip.files) {
-          if (filename.startsWith('mp3/') && filename.endsWith('.mp3')) {
-            const entry = zip.file(filename)
-            if (!entry) continue
-            const blob = await entry.async('blob')
-            const id = filename.replace(/^mp3\//, '').replace(/\.mp3$/, '')
-            records.push({ id, file: blob })
-          }
-        }
-        await set(LOCAL_FILE_KEY, records)
-      }
-
-      const str = await dataFile.async('string')
-      await importJson(str)
-    } catch (e) {
-      Toast.error(e?.message || e || t('import_failed'))
-    } finally {
-      importLoading = false
+      const zip = await JSZip.loadAsync(file, { checkCRC32: true })
+      const { text, audio } = await readBackupZip(zip)
+      await importJson(text, audio)
+    } else {
+      Toast.error(t('unsupported_file_type'))
     }
-  } else {
-    Toast.error(t('unsupported_file_type'))
+  } catch (err) {
+    Toast.error(t('import_failed') + ': ' + ((err as Error)?.message ?? String(err)))
+  } finally {
+    importLoading = false
+    e.target.value = ''
   }
-  importLoading = false
 }
 
 let showBackupGate = $ref(false)
@@ -353,6 +300,7 @@ function openHistoryRestoreGate(item: HistoryBackupMeta) {
 }
 
 function openSupabaseSaveGate() {
+  if (config.public.isDesktop) return
   sbFormRef?.validate(valid => {
     if (!valid) return
     openGate('supabase_save')
@@ -363,68 +311,77 @@ async function restoreHistoryData() {
   if (!restoreTarget) return
   if (restoreLoading) return
   restoreLoading = true
+  const previousLoading = runtimeStore.globalLoading
+  runtimeStore.globalLoading = true
   try {
     const { data: val }: Snapshot = await get(restoreTarget.key)
-    debugger
-    let data: BackupData['val'] = {
-      setting: JSON.parse(val.setting),
-      dict: JSON.parse(val.dict),
-      [PRACTICE_WORD_CACHE.key]: JSON.parse(val[PRACTICE_WORD_CACHE.key]),
-      [PRACTICE_ARTICLE_CACHE.key]: JSON.parse(val[PRACTICE_ARTICLE_CACHE.key]),
-    }
-    data.dict.val = await checkAndUpgradeSaveDict(data.dict)
-    data.setting.val = await checkAndUpgradeSaveSetting(data.setting)
-    upgradeImportedPracticeWordCache(data)
+    const data = await prepareBackupImport(
+      JSON.stringify({
+        version: EXPORT_DATA_KEY.version,
+        val: {
+          setting: JSON.parse(val.setting),
+          dict: JSON.parse(val.dict),
+          [PRACTICE_WORD_CACHE.key]: JSON.parse(String(val[PRACTICE_WORD_CACHE.key] ?? 'null')),
+          [PRACTICE_ARTICLE_CACHE.key]: JSON.parse(String(val[PRACTICE_ARTICLE_CACHE.key] ?? 'null')),
+        },
+      }),
+      (await get(LOCAL_FILE_KEY)) ?? []
+    )
 
     //需在调同步方法前面，同步方法可能报错
     let hasRemote = Supabase.check()
     runtimeStore.globalLoading = true
     const pushOk = await dataSyncPersistence.forcePushLocalDataToRemote(data)
-    runtimeStore.globalLoading = false
     if (pushOk) {
       Toast.success(t('history_restore_success_overwrite_remote'))
     } else {
       Toast.success(hasRemote ? t('history_restore_success_push_failed') : t('restore_success_short'))
     }
     runtimeStore.isNew = APP_VERSION.version > Number(data.setting?.val?.webAppVersion ?? APP_VERSION.version)
-    data.setting.val.load = true
-    settingStore.setState(data.setting.val)
-    data.dict.val.load = true
-    store.setState(data.dict.val)
     showBackupGate = false
     showHistoryDialog = false
   } catch (error) {
     Toast.error(t('restore_failed') + ((error as Error)?.message ?? String(error)))
   } finally {
+    await nextTick()
+    runtimeStore.globalLoading = previousLoading
     restoreLoading = false
   }
 }
 
 let tempSbInstance = null
+let tempSbConfig: { url: string; key: string } | null = null
 
 async function onSbFirstSyncChoice(action: 'push_local' | 'pull_remote') {
-  if (sbSyncChoiceLoading) return
+  if (config.public.isDesktop) return false
+  if (sbSyncChoiceLoading || !tempSbInstance || !tempSbConfig) return false
+  const client = tempSbInstance
+  const credentials = tempSbConfig
   sbSyncChoiceLoading = true
   try {
     if (action === 'push_local') {
       let localData = await getExportedData()
-      const ok = await dataSyncPersistence.forcePushLocalDataToRemote(localData.val, tempSbInstance)
+      const ok = await dataSyncPersistence.forcePushLocalDataToRemote(localData.val, client)
       if (!ok) throw new Error(t('push_local_failed'))
       Toast.success(t('push_local_success'))
     } else {
-      const ok = await dataSyncPersistence.pullAllRemoteToLocal(tempSbInstance)
+      const ok = await dataSyncPersistence.pullAllRemoteToLocal(client)
       if (!ok) throw new Error(t('pull_remote_failed'))
       Toast.success(t('pull_remote_success'))
     }
     Supabase.setStatus('success')
     sbStatus = Supabase.getStatus()
-    Supabase.saveConfig(sbForm?.url, sbForm?.key)
+    Supabase.saveConfig(credentials.url, credentials.key)
     showSbFirstSyncChoiceDialog = false
+    tempSbInstance = null
+    tempSbConfig = null
+    return true
   } catch (error) {
     const msg = (error as Error)?.message ?? String(error)
     Supabase.setStatus('error', msg)
     sbStatus = Supabase.getStatus()
     Toast.error(t('sync_error_with_msg') + msg)
+    return false
   } finally {
     sbSyncChoiceLoading = false
   }
@@ -482,11 +439,16 @@ const canSyncToServe = $computed(() => {
 })
 
 async function doSaveSbConfig() {
-  if (configLoading) return
+  if (config.public.isDesktop) return
+  if (configLoading || sbSyncChoiceLoading || showSbFirstSyncChoiceDialog) return
   showBackupGate = false
   configLoading = true
-  tempSbInstance = createClient(sbForm?.url, sbForm?.key)
+  tempSbInstance = null
+  tempSbConfig = null
   try {
+    // Keep the verified credentials paired with this client across asynchronous UI edits.
+    const credentials = { url: sbForm.url, key: sbForm.key }
+    tempSbInstance = createSyncClient(credentials.url, credentials.key, Boolean(config.public.isDesktop))
     // 检测 typewords_data 表是否存在
     const { data: existingData, error: checkError } = await tempSbInstance.from('typewords_data').select('type')
     if (checkError) {
@@ -505,7 +467,8 @@ async function doSaveSbConfig() {
       ]
       for (const item of defaultData) {
         if (!existingTypes.includes(item.type)) {
-          await (tempSbInstance as any).from('typewords_data').insert(item)
+          const { error } = await (tempSbInstance as any).from('typewords_data').insert(item)
+          if (error) throw new Error(error.message ?? String(error))
         }
       }
       const { data: hasVersionData, error: versionError } = await (tempSbInstance as any)
@@ -518,14 +481,12 @@ async function doSaveSbConfig() {
       }
       const hasRemoteVersionData = Array.isArray(hasVersionData) && hasVersionData.length > 0
 
+      tempSbConfig = credentials
       if (hasRemoteVersionData) {
         showSbFirstSyncChoiceDialog = true
       } else {
-        Supabase.setStatus('success')
-        sbStatus = Supabase.getStatus()
-        await onSbFirstSyncChoice('push_local')
+        if (!(await onSbFirstSyncChoice('push_local'))) return
         Toast.success(t('save_success'))
-        Supabase.saveConfig(sbForm?.url, sbForm?.key)
         transferOk()
       }
     }
@@ -598,7 +559,7 @@ function disable360() {
               <span>{{ $t('data_management') }}</span>
             </div>
 
-            <div class="tab" :class="tabIndex === 6 && 'active'" @click="tabIndex = 6">
+            <div v-if="!config.public.isDesktop" class="tab" :class="tabIndex === 6 && 'active'" @click="tabIndex = 6">
               <IconFluentCloudSync20Regular />
               <span>{{ $t('data_sync') }}</span>
               <div class="red-point" v-if="runtimeStore.isError"></div>
@@ -665,7 +626,7 @@ function disable360() {
             </div>
           </div>
 
-          <div v-if="tabIndex === 6">
+          <div v-if="tabIndex === 6 && !config.public.isDesktop">
             <p class="text-red font-bold">过时功能：由于经常同步失败，不再推荐继续使用，请等待官方同步功能</p>
             <!--          Supabase 设置  -->
             <SettingItem :title="$t('supabase_config')" :desc="$t('supabase_config_desc')">

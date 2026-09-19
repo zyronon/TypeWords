@@ -1,0 +1,60 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "Local main window: user-selected backup save and scoped HTTPS links only.",
+  "windows": ["main"],
+  "permissions": [
+    "dialog:allow-save",
+    "fs:allow-write-file",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://github.com/*"
+        },
+        {
+          "url": "https://typewords.cc/*"
+        },
+        {
+          "url": "https://2study.top/*"
+        },
+        {
+          "url": "https://enpuz.com/*"
+        },
+        {
+          "url": "https://www.youdao.com/*"
+        },
+        {
+          "url": "https://v.wjx.cn/*"
+        },
+        {
+          "url": "https://www.google.cn/*"
+        },
+        {
+          "url": "https://chromewebstore.google.com/*"
+        },
+        {
+          "url": "https://microsoftedge.microsoft.com/*"
+        },
+        {
+          "url": "https://supabase.com/*"
+        },
+        {
+          "url": "https://www.kdocs.cn/*"
+        },
+        {
+          "url": "https://x.com/*"
+        },
+        {
+          "url": "https://pan.quark.cn/*"
+        },
+        {
+          "url": "https://v.v8l.cn/*"
+        },
+        {
+          "url": "mailto:zyronon@163.com"
+        }
+      ]
+    }
+  ]
+}

@@ -10,9 +10,12 @@ import {
   type LocalCacheResult,
   type PracticeWordCacheStored,
 } from '@/core/utils/cache.ts'
-import { useDataSyncPersistence } from '@/core/composables/useDataSyncPersistence.ts'
+import { RemoteDataReadError, useDataSyncPersistence } from '@/core/composables/useDataSyncPersistence.ts'
+import { RemoteDataValidationError } from '@/core/composables/remotePracticeValidation'
 import { shouldFetchRemote } from '@/core/utils/index.ts'
 import type { PracticeSessionSnapshot } from './practice-flow-types.ts'
+
+export { RemoteDataValidationError }
 
 export type PracticeData = Omit<LegacyPracticeData, 'isTypingWrongWord' | 'question'> & {
   question: Question | null
@@ -173,9 +176,19 @@ export function usePracticeWordPersistence() {
   }
 
   async function load(): Promise<PracticeWordCache | null> {
+    let remoteReadFailed = false
     const [local, remote] = await Promise.all([
       getPracticeWordCacheLocalWithMeta() as Promise<LocalCacheResult<PracticeWordCacheStored> | null>,
-      dataSync.getRemoteData(SyncDataType.practice_word),
+      dataSync.getRemoteData(SyncDataType.practice_word).catch(error => {
+        if (error instanceof RemoteDataReadError) {
+          remoteReadFailed = true
+          return null
+        }
+        if (error instanceof RemoteDataValidationError && error.unsupportedVersion !== undefined) {
+          throw new UnsupportedPracticeCacheVersionError(error.unsupportedVersion)
+        }
+        throw error
+      }),
     ])
 
     let selected: LocalCacheResult<unknown> | null = local
@@ -208,12 +221,13 @@ export function usePracticeWordPersistence() {
         settingStore
       )
       if (upgraded.val == null) {
-        await save(null)
+        if (!remoteReadFailed) await save(null)
         return null
       }
       const restored = restoreCurrentCache(upgraded.val)
       if (!restored) return null
-      await save(restored)
+      // A failed read is not evidence that the old local cache should replace remote progress.
+      if (!remoteReadFailed) await save(restored)
       return restored
     }
 

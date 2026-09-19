@@ -150,6 +150,7 @@ export function resetActiveWordPlayCount(word: string) {
 }
 
 let cachedWordAudio: HTMLAudioElement | null = null
+let clearWordNetworkPlayback: (() => void) | null = null
 let wordPlaybackGeneration = 0
 let ttsPlaybackGeneration = 0
 
@@ -163,6 +164,8 @@ function getCachedWordAudio(): HTMLAudioElement | null {
 export function cancelWordPracticeAudio() {
   wordPlaybackGeneration++
   ttsPlaybackGeneration++
+  clearWordNetworkPlayback?.()
+  clearWordNetworkPlayback = null
   if (typeof speechSynthesis !== 'undefined') {
     speechSynthesis.pause()
     speechSynthesis.cancel()
@@ -171,6 +174,7 @@ export function cancelWordPracticeAudio() {
   if (wordAudio) {
     wordAudio.onended = null
     wordAudio.onerror = null
+    wordAudio.onplay = null
     wordAudio.pause()
     wordAudio.currentTime = 0
   }
@@ -213,34 +217,87 @@ export function usePlayWordAudio() {
     if (settingStore.soundType === 'uk') {
       url = `${PronunciationApi}${word}&type=1`
     }
-    let onended = () => {
-      if (generation !== wordPlaybackGeneration) return
+    let completed = false
+    let fallingBack = false
+    let waitTimer: ReturnType<typeof setTimeout> | undefined
+    const isCurrent = () => generation === wordPlaybackGeneration && !completed
+    const cleanup = () => {
+      clearTimeout(waitTimer)
+      wordAudio.onended = null
+      wordAudio.onerror = null
+      wordAudio.onplay = null
+      wordAudio.onplaying = null
+      wordAudio.ontimeupdate = null
+      if (clearWordNetworkPlayback === cleanup) clearWordNetworkPlayback = null
+    }
+    clearWordNetworkPlayback = cleanup
+    const finish = () => {
+      if (!isCurrent()) return
+      completed = true
+      cleanup()
       onEnd?.()
     }
-    wordAudio.onended = onended
-    wordAudio.onplay = () => onPlay?.()
-    wordAudio.onerror = () => {
-      if (generation !== wordPlaybackGeneration) return
+    const fallback = () => {
+      if (!isCurrent() || fallingBack) return
+      fallingBack = true
+      cleanup()
+      wordAudio.pause()
       const ttsPlay = useTTsPlayAudio()
-      ttsPlay(word, { rate: playbackRate, onEnd: onended })
+      ttsPlay(word, { rate: playbackRate, onEnd: finish })
     }
+    const waitForProgress = () => {
+      if (!isCurrent() || fallingBack) return
+      clearTimeout(waitTimer)
+      // Bound both initial loading and a network stall, not the clip's duration.
+      waitTimer = setTimeout(fallback, 8000)
+    }
+    let lastTime = 0
+    wordAudio.onended = () => {
+      if (!fallingBack) finish()
+    }
+    wordAudio.onplay = () => {
+      if (isCurrent() && !fallingBack) onPlay?.()
+    }
+    wordAudio.onplaying = waitForProgress
+    wordAudio.ontimeupdate = () => {
+      if (wordAudio.currentTime > lastTime) {
+        lastTime = wordAudio.currentTime
+        waitForProgress()
+      }
+    }
+    wordAudio.onerror = fallback
     wordAudio.src = url
     wordAudio.volume = settingStore.wordSoundVolume / 100
     wordAudio.playbackRate = playbackRate
-    void wordAudio.play()
+    waitForProgress()
+    try {
+      void wordAudio.play().catch(fallback)
+    } catch {
+      fallback()
+    }
   }
 
   return playAudio
 }
 
-function getVoicesAsync() {
+function getVoicesAsync(): Promise<SpeechSynthesisVoice[]> {
   return new Promise(resolve => {
     const voices = speechSynthesis.getVoices()
     if (voices.length) return resolve(voices)
 
-    speechSynthesis.onvoiceschanged = () => {
-      resolve(speechSynthesis.getVoices())
+    // Some WebViews never emit voiceschanged when no voice pack is available.
+    const finish = (available: SpeechSynthesisVoice[]) => {
+      clearTimeout(timer)
+      speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged)
+      resolve(available)
     }
+    const onVoicesChanged = () => {
+      const available = speechSynthesis.getVoices()
+      if (available.length) finish(available)
+    }
+    const timer = setTimeout(() => finish(speechSynthesis.getVoices()), 1500)
+    speechSynthesis.addEventListener('voiceschanged', onVoicesChanged)
+    onVoicesChanged()
   })
 }
 
@@ -256,18 +313,35 @@ export function useTTsPlayAudio() {
   const settingStore = useSettingStore()
 
   function play(text: string, options: TTsPlayOptions = {}) {
-    if (!text || typeof speechSynthesis === 'undefined') return
     const generation = ++ttsPlaybackGeneration
+    let completed = false
+    const finish = () => {
+      if (completed || generation !== ttsPlaybackGeneration) return
+      completed = true
+      options.onEnd?.()
+    }
+    if (!text) return finish()
+    if (typeof speechSynthesis === 'undefined' || typeof SpeechSynthesisUtterance === 'undefined') {
+      Toast.warning('当前环境暂无可用语音，请继续手动练习')
+      return finish()
+    }
     speechSynthesis.cancel() // 防止 Chrome 队列卡死
     let msg = new SpeechSynthesisUtterance(text)
     msg.rate = options.rate ?? settingStore.wordSoundSpeed
     msg.volume = options.volume ?? settingStore.wordSoundVolume / 100
     msg.pitch = options.pitch ?? 1
     msg.lang = options.lang ?? 'en-US'
-    msg.onend = () => options.onEnd?.()
-    msg.onerror = () => options.onEnd?.()
-    getVoicesAsync().then((voices: any[]) => {
+    msg.onend = finish
+    msg.onerror = finish
+    getVoicesAsync().then(voices => {
       if (generation !== ttsPlaybackGeneration) return
+      if (!voices.length) {
+        Toast.warning('当前环境暂无可用语音，请继续手动练习')
+        finish()
+        return
+      }
+      // cancelWordPracticeAudio pauses the shared synthesis engine.
+      speechSynthesis.resume()
       // 优先使用用户在当前浏览器配置的声色
       const browserKey = getBrowserKey()
       const savedVoiceName = settingStore?.ttsVoiceMap?.find(v => v.key === browserKey)?.voice
@@ -279,11 +353,18 @@ export function useTTsPlayAudio() {
           return
         }
       }
-      // 回退：优先找 Emma / US，否则取第一个英文声色
-      let voiceList = voices.filter(v => v.lang === 'en-US')
-      if (voiceList && voiceList.length) {
-        msg.voice = voiceList.find(v => v.name.includes('US') || v.name.includes('Emma')) ?? voiceList[0]
+      // Prefer the requested locale, then another locale of the same language.
+      const language = msg.lang.toLowerCase()
+      const exactVoices = voices.filter(v => v.lang.toLowerCase() === language)
+      const voiceList = exactVoices.length
+        ? exactVoices
+        : voices.filter(v => v.lang.toLowerCase().split('-')[0] === language.split('-')[0])
+      if (!voiceList.length) {
+        Toast.warning(`当前环境暂无 ${msg.lang} 语音，请继续手动练习`)
+        finish()
+        return
       }
+      msg.voice = voiceList.find(v => v.name.includes('US') || v.name.includes('Emma')) ?? voiceList[0]
       speechSynthesis.speak(msg)
     })
   }

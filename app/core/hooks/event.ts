@@ -205,7 +205,8 @@ export function useEventListener(type: string, listener: EventListenerOrEventLis
           char = 'Backspace'
           keyCode = 8
         } else {
-          char = target?.value?.slice(-1) || (event as any).data?.slice(-1)
+          char = target.value.slice(-1) || event.data?.slice(-1) || ''
+          if (!char) return
           keyCode = char === ' ' ? 32 : char.toUpperCase().charCodeAt(0)
         }
         if (emitWindowsKeys.has(char)) return
@@ -232,7 +233,8 @@ export function useEventListener(type: string, listener: EventListenerOrEventLis
         // if (e.code in CODE_TO_CHAR && !e.ctrlKey && !e.metaKey) return
         // return
         // console.log('windowListener', Date.now(), e)
-        if (e.key === 'Process') {
+        // IME editing/confirmation keys belong to the composition, not the practice shortcuts.
+        if (e.isComposing || e.key === 'Process') {
           // @ts-ignore
           // e.key = CODE_TO_CHAR[e.code]
           //todo 这里不能直接设置值，会报错，后续可以用合成事件优化

@@ -6,6 +6,7 @@ import {
   shouldFetchRemote,
 } from '../utils'
 import {
+  checkAndUpgradePracticeWordCache,
   getPracticeArticleCacheLocal,
   getPracticeArticleCacheLocalWithMeta,
   getPracticeWordCacheLocal,
@@ -31,9 +32,35 @@ import { type BaseState, getDefaultBaseState, getDefaultSettingState, useBaseSto
 import type { BackupData, SaveData, Snapshot } from '../types/types.ts'
 import { SyncDataType, CompareResult, DictType } from '../types/enum'
 import { Supabase } from '../utils/supabase'
-import { del, get, set } from 'idb-keyval'
+import { del, get, set, setMany } from 'idb-keyval'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { Toast } from '@/base'
+import { nextTick, toRaw } from 'vue'
+import { RemoteDataValidationError, validateRemotePracticeCache } from './remotePracticeValidation'
+import { validateStoredSettings } from './settingsValidation'
+import { validateStoredDictionary } from './dictionaryValidation'
+import type { AccountSync, AccountSyncScope } from '../platform/accountSync'
+import { setManyForAccount } from '../platform/accountPersistence'
+
+// JSON cloning changes FSRS Date objects into strings; unwrap reactive children individually.
+function cloneImportState<T>(value: T): T {
+  if (value === null || typeof value !== 'object') return value
+  const raw = toRaw(value)
+  if (raw instanceof Date) return new Date(raw.getTime()) as T
+  if (Array.isArray(raw)) return raw.map(cloneImportState) as T
+  return Object.fromEntries(Object.entries(raw).map(([key, item]) => [key, cloneImportState(item)])) as T
+}
+
+// Serialize writes across composable instances; an import invalidates queued autosaves.
+let persistenceQueue: Promise<unknown> = Promise.resolve()
+let importGeneration = 0
+function enqueuePersistence<T>(action: () => Promise<T>, generation?: number): Promise<T> {
+  const result = persistenceQueue.then(() =>
+    generation === undefined || generation === importGeneration ? action() : undefined
+  )
+  persistenceQueue = result.catch(() => {})
+  return result as Promise<T>
+}
 
 type RemoteMetaRow = {
   type: SyncDataType
@@ -83,9 +110,16 @@ function getPersistKey(type: SyncDataType): string {
   return type === SyncDataType.dict ? SAVE_DICT_KEY.key : SAVE_SETTING_KEY.key
 }
 
-function getSyncClient(client?: SupabaseClient | null): SupabaseClient | null {
+export class RemoteDataReadError extends Error {
+  constructor() {
+    super('远端同步数据读取失败，本地缓存仅在内存中恢复，请检查同步配置后重试')
+  }
+}
+
+function getSyncClient(client?: SupabaseClient | null, allowReadRetry = false): SupabaseClient | null {
+  if (!Supabase.isEnabled()) return null
   if (client) return client
-  if (!Supabase.check()) return null
+  if (!Supabase.check(allowReadRetry)) return null
   return Supabase.getInstance() as SupabaseClient
 }
 
@@ -124,20 +158,31 @@ async function persistLocalState(type: SyncDataType, val: unknown, updated_at?: 
   )
 }
 
-function applyDictData(store: ReturnType<typeof useBaseStore>, data: unknown) {
-  store.setState(data as any)
+function hydrateDictData(store: ReturnType<typeof useBaseStore>, scope?: AccountSyncScope) {
+  const word = store.word
+  const article = store.article
   if (store.word.studyIndex >= 3) {
     if (!store.sdict.custom && !store.sdict.system && !store.sdict.words.length) {
-      _getDictDataByUrl(store.sdict).then(r => {
-        store.word.bookList[store.word.studyIndex] = r
-      })
+      const index = word.studyIndex
+      const dict = store.sdict
+      _getDictDataByUrl(dict)
+        .then(r => {
+          scope?.assertCurrent()
+          if (store.word === word && word.bookList[index] === dict) word.bookList[index] = r
+        })
+        .catch(error => console.warn('Remote dictionary resource load failed', error))
     }
   }
   if (store.article.studyIndex >= 1) {
     if (!store.sbook.custom && !store.sbook.system && !store.sbook.articles.length) {
-      _getDictDataByUrl(store.sbook, DictType.article).then(r => {
-        store.article.bookList[store.article.studyIndex] = r
-      })
+      const index = article.studyIndex
+      const book = store.sbook
+      _getDictDataByUrl(book, DictType.article)
+        .then(r => {
+          scope?.assertCurrent()
+          if (store.article === article && article.bookList[index] === book) article.bookList[index] = r
+        })
+        .catch(error => console.warn('Remote article resource load failed', error))
     }
   }
 }
@@ -152,7 +197,32 @@ async function fetchServerMeta(types: SyncDataType[], client?: SupabaseClient | 
       Supabase.setStatus('error', error?.message ?? String(error))
       return null
     }
-    return (data ?? []) as RemoteMetaRow[]
+    // Only a valid empty array means no remote rows; malformed metadata must never select a push.
+    const seen = new Set<SyncDataType>()
+    if (
+      !Array.isArray(data) ||
+      data.some(row => {
+        if (
+          !row ||
+          typeof row !== 'object' ||
+          Array.isArray(row) ||
+          !types.includes(row.type) ||
+          seen.has(row.type) ||
+          (row.data_version != null && (!Number.isInteger(row.data_version) || row.data_version < 1)) ||
+          (row.updated_at != null &&
+            (typeof row.updated_at !== 'string' ||
+              !/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(row.updated_at) ||
+              !Number.isFinite(Date.parse(row.updated_at))))
+        ) {
+          return true
+        }
+        seen.add(row.type)
+        return false
+      })
+    ) {
+      throw new Error('远端同步元数据无效，请检查数据和读取权限后重试')
+    }
+    return data as RemoteMetaRow[]
   } catch (error) {
     console.log('sp-error', error)
     Supabase.setStatus('error', error?.message ?? String(error))
@@ -165,7 +235,7 @@ async function fetchServerDatas(
   client?: SupabaseClient | null
 ): Promise<RemoteDataRow[] | null> {
   const sb = getSyncClient(client)
-  if (!sb) return []
+  if (!sb) return null
   console.log('Fetching server data list', types)
   try {
     const { data, error } = await sb
@@ -175,13 +245,21 @@ async function fetchServerDatas(
     if (error) {
       console.log('sp-error', error)
       Supabase.setStatus('error', error?.message ?? String(error))
-      return []
+      return null
     }
-    return (data ?? []) as RemoteDataRow[]
+    // Metadata selected these rows for a pull; missing rows are not a successful read.
+    if (
+      !Array.isArray(data) ||
+      data.length !== types.length ||
+      types.some(type => data.filter(row => row?.type === type).length !== 1)
+    ) {
+      throw new Error('远端同步数据不完整，请检查读取权限后重试')
+    }
+    return data as RemoteDataRow[]
   } catch (error) {
     console.log('sp-error', error)
     Supabase.setStatus('error', error?.message ?? String(error))
-    return []
+    return null
   }
 }
 
@@ -236,30 +314,148 @@ async function applyRemoteDataByType(
   settingStore: ReturnType<typeof useSettingStore>
 ): Promise<void> {
   if (!row) return
+  try {
+    await applyRemoteDataBatch([row], store, settingStore)
+  } catch (error) {
+    Supabase.setStatus('error', error?.message ?? String(error))
+    throw error
+  }
+}
+
+function validateRemoteDataRow(row: RemoteDataRow): void {
+  const cache = row.type === SyncDataType.practice_word || row.type === SyncDataType.practice_article
+  if (
+    !ALL_SYNC_TYPES.includes(row.type) ||
+    !Number.isInteger(row.data_version) ||
+    row.data_version < 1 ||
+    row.data_version > getDataVersion(row.type) ||
+    (!(cache && row.data === null) && (!row.data || typeof row.data !== 'object' || Array.isArray(row.data)))
+  ) {
+    throw new RemoteDataValidationError(
+      'Invalid or unsupported remote data',
+      row.data_version > getDataVersion(row.type) ? row.data_version : undefined
+    )
+  }
+  if (cache) {
+    validateRemotePracticeCache(
+      row.data,
+      row.type === SyncDataType.practice_word ? 'word' : 'article',
+      row.data_version
+    )
+  }
+  if (row.type === SyncDataType.setting) {
+    try {
+      validateStoredSettings(row.data)
+    } catch (error) {
+      throw new RemoteDataValidationError(`Invalid remote settings: ${error instanceof Error ? error.message : error}`)
+    }
+  }
+  if (row.type === SyncDataType.dict) {
+    try {
+      validateStoredDictionary(row.data)
+    } catch (error) {
+      throw new RemoteDataValidationError(
+        `Invalid remote dictionary: ${error instanceof Error ? error.message : error}`
+      )
+    }
+  }
+}
+
+async function applyRemoteDataBatch(
+  rows: RemoteDataRow[],
+  store: ReturnType<typeof useBaseStore>,
+  settingStore: ReturnType<typeof useSettingStore>,
+  scope?: AccountSyncScope
+): Promise<void> {
+  scope?.assertCurrent()
+  // Validate every envelope before legacy normalizers or live state changes.
+  const prepared = new Map<SyncDataType, any>()
+  for (const row of rows) {
+    validateRemoteDataRow(row)
+    if (prepared.has(row.type)) throw new RemoteDataValidationError('Duplicate remote data type')
+    prepared.set(row.type, cloneImportState(row.data))
+  }
   const now = new Date().toISOString()
-  if (type === SyncDataType.setting) {
+  if (prepared.has(SyncDataType.setting)) {
+    const row = rows.find(row => row.type === SyncDataType.setting)!
     const normalized = await checkAndUpgradeSaveSetting({
-      val: row.data,
+      val: prepared.get(row.type),
       version: row.data_version,
     })
+    scope?.assertCurrent()
     normalized.load = true
     normalized._ignoreWatch = true
-    settingStore.setState(normalized)
-    await persistLocalState(SyncDataType.setting, normalized, row.updated_at ?? now)
-    return
+    prepared.set(row.type, normalized)
   }
-  if (type === SyncDataType.dict) {
+  if (prepared.has(SyncDataType.dict)) {
+    const row = rows.find(row => row.type === SyncDataType.dict)!
     const normalized = await checkAndUpgradeSaveDict({
-      val: row.data,
+      val: prepared.get(row.type),
       version: row.data_version,
     })
+    scope?.assertCurrent()
     normalized.load = true
     normalized._ignoreWatch = true
-    applyDictData(store, normalized)
-    await persistLocalState(SyncDataType.dict, normalized, row.updated_at ?? now)
-    return
+    prepared.set(row.type, normalized)
   }
-  await persistLocalState(type, row.data, row.updated_at ?? now)
+  if (prepared.has(SyncDataType.practice_word)) {
+    const row = rows.find(row => row.type === SyncDataType.practice_word)!
+    prepared.set(
+      row.type,
+      checkAndUpgradePracticeWordCache(
+        { val: prepared.get(row.type), version: row.data_version },
+        prepared.get(SyncDataType.setting) ?? settingStore.$state
+      ).val
+    )
+  }
+  const entries: [string, string][] = rows.map(row => [
+    row.type === SyncDataType.practice_word
+      ? PRACTICE_WORD_CACHE.key
+      : row.type === SyncDataType.practice_article
+        ? PRACTICE_ARTICLE_CACHE.key
+        : getPersistKey(row.type),
+    JSON.stringify({
+      val: prepared.get(row.type),
+      version: getDataVersion(row.type),
+      updated_at: row.updated_at ?? now,
+    }),
+  ])
+  const previousDict = cloneImportState(store.$state)
+  const previousSetting = cloneImportState(settingStore.$state)
+  // Account pulls publish to memory only after the cancellable transaction commits.
+  // A stale operation must never restore a snapshot over the next account's state.
+  if (scope) {
+    await setManyForAccount(entries, scope)
+    scope.assertCurrent()
+  }
+  try {
+    scope?.assertCurrent()
+    if (prepared.has(SyncDataType.dict)) store.setState(prepared.get(SyncDataType.dict))
+    scope?.assertCurrent()
+    if (prepared.has(SyncDataType.setting)) settingStore.setState(prepared.get(SyncDataType.setting))
+    if (!scope) await setMany(entries)
+  } catch (error) {
+    scope?.assertCurrent()
+    if (prepared.has(SyncDataType.dict)) store.setState({ ...previousDict, _ignoreWatch: true })
+    if (prepared.has(SyncDataType.setting)) {
+      settingStore.$patch(state => {
+        for (const key of Object.keys(state)) delete state[key]
+        Object.assign(state, previousSetting, { _ignoreWatch: true })
+      })
+    }
+    await nextTick()
+    throw error
+  }
+  await nextTick()
+  scope?.assertCurrent()
+  if (prepared.has(SyncDataType.dict)) {
+    // Resource availability does not undo a completed local transaction.
+    try {
+      hydrateDictData(store, scope)
+    } catch (error) {
+      console.warn('Remote dictionary resource load failed', error)
+    }
+  }
 }
 
 function getDictSyncBlockReason(state: BaseState): string | null {
@@ -356,20 +552,51 @@ export function useDataSyncPersistence() {
   const store = useBaseStore()
   const settingStore = useSettingStore()
 
-  async function pullIfRemoteNewer(type: SyncDataType, client?: SupabaseClient | null): Promise<RemoteDataRow | null> {
-    const remoteMetas = await fetchServerMeta([type], client)
-    if (!remoteMetas) return null
-    const remoteMetaMap = new Map(remoteMetas.map(item => [item.type, item]))
-    const compareResult = await compareResultByType(type, remoteMetaMap)
-    console.log('pullIfRemoteNewer-compareResult', CompareResult[compareResult], type)
-    if (compareResult === CompareResult.RemoteNewer) {
-      const remoteData = await fetchServerDatas([type], client)
-      if (remoteData?.length) {
-        await applyRemoteDataByType(type, remoteData[0], store, settingStore)
-        return remoteData[0]
+  async function pullAccountRemoteToLocal(account: AccountSync, scope: AccountSyncScope): Promise<boolean> {
+    try {
+      scope.assertCurrent()
+      const data = await scope.read(ALL_SYNC_TYPES)
+      scope.assertCurrent()
+      if (
+        data.length !== ALL_SYNC_TYPES.length ||
+        ALL_SYNC_TYPES.some(type => data.filter(row => row.type === type).length !== 1)
+      ) {
+        throw new Error('远端账号数据不完整，不能完成首次拉取')
       }
+      await applyRemoteDataBatch(data as RemoteDataRow[], store, settingStore, scope)
+      scope.assertCurrent()
+      account.completeInitialSync(scope)
+      return true
+    } catch (error) {
+      // Do not unlock or update the legacy anonymous client's global status.
+      scope.assertCurrent()
+      throw error
     }
-    return null
+  }
+
+  async function pullIfRemoteNewer(type: SyncDataType, client?: SupabaseClient | null): Promise<RemoteDataRow | null> {
+    try {
+      const sb = getSyncClient(client, true)
+      if (!sb) return null
+      const remoteMetas = await fetchServerMeta([type], sb)
+      if (!remoteMetas) return null
+      const remoteMetaMap = new Map(remoteMetas.map(item => [item.type, item]))
+      const compareResult = await compareResultByType(type, remoteMetaMap)
+      console.log('pullIfRemoteNewer-compareResult', CompareResult[compareResult], type)
+      if (compareResult === CompareResult.RemoteNewer) {
+        const remoteData = await fetchServerDatas([type], sb)
+        if (remoteData?.length) {
+          await applyRemoteDataByType(type, remoteData[0], store, settingStore)
+          // Metadata alone cannot recover a failed payload read or local transaction.
+          Supabase.setStatus('success')
+          return remoteData[0]
+        }
+      }
+      return null
+    } catch (error) {
+      Supabase.setStatus('error', error?.message ?? String(error))
+      throw error
+    }
   }
 
   // 同步数据，远程新则拉取（默认），本地新则推送（默认）
@@ -396,9 +623,8 @@ export function useDataSyncPersistence() {
 
       if (pull.length) {
         const rows = await fetchServerDatas(pull)
-        for (const item of rows) {
-          await applyRemoteDataByType(item.type, item, store, settingStore)
-        }
+        if (!rows) return
+        await applyRemoteDataBatch(rows, store, settingStore)
       }
 
       if (push.length && options?.pushWhenLocalNewer !== false) {
@@ -454,8 +680,30 @@ export function useDataSyncPersistence() {
   }
 
   async function getRemoteData(type: SyncDataType, client?: SupabaseClient | null): Promise<RemoteDataRow | null> {
-    const rows = await fetchServerDatas([type], client)
-    return rows?.[0] ?? null
+    let sb: SupabaseClient | null
+    try {
+      sb = getSyncClient(client, true)
+    } catch (error) {
+      Supabase.setStatus('error', error?.message ?? String(error))
+      throw new RemoteDataReadError()
+    }
+    if (!sb) {
+      if (Supabase.getStatus().status === 'error') throw new RemoteDataReadError()
+      return null
+    }
+    const rows = await fetchServerDatas([type], sb)
+    const row = rows?.[0]
+    if (!row) throw new RemoteDataReadError()
+    try {
+      // This read path historically treats an absent version as v1; batch imports remain strict.
+      validateRemoteDataRow({ ...row, data_version: row.data_version ?? 1 })
+      Supabase.setStatus('success')
+      return row
+    } catch (error) {
+      Supabase.setStatus('error', error?.message ?? String(error))
+      // A null result lets the caller migrate/save a local cache over the rejected remote data.
+      throw error
+    }
   }
 
   async function getRemoteMeta(type: SyncDataType, client?: SupabaseClient | null): Promise<RemoteMetaRow | null> {
@@ -463,9 +711,53 @@ export function useDataSyncPersistence() {
     return rows?.[0] ?? null
   }
 
-  async function forcePushLocalDataToRemote(data: BackupData['val'], client?: SupabaseClient | null): Promise<boolean> {
+  async function forcePushLocalDataToRemote(
+    data: BackupData['val'],
+    client?: SupabaseClient | null,
+    audio?: Array<{ id: string; file: Blob }>
+  ): Promise<boolean> {
     let syncResult = true
     const updated_at = new Date().toISOString()
+    const entries: [string, any][] = [
+      [SAVE_DICT_KEY.key, JSON.stringify({ val: data.dict.val, version: SAVE_DICT_KEY.version, updated_at })],
+      [SAVE_SETTING_KEY.key, JSON.stringify({ val: data.setting.val, version: SAVE_SETTING_KEY.version, updated_at })],
+      [
+        PRACTICE_WORD_CACHE.key,
+        JSON.stringify({
+          val: (data[PRACTICE_WORD_CACHE.key] as SaveData)?.val ?? null,
+          version: PRACTICE_WORD_CACHE.version,
+          updated_at,
+        }),
+      ],
+      [
+        PRACTICE_ARTICLE_CACHE.key,
+        JSON.stringify({
+          val: (data[PRACTICE_ARTICLE_CACHE.key] as SaveData)?.val ?? null,
+          version: PRACTICE_ARTICLE_CACHE.version,
+          updated_at,
+        }),
+      ],
+    ]
+    if (audio !== undefined) entries.push([LOCAL_FILE_KEY, audio])
+    const previousDict = cloneImportState(store.$state)
+    const previousSetting = cloneImportState(settingStore.$state)
+    try {
+      store.setState({ ...cloneImportState(data.dict.val), load: true, _ignoreWatch: true })
+      settingStore.setState({ ...cloneImportState(data.setting.val), load: true, _ignoreWatch: true })
+      await setMany(entries)
+    } catch (error) {
+      store.setState({ ...previousDict, _ignoreWatch: true })
+      settingStore.$patch(state => {
+        for (const key of Object.keys(state)) delete state[key]
+        Object.assign(state, previousSetting, { _ignoreWatch: true })
+      })
+      await nextTick()
+      // An explicit IndexedDB abort can reject with transaction.error === null.
+      throw error ?? new Error('Local backup transaction failed')
+    }
+    await nextTick()
+    // Local-only audio cannot be reconstructed by a remote JSON consumer.
+    if (getDictSyncBlockReason(data.dict.val as BaseState)) return false
     const sb = getSyncClient(client)
     if (sb) {
       const rows: Array<{ type: SyncDataType; data: unknown; data_version: number; updated_at: string }> = [
@@ -499,19 +791,13 @@ export function useDataSyncPersistence() {
     } else {
       syncResult = false
     }
-    await persistLocalState(SyncDataType.dict, data.dict.val, updated_at)
-    await persistLocalState(SyncDataType.setting, data.setting.val, updated_at)
-    //@ts-ignore
-    await persistLocalState(SyncDataType.practice_word, data?.[PRACTICE_WORD_CACHE.key]?.val ?? null, updated_at)
-    //@ts-ignore
-    await persistLocalState(SyncDataType.practice_article, data?.[PRACTICE_ARTICLE_CACHE.key]?.val ?? null, updated_at)
     return syncResult
   }
 
   async function pullAllRemoteToLocal(client?: SupabaseClient | null): Promise<boolean> {
-    const sb = getSyncClient(client)
-    if (!sb) return false
     try {
+      const sb = getSyncClient(client, true)
+      if (!sb) return false
       const { data, error } = await (sb as any)
         .from('typewords_data')
         .select('type, data, updated_at, data_version')
@@ -521,11 +807,16 @@ export function useDataSyncPersistence() {
         Supabase.setStatus('error', error?.message ?? String(error))
         return false
       }
-      const rows = (data ?? []) as RemoteDataRow[]
-      const map = new Map(rows.map(item => [item.type, item]))
-      for (const type of ALL_SYNC_TYPES) {
-        await applyRemoteDataByType(type, map.get(type) ?? null, store, settingStore)
+      if (
+        !Array.isArray(data) ||
+        !data.length ||
+        data.some(row => !row || !ALL_SYNC_TYPES.includes(row.type)) ||
+        new Set(data.map(row => row.type)).size !== data.length
+      ) {
+        throw new Error('远端没有可用的同步数据或返回数据不完整，请检查读取权限后重试')
       }
+      const rows = data as RemoteDataRow[]
+      await applyRemoteDataBatch(rows, store, settingStore)
       Supabase.setStatus('success')
       return true
     } catch (error) {
@@ -594,22 +885,36 @@ export function useDataSyncPersistence() {
       // @deprecated 大版本5废弃
       [APP_VERSION.key]: null,
     }
-    store.setState(d)
-    settingStore.setState(d1)
     return await forcePushLocalDataToRemote(data)
   }
 
   return {
-    pullIfRemoteNewer,
-    saveLocalAndSync,
+    pullAccountRemoteToLocal: (account: AccountSync) => {
+      if (!Supabase.isEnabled()) return Promise.reject(new Error('本地桌面版暂不提供云同步'))
+      // Capture before joining the shared queue, not when the queued job starts.
+      const scope = account.capture('read')
+      return enqueuePersistence(() => pullAccountRemoteToLocal(account, scope))
+    },
+    pullIfRemoteNewer: (...args: Parameters<typeof pullIfRemoteNewer>) =>
+      enqueuePersistence(() => pullIfRemoteNewer(...args)),
+    saveLocalAndSync: (...args: Parameters<typeof saveLocalAndSync>) =>
+      enqueuePersistence(() => saveLocalAndSync(...args), importGeneration),
     getRemoteData,
     getRemoteMeta,
-    saveDictState,
-    forcePushLocalDataToRemote,
-    pullAllRemoteToLocal,
+    saveDictState: (...args: Parameters<typeof saveDictState>) =>
+      enqueuePersistence(() => saveDictState(...args), importGeneration),
+    forcePushLocalDataToRemote: (...args: Parameters<typeof forcePushLocalDataToRemote>) => {
+      importGeneration++
+      return enqueuePersistence(() => forcePushLocalDataToRemote(...args))
+    },
+    pullAllRemoteToLocal: (...args: Parameters<typeof pullAllRemoteToLocal>) =>
+      enqueuePersistence(() => pullAllRemoteToLocal(...args)),
     getLocalCompactDataByType,
-    syncData,
+    syncData: (...args: Parameters<typeof syncData>) => enqueuePersistence(() => syncData(...args)),
     getDictSyncBlockReason,
-    clear,
+    clear: () => {
+      importGeneration++
+      return enqueuePersistence(clear)
+    },
   }
 }

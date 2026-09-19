@@ -9,7 +9,7 @@ import {
   SAVE_SETTING_KEY,
 } from '../config/env'
 import { get } from 'idb-keyval'
-import saveAs from 'file-saver'
+import { saveBackup } from '../platform/desktop'
 import dayjs from 'dayjs'
 import { Toast } from '@/base'
 import { useBaseStore } from '../stores/base'
@@ -20,6 +20,7 @@ import { usePracticeArticlePersistence, usePracticeWordPersistence } from '../co
 import type { BackupData } from '../types'
 
 export function useExport() {
+  const isDesktop = useRuntimeConfig().public.isDesktop
   const store = useBaseStore()
   const settingStore = useSettingStore()
 
@@ -63,14 +64,14 @@ export function useExport() {
 
   async function exportData(
     notice = '导出成功！',
-    fileName = `${APP_NAME}-User-Data-${dayjs().format('YYYY-MM-DD HH-mm-ss')}.zip`,
+    fileName = `${APP_NAME}-User-Data-${dayjs().format('YYYY-MM-DD HH-mm-ss')}.zip`
   ) {
     if (loading.value) return
     loading.value = true
 
     try {
       const content = await buildExportZip()
-      saveAs(content, fileName)
+      if (!(await saveBackup(content, fileName, isDesktop))) return
       notice && Toast.success(notice)
       return content
     } catch (e: any) {

@@ -1,0 +1,9 @@
+/* Web-only: desktop uses the existing local serif fallback without network fonts. */
+@font-face {
+  font-family: 'Garamond';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/l/font?kit=XoHg2Y_-T6Oo88RDZSQPp2sshj3I9QTcqzw&skey=509bbab0bec2784f&v=v18)
+    format('woff2');
+}

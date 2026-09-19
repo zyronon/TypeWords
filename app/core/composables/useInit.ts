@@ -5,11 +5,36 @@ import { useBaseStore, useRuntimeStore, useSettingStore } from '../stores'
 import { Supabase } from '../utils/supabase'
 import { ensureHashGuardBeforeInit, useDataSyncPersistence } from './useDataSyncPersistence'
 import { SyncDataType } from '../types'
-import type { SubscriptionCallbackMutation } from 'pinia'
+import type { StateTree, SubscriptionCallback } from 'pinia'
 import { onUnmounted } from 'vue'
 
 let unsub = null
 let unsub2 = null
+
+function importAwareAutosave<S extends StateTree & { _ignoreWatch: boolean }>(save: (data: S) => Promise<void>) {
+  let generation = 0
+  let resetting = false
+  const deferred = debounce((data: S, scheduledGeneration: number) => {
+    if (scheduledGeneration === generation) return save(data)
+  }, 1000)
+  const callback: SubscriptionCallback<S> = (mutation, data) => {
+    if (resetting) return
+    if (data._ignoreWatch) {
+      // Consume import/rollback suppression before a genuine edit can join the debounce window.
+      generation++
+      resetting = true
+      try {
+        data._ignoreWatch = false
+      } finally {
+        resetting = false
+      }
+      return
+    }
+    if (mutation.type === 'direct' && mutation.events?.key === '_ignoreWatch') return
+    deferred(data, generation)
+  }
+  return { callback, cancel: () => generation++ }
+}
 
 export function useInit() {
   const store = useBaseStore()
@@ -67,51 +92,44 @@ export function useInit() {
     }
     settingStore.load = true
     store.load = true
+    // Imported records may contain this runtime-only flag; initial hydration has no subscribers.
+    store._ignoreWatch = false
+    settingStore._ignoreWatch = false
     console.timeEnd('init')
     initializing = false // 初始化完成，允许保存数据
 
     //等数据全部准备好，再开启监听，避免循环保存-同步
     document.addEventListener('visibilitychange', onvisibilitychange)
     //用 $subscribe 替代 watch
-    unsub = store.$subscribe(
-      debounce(async (mutation, data: BaseState) => {
-        if (fetching || !focus || runtimeStore.globalLoading || restoreFetching) return
-        if (data._ignoreWatch) {
-          data._ignoreWatch = false
-          return
-        }
-        if (mutation.type === 'direct' && mutation.events?.key === '_ignoreWatch') {
-          return
-        }
-        console.log('store.$subscribe', mutation, data, data._ignoreWatch)
-        fetching = true
-        try {
-          await dataSync.saveDictState(data)
-        } finally {
-          fetching = false
-        }
-      }, 1000)
-    )
+    const dictAutosave = importAwareAutosave(async (data: BaseState) => {
+      if (fetching || !focus || runtimeStore.globalLoading || restoreFetching) return
+      fetching = true
+      try {
+        await dataSync.saveDictState(data)
+      } finally {
+        fetching = false
+      }
+    })
+    const stopDict = store.$subscribe(dictAutosave.callback, { flush: 'sync' })
+    unsub = () => {
+      dictAutosave.cancel()
+      stopDict()
+    }
 
-    unsub2 = settingStore.$subscribe(
-      debounce(async (mutation: SubscriptionCallbackMutation<SettingState>, data: SettingState) => {
-        if (fetching2 || !focus || runtimeStore.globalLoading || restoreFetching) return
-        console.log('settingStore.$subscribe', mutation, data, data._ignoreWatch)
-        if (data._ignoreWatch) {
-          data._ignoreWatch = false
-          return
-        }
-        if (mutation.type === 'direct' && mutation.events?.key === '_ignoreWatch') {
-          return
-        }
-        fetching2 = true
-        try {
-          await dataSync.saveLocalAndSync(SyncDataType.setting, data)
-        } finally {
-          fetching2 = false
-        }
-      }, 1000)
-    )
+    const settingAutosave = importAwareAutosave(async (data: SettingState) => {
+      if (fetching2 || !focus || runtimeStore.globalLoading || restoreFetching) return
+      fetching2 = true
+      try {
+        await dataSync.saveLocalAndSync(SyncDataType.setting, data)
+      } finally {
+        fetching2 = false
+      }
+    })
+    const stopSetting = settingStore.$subscribe(settingAutosave.callback, { flush: 'sync' })
+    unsub2 = () => {
+      settingAutosave.cancel()
+      stopSetting()
+    }
 
     runtimeStore.isNew = APP_VERSION.version > Number(settingStore.webAppVersion)
     // runtimeStore.isNew = true

@@ -105,6 +105,9 @@ function splitTranslateText() {
 
 //TODO
 async function startNetworkTranslate() {
+  if (useRuntimeConfig().public.isDesktop) {
+    return Toast.warning('桌面百度翻译未启用：需要独立的远端翻译服务；请手动填写译文')
+  }
   if (!editArticle.title.trim()) {
     return Toast.error($t('please_fill_title'))
   }
@@ -800,7 +803,6 @@ function minusStartTime(val: Sentence) {
     }
   }
 }
-
 
 @media (max-width: 768px) {
   .content {

@@ -5,6 +5,7 @@ import ShareIcon from './ShareIcon.vue'
 import WeChat from './WeChat.vue'
 import Github from './Github.vue'
 import { withAppBaseURL } from '@/core/utils/base-url'
+import { EMAIL } from '@/core/config/env.ts'
 
 withDefaults(
   defineProps<{
@@ -54,10 +55,10 @@ const qqQrSrc = withAppBaseURL('/imgs/channel/qq.jpg')
     </a>
 
     <a
-      href="mailto:zyronon@163.com"
+      :href="`mailto:${EMAIL}`"
       target="_blank"
       rel="noreferrer"
-      :aria-label="$t('send_email', { email: 'zyronon@163.com' })"
+      :aria-label="$t('send_email', { email: EMAIL })"
     >
       <BaseIcon :title="$t('email')">
         <IconMaterialSymbolsMail class="color-blue" />

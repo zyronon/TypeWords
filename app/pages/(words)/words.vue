@@ -56,6 +56,7 @@ import { WordPracticeMode } from '@/core/types/enum.ts'
 import {
   type PracticeWordCache,
   UnsupportedPracticeCacheVersionError,
+  RemoteDataValidationError,
   usePracticeWordPersistence,
 } from '@/core/composables/practice-words/practice-word-session.ts'
 import dayjs from 'dayjs'
@@ -71,15 +72,22 @@ const { nav } = useNav()
 const runtimeStore = useRuntimeStore()
 let loading = $ref(true)
 let isSaveData = $ref(false)
-let unsupportedCacheVersion = false
+let blockedPracticeCache = false
 
 async function loadPracticeCache() {
   try {
-    return await wordPersistence.load()
+    const cache = await wordPersistence.load()
+    blockedPracticeCache = false
+    return cache
   } catch (error) {
-    if (!(error instanceof UnsupportedPracticeCacheVersionError)) throw error
-    unsupportedCacheVersion = true
-    Toast.error('练习缓存来自更高版本，请升级后再继续')
+    if (!(error instanceof UnsupportedPracticeCacheVersionError) && !(error instanceof RemoteDataValidationError))
+      throw error
+    blockedPracticeCache = true
+    Toast.error(
+      error instanceof UnsupportedPracticeCacheVersionError
+        ? '练习缓存来自更高版本，请升级后再继续'
+        : '远端练习缓存损坏，已停止加载，请修复同步数据后重试'
+    )
     return null
   }
 }
@@ -152,7 +160,7 @@ const reviewWordTip = $computed(() => {
 })
 
 async function resetCacheData() {
-  if (unsupportedCacheVersion) return
+  if (blockedPracticeCache) return
   isSaveData && flushStatToStore(practiceData.statStoreData)
   isSaveData = false
   practiceData.practiceData = null
@@ -248,7 +256,7 @@ async function init() {
     if (d) {
       practiceData = d
       isSaveData = true
-    } else if (!unsupportedCacheVersion) {
+    } else if (!blockedPracticeCache) {
       refreshStudyTask()
     }
   }
@@ -256,8 +264,8 @@ async function init() {
 }
 
 async function startPractice(practiceMode: WordPracticeMode, resetCache: boolean = false): Promise<void> {
-  if (unsupportedCacheVersion) {
-    Toast.error('当前客户端无法读取这份练习缓存，请升级后再继续')
+  if (blockedPracticeCache) {
+    Toast.error('当前无法读取这份练习缓存，请先修复同步数据或升级客户端后重试')
     return
   }
   if (practiceMode === WordPracticeMode.Custom) {

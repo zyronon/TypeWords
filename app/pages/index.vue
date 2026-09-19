@@ -540,15 +540,6 @@ useSeoMeta({
   color: var(--hw-text);
 }
 
-@font-face {
-  font-family: 'Garamond';
-  font-style: italic;
-  font-weight: 700;
-  font-display: swap;
-  src: url(https://fonts.gstatic.com/l/font?kit=XoHg2Y_-T6Oo88RDZSQPp2sshj3I9QTcqzw&skey=509bbab0bec2784f&v=v18)
-    format('woff2');
-}
-
 /* Hero 标题艺术字体 */
 .hero-title {
   font-family: Garamond, Georgia, 'Times New Roman', serif;

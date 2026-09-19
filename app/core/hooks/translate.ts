@@ -39,6 +39,9 @@ export async function getNetworkTranslate(
   allShow: boolean = false,
   progressCb?: (val: number) => void
 ) {
+  // /baidu is a development proxy, not a configured desktop service.
+  if (useRuntimeConfig().public.isDesktop) return false
+
   let translator: Translator
   if (translateEngine === TranslateEngine.Baidu) {
     translator = new Baidu({

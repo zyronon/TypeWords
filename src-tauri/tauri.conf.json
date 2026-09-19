@@ -1,0 +1,65 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "TypeWords",
+  "version": "0.1.3",
+  "identifier": "io.github.zyronon.typewords",
+  "build": {
+    "beforeDevCommand": "pnpm run desktop:frontend:dev",
+    "beforeBuildCommand": "pnpm run desktop:frontend:build",
+    "devUrl": "http://127.0.0.1:5567",
+    "frontendDist": "../.output/public"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "label": "main",
+        "title": "TypeWords",
+        "url": "index.html",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "useHttpsScheme": false,
+        "create": false
+      }
+    ],
+    "security": {
+      "capabilities": [
+        "main"
+      ],
+      "csp": {
+        "default-src": "'self'",
+        "base-uri": "'self'",
+        "object-src": "'none'",
+        "frame-src": "'none'",
+        "form-action": "'none'",
+        "script-src": "'self'",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' data: blob:",
+        "font-src": "'self' data:",
+        "media-src": "'self' blob: https://dict.youdao.com https://fanyi.baidu.com",
+        "connect-src": "'self' ipc: http://ipc.localhost https://dict.youdao.com https://fanyi.baidu.com https://*.supabase.co"
+      },
+      "devCsp": {
+        "default-src": "'self'",
+        "base-uri": "'self'",
+        "object-src": "'none'",
+        "frame-src": "'none'",
+        "form-action": "'none'",
+        "script-src": "'self' 'unsafe-inline' 'unsafe-eval'",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' data: blob:",
+        "font-src": "'self' data:",
+        "media-src": "'self' blob: https://dict.youdao.com https://fanyi.baidu.com",
+        "connect-src": "'self' ipc: http://ipc.localhost https://dict.youdao.com https://fanyi.baidu.com https://*.supabase.co http://127.0.0.1:5567 ws://127.0.0.1:5567 ws://127.0.0.1:24678 ws://localhost:24678"
+      }
+    }
+  },
+  "bundle": {
+    "active": false,
+    "icon": [
+      "icons/icon.ico"
+    ]
+  }
+}

@@ -1,6 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-//@ts-ignore
-import { resolve } from 'pathe'
+import { resolve } from 'node:path'
 import Icons from 'unplugin-icons/vite'
 import Components from 'unplugin-vue-components/vite'
 import IconsResolver from 'unplugin-icons/resolver'
@@ -45,7 +44,8 @@ function toSiteURL(path: string, baseURL: string) {
   return new URL(withBaseURL(path, baseURL), siteOrigin).toString()
 }
 
-const appBaseURL = normalizeBaseURL(process.env.NUXT_APP_BASE_URL || '/')
+const isDesktop = process.env.TYPEWORDS_TARGET === 'desktop'
+const appBaseURL = isDesktop ? '/' : normalizeBaseURL(process.env.NUXT_APP_BASE_URL || '/')
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -61,17 +61,36 @@ export default defineNuxtConfig({
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
     },
   },
-  // ssr: false,
-  routeRules: {
-    '/words': { ssr: false },
-    '/articles': { ssr: false },
-    '/setting': { ssr: false },
-    '/book/nce1': { prerender: true },
-    '/book/nce2': { prerender: true },
-    '/book/nce3': { prerender: true },
-    '/book/nce4': { prerender: true },
-  },
+  ...(isDesktop ? { ssr: false, image: { provider: 'none' } } : {}),
+  routeRules: isDesktop
+    ? {}
+    : {
+        '/words': { ssr: false },
+        '/articles': { ssr: false },
+        '/setting': { ssr: false },
+        '/book/nce1': { prerender: true },
+        '/book/nce2': { prerender: true },
+        '/book/nce3': { prerender: true },
+        '/book/nce4': { prerender: true },
+      },
+  // Nuxt owns the HTTP listener; Vite strictPort alone does not prevent fallback.
+  hooks: isDesktop
+    ? {
+        async listen(server, listener) {
+          const address = server.address()
+          if (!address || typeof address === 'string' || address.port !== 5567) {
+            console.error('[desktop] Expected port 5567; refusing fallback port')
+            try {
+              await listener.close()
+            } finally {
+              process.exit(1)
+            }
+          }
+        },
+      }
+    : {},
   vite: {
+    ...(isDesktop ? { server: { strictPort: true, watch: { ignored: ['**/src-tauri/**'] } } } : {}),
     plugins: [
       Components({
         resolvers: [
@@ -113,7 +132,7 @@ export default defineNuxtConfig({
     strategy: 'no_prefix',
   },
   // CSS
-  css: ['~/assets/css/main.scss'],
+  css: ['~/assets/css/main.scss', ...(isDesktop ? [] : ['~/assets/css/web-fonts.css'])],
   // 别名配置
   alias: {
     '@': resolve(__dirname, 'app'),
@@ -130,6 +149,8 @@ export default defineNuxtConfig({
   // 运行时配置
   runtimeConfig: {
     public: {
+      isDesktop,
+      desktopApiBase: isDesktop ? process.env.TYPEWORDS_DESKTOP_API_BASE || '' : '',
       apiBase: process.env.API_BASE || 'http://localhost/',
       origin: process.env.ORIGIN || 'https://typewords.cc',
       host: process.env.HOST || 'typewords.cc',
@@ -162,13 +183,16 @@ export default defineNuxtConfig({
   },
   nitro: {
     prerender: {
+      ...(isDesktop ? { crawlLinks: false, routes: ['/'] } : {}),
       ignore: appBaseURL === '/' ? [] : [withBaseURL('/manifest.json', appBaseURL)],
     },
-    devProxy: {
-      '/baidu': {
-        target: 'https://api.fanyi.baidu.com/api/trans/vip/translate',
-        changeOrigin: true,
-      },
-    },
+    devProxy: isDesktop
+      ? {}
+      : {
+          '/baidu': {
+            target: 'https://api.fanyi.baidu.com/api/trans/vip/translate',
+            changeOrigin: true,
+          },
+        },
   },
 })
