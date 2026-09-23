@@ -217,7 +217,6 @@ export function usePracticeWordTyping(options: PracticeWordTypingOptions) {
 
     if (options.getPracticeType() === WordPracticeType.Identify && !options.getShowWordResult()) {
       options.setShowWordResult(true)
-      typo(false)
     }
 
     if (wholeInputAttempt.value === null) wholeInputAttempt.value = !options.getIsWordMasked()
@@ -235,6 +234,7 @@ export function usePracticeWordTyping(options: PracticeWordTypingOptions) {
         if (isWholePracticeInputCorrect(input.value, target, settings.ignoreCase)) completeCurrentInput()
         else {
           options.playBeep()
+          if (options.getPracticeType() === WordPracticeType.Identify) options.onWrong()
           options.onPlay(WordPlayTrigger.Typo)
         }
       } else {
