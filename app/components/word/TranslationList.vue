@@ -29,10 +29,11 @@ function init() {
   let posMap = new Map<string, { pos: string; cn: string; frequency?: number }[]>()
   let emptyPos: { cn: string; frequency?: number }[] = []
   trans.forEach(item => {
-    if (!item.pos) {
+    if (!item.pos && !item.cn.includes('【')) {
       emptyPos.push(item)
       return
     }
+    if (item.cn.includes('【')) return
     if (!posMap.has(item.pos)) {
       posMap.set(item.pos, [])
     }
@@ -60,7 +61,7 @@ onMounted(() => {
 </script>
 <template>
   <div>
-    <div class="flex gap-3 flex-wrap items-end" v-if="false">
+    <div class="flex gap-3 flex-wrap items-end">
       <span v-for="tran in noposTrans">
         <SentenceHightLightWord
           :class="['rare', 'uncommon', 'common'][tran.frequency ?? 2]"
