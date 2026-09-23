@@ -60,7 +60,7 @@ onMounted(() => {
 </script>
 <template>
   <div>
-    <div class="flex gap-3 flex-wrap items-end">
+    <div class="flex gap-3 flex-wrap items-end" v-if="false">
       <span v-for="tran in noposTrans">
         <SentenceHightLightWord
           :class="['rare', 'uncommon', 'common'][tran.frequency ?? 2]"
