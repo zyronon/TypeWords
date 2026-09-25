@@ -73,7 +73,7 @@ function handleClick(e: MouseEvent) {
         class="absolute left-2 bottom-3 z-3"
       />
       <div class="custom z-1" v-if="item.custom">{{ $t('custom') }}</div>
-      <div class="system z-1" v-else-if="item.system">内置</div>
+      <div class="system z-1" v-else-if="item.system">Built-in</div>
       <!--      <div class="custom bg-red! color-white z-1" v-else-if="item.update">更新中</div>-->
       <!--      <div class="sync bg-red! color-white z-1" v-if="!item.sync && isUser && !showCheckbox">未同步</div>-->
     </div>

@@ -174,7 +174,7 @@ export function useEventListener(type: string, listener: EventListenerOrEventLis
       const handleCompositionStart = () => {
         // console.log('handleCompositionStart',Date.now())
         isComposing = true
-        Toast.warning('请切换到英文输入')
+        Toast.warning('Please switch to English input')
       }
 
       const handleCompositionEnd = (event: CompositionEvent) => {

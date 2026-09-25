@@ -88,11 +88,11 @@ watch(dict_list, val => {
     })
     tour.addStep({
       id: 'step2',
-      text: '选一本自己准备学习的词典',
+      text: 'Pick a dictionary you want to study',
       attachTo: { element: '#dict-1', on: 'bottom' },
       buttons: [
         {
-          text: `下一步（2/${TourConfig.total}）`,
+          text: `Next (2/${TourConfig.total})`,
           action() {
             tour.next()
             selectDict({ dict: cet4 })
@@ -115,7 +115,7 @@ watch(dict_list, val => {
       <div class="flex items-center relative gap-2 header-section">
         <BackIcon class="z-2" @click="router.back" />
         <div class="flex flex-1 gap-4" v-if="showSearchInput">
-          <BaseInput clearable placeholder="请输入词典名称/缩写/类别" v-model="searchKey" class="flex-1" autofocus />
+          <BaseInput clearable placeholder="Search by dictionary name / abbreviation / category" v-model="searchKey" class="flex-1" autofocus />
           <BaseButton @click="((showSearchInput = false), (searchKey = ''))">{{ $t('cancel') }}</BaseButton>
         </div>
         <div class="py-1 flex flex-1 justify-end" v-else>
@@ -130,17 +130,17 @@ watch(dict_list, val => {
           v-if="searchList.length"
           @selectDict="selectDict"
           :list="searchList"
-          quantifier="词"
+          quantifier=" words"
           :select-id="'-1'"
         />
-        <Empty v-else text="没有相关词典" />
+        <Empty v-else text="No matching dictionaries" />
       </div>
       <div class="w-full" v-else>
         <DictGroup
           v-for="item in groupedByCategoryAndTag"
           :select-id="store.sdict.id"
           @selectDict="selectDict"
-          quantifier="词"
+          quantifier=" words"
           :groupByTag="item[1]"
           :category="item[0]"
         />

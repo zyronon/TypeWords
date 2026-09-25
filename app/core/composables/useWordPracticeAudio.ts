@@ -48,11 +48,11 @@ export function useWordPracticeAudio({ word, volumeIconRef, canSeeSentences }: W
       if (!hasVoice) {
         ttsVoiceHintShown = true
         const ins = Toast.warning(
-          '例句默认使用浏览器内置 TTS 发音，若无声请前往「设置 → 音效设置 → TTS 声色」选择可用声色',
+          'Example sentences use the browser\'s built-in TTS by default. If there is no sound, go to "Settings → Sound → TTS Voice" and pick an available voice',
           {
             duration: 15000000,
             action: {
-              text: '设置',
+              text: 'Settings',
               onClick: () => {
                 router.push('/setting?index=4')
                 ins.close()

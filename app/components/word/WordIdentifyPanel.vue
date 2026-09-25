@@ -85,12 +85,12 @@ useEventsByWatch(
 
 const text = $computed(() => {
   if (!completeSelect) {
-    return '请选择 或 直接拼写'
+    return 'Choose an option or spell directly'
   } else {
     if (isCorrect) {
-      return '按空格键继续'
+      return 'Press Space to continue'
     } else {
-      return '请输入单词'
+      return 'Please type the word'
     }
   }
 })
@@ -115,22 +115,22 @@ const text = $computed(() => {
       <template #reference>
         <div class="p-1">
           <ul class="pl-4 my-0">
-            <li>直接拼写：直接输入单词；开始输入后，该词会自动标记为 <span class="font-bold">“不认识”</span></li>
+            <li>Spell directly: just type the word. Once you start typing, it is automatically marked as <span class="font-bold">"Don't know"</span></li>
             <li>
-              快速标记：{{
+              Quick mark: {{
                 `${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.KnowWord]}/${settingStore.shortcutKeyMap[ShortcutKey.UnknownWord]}/${settingStore.shortcutKeyMap[ShortcutKey.MasteredWord]})`
               }}
-              分别标记为“我认识 / 不认识 / 已掌握
+              mark as "I know / Don't know / Mastered" respectively
             </li>
             <li>
-              选择答案：按{{
+              Choose answer: press {{
                 `${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.SelfTestingChooseA]}/${settingStore.shortcutKeyMap[ShortcutKey.SelfTestingChooseB]}/${settingStore.shortcutKeyMap[ShortcutKey.SelfTestingChooseC]}/${settingStore.shortcutKeyMap[ShortcutKey.SelfTestingChooseD]})`
-              }}，或点击 A～D
+              }}, or click A–D
             </li>
-            <li>批量标记：点击右侧按钮，可一次标记多个单词</li>
+            <li>Batch mark: click the button on the right to mark multiple words at once</li>
           </ul>
           <div class="opacity-50 flex items-center">
-            <span>提示：快捷键可在设置中修改</span>
+            <span>Tip: shortcuts can be changed in Settings</span>
           </div>
         </div>
       </template>
@@ -152,14 +152,14 @@ const text = $computed(() => {
       :keyboard="`${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.MasteredWord]})`"
       size="large"
       @click="mastered"
-      >已掌握
+      >Mastered
     </BaseButton>
 
     <div class="flex gap-2 center absolute! right-0">
-      <Tooltip :title="`${settingStore.showWordQuestion ? '关闭' : '开启'}答案选项`">
+      <Tooltip :title="`${settingStore.showWordQuestion ? 'Hide' : 'Show'} answer options`">
         <Switch type="info" v-model="settingStore.showWordQuestion" />
       </Tooltip>
-      <BaseButton type="text" keyboard="批量标记" class="" @click="emit('quickMark')">
+      <BaseButton type="text" keyboard="Batch mark" class="" @click="emit('quickMark')">
         <IconFluentMultiselectRtl20Regular />
       </BaseButton>
     </div>

@@ -20,7 +20,7 @@ const simpleWords = $computed({
 
 <template>
   <div>
-    <SettingItem :title="$t('ignore_case')" desc="开启后，输入时不区分大小写，如输入“hello”和“Hello”都会被认为是正确的">
+    <SettingItem :title="$t('ignore_case')" desc="When enabled, input is case-insensitive, e.g. both “hello” and “Hello” are accepted as correct">
       <Switch v-model="settingStore.ignoreCase" />
     </SettingItem>
 

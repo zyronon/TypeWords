@@ -13,7 +13,7 @@ const router = useRouter()
     {{ $t('fsrs_desc') }}
   </p>
 
-  <BaseButton type="info" @click="router.push('/fsrs')"> 学习记录 </BaseButton>
+  <BaseButton type="info" @click="router.push('/fsrs')"> Study Records </BaseButton>
 
   <div class="line mt-4 mb-4"></div>
 

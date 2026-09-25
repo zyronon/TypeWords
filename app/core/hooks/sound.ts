@@ -92,7 +92,7 @@ export function usePlayKeyboardAudio() {
 
     watchEffect(() => {
       if (!settingStore.keyboardSound) return
-      if (!SoundFileOptions.find(v => v.label === settingStore.keyboardSoundFile)) {
+      if (!SoundFileOptions.find(v => v.value === settingStore.keyboardSoundFile)) {
         settingStore.keyboardSoundFile = '机械键盘2'
       }
       let urlList = getAudioFileUrl(settingStore.keyboardSoundFile)
@@ -196,7 +196,7 @@ export function usePlayWordAudio() {
       const count = activeWordPlayCountMap.get(key) ?? 0
       if (count % 3 !== 0) {
         playbackRate = playbackRate * 0.75
-        Toast.success('0.75倍速播放')
+        Toast.success('Playing at 0.75x speed')
       } else {
         Toast.closeAll()
       }

@@ -62,7 +62,7 @@ export function useExport() {
   }
 
   async function exportData(
-    notice = '导出成功！',
+    notice = 'Export successful!',
     fileName = `${APP_NAME}-User-Data-${dayjs().format('YYYY-MM-DD HH-mm-ss')}.zip`,
   ) {
     if (loading.value) return
@@ -74,7 +74,7 @@ export function useExport() {
       notice && Toast.success(notice)
       return content
     } catch (e: any) {
-      Toast.error(e?.message || e || '导出失败')
+      Toast.error(e?.message || e || 'Export failed')
     } finally {
       loading.value = false
     }

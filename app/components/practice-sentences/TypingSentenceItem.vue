@@ -420,7 +420,7 @@ function play() {
         <Space v-if="word.nextSpace" class="word-end" :is-wrong="false" :is-wait="isCurrent(w) && isSpace" />
       </span>
     </span>
-    <VolumeIcon :simple="true" v-if="showPlayButton" class="mr-2" title="发音" :cb="play" />
+    <VolumeIcon :simple="true" v-if="showPlayButton" class="mr-2" title="Pronounce" :cb="play" />
     <div v-if="!isEnd && active" class="cursor" :style="{ top: cursor.top + 'px', left: cursor.left + 'px' }"></div>
   </span>
 </template>

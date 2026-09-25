@@ -86,7 +86,7 @@ watch(
         <Close class="close-btn" :title="$t('close')" @click="closeWordLookup" />
 
         <template v-if="wordLookupState.loading">
-          <div class="text-sm color-gray py-2 pr-5">查询中...</div>
+          <div class="text-sm color-gray py-2 pr-5">Looking up...</div>
         </template>
         <template v-else-if="wordLookupState.notFound">
           <div class="flex items-center gap-2 flex-wrap pr-5">
@@ -97,11 +97,11 @@ watch(
             </BaseIcon>
           </div>
           <div class="color-gray mt-1 flex items-center gap-2">
-            <span>暂未收录该单词</span>
+            <span>This word is not in the dictionary yet</span>
             <BaseButton @click="goYoudao(wordLookupState.queryWord)">
               <div class="flex items-center gap-2">
                 <IconFluentSearch20Regular />
-                <span>有道词典</span>
+                <span>Youdao Dictionary</span>
               </div>
             </BaseButton>
           </div>

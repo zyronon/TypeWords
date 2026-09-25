@@ -27,9 +27,9 @@ const chooseAllIndexes = ref<number[]>([])
 const chooseAllMode = ref<PaintMode | null>(null)
 
 const modeLabels: Record<PaintMode, string> = {
-  know: '我认识',
-  unknown: '不认识',
-  mastered: '已掌握',
+  know: 'I know',
+  unknown: "Don't know",
+  mastered: 'Mastered',
 }
 
 /** 与当前顶部模式同色则取消标记，否则设为当前模式。 */
@@ -100,7 +100,7 @@ function chooseAll() {
     selectedIndexes.push(index)
   })
   if (!selectedIndexes.length) {
-    Toast.info('所有单词均已标记')
+    Toast.info('All words are already marked')
     return
   }
   chooseAllIndexes.value = selectedIndexes
@@ -112,14 +112,14 @@ watch(paintMode, resetChooseAll)
 
 <template>
   <div class="word-mark-pick-list text-xl flex flex-col gap-3 w-full pt-10">
-    <Header title="批量标记" @click="emit('back')"></Header>
+    <Header title="Batch Mark" @click="emit('back')"></Header>
     <div>
-      操作说明：先选择分类，再点击单词进行标记。再次点击相同分类可取消，切换分类后点击可直接改标。
-      <div class="font-bold">未标记和标为“不认识”的单词将进入后续练习。</div>
+      How it works: pick a category first, then click words to mark them. Click again with the same category to unmark; switch categories and click to re-mark.
+      <div class="font-bold">Unmarked words and words marked "Don't know" will go into the following practice.</div>
     </div>
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <div>当前标记:</div>
+        <div>Current mark:</div>
         <button
           v-for="mode in ['know', 'unknown', 'mastered'] as const"
           :key="mode"
@@ -131,13 +131,13 @@ watch(paintMode, resetChooseAll)
           {{ modeLabels[mode] }}
         </button>
       </div>
-      <BaseButton type="info" @click="chooseAll">{{ chooseAllMode ? '取消全选' : '全选' }}</BaseButton>
+      <BaseButton type="info" @click="chooseAll">{{ chooseAllMode ? 'Deselect All' : 'Select All' }}</BaseButton>
     </div>
     <div class="text-sm color-[var(--color-font-3)]">
-      省时技巧：先标记数量较少的一类，再切换到多数类别点击“全选”，即可补齐未标记单词；再次点击可撤销本次全选，已有标记不会被覆盖。
+      Tip: mark the smaller category first, then switch to the larger one and click "Select All" to fill in the unmarked words. Click again to undo that select-all; existing marks are not overwritten.
     </div>
 
-    <div class="word-grid" role="list" aria-label="单词列表">
+    <div class="word-grid" role="list" aria-label="Word list">
       <div
         v-for="(item, index) in words"
         :key="index"
@@ -151,7 +151,7 @@ watch(paintMode, resetChooseAll)
     </div>
 
     <div class="center pt-1">
-      <BaseButton type="primary" size="large" @click="onComplete">完成标记</BaseButton>
+      <BaseButton type="primary" size="large" @click="onComplete">Finish Marking</BaseButton>
     </div>
   </div>
 </template>

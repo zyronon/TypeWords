@@ -558,10 +558,10 @@ function disable360() {
   let disabled = localStorage.getItem('disable360')
   if (disabled) {
     localStorage.removeItem('disable360')
-    Toast.success('已清除')
+    Toast.success('Cleared')
   } else {
     localStorage.setItem('disable360', '1')
-    Toast.success('已设置')
+    Toast.success('Set')
   }
 }
 </script>
@@ -657,22 +657,22 @@ function disable360() {
                 <BaseButton size="large">{{ $t('clear_all_data') }}</BaseButton>
               </PopConfirm>
               <PopConfirm
-                title="不要乱点，点击后会使导出功能失效，仅适用于： Mac 版本 360 极速浏览器"
+                title="Do not click unless needed: this disables the export feature. Only for 360 Speed Browser on Mac"
                 @confirm="disable360"
               >
-                <BaseButton size="large" type="info">跳过导出</BaseButton>
+                <BaseButton size="large" type="info">Skip export</BaseButton>
               </PopConfirm>
             </div>
           </div>
 
           <div v-if="tabIndex === 6">
-            <p class="text-red font-bold">过时功能：由于经常同步失败，不再推荐继续使用，请等待官方同步功能</p>
+            <p class="text-red font-bold">Deprecated: syncing often fails, so this is no longer recommended. Please wait for the official sync feature</p>
             <!--          Supabase 设置  -->
             <SettingItem :title="$t('supabase_config')" :desc="$t('supabase_config_desc')">
               <div v-if="sbStatus.status !== 'idle'" class="mt-2 text-sm">
                 <span v-if="sbStatus.status === 'success'" class="text-green">{{ $t('sync_status_running') }}</span>
                 <span v-else-if="sbStatus.status === 'error'" class="text-red">
-                  {{ $t('sync_status_failed') }}{{ sbStatus.statusMessage ? `（${sbStatus.statusMessage}）` : '' }}
+                  {{ $t('sync_status_failed') }}{{ sbStatus.statusMessage ? ` (${sbStatus.statusMessage})` : '' }}
                 </span>
                 <span v-else-if="sbStatus.status === 'syncing'">{{ $t('sync_status_syncing') }}</span>
               </div>
@@ -740,7 +740,7 @@ function disable360() {
                       @blur="handleInputBlur"
                     />
                     <span @click.stop="editShortcutKey = ''"
-                      >{{ $t('press_key_to_set') }}，<span class="text-red!">{{
+                      >{{ $t('press_key_to_set') }}, <span class="text-red!">{{
                         $t('click_here_when_done')
                       }}</span></span
                     >

@@ -52,7 +52,7 @@ let failCount = $ref(0)
 let resultRef = $ref<HTMLDivElement>()
 const TranslateEngineOptions = [
   // {value: 'youdao', label: '有道'},
-  { value: 'baidu', label: '百度' },
+  { value: 'baidu', label: 'Baidu' },
 ]
 
 let editArticle = $ref<Article>(getDefaultArticle())
@@ -376,7 +376,7 @@ function minusStartTime(val: Sentence) {
     <div class="row flex flex-col gap-2">
       <div class="title">{{ $t('original_text') }}</div>
       <div class="flex gap-2 items-center">
-        <div class="shrink-0">{{ $t('title') }}：</div>
+        <div class="shrink-0">{{ $t('title') }}:</div>
         <BaseInput
           v-model="editArticle.title"
           :disabled="![100, 0].includes(progress)"
@@ -386,7 +386,7 @@ function minusStartTime(val: Sentence) {
       </div>
       <div class="flex justify-between">
         <span
-          >{{ $t('content') }}：<span class="text-sm color-gray">{{ $t('one_sentence_per_line') }}</span></span
+          >{{ $t('content') }}: <span class="text-sm color-gray">{{ $t('one_sentence_per_line') }}</span></span
         >
         <Tooltip :title="$t('name_config_tip')">
           <div @click="showNameDialog = true" class="center gap-1 cp">
@@ -431,7 +431,7 @@ function minusStartTime(val: Sentence) {
     <div class="row flex flex-col gap-2">
       <div class="title">{{ $t('translation') }}</div>
       <div class="flex gap-2 items-center">
-        <div class="shrink-0">{{ $t('title') }}：</div>
+        <div class="shrink-0">{{ $t('title') }}:</div>
         <BaseInput
           v-model="editArticle.titleTranslate"
           :disabled="![100, 0].includes(progress)"
@@ -440,7 +440,7 @@ function minusStartTime(val: Sentence) {
         />
       </div>
       <div class="">
-        {{ $t('content') }}：<span class="text-sm color-gray">{{ $t('one_sentence_per_line') }}</span>
+        {{ $t('content') }}: <span class="text-sm color-gray">{{ $t('one_sentence_per_line') }}</span>
       </div>
       <Textarea
         v-model="editArticle.textTranslate"
@@ -579,7 +579,7 @@ function minusStartTime(val: Sentence) {
         </div>
         <div class="options" v-if="editArticle.text.trim()">
           <div class="status">
-            <span>{{ $t('status') }}：</span>
+            <span>{{ $t('status') }}:</span>
             <div class="warning" v-if="failCount">
               <IconFluentShieldQuestion20Regular />
               {{ $t('sentences_not_translated', { count: failCount }) }}
@@ -624,7 +624,7 @@ function minusStartTime(val: Sentence) {
         </div>
         <div class="flex flex-col gap-2">
           <div class="flex gap-2 items-center">
-            <div>{{ $t('start_time') }}：</div>
+            <div>{{ $t('start_time') }}:</div>
             <div class="flex justify-between flex-1">
               <div class="flex items-center gap-2">
                 <InputNumber v-model="editSentence.audioPosition[0]" :precision="2" :step="0.1" />
@@ -658,7 +658,7 @@ function minusStartTime(val: Sentence) {
             </div>
           </div>
           <div class="flex gap-2 items-center">
-            <div>{{ $t('end_time') }}：</div>
+            <div>{{ $t('end_time') }}:</div>
             <div class="flex justify-between flex-1">
               <div class="flex items-center gap-2">
                 <InputNumber v-model="editSentence.audioPosition[1]" :precision="2" :step="0.1" />

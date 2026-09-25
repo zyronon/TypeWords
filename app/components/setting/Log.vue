@@ -2,296 +2,296 @@
 let logList = [
   {
     date: '2026/08/13',
-    content: '自测流程新增“快速标记”、“答案四选一”',
+    content: 'Self-test now includes “Quick Mark” and “Multiple Choice (4 options)”',
   },
   {
     date: '2026/08/11',
-    content: '优化练习流程：单词可见时，不再标记为错误单词，大约节省 15% 的时间',
+    content: 'Improved practice flow: words are no longer marked wrong while visible, saving about 15% of time',
   },
   {
     date: '2026/08/09',
-    content: '整个项目由Monorepo恢复为线Nuxt项目',
+    content: 'Project converted from a monorepo back to a plain Nuxt project',
   },
   {
     date: '2026/08/07',
-    content: '恢复原单词收藏功能',
+    content: 'Restored the original word bookmarking feature',
   },
   {
     date: '2026/08/02',
-    content: '新增复习词可选练习系统计划外的单词功能，用于解决无复习词的情况',
+    content: 'Review can now include words outside the study plan, for when there are no words to review',
   },
   {
     date: '2026/08/01',
-    content: '重写整个单词练习流程，修复从缓存中恢复练习时，流程错误的问题',
+    content: 'Rewrote the word practice flow; fixed incorrect flow when resuming practice from cache',
   },
   {
     date: '2026/07/22',
-    content: '优化例句练习，使其更符合句子练习手感',
+    content: 'Improved example sentence practice to feel more natural',
   },
   {
     date: '2026/07/19',
-    content: '优化文章列表搜索逻辑，优化文章详情页',
+    content: 'Improved article list search and the article detail page',
   },
   {
     date: '2026/06/27',
-    content: '单词可收藏到其他词典',
+    content: 'Words can be saved to other dictionaries',
   },
   {
     date: '2026/06/26',
-    content: '例句支持快捷键播放（Ctrl+1~9）；播放单词后自动播放例句',
+    content: 'Example sentences can be played with shortcuts (Ctrl+1~9); example sentences auto-play after the word',
   },
   {
     date: '2026/06/25',
-    content: '短语支持发音',
+    content: 'Phrases now support pronunciation',
   },
   {
     date: '2026/06/24',
-    content: '新增/编辑单词时，可一键查询',
+    content: 'One-click lookup when adding or editing words',
   },
   {
     date: '2026/06/23',
-    content: '新增：更新通知功能',
+    content: 'New: update notifications',
   },
   {
     date: '2026/06/22',
-    content: '新增：重复播放单词，降低语速',
+    content: 'New: repeat word playback at a slower speed',
   },
   {
     date: '2026/06/18',
-    content: '点击查词功能',
+    content: 'Click-to-look-up words',
   },
   {
     date: '2026/06/13',
-    content: '优化导入单词、文章的流程和界面，更清晰明了',
+    content: 'Clearer flow and UI for importing words and articles',
   },
   {
     date: '2026/06/09',
-    content: '文章标题和问题支持发音',
+    content: 'Article titles and questions now support pronunciation',
   },
   {
     date: '2026/06/08',
-    content: '随机复习/测试时，支持自定义单词范围；优化多语言',
+    content: 'Custom word range for random review/test; improved multi-language support',
   },
   {
     date: '2026/06/04',
-    content: '修复所有已知的单词、文章错误',
+    content: 'Fixed all known word and article errors',
   },
   {
     date: '2026/05/06',
-    content: '添加小程序地址',
+    content: 'Added Mini Program link',
   },
   {
     date: '2026/05/05',
-    content: '添加引导收藏地址小提示',
+    content: 'Added a tip prompting users to bookmark the site',
   },
   {
     date: '2026/04/28',
-    content: '修复无法匹配中文符号的问题',
+    content: 'Fixed Chinese punctuation not being matched',
   },
   {
     date: '2026/04/27',
-    content: '支持子目录部署',
+    content: 'Support for deployment under a subdirectory',
   },
   {
     date: '2026/04/26',
-    content: '支持带词频的词典 https://github.com/zyronon/TypeWords/pull/257',
+    content: 'Support for dictionaries with word frequency https://github.com/zyronon/TypeWords/pull/257',
   },
   {
     date: '2026/04/23',
-    content: '修复切换词典/修改练习时，丢失暂存的练习数据',
+    content: 'Fixed saved practice data being lost when switching dictionaries or changing practice',
   },
   {
     date: '2026/04/21',
-    content: '新增 TTS 音色选项',
+    content: 'Added TTS voice options',
   },
   {
     date: '2026/04/14',
-    content: '新首页',
+    content: 'New home page',
   },
   {
     date: '2026/04/05',
-    content: '新增时间暂停功能',
+    content: 'Added timer pause',
   },
   {
     date: '2026/03/29',
-    content: '新增统计功能；修复例句无法发音问题；优化学习记录表格；新增快速自测模式',
+    content: 'Added statistics; fixed example sentences not playing audio; improved the study record table; added quick self-test mode',
   },
   {
     date: '2026/03/28',
-    content: '合并新功能：自测方式（单词测试）；修复按1、2、3、4键无反应的问题',
+    content: 'Merged new feature: self-test (word test); fixed keys 1, 2, 3, 4 not responding',
   },
   {
     date: '2026/03/25',
-    content: '缩短练习流程：1、优化自测逻辑，新增快速标记；2、拼写时未错误的单词移除错词列表，不再重复安排练习',
+    content: 'Shorter practice flow: 1. improved self-test logic and added Quick Mark; 2. words spelled correctly are removed from the mistakes list and no longer rescheduled',
   },
   {
     date: '2026/03/08',
-    content: '新增本地数据自动备份功能',
+    content: 'Added automatic local data backup',
   },
   {
     date: '2026/03/06',
-    content: '新增 Supabase  同步数据',
+    content: 'Added data sync via Supabase',
   },
   {
     date: '2026/02/27',
-    content: '新增记忆曲线功能，复习词根据记忆曲线动态生成',
+    content: 'Added forgetting-curve scheduling; review words are generated dynamically from it',
   },
   {
     date: '2026/02/24',
-    content: '添加 Docker 支持',
+    content: 'Added Docker support',
   },
   {
     date: '2026/02/10',
-    content: '练习界面添加提示、优化引导',
+    content: 'Added hints to the practice screen and improved onboarding',
   },
   {
     date: '2026/02/09',
-    content: '发布 Vscode 插件',
+    content: 'Released the VS Code extension',
   },
   {
     date: '2026/02/04',
-    content: '首页添加单词测试的入口',
+    content: 'Added a word test entry on the home page',
   },
   {
     date: '2026/02/02',
-    content: '修改项目架构；添加例句发音功能',
+    content: 'Restructured the project; added example sentence pronunciation',
   },
   {
     date: '2026/01/19',
-    content: '文章练习界面添加自动滚动; 修复练习界面，打开设置弹窗事件冲突',
+    content: 'Added auto-scroll to article practice; fixed event conflicts when opening the settings dialog during practice',
   },
   {
     date: '2026/01/16',
-    content: '用 Nuxt 重构',
+    content: 'Rebuilt with Nuxt',
   },
   {
     date: '2026/01/06',
-    content: '优化书籍详情页面',
+    content: 'Improved the book detail page',
   },
   {
     date: '2025/12/30',
-    content: '移除“继续默写”选项',
+    content: 'Removed the “Continue dictation” option',
   },
   {
     date: '2025/12/29',
-    content: '单词练习界面，底部工具栏新增音频设置按钮',
+    content: 'Added an audio settings button to the bottom toolbar in word practice',
   },
   {
     date: '2025/12/27',
-    content: '优化进度条展示，现可展示当前阶段、所有阶段',
+    content: 'Improved the progress bar; it now shows the current stage and all stages',
   },
   {
     date: '2025/12/23',
-    content: '新增复习、自测、默写、听写模式',
+    content: 'Added review, self-test, recall writing, and dictation modes',
   },
   {
     date: '2025/12/20',
-    content: '新增资源分享页面',
+    content: 'Added a resource sharing page',
   },
   {
     date: '2025/12/17',
-    content: '新增帮助页面',
+    content: 'Added a help page',
   },
   {
     date: '2025/12/16',
-    content: '修复弹框内边距太小；单词、文章、通用设置在设置页面、练习界面均可进行设置',
+    content: 'Fixed dialog padding being too small; word, article, and general settings are now available on both the settings page and the practice screen',
   },
   {
     date: '2025/12/15',
-    content: '修复在黑暗模式下，翻译颜色不正确；支持中文符号输入',
+    content: 'Fixed incorrect translation color in dark mode; support for Chinese punctuation input',
   },
   {
     date: '2025/12/11',
-    content: '修复音标显示错误问题，优化反馈页面',
+    content: 'Fixed phonetic symbols displaying incorrectly; improved the feedback page',
   },
   {
     date: '2025/12/10',
-    content: '新增选项：复习比(单词练习时，复习词与新词的比例)',
+    content: 'New option: review ratio (ratio of review words to new words in word practice)',
   },
   {
     date: '2025/12/5',
-    content: '解决练习界面无法复制、全选的问题',
+    content: 'Fixed being unable to copy or select all on the practice screen',
   },
   {
     date: '2025/12/3',
-    content: '单词、文章设置修改为弹框，更方便',
+    content: 'Word and article settings moved into a dialog for convenience',
   },
   {
     date: '2025/12/3',
-    content: '录入新概念（三、四）部分音频，优化文章相关功能',
+    content: 'Added some audio for New Concept English (Books 3 and 4); improved article features',
   },
   {
     date: '2025/12/2',
-    content: '完成新概念（一）音频，优化文章管理页面',
+    content: 'Completed audio for New Concept English (Book 1); improved the article management page',
   },
   {
     date: '2025/11/30',
-    content: '文章里的单词可点击播放',
+    content: 'Words in articles can be clicked to play audio',
   },
   {
     date: '2025/11/29',
-    content: '修改 Slider 组件显示bug，新增 IE 浏览器检测提示',
+    content: 'Fixed a Slider display bug; added an Internet Explorer detection notice',
   },
   {
     date: '2025/11/28',
-    content: '新增引导框、 新增词典测试模式（由大佬hebeihang 开发）',
+    content: 'Added onboarding tips; added dictionary test mode (developed by hebeihang)',
   },
   {
     date: '2025/11/25',
-    content: '文章练习新增人名忽略功能（新概念一已全部适配），上传了新概念（一）1-18 音频',
+    content: 'Article practice can now ignore personal names (fully supported for New Concept English Book 1); uploaded audio for New Concept English Book 1, lessons 1-18',
   },
   {
     date: '2025/11/23',
-    content: '优化练习完成结算界面，新增分享功能',
+    content: 'Improved the practice summary screen; added sharing',
   },
   {
     date: '2025/11/22',
-    content: '适配移动端',
+    content: 'Mobile support',
   },
   {
     date: '2025/11/16',
-    content: '自测单词时，不认识单词可以直接输入，自动标识为错误单词，无需按2',
+    content: 'During word self-test, you can type an unknown word directly and it is marked wrong automatically, no need to press 2',
   },
   {
     date: '2025/11/15',
-    content: '练习单词时，底部工具栏新增“跳到下一阶段”按钮',
+    content: 'Added a “Skip to next stage” button to the bottom toolbar in word practice',
   },
   {
     date: '2025/11/14',
     content:
-      '新增文章练习时可跳过空格：如果在单词的最后一位上，不按空格直接输入下一个字母的话，自动跳下一个单词，按空格也自动跳下一个单词',
+      'Article practice can skip spaces: at the end of a word, typing the next letter without Space jumps to the next word automatically; pressing Space also jumps',
   },
   {
     date: '2025/11/13',
-    content: '新增文章练习时“输入时忽略符号/数字”选项',
+    content: 'Added the “Ignore symbols/numbers when typing” option for article practice',
   },
   {
     date: '2025/11/6',
-    content: '新增随机复习功能',
+    content: 'Added random review',
   },
   {
     date: '2025/10/30',
-    content: '集成PWA基础配置，支持用户以类App形式打开项目',
+    content: 'Added basic PWA support so the app can be opened like a native app',
   },
   {
     date: '2025/10/26',
-    content: '进一步完善单词练习，解决复习数量太多的问题',
+    content: 'Further improved word practice; fixed too many review words',
   },
   {
     date: '2025/10/8',
-    content: '文章支持自动播放下一篇',
+    content: 'Articles can auto-play the next one',
   },
   {
     date: '2025/9/14',
-    content: '完善文章编辑、导入、导出等功能',
+    content: 'Improved article editing, import, and export',
   },
   {
     date: '2025/8/10',
-    content: '2.0版本发布，全新UI，全新逻辑，新增短语、例句、近义词等功能',
+    content: 'Version 2.0 released: new UI, new logic, plus phrases, example sentences, synonyms, and more',
   },
   {
     date: '2025/7/19',
-    content: '1.0版本发布',
+    content: 'Version 1.0 released',
   },
 ]
 </script>
@@ -301,8 +301,8 @@ let logList = [
     <div class="log-item" v-for="item in logList" :key="item.date">
       <div class="mb-2">
         <div>
-          <div>日期：{{ item.date }}</div>
-          <div>内容：{{ item.content }}</div>
+          <div>Date: {{ item.date }}</div>
+          <div>Changes: {{ item.content }}</div>
         </div>
       </div>
     </div>

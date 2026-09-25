@@ -15,10 +15,10 @@ const Dialog = defineAsyncComponent(() => import('@/base/dialog/Dialog.vue'))
         {{ $t('community_desc') }}
       </div>
       <div class="text-center">
-        <p>由于微信群二维码有7天限制，为方便更新，故用在线文档分享二维码</p>
+        <p>WeChat group QR codes expire after 7 days, so the QR code is shared via an online document for easier updates</p>
         <a href="https://www.kdocs.cn/l/ciNZFKZHCpE2"
            target="_blank">
-          >【金山文档 | WPS云文档】 微信群二维码 https://www.kdocs.cn/l/ciNZFKZHCpE2</a
+          >[Kingsoft Docs | WPS Cloud Docs] WeChat group QR code https://www.kdocs.cn/l/ciNZFKZHCpE2</a
         >
         <!--        <img src="/imgs/channel/wechat.png" :alt="$t('wechat_qrcode')" class="w-70 rounded-xl shadow-lg" />-->
       </div>

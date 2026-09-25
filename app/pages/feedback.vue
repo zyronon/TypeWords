@@ -4,7 +4,7 @@ import About from '@/components/About.vue'
 import { APP_NAME, Origin } from '@/core/config/env.ts'
 
 let route = useRoute()
-let title = APP_NAME + ' 反馈'
+let title = APP_NAME + ' Feedback'
 useSeoMeta({
   title: title,
   description: title,

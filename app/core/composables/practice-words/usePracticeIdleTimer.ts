@@ -122,7 +122,7 @@ export function usePracticeIdleTimer(options: {
     if (!isFocus.value) return
     if (statStore.timerPaused) {
       statStore.resumeTimer()
-      options.notify?.('success', '已恢复计时')
+      options.notify?.('success', 'Timer resumed')
     }
     bumpActivity()
   }

@@ -76,7 +76,7 @@ function repeat() {
 function prev() {
   // console.log('next')
   if (store.sbook.lastLearnIndex === 0) {
-    Toast.warning('已经在第一章了~')
+    Toast.warning('Already at the first chapter~')
   } else {
     store.sbook.lastLearnIndex--
     getCurrentPractice()
@@ -123,7 +123,7 @@ async function init() {
       if (!dict.custom) dict = await _getDictDataByUrl(dict, DictType.article)
       if (!dict.articles.length) {
         router.push('/articles')
-        return Toast.warning('没有文章可学习！')
+        return Toast.warning('No articles to study!')
       }
       await store.changeBook(dict)
       articleData.list = cloneDeep(store.sbook.articles)
@@ -492,15 +492,15 @@ provide('currentPractice', currentPractice)
           <div class="flex justify-between items-center gap-2">
             <div class="stat">
               <div class="row">
-                <div class="num">{{ currentPractice.length }}次/{{ msToMinute(total(currentPractice, 'spend')) }}</div>
+                <div class="num">{{ currentPractice.length }}x/{{ msToMinute(total(currentPractice, 'spend')) }}</div>
                 <div class="line"></div>
-                <div class="name">记录</div>
+                <div class="name">Records</div>
               </div>
               <div class="row">
                 <!--                <div class="num">{{statStore.spend }}分钟</div>-->
-                <div class="num">{{ Math.floor(statStore.spend / 1000 / 60) }}分钟</div>
+                <div class="num">{{ Math.floor(statStore.spend / 1000 / 60) }} min</div>
                 <div class="line"></div>
-                <div class="name">时间</div>
+                <div class="name">Time</div>
               </div>
               <div class="row">
                 <div class="num center gap-1">
@@ -509,14 +509,14 @@ provide('currentPractice', currentPractice)
                     <IconFluentQuestionCircle20Regular width="18" />
                     <template #reference>
                       <div>
-                        统计词数{{ settingStore.ignoreSimpleWord ? '不包含' : '包含' }}简单词，不包含已掌握
-                        <div>简单词可在设置 -> 练习设置 -> 简单词过滤中修改</div>
+                        Word count {{ settingStore.ignoreSimpleWord ? 'excludes' : 'includes' }} simple words and excludes mastered words
+                        <div>Simple words can be changed in Settings -> Practice Settings -> Simple Word Filter</div>
                       </div>
                     </template>
                   </Tooltip>
                 </div>
                 <div class="line"></div>
-                <div class="name">单词总数</div>
+                <div class="name">Total Words</div>
               </div>
             </div>
             <ArticleAudio
@@ -529,25 +529,25 @@ provide('currentPractice', currentPractice)
               <div class="flex gap-2 center">
                 <SettingDialog type="article" />
 
-                <BaseIcon :title="`下一句(${settingStore.shortcutKeyMap[ShortcutKey.Next]})`" @click="skip">
+                <BaseIcon :title="`Next sentence (${settingStore.shortcutKeyMap[ShortcutKey.Next]})`" @click="skip">
                   <IconFluentArrowBounce20Regular class="transform-rotate-180" />
                 </BaseIcon>
                 <BaseIcon
-                  :title="`播放当前句子(${settingStore.shortcutKeyMap[ShortcutKey.PlayWordPronunciation]})`"
+                  :title="`Play current sentence (${settingStore.shortcutKeyMap[ShortcutKey.PlayWordPronunciation]})`"
                   @click="play"
                 >
                   <IconFluentReplay20Regular />
                 </BaseIcon>
                 <BaseIcon
                   @click="settingStore.dictation = !settingStore.dictation"
-                  :title="`开关默写模式(${settingStore.shortcutKeyMap[ShortcutKey.ToggleDictation]})`"
+                  :title="`Toggle dictation mode (${settingStore.shortcutKeyMap[ShortcutKey.ToggleDictation]})`"
                 >
                   <IconFluentEyeOff16Regular v-if="settingStore.dictation" />
                   <IconFluentEye16Regular v-else />
                 </BaseIcon>
 
                 <BaseIcon
-                  :title="`开关释义显示(${settingStore.shortcutKeyMap[ShortcutKey.ToggleShowTranslate]})`"
+                  :title="`Toggle translation display (${settingStore.shortcutKeyMap[ShortcutKey.ToggleShowTranslate]})`"
                   @click="settingStore.translate = !settingStore.translate"
                 >
                   <IconPhTranslate v-if="settingStore.translate" />
@@ -561,7 +561,7 @@ provide('currentPractice', currentPractice)
                 <!--              />-->
                 <BaseIcon
                   @click="settingStore.showPanel = !settingStore.showPanel"
-                  :title="`面板(${settingStore.shortcutKeyMap[ShortcutKey.TogglePanel]})`"
+                  :title="`Panel (${settingStore.shortcutKeyMap[ShortcutKey.TogglePanel]})`"
                 >
                   <IconFluentTextListAbcUppercaseLtr20Regular />
                 </BaseIcon>

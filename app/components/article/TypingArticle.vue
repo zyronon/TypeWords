@@ -784,7 +784,7 @@ const currentPractice = inject('currentPractice', [])
           <VolumeIcon :simple="true" :title="$t('play')" :cb="playArticleQuestionAudio" />
         </div>
         <div class="text-xl color-translate-second" v-if="settingStore.translate">
-          问题: {{ props.article?.question?.translate }}
+          Question: {{ props.article?.question?.translate }}
         </div>
       </div>
     </header>
@@ -897,7 +897,7 @@ const currentPractice = inject('currentPractice', [])
     <div class="font-family text-base pr-2 mb-50 mt-10" v-if="currentPractice.length && isEnd">
       <div class="text-2xl font-bold">{{ $t('learning_record') }}</div>
       <div class="mt-1 mb-3">
-        {{ $t('total_learning_time') }}：{{ msToHourMinute(total(currentPractice, 'spend')) }}
+        {{ $t('total_learning_time') }}: {{ msToHourMinute(total(currentPractice, 'spend')) }}
       </div>
       <div
         class="item border border-item border-solid mt-2 p-2 bg-[var(--bg-history)] rounded-md flex justify-between"

@@ -63,11 +63,11 @@ watchOnce(
         })
         tour.addStep({
           id: 'step5',
-          text: '这里可以练习拼写单词，只需要按下键盘上对应的按键即可，没有输入框！',
+          text: 'Practice spelling words here. Just press the matching keys on your keyboard. There is no input box!',
           attachTo: { element: '#word', on: 'bottom' },
           buttons: [
             {
-              text: '关闭',
+              text: 'Close',
               action() {
                 settingStore.first = false
                 tour.next()

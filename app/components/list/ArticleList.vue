@@ -78,7 +78,7 @@ defineExpose({ scrollToBottom, scrollToItem })
 <template>
   <div class="list">
     <div class="search">
-      <BaseInput clearable v-model="searchKey" placeholder="标题/序号">
+      <BaseInput clearable v-model="searchKey" placeholder="Title / No.">
         <template #subfix>
           <IconFluentSearch24Regular class="text-lg text-gray" />
         </template>

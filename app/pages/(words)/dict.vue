@@ -74,8 +74,8 @@ let wordForm = $ref(getDefaultFormWord())
 let wordFormRef = $ref()
 const wordRules = reactive({
   word: [
-    { required: true, message: '请输入单词', trigger: 'blur' },
-    { max: 100, message: '名称不能超过100个字符', trigger: 'blur' },
+    { required: true, message: 'Please enter a word', trigger: 'blur' },
+    { max: 100, message: 'Name cannot exceed 100 characters', trigger: 'blur' },
   ],
 })
 let studyLoading = $ref(false)
@@ -130,7 +130,7 @@ function onWordFormWordChange(value: string) {
 async function searchOfficialWord() {
   const word = wordForm.word?.trim()
   if (!word) {
-    Toast.warning('请输入单词')
+    Toast.warning('Please enter a word')
     return
   }
   wordSearchLoading = true
@@ -138,7 +138,7 @@ async function searchOfficialWord() {
     const res = await queryWord({ word })
     if (!res.success || !res.data) {
       officialWordSnapshot = null
-      Toast.warning('单词未收录')
+      Toast.warning('Word not found in dictionary')
       return
     }
     const normalized = normalizeApiWord(res.data)
@@ -191,9 +191,9 @@ async function onSubmitWord() {
         let r = allList.find(v => v.id === data.id)
         if (r) {
           Object.assign(r, data)
-          Toast.success('修改成功')
+          Toast.success('Updated successfully')
         } else {
-          Toast.success('修改失败，未找到单词')
+          Toast.success('Update failed: word not found')
           return
         }
       } else {
@@ -201,15 +201,15 @@ async function onSubmitWord() {
         data.checked = false
         let r = allList.find(v => v.word === wordForm.word)
         if (r) {
-          Toast.warning('已有相同名称单词！')
+          Toast.warning('A word with the same name already exists!')
           return
         } else allList.push(data)
-        Toast.success('添加成功')
+        Toast.success('Added successfully')
         resetWordForm()
       }
       syncDictInMyStudyList()
     } else {
-      Toast.warning('请填写完整')
+      Toast.warning('Please fill in all required fields')
     }
   })
 }
@@ -287,7 +287,7 @@ const showBookDetail = computed(() => {
 function createCopy() {
   // 生成副本数据，不写入 store。经由 initialData 传给 EditBook，确认后才写入
   const copy = ensureCustomDictCopy(runtimeStore.editDict)
-  copy.name = runtimeStore.editDict.name + ' (副本)'
+  copy.name = runtimeStore.editDict.name + ' (Copy)'
   _copyData = copy
   isAdd = true
 }
@@ -379,7 +379,7 @@ async function startPractice(query = {}) {
 
 async function addMyStudyList() {
   if (!runtimeStore.editDict.words.length) {
-    return Toast.warning('没有单词可学习！')
+    return Toast.warning('No words to study!')
   }
   showPracticeSettingDialog = true
 }
@@ -433,7 +433,7 @@ async function exportXlsxData() {
   wb.Sheets['Sheet1'] = XLSX.utils.json_to_sheet(sheetData)
   wb.SheetNames = ['Sheet1']
   XLSX.writeFile(wb, `${filename}.xlsx`)
-  Toast.success(filename + ' 导出成功！')
+  Toast.success(filename + ' exported successfully!')
   exportXlsxLoading = false
 }
 
@@ -462,11 +462,11 @@ watch(
       })
       tour.addStep({
         id: 'step3',
-        text: '点击这里开始学习',
+        text: 'Click here to start learning',
         attachTo: { element: '#study', on: 'bottom' },
         buttons: [
           {
-            text: `下一步（3/${TourConfig.total}）`,
+            text: `Next (3/${TourConfig.total})`,
             action() {
               tour.next()
               addMyStudyList()
@@ -477,7 +477,7 @@ watch(
 
       tour.addStep({
         id: 'step4',
-        text: '这里可以选择学习模式、设置学习数量、修改学习进度',
+        text: 'Here you can choose a study mode, set how many words to study, and adjust your progress',
         attachTo: { element: '#mode', on: 'bottom' },
         beforeShowPromise() {
           return new Promise(resolve => {
@@ -491,7 +491,7 @@ watch(
         },
         buttons: [
           {
-            text: `下一步（4/${TourConfig.total}）`,
+            text: `Next (4/${TourConfig.total})`,
             action: async () => {
               tour.next()
               await startPractice({ guide: 1 })
@@ -551,7 +551,7 @@ function onSort(type: Sort, pageNo: number, pageSize: number) {
     .concat(fun(allList.slice(pageSize * (pageNo - 1), pageSize * (pageNo - 1) + pageSize)))
     .concat(allList.slice(pageSize * (pageNo - 1) + pageSize))
   runtimeStore.editDict.words = allList
-  Toast.success('操作成功')
+  Toast.success('Done')
   tableRef.value.getData()
   syncDictInMyStudyList()
 }
@@ -587,7 +587,7 @@ defineRender(() => {
           {dict.description && (
             <>
               <div class="text-lg  mt-2">
-                {$t('introduction')}：{dict.description}
+                {$t('introduction')}: {dict.description}
               </div>
               <div class="line my-3"></div>
             </>
@@ -646,7 +646,7 @@ defineRender(() => {
                             <IconFluentTextEditStyle20Regular />
                           </BaseIcon>
                           {editable ? (
-                            <PopConfirm title="确认删除？" onConfirm={() => batchDel([val.item.id])}>
+                            <PopConfirm title="Confirm delete?" onConfirm={() => batchDel([val.item.id])}>
                               <BaseIcon class="option-icon" title={$t('delete')}>
                                 <DeleteIcon />
                               </BaseIcon>
@@ -676,7 +676,7 @@ defineRender(() => {
                   model={wordForm}
                   label-width="7rem"
                 >
-                  <FormItem label="单词" prop="word">
+                  <FormItem label="Word" prop="word">
                     <BaseInput
                       modelValue={wordForm.word}
                       onUpdate:modelValue={onWordFormWordChange}
@@ -687,65 +687,65 @@ defineRender(() => {
                       onEnter={searchOfficialWord}
                     />
                   </FormItem>
-                  <FormItem label="英音音标">
+                  <FormItem label="UK phonetic">
                     <BaseInput modelValue={wordForm.phonetic0} onUpdate:modelValue={e => (wordForm.phonetic0 = e)} />
                   </FormItem>
-                  <FormItem label="美音音标">
+                  <FormItem label="US phonetic">
                     <BaseInput modelValue={wordForm.phonetic1} onUpdate:modelValue={e => (wordForm.phonetic1 = e)} />
                   </FormItem>
-                  <FormItem label="翻译">
+                  <FormItem label="Translation">
                     <Textarea
                       modelValue={wordForm.trans}
                       onUpdate:modelValue={e => (wordForm.trans = e)}
-                      placeholder="一行一个翻译，前面词性，后面内容（如n.取消）；多个翻译请换行"
+                      placeholder="One translation per line: part of speech first, then meaning (e.g. n. cancel); put multiple translations on separate lines"
                       autosize={{ minRows: 6, maxRows: 10 }}
                     />
                   </FormItem>
-                  <FormItem label="笔记">
+                  <FormItem label="Notes">
                     <Textarea
                       modelValue={wordForm.note}
                       onUpdate:modelValue={e => (wordForm.note = e)}
-                      placeholder="记录这个单词的个人笔记"
+                      placeholder="Your personal notes for this word"
                       autosize={{ minRows: 3, maxRows: 8 }}
                     />
                   </FormItem>
-                  <FormItem label="例句">
+                  <FormItem label="Examples">
                     <Textarea
                       modelValue={wordForm.sentences}
                       onUpdate:modelValue={e => (wordForm.sentences = e)}
-                      placeholder="一行原文，一行译文；多个请换两行"
+                      placeholder="One line of original text, one line of translation; separate multiple entries with a blank line"
                       autosize={{ minRows: 6, maxRows: 10 }}
                     />
                   </FormItem>
-                  <FormItem label="短语">
+                  <FormItem label="Phrases">
                     <Textarea
                       modelValue={wordForm.phrases}
                       onUpdate:modelValue={e => (wordForm.phrases = e)}
-                      placeholder="一行原文，一行译文；多个请换两行"
+                      placeholder="One line of original text, one line of translation; separate multiple entries with a blank line"
                       autosize={{ minRows: 6, maxRows: 10 }}
                     />
                   </FormItem>
-                  <FormItem label="同义词">
+                  <FormItem label="Synonyms">
                     <Textarea
                       modelValue={wordForm.synos}
                       onUpdate:modelValue={e => (wordForm.synos = e)}
-                      placeholder="请参考已有单词格式"
+                      placeholder="Follow the format of existing words"
                       autosize={{ minRows: 6, maxRows: 20 }}
                     />
                   </FormItem>
-                  <FormItem label="同根词">
+                  <FormItem label="Related words">
                     <Textarea
                       modelValue={wordForm.relWords}
                       onUpdate:modelValue={e => (wordForm.relWords = e)}
-                      placeholder="请参考已有单词格式"
+                      placeholder="Follow the format of existing words"
                       autosize={{ minRows: 6, maxRows: 20 }}
                     />
                   </FormItem>
-                  <FormItem label="词源">
+                  <FormItem label="Etymology">
                     <Textarea
                       modelValue={wordForm.etymology}
                       onUpdate:modelValue={e => (wordForm.etymology = e)}
-                      placeholder="请参考已有单词格式"
+                      placeholder="Follow the format of existing words"
                       autosize={{ minRows: 6, maxRows: 10 }}
                     />
                   </FormItem>

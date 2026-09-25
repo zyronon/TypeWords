@@ -11,8 +11,8 @@ interface IProps {
 }
 
 const props = withDefaults(defineProps<IProps>(), {
-  activeText: '开',
-  inactiveText: '关',
+  activeText: 'On',
+  inactiveText: 'Off',
   type: 'primary',
 })
 

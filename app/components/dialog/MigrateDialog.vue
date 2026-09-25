@@ -20,7 +20,7 @@ async function migrateFromOldSite() {
     var LS_KEYS = ['PracticeSaveWord', 'PracticeSaveArticle']
     const migrateWin = window.open(`${OLD_ORIGIN}/migrate.html`, '_blank', 'width=400,height=400')
 
-    if (!migrateWin) return reject('弹窗被阻止，请在网址输入栏最右边，点击允许弹窗')
+    if (!migrateWin) return reject('Pop-up blocked. Please click "Allow pop-ups" at the right end of the address bar')
 
     async function onMessage(event) {
       if (event.origin !== OLD_ORIGIN) return
@@ -52,7 +52,7 @@ async function migrateFromOldSite() {
     const timer = setInterval(() => {
       if (!migrateWin || migrateWin.closed) {
         clearInterval(timer)
-        reject('迁移窗口已关闭')
+        reject('Migration window was closed')
       } else {
         try {
           migrateWin.postMessage({ type: 'REQUEST_MIGRATION_DATA' }, OLD_ORIGIN)
@@ -69,11 +69,11 @@ async function transfer() {
     await migrateFromOldSite()
     localStorage.setItem('__migrated_from_2study_top__', '1')
     console.log('迁移完成')
-    Toast.success('迁移完成')
+    Toast.success('Migration complete')
     model.value = false
     emit('ok')
   } catch (e) {
-    Toast.error('迁移失败：' + e)
+    Toast.error('Migration failed: ' + e)
     console.error('迁移失败', e)
   }
 }
@@ -94,7 +94,7 @@ async function transfer() {
       <h3>
         {{ $t('migrate_old_domain_notice') }}
       </h3>
-      <div>如果您不想此时迁移，关闭弹窗后，您可随时在“设置” -> “数据管理” 里面再次进行</div>
+      <div>If you don't want to migrate now, close this dialog. You can do it anytime later under “Settings” -> “Data Management”</div>
     </div>
   </Dialog>
 </template>

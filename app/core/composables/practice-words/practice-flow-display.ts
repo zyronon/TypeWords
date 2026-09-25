@@ -34,7 +34,7 @@ export function getPracticeFlowDisplayState(input: PracticeFlowDisplayInput): Pr
 
   let status = translate(config.label)
   if (cursor.loop) {
-    status = '小组巩固'
+    status = 'Group consolidation'
   } else if (cursor.inWrongWordClear) {
     status = translate('review_wrong_words')
   } else {

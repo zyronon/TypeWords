@@ -44,9 +44,9 @@ watch(
   <transition name="right">
     <div class="CollectNotice card" :class="{ mobile }" v-if="show">
       <div class="notice">
-        坚持练习，提高外语能力。将
+        Keep practicing and improve your language skills. Bookmark
         <span class="active font-bold">「{{ APP_NAME }}」</span>
-        保存为书签，永不迷失！
+        so you never lose it!
       </div>
       <div class="collect">
         <div class="href-wrapper">
@@ -57,19 +57,19 @@ watch(
           <div class="right">
             👈
             <IconMdiStar />
-            点亮它!
+            Light it up!
           </div>
         </div>
       </div>
       <div class="text-base">
-        Ctrl/Command + D 快速收藏
+        Press Ctrl/Command + D to bookmark
       </div>
-      <BaseButton size="large" @click="toggleNotice" v-if="!showNotice">我已收藏</BaseButton>
+      <BaseButton size="large" @click="toggleNotice" v-if="!showNotice">I've bookmarked it</BaseButton>
       <div class="close-wrapper">
         <span v-show="showNotice"
-          ><span class="active">{{ num }}s</span> 后自动关闭</span
+          >Closing automatically in <span class="active">{{ num }}s</span></span
         >
-        <Close @click="close" title="关闭" />
+        <Close @click="close" title="Close" />
       </div>
     </div>
   </transition>

@@ -16,12 +16,12 @@ let showTranslate = $ref(false)
 </script>
 
 <template>
-  <Dialog v-model="model" padding title="任务">
+  <Dialog v-model="model" padding title="Tasks">
     <div class="pb-4 h-80vh flex gap-4">
       <div class="h-full flex flex-col gap-2">
         <div class="flex justify-between items-center">
-          <span class="title">新词 {{ data.new.length }} 个</span>
-          <Checkbox v-model="showTranslate">翻译</Checkbox>
+          <span class="title">New words: {{ data.new.length }}</span>
+          <Checkbox v-model="showTranslate">Translation</Checkbox>
         </div>
         <BaseTable
           class="overflow-auto flex-1 w-85"
@@ -37,7 +37,7 @@ let showTranslate = $ref(false)
       </div>
       <div class="h-full flex flex-col gap-2" v-if="data.review.length">
         <div class="flex justify-between items-center">
-          <span class="title">{{ $t('review') }}{{ data.review.length }} 个</span>
+          <span class="title">{{ $t('review') }}: {{ data.review.length }}</span>
         </div>
         <BaseTable
           class="overflow-auto flex-1 w-85"

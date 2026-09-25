@@ -183,7 +183,7 @@ export function usePracticeWordSession(options: PracticeWordSessionOptions) {
     const word = currentWord.value
     const wrongIndex = data.wrongWords.findIndex(item => item.word === word.word)
     if (wrongIndex >= 0) {
-      options.notify?.('info', `${word.word} 已从错词列表移除，原因：用户已认识`)
+      options.notify?.('info', `${word.word} removed from the mistakes list (marked as known)`)
       data.wrongWords.splice(wrongIndex, 1)
     }
     data.allWrongWords = data.allWrongWords.filter(key => key !== word.word)

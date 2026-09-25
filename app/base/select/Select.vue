@@ -26,7 +26,7 @@ const dropdownRef = ref<HTMLDivElement | null>(null)
 const slots = useSlots()
 
 const displayValue = computed(() => {
-  return selectedOption.value ? selectedOption.value.label : props.placeholder || '请选择'
+  return selectedOption.value ? selectedOption.value.label : props.placeholder || 'Please select'
 })
 
 const updateDropdownPosition = async () => {

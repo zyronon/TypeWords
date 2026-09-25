@@ -27,7 +27,7 @@
     </div>
 
     <div v-if="explanation && isSubmitted" class="mt-2 text-xl text-gray-600">
-      {{ $t('explanation') }}：{{ explanation }}
+      {{ $t('explanation') }}: {{ explanation }}
     </div>
   </div>
 </template>

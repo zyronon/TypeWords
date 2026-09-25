@@ -234,23 +234,23 @@ const notice = $computed(() => {
   let show = false
   if (props.practiceType === WordPracticeType.Identify) {
     if (showWordResult) {
-      text = typingCoreRef?.isWordRight() ? '按空格键继续' : '请拼写单词'
+      text = typingCoreRef?.isWordRight() ? 'Press Space to continue' : 'Please spell the word'
       show = true
     }
   } else if (props.practiceType === WordPracticeType.Listen) {
     if (showWordResult) {
-      text = '按空格键继续'
+      text = 'Press Space to continue'
       show = true
     }
   } else if (props.practiceType === WordPracticeType.Dictation) {
     text = showWordResult
       ? typingCoreRef?.isWordRight()
-        ? '按空格键继续'
+        ? 'Press Space to continue'
         : $t('press_delete_reinput')
-      : '按空格键完成默写'
+      : 'Press Space to finish dictation'
     show = true
   } else {
-    text = '输入完成后按空格键继续'
+    text = 'Press Space to continue when done typing'
     show = true
   }
   return { show, text }
@@ -332,14 +332,14 @@ useEvents([
           / {{ word.phonetic1 }} /
         </div>
         <VolumeIcon
-          :title="`发音(${settingStore.shortcutKeyMap[ShortcutKey.PlayWordPronunciation]})`"
+          :title="`Pronounce (${settingStore.shortcutKeyMap[ShortcutKey.PlayWordPronunciation]})`"
           ref="volumeIconRef"
           :cb="onVolumeIconClick"
         />
       </div>
 
       <!-- 单词键入区 -->
-      <Tooltip :title="`快捷键(${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]})显示单词信息`">
+      <Tooltip :title="`Shortcut (${settingStore.shortcutKeyMap[ShortcutKey.ShowWord]}) shows word info`">
         <div
           id="word-wrap"
           ref="word-wrap"
@@ -376,7 +376,7 @@ useEvents([
           <IconFluentCheckmarkCircle16Regular v-if="!isSimple" />
           <IconFluentCheckmarkCircle16Filled v-else />
         </BaseIcon>
-        <BaseIcon @click="editNote" :title="editingNote ? '完成编辑笔记' : '编辑笔记'">
+        <BaseIcon @click="editNote" :title="editingNote ? 'Finish editing note' : 'Edit note'">
           <IconFluentClipboardTextEdit20Regular />
         </BaseIcon>
         <BaseIcon
@@ -407,21 +407,21 @@ useEvents([
       <template v-if="showNote">
         <div class="flex flex-col gap-2 w-full mt-4">
           <div class="flex">
-            <div class="label">笔记</div>
+            <div class="label">Note</div>
             <Textarea
               autofocus
               v-if="editingNote"
               v-model="noteInputValue"
-              placeholder="记录这个单词的个人笔记"
+              placeholder="Write a personal note for this word"
               :autosize="{ minRows: 4, maxRows: 8 }"
               class="note-textarea"
             />
             <div v-else class="note-content">{{ store.noteData[word.word] }}</div>
           </div>
           <div v-if="editingNote" class="flex justify-end mt-2">
-            <BaseButton size="large" type="info" v-if="store.noteData[word.word]" @click="deleteNote">删除</BaseButton>
-            <BaseButton size="large" @click="cancelNote">取消</BaseButton>
-            <BaseButton size="large" type="primary" @click="saveNote">保存</BaseButton>
+            <BaseButton size="large" type="info" v-if="store.noteData[word.word]" @click="deleteNote">Delete</BaseButton>
+            <BaseButton size="large" @click="cancelNote">Cancel</BaseButton>
+            <BaseButton size="large" type="primary" @click="saveNote">Save</BaseButton>
           </div>
         </div>
         <div class="line-white my-3"></div>

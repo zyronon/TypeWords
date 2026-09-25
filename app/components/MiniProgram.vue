@@ -29,7 +29,7 @@ function neverShowMiniQr() {
     miniQrAutoTimer = null
   }
   localStorage.setItem(LS_KEY_MINI_QR_NEVER, '1')
-  Toast.success('关闭成功')
+  Toast.success('Closed')
 }
 
 function handleMiniIconEnter() {
@@ -65,9 +65,9 @@ onMounted(() => {
       }"
     >
       <div class="card p-3 flex flex-col items-center gap-2">
-        <img src="/imgs/mini.png" alt="小程序二维码" class="w-40 h-40 rounded" />
-        <span class="">扫码体验小程序</span>
-        <BaseButton size="small" @click="neverShowMiniQr" v-if="!isNeverShowMiniQr()"> 不再自动展示 </BaseButton>
+        <img src="/imgs/mini.png" alt="Mini Program QR code" class="w-40 h-40 rounded" />
+        <span class="">Scan to try the Mini Program</span>
+        <BaseButton size="small" @click="neverShowMiniQr" v-if="!isNeverShowMiniQr()"> Don't show automatically again </BaseButton>
       </div>
     </div>
     <BaseIcon>

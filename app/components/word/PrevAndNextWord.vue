@@ -33,7 +33,7 @@ const settingStore = useSettingStore()
     style="left: calc(50vw + var(--aside-width) / 2 - var(--toolbar-width) / 2); width: var(--toolbar-width)"
     v-if="settingStore.showNearWord"
   >
-    <Tooltip :title="`上一个(${settingStore.shortcutKeyMap[ShortcutKey.Previous]})`">
+    <Tooltip :title="`Previous (${settingStore.shortcutKeyMap[ShortcutKey.Previous]})`">
       <div class="relative z-2 center gap-2 cp float-left" @click="emit('prev')" v-if="prevWord">
         <IconFluentArrowLeft16Regular class="arrow" width="22" />
         <div class="word">{{ prevWord.word }}</div>
@@ -42,10 +42,10 @@ const settingStore = useSettingStore()
 
     <div class="center gap-1 absolute w-full cp" v-if="settingStore.showConflictNotice2" @click="emit('openNotice')">
       <IconFluentQuestionCircle20Regular />
-      <span class="">无法输入？</span>
+      <span class="">Can't type?</span>
     </div>
 
-    <Tooltip :title="`下一个(${settingStore.shortcutKeyMap[ShortcutKey.Next]})`">
+    <Tooltip :title="`Next (${settingStore.shortcutKeyMap[ShortcutKey.Next]})`">
       <div class="relative center gap-2 cp float-right mr-3" @click="emit('next', false)" v-if="nextWord">
         <div class="word" :class="isWordMasked && 'word-shadow'">
           {{ nextWord.word }}

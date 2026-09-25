@@ -180,7 +180,7 @@ defineExpose({
       <VolumeIcon
         ref="volumeIcon"
         class="ml-1"
-        :title="getSentenceShortcut(index) ? `发音(${getSentenceShortcut(index)})` : '发音'"
+        :title="getSentenceShortcut(index) ? `Pronounce (${getSentenceShortcut(index)})` : 'Pronounce'"
         @click="emit('play')"
       />
     </div>

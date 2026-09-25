@@ -141,7 +141,7 @@ const encouragementText = $computed(() => {
           </div>
 
           <div>
-            <div class="font-medium text-lg text-center mb-2">错词统计</div>
+            <div class="font-medium text-lg text-center mb-2">Mistake Stats</div>
             <div class="flex gap-space flex-wrap max-w-150">
               <span
                 class="bg-[var(--bg-card-secend)] py-1 px-2 rounded-md"
@@ -150,7 +150,7 @@ const encouragementText = $computed(() => {
                   .slice(0, 10)"
               >
                 {{ item[0] }}
-                {{ item[1] }}次
+                {{ item[1] }}×
               </span>
             </div>
           </div>
@@ -223,8 +223,8 @@ const encouragementText = $computed(() => {
         </div>
         <div class="h-full w-full center flex-col absolute top-0 left-0 space-y-2" v-if="loading">
           <IconEosIconsLoading class="text-3xl" />
-          <div>结算中...</div>
-          <div>请耐心等待，刷新页面可能导致数据丢失</div>
+          <div>Calculating results...</div>
+          <div>Please wait. Refreshing the page may cause data loss</div>
         </div>
       </div>
     </div>

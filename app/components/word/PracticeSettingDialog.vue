@@ -65,7 +65,7 @@ watch(
       <div class="text-center mt-4">
         <span
           >{{ $t('total') }}<span class="target-number mx-2">{{ runtimeStore.editDict.length }}</span
-          >{{ $t('words_count') }}，</span
+          >{{ $t('words_count') }}, </span
         >
         <span
           >{{ $t('estimated')
@@ -86,7 +86,7 @@ watch(
           <BaseInput class="target-number" v-model="tempPerDayStudyNumber" />
         </div>
         <span>{{ $t('new_words_count2') }}</span>
-        <span>，最多复习</span>
+        <span>, review up to</span>
         <div class="target-number mx-2">
           {{ tempPerDayStudyNumber * tempWordReviewRatio || '-' }}
         </div>

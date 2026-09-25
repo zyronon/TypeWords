@@ -158,17 +158,17 @@ async function submit(setting: ShufflePracticeSetting) {
 async function confirm() {
   syncTotalWithRange()
   if (rangeWordCount < MIN_RANGE_WORD_COUNT) {
-    Toast.warning('随机区间至少需要5个单词')
+    Toast.warning('The random range needs at least 5 words')
     return false
   }
   if (!num) {
-    Toast.warning('请设置随机数量')
+    Toast.warning('Please set the random count')
     return false
   }
 
   const result = getSelection()
   if (!result.available) {
-    Toast.warning('当前区间筛选后没有可用单词，请调整区间或忽略规则')
+    Toast.warning('No words available in the current range after filtering. Adjust the range or the ignore rules')
     return false
   }
 
@@ -204,18 +204,18 @@ watch(
 </script>
 
 <template>
-  <Dialog v-model="model" :title="wordPracticeMode + '设置'" :footer="true" :padding="true" :onConfirm="confirm">
+  <Dialog v-model="model" :title="wordPracticeMode + ' Settings'" :footer="true" :padding="true" :onConfirm="confirm">
     <div class="w-120 color-main">
       <div class="center items-end mb-4">
-        从<span class="font-bold mx-2">{{ store.sdict.name }}</span
-        >的 <span class="font-bold mx-2">[{{ startNo }} - {{ endNo }}]</span>中<span>{{ wordPracticeMode }}</span>
+        From<span class="font-bold mx-2">{{ store.sdict.name }}</span
+        > <span class="font-bold mx-2">[{{ startNo }} - {{ endNo }}]</span>, <span>{{ wordPracticeMode }}</span>
         <span class="target-number mx-2">{{ num }}</span
-        >个单词
+        >words
       </div>
 
       <div class="space-y-4">
         <div class="flex items-start gap-space">
-          <span class="shrink-0 w-20">随机数量：</span>
+          <span class="shrink-0 w-20">Count:</span>
           <Slider
             v-model="num"
             show-input
@@ -228,7 +228,7 @@ watch(
         </div>
 
         <div class="flex items-start gap-space">
-          <span class="shrink-0 w-20">随机范围：</span>
+          <span class="shrink-0 w-20">Range:</span>
           <div class="flex-1">
             <Slider
               v-model="rangeModel"
@@ -241,35 +241,34 @@ watch(
               :min-gap="sliderMinGap"
             />
             <div class="text-sm mt-1" :class="rangeWordCount < MIN_RANGE_WORD_COUNT ? 'text-red-500' : 'text-gray-500'">
-              第 {{ displayRange.start || 0 }} 到 {{ displayRange.end || 0 }} 个，当前区间 {{ rangeWordCount }} 个单词
+              Words {{ displayRange.start || 0 }} to {{ displayRange.end || 0 }}, {{ rangeWordCount }} words in the current range
             </div>
           </div>
-          <BaseButton type="info" @click="showRangeInput = !showRangeInput">输入</BaseButton>
+          <BaseButton type="info" @click="showRangeInput = !showRangeInput">Input</BaseButton>
         </div>
 
         <div class="flex items-center gap-space pl-24" v-if="showRangeInput">
-          <span>第</span>
+          <span>From</span>
           <InputNumber
             :min="wordCount ? 1 : 0"
             :max="wordCount"
             :model-value="startNo"
             @update:model-value="value => setRange(Number(value), endNo, 'start')"
           />
-          <span>到</span>
+          <span>to</span>
           <InputNumber
             :min="wordCount ? 1 : 0"
             :max="wordCount"
             :model-value="endNo"
             @update:model-value="value => setRange(startNo, Number(value), 'end')"
           />
-          <span>个</span>
         </div>
 
         <div class="flex items-center gap-space">
-          <span class="shrink-0 w-20">快捷选择：</span>
-          <BaseButton type="info" @click="applyRecentRange(500)">最近500个</BaseButton>
-          <BaseButton type="info" @click="applyRecentRange(300)">最近300个</BaseButton>
-          <BaseButton type="info" @click="applyRecentRange(100)">最近100个</BaseButton>
+          <span class="shrink-0 w-20">Quick pick:</span>
+          <BaseButton type="info" @click="applyRecentRange(500)">Last 500</BaseButton>
+          <BaseButton type="info" @click="applyRecentRange(300)">Last 300</BaseButton>
+          <BaseButton type="info" @click="applyRecentRange(100)">Last 100</BaseButton>
         </div>
       </div>
     </div>
@@ -277,19 +276,19 @@ watch(
 
   <Dialog
     v-model="showInsufficientDialog"
-    title="可用单词不足"
+    title="Not Enough Words"
     :footer="true"
     :padding="true"
-    confirm-button-text="继续"
-    cancel-button-text="取消"
+    confirm-button-text="Continue"
+    cancel-button-text="Cancel"
     :onConfirm="continueWithAvailable"
   >
     <div class="w-90 color-main py-2">
-      当前范围筛选后只有
+      After filtering, the current range has only
       <span class="font-bold target-number">{{ availableCount }}</span>
-      个可用单词，少于你设置的
+      available words, fewer than the
       <span class="font-bold target-number">{{ requestedCount }}</span>
-      个。继续后将以当前可用数量开始，取消后可重新修改。
+      you set. Continue to start with the available words, or cancel to adjust.
     </div>
   </Dialog>
 </template>

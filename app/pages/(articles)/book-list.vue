@@ -59,7 +59,7 @@ const searchList = computed<any[]>(() => {
         <div class="flex flex-1 gap-4" v-if="showSearchInput">
           <BaseInput
             prefix-icon
-            placeholder="请输入书籍名称/缩写/类别"
+            placeholder="Enter book name / abbreviation / category"
             v-model="searchKey"
             class="flex-1"
             autofocus
@@ -79,13 +79,13 @@ const searchList = computed<any[]>(() => {
           v-if="searchList.length"
           @selectDict="selectDict"
           :list="searchList"
-          quantifier="篇"
+          quantifier=" articles"
           :select-id="'-1'"
         />
-        <Empty v-else text="没有相关书籍" />
+        <Empty v-else text="No matching books" />
       </div>
       <div class="w-full mt-2" v-else>
-        <DictList v-if="list?.length" @selectDict="selectDict" :list="list" quantifier="篇" :select-id="'-1'" />
+        <DictList v-if="list?.length" @selectDict="selectDict" :list="list" quantifier=" articles" :select-id="'-1'" />
       </div>
     </div>
   </BasePage>

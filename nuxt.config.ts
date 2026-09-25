@@ -54,9 +54,9 @@ export default defineNuxtConfig({
     baseURL: appBaseURL,
     // keepalive: true,
     head: {
-      title: 'Type Words — 免费英语单词练习 | Free English Typing Practice', // default fallback title
+      title: 'Type Words — Free English Typing Practice', // default fallback title
       htmlAttrs: {
-        lang: 'zh-CN',
+        lang: 'en',
       },
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
     },
@@ -66,6 +66,8 @@ export default defineNuxtConfig({
     '/words': { ssr: false },
     '/articles': { ssr: false },
     '/setting': { ssr: false },
+    '/songs': { ssr: false },
+    '/songs/**': { ssr: false },
     '/book/nce1': { prerender: true },
     '/book/nce2': { prerender: true },
     '/book/nce3': { prerender: true },
@@ -108,7 +110,7 @@ export default defineNuxtConfig({
       { code: 'id', language: 'id-ID', file: 'id.json', name: 'Bahasa Indonesia' },
       { code: 'tw', language: 'zh-TW', file: 'tw.json', name: '繁體中文' },
     ],
-    defaultLocale: 'zh',
+    defaultLocale: 'en',
     // langDir:'app/i18n/',
     strategy: 'no_prefix',
   },

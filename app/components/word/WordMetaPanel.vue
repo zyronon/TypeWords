@@ -85,11 +85,11 @@ function playTtsWithGuide(text: string, onEnd?: () => void) {
     if (!hasVoice) {
       ttsVoiceHintShown = true
       const ins = Toast.warning(
-        '例句默认使用浏览器内置 TTS 发音，若无声请前往「设置 → 音效设置 → TTS 声色」选择可用声色',
+        'Example sentences use built-in browser TTS. If there is no sound, go to "Settings → Sound Settings → TTS Voice" and pick an available voice',
         {
           duration: 10000,
           action: {
-            text: '设置',
+            text: 'Settings',
             onClick: () => {
               router.push('/setting?index=4')
               ins.close()
@@ -193,7 +193,7 @@ defineExpose({ startPracticeSentence, playSentence })
             <div class="flex items-center gap-4" v-for="(item, index) in word.phrases" :key="index">
               <div class="flex gap-space items-center">
                 <ClickableEnglishText class="en" :text="item.c" :word="word.word" :dictation="effective.isWordMasked" />
-                <VolumeIcon :simple="false" title="发音" @click.stop="() => playTtsWithGuide(item.c)" />
+                <VolumeIcon :simple="false" title="Pronounce" @click.stop="() => playTtsWithGuide(item.c)" />
               </div>
               <div class="anim" v-opacity="showTranslation">
                 {{ item.cn }}
@@ -254,7 +254,7 @@ defineExpose({ startPracticeSentence, playSentence })
             <div class="label">{{ $t('related_words') }}</div>
             <div class="flex flex-col">
               <div v-if="word.relWords.root">
-                {{ $t('word_root') }}：
+                {{ $t('word_root') }}:
                 <ClickableWord class="en" :word="word.relWords.root" />
               </div>
               <div class="flex" v-for="item in word.relWords.rels">

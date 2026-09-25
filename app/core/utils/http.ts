@@ -27,7 +27,7 @@ axiosInstance.interceptors.response.use(
     if (data === null) {
       return Promise.resolve({
         code: 500,
-        msg: '系统出现错误',
+        msg: 'A system error occurred',
         data: {},
         success: false,
       })
@@ -46,7 +46,7 @@ axiosInstance.interceptors.response.use(
     if (error.response === undefined && error.status === undefined) {
       return Promise.resolve({
         code: 500,
-        msg: '服务器响应超时',
+        msg: 'Server response timed out',
         data: null,
         success: false,
       })
@@ -54,7 +54,7 @@ axiosInstance.interceptors.response.use(
     if (error.response.status >= 500) {
       return Promise.resolve({
         code: 500,
-        msg: '服务器出现错误',
+        msg: 'Server error',
         data: null,
         success: false,
       })
@@ -62,7 +62,7 @@ axiosInstance.interceptors.response.use(
     if (error.response.status === 401) {
       return Promise.resolve({
         code: 500,
-        msg: '用户名或密码不正确',
+        msg: 'Incorrect username or password',
         data: null,
       })
     }

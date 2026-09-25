@@ -154,7 +154,7 @@ function scheduleVisibilityResume() {
       if (document.hidden || showRemoteReloadDialog) return
       if (!canAutoResumeVisibilityTimer(statStore)) return
       statStore.resumeTimer()
-      Toast.success('已自动恢复计时')
+      Toast.success('Timer resumed automatically')
     }, 1500)
   }
 }
@@ -173,7 +173,7 @@ async function checkRemotePracticeUpdate(): Promise<boolean> {
     return true
   } catch (error) {
     if (error instanceof UnsupportedPracticeCacheVersionError) {
-      Toast.error('远端练习缓存来自更高版本，请升级后再继续')
+      Toast.error('The remote practice cache is from a newer version. Please upgrade to continue')
     } else {
       console.error('[practice] 检查远端练习进度失败', error)
     }
@@ -202,23 +202,23 @@ async function reloadRemotePracticeSession(): Promise<boolean> {
     knownCacheUpdatedAt = Math.max(knownCacheUpdatedAt, pendingRemoteUpdatedAt, Date.now())
     pendingRemoteUpdatedAt = 0
     if (!cache) {
-      Toast.warning('远端练习已结束或缓存已清空')
+      Toast.warning('The remote practice has ended or its cache was cleared')
       await router.push('/words')
       return true
     }
     if (!session.applyPracticeCache(cache)) {
-      Toast.error('远端练习进度无效，无法重新加载')
+      Toast.error('Remote practice progress is invalid and cannot be reloaded')
       return false
     }
     resetSameWordAfterViewUpdate(previousWord)
-    Toast.success('已加载其他设备的最新进度')
+    Toast.success('Loaded the latest progress from another device')
     return true
   } catch (error) {
     if (error instanceof UnsupportedPracticeCacheVersionError) {
-      Toast.error('远端练习缓存来自更高版本，请升级后再继续')
+      Toast.error('The remote practice cache is from a newer version. Please upgrade to continue')
     } else {
       console.error('[practice] 加载远端练习进度失败', error)
-      Toast.error('远端进度加载失败，请稍后重试')
+      Toast.error('Failed to load remote progress. Please try again later')
     }
     return false
   } finally {
@@ -263,7 +263,7 @@ async function loadDict() {
       if (!dict.custom) dict = await _getDictDataByUrl(dict)
       if (!dict.words.length) {
         router.push('/words')
-        return Toast.warning('没有单词可学习！')
+        return Toast.warning('No words to study!')
       }
       store.changeDict(dict)
       await initData(null, true)
@@ -286,7 +286,7 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
         d = await wordPersistence.load()
       } catch (error) {
         if (!(error instanceof UnsupportedPracticeCacheVersionError)) throw error
-        Toast.error('练习缓存来自更高版本，请升级后再继续')
+        Toast.error('The practice cache is from a newer version. Please upgrade to continue')
         await router.push('/words')
         return
       }
@@ -304,7 +304,7 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
     console.log('initData')
     //不能直接赋值，会导致 inject 的数据为默认值
     if (!session.initializeTask(initVal)) {
-      Toast.warning('没有可学习的单词！')
+      Toast.warning('No words available to study!')
       router.push('/words')
       return
     }
@@ -359,7 +359,7 @@ async function complete() {
         await dataSync.saveDictState(store.$state, { pullWhenRemoteNewer: false })
       } catch (error) {
         console.error('[practice] 远端结算同步失败', error)
-        Toast.error('本地结算已完成，远端同步失败，可稍后重试')
+        Toast.error('Saved locally, but syncing to the server failed. You can retry later')
       }
 
       await wordPersistence.clear()
@@ -378,7 +378,7 @@ async function complete() {
       window.umami?.track('endStudyWord', trackData)
     } catch (error) {
       console.error('[practice] 本地结算失败', error)
-      Toast.error('结算失败，请重试')
+      Toast.error('Failed to save results. Please try again')
     } finally {
       settling = false
       runtimeStore.globalLoading = false
@@ -420,7 +420,7 @@ async function savePracticeDataIns() {
       knownCacheUpdatedAt = Math.max(knownCacheUpdatedAt, Date.now())
     } catch (error) {
       console.error('[practice] 保存练习缓存失败', error)
-      Toast.error('练习进度保存失败，请稍后重试')
+      Toast.error('Failed to save practice progress. Please try again later')
     } finally {
       runtimeStore.globalLoading = false
     }
@@ -465,7 +465,7 @@ async function continueStudy() {
   wordPersistence.clear()
   const temp = session.createNextTask(isComplete)
   if (!temp.new.length && !temp.review.length) {
-    Toast.warning('当前没有可学习的单词')
+    Toast.warning('There are no words to study right now')
     return
   }
   await initData(temp)
@@ -547,7 +547,7 @@ useEvents([
             :anim="statStore.timerPauseReason !== 'auto_visibility'"
             :shadow="false"
             :showClose="true"
-            :message="statStore.timerPauseReason === 'auto_idle' ? '已连续 3 分钟无键盘操作，计时已暂停' : '计时已暂停'"
+            :message="statStore.timerPauseReason === 'auto_idle' ? 'No keyboard activity for 3 minutes, timer paused' : 'Timer paused'"
             @close="statStore.resumeTimer"
           />
         </div>
@@ -596,12 +596,12 @@ useEvents([
             <BaseIcon
               v-if="taskWords.new.length"
               @click="continueStudy"
-              :title="`下一组(${settingStore.shortcutKeyMap[ShortcutKey.NextChapter]})`"
+              :title="`Next group (${settingStore.shortcutKeyMap[ShortcutKey.NextChapter]})`"
             >
               <IconFluentArrowRight16Regular class="arrow" width="22" />
             </BaseIcon>
 
-            <BaseIcon @click="randomWrite" :title="`随机默写(${settingStore.shortcutKeyMap[ShortcutKey.RandomWrite]})`">
+            <BaseIcon @click="randomWrite" :title="`Random dictation (${settingStore.shortcutKeyMap[ShortcutKey.RandomWrite]})`">
               <IconFluentArrowShuffle16Regular class="arrow" width="22" />
             </BaseIcon>
           </div>
@@ -636,10 +636,10 @@ useEvents([
   />
   <Dialog
     v-model="showRemoteReloadDialog"
-    title="检测到其他设备的新进度，是否重新加载？"
-    content="重新加载将使用其他设备的最新练习进度；保留当前进度则继续本页练习。"
-    confirm-button-text="重新加载"
-    cancel-button-text="保留当前进度"
+    title="New progress detected from another device. Reload?"
+    content="Reloading will use the latest practice progress from the other device. Keeping current progress continues practice on this page."
+    confirm-button-text="Reload"
+    cancel-button-text="Keep current progress"
     :footer="true"
     :padding="true"
     :show-close="false"

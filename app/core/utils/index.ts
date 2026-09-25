@@ -36,7 +36,7 @@ import { withAppBaseURL } from './base-url'
 dayjs.extend(duration)
 
 export function no() {
-  Toast.warning('未现实')
+  Toast.warning('Not implemented')
 }
 
 //检测多余字段;防止人为删除数据，导致数据不完整报错
@@ -84,7 +84,7 @@ export async function checkAndUpgradeSaveDict(val: any) {
         data = val
       }
       if (!data.version) {
-        let currentHash = '词典数据缺少版本号-自动备份'
+        let currentHash = 'Dict data missing version - auto backup'
         window?.umami?.track('error', currentHash)
         console.warn(currentHash)
         await saveHashSnapshot(currentHash, '')
@@ -92,7 +92,7 @@ export async function checkAndUpgradeSaveDict(val: any) {
       }
       let state: any = data.val
       if (typeof state !== 'object') {
-        let currentHash1 = '词典数据格式无效-自动备份'
+        let currentHash1 = 'Invalid dict data format - auto backup'
         console.warn(currentHash1)
         window?.umami?.track('error', currentHash1)
         await saveHashSnapshot(currentHash1, '')
@@ -120,7 +120,7 @@ export async function checkAndUpgradeSaveDict(val: any) {
           }
           return defaultState
         } catch (upgradeError) {
-          let currentHash2 = '词典数据升级失败-自动备份'
+          let currentHash2 = 'Dict data upgrade failed - auto backup'
           console.error(currentHash2, upgradeError)
           window?.umami?.track('error', currentHash2 + upgradeError)
           await saveHashSnapshot(currentHash2, '')
@@ -128,7 +128,7 @@ export async function checkAndUpgradeSaveDict(val: any) {
         }
       }
     } catch (e) {
-      let currentHash3 = '词典数据解析异常-自动备份'
+      let currentHash3 = 'Dict data parse error - auto backup'
       console.error(currentHash3, e)
       window?.umami?.track('error', currentHash3 + e)
       await saveHashSnapshot(currentHash3, '')
@@ -233,7 +233,7 @@ export async function checkAndUpgradeSaveSetting(val: any) {
       ;(defaultState as any).__updateLocalData = updateLocalData
       return defaultState
     } catch (e) {
-      let currentHash = '设置数据解析异常-自动备份'
+      let currentHash = 'Settings data parse error - auto backup'
       window?.umami?.track('error', currentHash + e)
       await saveHashSnapshot(currentHash, '')
       return defaultState
@@ -294,13 +294,13 @@ export function msToHourMinute(ms: number, en: boolean = false) {
   const totalMinutes = Math.floor(d.asMinutes())
   const hours = Math.floor(totalMinutes / 60)
   const minutes = totalMinutes % 60
-  if (hours) return `${hours}${en ? 'h' : '小时'}${minutes}${en ? 'm' : '分钟'}`
-  if (minutes) return `${minutes}${en ? 'm' : '分钟'}`
-  return `${Math.floor(d.asSeconds())}秒`
+  if (hours) return `${hours}h ${minutes}m`
+  if (minutes) return `${minutes}m`
+  return `${Math.floor(d.asSeconds())}s`
 }
 
 export function msToMinute(ms: number, en: boolean = false) {
-  return `${Math.floor(dayjs.duration(ms).asMinutes())}${en ? 'm' : '分钟'}`
+  return `${Math.floor(dayjs.duration(ms).asMinutes())}m`
 }
 
 //获取完成天数
@@ -637,7 +637,7 @@ export async function loadJsLib(key: string, url: string) {
           // @ts-ignore
           resolve(window[key])
         } catch (err: any) {
-          reject(`${key} 加载失败: ${err.message}`)
+          reject(`${key} failed to load: ${err.message}`)
         }
       }
     } else {
@@ -646,7 +646,7 @@ export async function loadJsLib(key: string, url: string) {
       // @ts-ignore
       script.onload = () => resolve(window[key])
     }
-    script.onerror = () => reject(key + ' 加载失败')
+    script.onerror = () => reject(key + ' failed to load')
     document.head.appendChild(script)
   })
 }

@@ -72,13 +72,13 @@ export const getDefaultBaseState = (): BaseState => ({
   load: false,
   word: {
     bookList: [
-      getDefaultDict({ id: DictId.wordCollect, enName: DictId.wordCollect, name: '收藏', system: true }),
-      getDefaultDict({ id: DictId.wordWrong, enName: DictId.wordWrong, name: '错词', system: true }),
+      getDefaultDict({ id: DictId.wordCollect, enName: DictId.wordCollect, name: 'Favorites', system: true }),
+      getDefaultDict({ id: DictId.wordWrong, enName: DictId.wordWrong, name: 'Mistakes', system: true }),
       getDefaultDict({
         id: DictId.wordKnown,
         enName: DictId.wordKnown,
-        name: '已掌握',
-        description: '已掌握后的单词不会出现在练习中',
+        name: 'Mastered',
+        description: 'Mastered words will not appear in practice',
         system: true,
       }),
     ],
@@ -86,7 +86,7 @@ export const getDefaultBaseState = (): BaseState => ({
   },
   article: {
     bookList: [
-      getDefaultDict({ id: DictId.articleCollect, enName: DictId.articleCollect, name: '收藏', system: true }),
+      getDefaultDict({ id: DictId.articleCollect, enName: DictId.articleCollect, name: 'Favorites', system: true }),
     ],
     studyIndex: -1,
   },
@@ -95,6 +95,29 @@ export const getDefaultBaseState = (): BaseState => ({
   noteData: {},
   _ignoreWatch: false,
 })
+
+// Rename system dicts persisted with the old Chinese default names
+const LEGACY_SYSTEM_DICT_NAMES: Record<string, { from: string[]; name: string; description?: string }> = {
+  [DictId.wordCollect]: { from: ['收藏'], name: 'Favorites' },
+  [DictId.wordWrong]: { from: ['错词'], name: 'Mistakes' },
+  [DictId.wordKnown]: {
+    from: ['已掌握'],
+    name: 'Mastered',
+    description: 'Mastered words will not appear in practice',
+  },
+  [DictId.articleCollect]: { from: ['收藏'], name: 'Favorites' },
+}
+
+function normalizeSystemDictNames(list?: Dict[]) {
+  list?.forEach(book => {
+    const rule = LEGACY_SYSTEM_DICT_NAMES[book?.id] ?? LEGACY_SYSTEM_DICT_NAMES[book?.enName]
+    if (!rule || !rule.from.includes(book.name)) return
+    book.name = rule.name
+    if (rule.description && book.description === '已掌握后的单词不会出现在练习中') {
+      book.description = rule.description
+    }
+  })
+}
 
 export const useBaseStore = defineStore('base', {
   state: (): BaseState => {
@@ -165,6 +188,8 @@ export const useBaseStore = defineStore('base', {
       return [this.allIgnoreWordsSet, this.knownWordsSet][settingStore.ignoreSimpleWord ? 0 : 1]
     },
     setState(obj: BaseState) {
+      normalizeSystemDictNames(obj?.word?.bookList)
+      normalizeSystemDictNames(obj?.article?.bookList)
       obj.word.bookList.map(book => {
         book.words = shallowReactive(book.words)
         book.articles = shallowReactive(book.articles)

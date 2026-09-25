@@ -27,7 +27,7 @@ watch(() => props.groupByTag, () => {
 <template>
   <div>
     <div class="flex items-center">
-      <div class="category shrink-0">{{ category }}：</div>
+      <div class="category shrink-0">{{ category }}:</div>
       <div class="tags">
         <div class="tag" :class="i === currentTag &&'active'"
              @click="currentTag = i"

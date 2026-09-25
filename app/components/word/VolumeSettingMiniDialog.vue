@@ -54,7 +54,7 @@ function eventCheck(e) {
       <IconClarityVolumeUpLine />
     </BaseIcon>
     <MiniDialog width="18rem" @mouseenter="toggle(true)" @mouseleave="toggle(false)" v-model="show">
-      <div class="mini-row-title">音效设置</div>
+      <div class="mini-row-title">Sound Settings</div>
       <div class="mini-row">
         <label class="item-title">{{ $t('word_auto_pronunciation') }}</label>
         <div class="wrapper">
@@ -64,9 +64,9 @@ function eventCheck(e) {
       <div class="mini-row">
         <label class="item-title">{{ $t('pronunciation_accent') }}</label>
         <div class="wrapper">
-          <Select v-model="settingStore.soundType" @toggle="selectToggle" placeholder="请选择" size="small">
-            <Option label="美音" value="us" />
-            <Option label="英音" value="uk" />
+          <Select v-model="settingStore.soundType" @toggle="selectToggle" placeholder="Please select" size="small">
+            <Option label="US" value="us" />
+            <Option label="UK" value="uk" />
           </Select>
         </div>
       </div>
@@ -86,7 +86,7 @@ function eventCheck(e) {
       <div class="mini-row">
         <label class="item-title">{{ $t('keyboard_sound_effect') }}</label>
         <div class="wrapper">
-          <Select v-model="settingStore.keyboardSoundFile" @toggle="selectToggle" placeholder="请选择" size="small">
+          <Select v-model="settingStore.keyboardSoundFile" @toggle="selectToggle" placeholder="Please select" size="small">
             <Option v-for="item in SoundFileOptions" :key="item.value" :label="item.label" :value="item.value">
               <div class="el-option-row">
                 <span>{{ item.label }}</span>

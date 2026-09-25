@@ -77,7 +77,7 @@ const showSkipStep = computed(() => flowDisplay.value.showSkipStep)
       <div class="flex justify-between items-center">
         <div class="stat">
           <div class="row">
-            <Tooltip title="进度 / 错误数 / 单词数">
+            <Tooltip title="Progress / Mistakes / Words">
               <div class="shrink-0">
                 <span> {{ practiceData.index + 1 }}</span> /
                 <span class="color-red"> {{ format(practiceData.wrongWords.length, '', 0) }}</span> /
@@ -88,7 +88,7 @@ const showSkipStep = computed(() => flowDisplay.value.showSkipStep)
             <div class="name">{{ status }}</div>
           </div>
           <div class="row">
-            <Tooltip title="点击可暂停或恢复学习计时">
+            <Tooltip title="Click to pause or resume the study timer">
               <div class="num cursor-pointer" @click="onTimerRowClick">
                 <template v-if="statStore.timerPaused">
                   <IconFluentPause20Regular width="18" height="18" class="inline-block align-middle" />
@@ -100,7 +100,7 @@ const showSkipStep = computed(() => flowDisplay.value.showSkipStep)
             <div class="name">{{ $t('time') }}</div>
           </div>
           <div class="row">
-            <Tooltip title="总错词数 | 总词数">
+            <Tooltip title="Total mistakes | Total words">
               <div class="num">{{ format(practiceData.allWrongWords.length, '', 0) }} | {{ statStore.total }}</div>
             </Tooltip>
             <div class="line"></div>
@@ -148,7 +148,7 @@ const showSkipStep = computed(() => flowDisplay.value.showSkipStep)
     <div class="progress-wrap flex gap-3 items-center color-gray">
       <span class="shrink-0">{{ status }}</span>
       <StageProgress :stages="stages" />
-      <Tooltip title="进度 / 错误数 / 单词数">
+      <Tooltip title="Progress / Mistakes / Words">
         <div class="shrink-0">
           <span> {{ practiceData.index + 1 }}</span> /
           <span class="color-red"> {{ format(practiceData.wrongWords.length, '', 0) }}</span> /

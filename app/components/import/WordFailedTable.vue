@@ -50,14 +50,14 @@ function deleteRow(id: string) {
 
 function doBatchDelete() {
   const toDelete = props.rows.filter(r => r.checked)
-  if (!toDelete.length) return Toast.warning('请先勾选要删除的单词')
+  if (!toDelete.length) return Toast.warning('Please select the words to delete first')
 
   const remove = () => updateRows(props.rows.filter(r => !r.checked))
 
   if (toDelete.length > 10) {
     MessageBox.confirm(
-      `确定删除已勾选的 ${toDelete.length} 个单词吗？`,
-      '批量删除',
+      `Delete the ${toDelete.length} selected words?`,
+      'Bulk Delete',
       () => void 0,
       () => void 0,
       null,
@@ -87,19 +87,19 @@ function onEditKeydown(e: KeyboardEvent, row: FailedWordRow, value: string) {
 <template>
   <div class="failed-table">
     <p class="failed-table-tip">
-      以下单词未收录，可点击单词修改拼写后重试；勾选后可通过底部按钮处理
+      The following words were not found. Click a word to fix its spelling and retry, or select words and use the buttons below
     </p>
     <div class="failed-table-toolbar">
-      <Checkbox v-model="allChecked">全选</Checkbox>
+      <Checkbox v-model="allChecked">Select all</Checkbox>
       <BaseButton type="info" size="small" :disabled="!checkedCount" @click="doBatchDelete">
-        批量删除
+        Delete selected
       </BaseButton>
-      <span class="failed-table-count">已选 {{ checkedCount }} / {{ rows.length }}</span>
+      <span class="failed-table-count">Selected {{ checkedCount }} / {{ rows.length }}</span>
     </div>
     <div class="failed-table-head">
       <span class="col-check" />
-      <span class="col-word">单词</span>
-      <span class="col-action">操作</span>
+      <span class="col-word">Word</span>
+      <span class="col-action">Actions</span>
     </div>
     <ul class="failed-table-body">
       <li v-for="row in rows" :key="row.id" class="failed-table-row">
@@ -120,7 +120,7 @@ function onEditKeydown(e: KeyboardEvent, row: FailedWordRow, value: string) {
           </button>
         </div>
         <div class="col-action">
-          <button type="button" class="delete-btn" title="删除" @click="deleteRow(row.id)">
+          <button type="button" class="delete-btn" title="Delete" @click="deleteRow(row.id)">
             <IconFluentDelete20Regular />
           </button>
         </div>

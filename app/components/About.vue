@@ -14,7 +14,7 @@ import WeChat from '@/components/channel-icons/WeChat.vue'
       {{ $t('github_address') }}<a :href="GITHUB" target="_blank">{{ GITHUB }}</a>
     </p>
     <div class="flex flex-col gap-2 mt-20">
-      <div class="">常见问题： <RouterLink to="/help">常见问题解答</RouterLink></div>
+      <div class="">FAQ: <RouterLink to="/help">Frequently Asked Questions</RouterLink></div>
       <div class="flex items-center">{{ $t('about_wechat_feedback') }}<WeChat /></div>
       <div class="">
         {{ $t('about_ticket_feedback')

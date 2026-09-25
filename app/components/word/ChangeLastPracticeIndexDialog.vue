@@ -25,7 +25,7 @@ defineEmits<{
 <template>
   <!--  todo 这里显示的时候可以选中并高亮当前index-->
   <!--  todo 这个组件的分页器，需要直接可跳转指定页面，并显示一页有多少个-->
-  <Dialog v-model="model" padding title="修改学习进度">
+  <Dialog v-model="model" padding title="Change Study Progress">
     <div class="py-4 h-80vh">
       <BaseTable class="h-full" :request="requestList" :show-toolbar="false">
         <template v-slot="item">

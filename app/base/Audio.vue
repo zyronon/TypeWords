@@ -76,7 +76,7 @@ const togglePlay = async () => {
     }
   } catch (err) {
     console.error('播放失败:', err)
-    error.value = '播放失败'
+    error.value = 'Playback failed'
   }
 }
 
@@ -138,7 +138,7 @@ const handleEnded = () => {
 }
 
 const handleError = () => {
-  error.value = '音频加载失败'
+  error.value = 'Failed to load audio'
   isLoading.value = false
 }
 
@@ -433,7 +433,7 @@ defineExpose({ audioRef })
         :class="{ loading: isLoading }"
         @click="togglePlay"
         :disabled="disabled"
-        :aria-label="isPlaying ? '暂停' : '播放'"
+        :aria-label="isPlaying ? 'Pause' : 'Play'"
       >
         <div v-if="isLoading" class="loading-spinner"></div>
         <svg v-else-if="isPlaying" class="icon" viewBox="0 0 24 24" fill="currentColor">
@@ -464,7 +464,7 @@ defineExpose({ audioRef })
           tabindex="-1"
           @click="toggleMute"
           :disabled="disabled"
-          :aria-label="volume > 0 ? '静音' : '取消静音'"
+          :aria-label="volume > 0 ? 'Mute' : 'Unmute'"
         >
           <IconBxVolumeMute v-if="volume === 0" class="icon"></IconBxVolumeMute>
           <IconBxVolumeLow v-else-if="volume < 0.5" class="icon"></IconBxVolumeLow>
@@ -489,7 +489,7 @@ defineExpose({ audioRef })
         class="speed-button"
         @click="changePlaybackRate"
         :disabled="disabled"
-        :aria-label="`播放速度: ${playbackRate}x`"
+        :aria-label="`Playback speed: ${playbackRate}x`"
       >
         {{ playbackRate }}x
       </button>

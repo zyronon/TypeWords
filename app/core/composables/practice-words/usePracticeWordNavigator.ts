@@ -298,7 +298,7 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
   function runWrongWordRetry(action: PracticeWrongWordClearAction) {
     const data = deps.getPracticeData()
     // 实际 practiceType 由 resolvePhaseByCtxCursor 从 action.templateId 派生，无需在此设置
-    deps.notify?.('info', '还有错词，继续巩固一下吧')
+    deps.notify?.('info', 'There are still mistakes, keep practicing them')
     console.log(`[Nav] 还有错词，进入错词清空（templateId=${action.templateId}）`)
     data.words = shuffle(cloneDeep(data.wrongWords))
     data.index = 0
@@ -479,7 +479,7 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
   function prev() {
     const data = deps.getPracticeData()
     if (data.index === 0) {
-      deps.notify?.('warning', '已经是第一个了~')
+      deps.notify?.('warning', 'Already at the first word~')
     } else {
       data.index--
     }

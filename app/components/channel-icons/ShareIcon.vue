@@ -27,9 +27,9 @@ const studyStats = $computed(() => {
     review: practiceStore.reviewWordNumber,
     wrong: practiceStore.wrong,
     correct: practiceStore.total - practiceStore.wrong,
-    time: msToHourMinute(practiceStore.spend),
-    date: dayjs().format('MM月DD日'),
-    dictionary: baseStore.sdict.name || '未知词书',
+    time: msToHourMinute(practiceStore.spend, true),
+    date: dayjs().format('MMM D'),
+    dictionary: baseStore.sdict.name || 'Unknown dictionary',
   }
 })
 
@@ -43,12 +43,12 @@ async function copyImageToClipboard() {
 
     if (navigator.clipboard && (window as any).ClipboardItem) {
       await navigator.clipboard.write([new (window as any).ClipboardItem({ [blob.type || 'image/png']: blob })])
-      Toass.success('图片已复制到剪贴板！')
+      Toass.success('Image copied to clipboard!')
     } else {
       await downloadImage()
     }
   } catch (error) {
-    Toass.error('复制失败！')
+    Toass.error('Copy failed!')
     await downloadImage()
   } finally {
     loading1 = false
@@ -77,36 +77,36 @@ const studyProgress = $computed(() => {
 
 const sentence = $computed(() => {
   let list = [
-    { en: 'Actions speak louder than words.', cn: '行动胜于言语' },
-    { en: 'Keep going, never give up!', cn: '坚持就是胜利' },
-    { en: "Where there's a will, there's a way.", cn: '有志者事竟成' },
-    { en: 'Every cloud has a silver lining.', cn: '黑暗中总有一线光明' },
-    { en: 'Time heals all wounds.', cn: '时间能治愈一切创伤' },
-    { en: 'Never say die.', cn: '永不言败' },
-    { en: 'The best is yet to come.', cn: '最好的尚未到来' },
-    { en: "Believe you can and you're halfway there.", cn: '相信你自己，你已经成功了一半' },
-    { en: 'No pain, no gain.', cn: '没有付出就没有收获' },
-    { en: 'Dream big and dare to fail.', cn: '大胆梦想，勇于失败' },
-    { en: 'Home is where the heart is.', cn: '心在哪里，家就在哪里' },
-    { en: 'Knowledge is power.', cn: '知识就是力量' },
-    { en: 'Practice makes perfect.', cn: '熟能生巧' },
-    { en: 'When in Rome, do as the Romans do.', cn: '入乡随俗' },
-    { en: 'Just do it.', cn: '只管去做' },
-    { en: 'So far, so good.', cn: '到目前为止，一切还好' },
-    { en: 'The early bird catches the worm.', cn: '早起的鸟儿有虫吃' },
-    { en: 'Every day is a new beginning.', cn: '每一天都是新的开始' },
-    { en: 'Success is a journey, not a destination.', cn: '成功是旅程，不是终点' },
-    { en: 'Your only limit is your mind.', cn: '你唯一的限制是你的思维' },
-    { en: 'A friend in need is a friend indeed.', cn: '患难见真情' },
-    { en: 'Silence is golden.', cn: '沉默是金' },
-    { en: 'Let bygones be bygones.', cn: '让过去的成为过去' },
-    { en: 'Keep calm and carry on.', cn: '保持冷静，继续前进' },
-    { en: 'Live and learn.', cn: '活到老，学到老' },
-    { en: 'Mistakes are proof that you are trying.', cn: '错误证明你在努力尝试' },
-    { en: 'Better late than never.', cn: '迟做总比不做好' },
-    { en: 'Be the change you wish to see in the world.', cn: '成为你希望在世界上看到的改变' },
-    { en: 'The journey of a thousand miles begins with a single step.', cn: '千里之行，始于足下' },
-    { en: 'When one door closes, another opens.', cn: '当一扇门关闭时，另一扇会打开' },
+    { en: 'Actions speak louder than words.', cn: 'What you do matters more than what you say' },
+    { en: 'Keep going, never give up!', cn: 'Persistence is victory' },
+    { en: "Where there's a will, there's a way.", cn: 'Determination finds a path' },
+    { en: 'Every cloud has a silver lining.', cn: 'There is always light in the darkness' },
+    { en: 'Time heals all wounds.', cn: 'Time makes every hurt fade' },
+    { en: 'Never say die.', cn: 'Never admit defeat' },
+    { en: 'The best is yet to come.', cn: 'Better days are ahead' },
+    { en: "Believe you can and you're halfway there.", cn: 'Believe in yourself and you are half done' },
+    { en: 'No pain, no gain.', cn: 'Effort is the price of reward' },
+    { en: 'Dream big and dare to fail.', cn: 'Aim high and fear no failure' },
+    { en: 'Home is where the heart is.', cn: 'Home is wherever your heart belongs' },
+    { en: 'Knowledge is power.', cn: 'Learning makes you strong' },
+    { en: 'Practice makes perfect.', cn: 'Skill comes from repetition' },
+    { en: 'When in Rome, do as the Romans do.', cn: 'Follow local customs wherever you go' },
+    { en: 'Just do it.', cn: 'Stop thinking, start doing' },
+    { en: 'So far, so good.', cn: 'All is well up to now' },
+    { en: 'The early bird catches the worm.', cn: 'Those who start early get ahead' },
+    { en: 'Every day is a new beginning.', cn: 'Each day is a fresh start' },
+    { en: 'Success is a journey, not a destination.', cn: 'Enjoy the road to success' },
+    { en: 'Your only limit is your mind.', cn: 'Only your thinking holds you back' },
+    { en: 'A friend in need is a friend indeed.', cn: 'Hard times reveal true friends' },
+    { en: 'Silence is golden.', cn: 'Sometimes saying nothing is best' },
+    { en: 'Let bygones be bygones.', cn: 'Leave the past behind' },
+    { en: 'Keep calm and carry on.', cn: 'Stay calm and keep moving forward' },
+    { en: 'Live and learn.', cn: 'Never stop learning' },
+    { en: 'Mistakes are proof that you are trying.', cn: 'Mistakes show you are making an effort' },
+    { en: 'Better late than never.', cn: 'Doing it late beats not doing it at all' },
+    { en: 'Be the change you wish to see in the world.', cn: 'Change starts with you' },
+    { en: 'The journey of a thousand miles begins with a single step.', cn: 'Every long journey starts with one step' },
+    { en: 'When one door closes, another opens.', cn: 'A closed door means a new one is opening' },
   ]
   return list[Math.floor(Math.random() * list.length)]
 })
@@ -119,7 +119,7 @@ const sentence = $computed(() => {
   </BaseIcon>
 
   <!-- 学习总结分享图片生成对话框 -->
-  <Dialog v-model="showShareDialog" title="分享">
+  <Dialog v-model="showShareDialog" title="Share">
     <div class="flex min-w-160 max-w-200 p-6 pt-0 gap-space">
       <!-- 左侧：海报预览区域 -->
       <div ref="posterEl" class="flex-1 border-r border-gray-200 bg-gray-100 rounded-xl overflow-hidden relative">
@@ -127,14 +127,14 @@ const sentence = $computed(() => {
           <div class="flex flex-col flex-1 space-y-3">
             <!-- 顶部用户信息 -->
             <div class="flex items-center">
-              <div class="ml-auto text-xs">Type Words | 英语学习</div>
+              <div class="ml-auto text-xs">Type Words | English Learning</div>
             </div>
 
             <div class="bg-gray-900/30 py-4 center flex-col rounded-2xl">
-              <div class="text-center mb-2 text-xl">我学习了{{ studyStats.time }} {{ baseStore.sdict.name }}</div>
+              <div class="text-center mb-2 text-xl">I studied {{ baseStore.sdict.name }} for {{ studyStats.time }}</div>
               <!-- Progress Overview -->
               <div class="w-90/100 flex items-center gap-space">
-                <div class="shrink-0">进度</div>
+                <div class="shrink-0">Progress</div>
                 <Progress :percentage="studyProgress" size="normal" />
               </div>
             </div>
@@ -143,15 +143,15 @@ const sentence = $computed(() => {
             <div class="grid grid-cols-3 gap-4">
               <div class="stat-card">
                 <div class="text-2xl font-bold">{{ studyStats.newWords }}</div>
-                <div class="text-base">新词</div>
+                <div class="text-base">New</div>
               </div>
               <div class="stat-card">
                 <div class="text-2xl font-bold">{{ studyStats.review }}</div>
-                <div class="text-base">复习</div>
+                <div class="text-base">Review</div>
               </div>
               <div class="stat-card">
                 <div class="text-2xl font-bold">{{ studyStats.wrong }}</div>
-                <div class="text-base">错词</div>
+                <div class="text-base">Mistakes</div>
               </div>
             </div>
 
@@ -168,7 +168,7 @@ const sentence = $computed(() => {
               <div class="space-y-2">
                 <div class="font-bold text-2xl">Type Words</div>
                 <div class="text-base">{{ Origin }}</div>
-                <div class="text-xs">一次敲击，一点进步，开源单词学习工具</div>
+                <div class="text-xs">Every keystroke is progress. An open-source vocabulary tool</div>
               </div>
               <img :src="withAppBaseURL('/imgs/share/qr.png')" class="w-20 w-20 rounded-md overflow-hidden" alt="" />
             </div>
@@ -187,23 +187,23 @@ const sentence = $computed(() => {
         <div class="">
           <div class="text-2xl font-bold mb-4 flex items-center">
             <span class="mr-2">🎯</span>
-            分享你的进步
+            Share your progress
           </div>
           <div class="flex items-start">
             <span class="mr-2">🚀</span>
-            在 {{ APP_NAME }}，学习英语也能成为超酷的事情！
+            With {{ APP_NAME }}, learning English can be seriously cool!
           </div>
           <div class="flex items-start">
             <span class="mr-2">📸</span>
-            快来分享你的学习图片，让你的进步刷屏朋友圈，成为最受瞩目的英语学霸！😎
+            Share your study card, flood your feed with your progress, and become the English whiz everyone notices! 😎
           </div>
           <div class="flex items-start">
             <span class="mr-2">💪</span>
-            这不只是简单的打卡，更是你秀出英语实力的舞台！
+            It's more than a check-in, it's your stage to show off your English!
           </div>
           <div class="flex items-start">
             <span class="mr-2">🔥</span>
-            分享你的学习记录，收获朋友们的点赞和认可，让你的朋友圈也掀起一股英语学习的热潮！
+            Share your study record, collect likes from friends, and start an English-learning wave among them!
           </div>
         </div>
 
@@ -214,7 +214,7 @@ const sentence = $computed(() => {
             class="flex items-center justify-start gap-space color-black px-6 py-3 bg-gray-200 rounded-lg cp hover:bg-gray-300 transition-all duration-200"
           >
             <IconMdiSparkles class="w-4 h-4 text-yellow-500" />
-            换个背景
+            Change background
           </div>
 
           <!-- 分享战绩 -->
@@ -224,7 +224,7 @@ const sentence = $computed(() => {
           >
             <IconEosIconsLoading class="text-xl" v-if="loading1" />
             <IconFluentCopy20Regular class="w-5 h-5" v-else />
-            <span class="font-medium">复制到剪贴板</span>
+            <span class="font-medium">Copy to clipboard</span>
           </div>
 
           <div
@@ -233,7 +233,7 @@ const sentence = $computed(() => {
           >
             <IconEosIconsLoading class="text-xl" v-if="loading2" />
             <IconFluentArrowDownload20Regular class="w-5 h-5" v-else />
-            <span class="font-medium">保存高清海报</span>
+            <span class="font-medium">Save HD poster</span>
           </div>
         </div>
       </div>

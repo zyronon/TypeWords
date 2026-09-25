@@ -11,17 +11,17 @@ const emit = defineEmits(['openLink'])
 // 根据难度获取对应的样式类
 const getDifficultyClass = (difficulty: string) => {
   switch (difficulty) {
-    case '入门':
+    case 'Beginner':
       return 'bg-green-500'
-    case '基础':
+    case 'Elementary':
       return 'bg-blue-500'
-    case '中级':
+    case 'Intermediate':
       return 'bg-purple-500'
-    case '进阶':
+    case 'Upper-Intermediate':
       return 'bg-amber-500'
-    case '高级':
+    case 'Advanced':
       return 'bg-red-500'
-    case '全级别':
+    case 'All levels':
       return 'bg-gray-500'
     default:
       return 'bg-blue-500'
