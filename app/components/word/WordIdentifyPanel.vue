@@ -115,7 +115,7 @@ const text = $computed(() => {
       <template #reference>
         <div class="p-1">
           <ul class="pl-4 my-0">
-            <li>直接拼写：直接输入单词；开始输入后，该词会自动标记为 <span class="font-bold">“不认识”</span></li>
+            <li>直接拼写：完整输入正确按答对计算；输入错误时，该词会标记为 <span class="font-bold">“不认识”</span></li>
             <li>
               快速标记：{{
                 `${$t('shortcut')}(${settingStore.shortcutKeyMap[ShortcutKey.KnowWord]}/${settingStore.shortcutKeyMap[ShortcutKey.UnknownWord]}/${settingStore.shortcutKeyMap[ShortcutKey.MasteredWord]})`
