@@ -80,7 +80,8 @@ export const SENTENCE_PLAY_SHORTCUT_KEYS = [
 ] as const
 
 export enum TranslateEngine {
-  Baidu = 0,
+  Baidu = 'baidu',
+  LocalLLM = 'local-llm',
 }
 
 export enum PracticeArticleWordType {

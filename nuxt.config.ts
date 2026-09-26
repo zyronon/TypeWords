@@ -134,6 +134,8 @@ export default defineNuxtConfig({
       origin: process.env.ORIGIN || 'https://typewords.cc',
       host: process.env.HOST || 'typewords.cc',
       passwordRsaPublicKey: process.env.VITE_PASSWORD_RSA_PUBLIC_KEY || '',
+      //本地大模型翻译入口。默认关闭，保持线上行为不变
+      enableLocalTranslate: process.env.ENABLE_LOCAL_TRANSLATE === 'true',
       latestCommitHash: latestCommitHash + (process.env.NODE_ENV === 'production' ? '' : ' (dev)'),
       latestCommitTime: latestCommitTime,
     },
@@ -167,6 +169,12 @@ export default defineNuxtConfig({
     devProxy: {
       '/baidu': {
         target: 'https://api.fanyi.baidu.com/api/trans/vip/translate',
+        changeOrigin: true,
+      },
+      //本地大模型翻译服务。llama.cpp / ollama / LM Studio 都是 OpenAI 兼容端点
+      //示例：llama serve -hf tencent/Hy-MT2-1.8B-GGUF:Q4_K_M --port 8080
+      '/hymt': {
+        target: process.env.LOCAL_TRANSLATE_TARGET || 'http://127.0.0.1:8080',
         changeOrigin: true,
       },
     },
