@@ -226,7 +226,6 @@ async function importJson(str: string) {
     },
   }
   try {
-    debugger
     obj = JSON.parse(str)
     let data = obj.val
     data.dict.val = await checkAndUpgradeSaveDict(data.dict)
@@ -365,7 +364,6 @@ async function restoreHistoryData() {
   restoreLoading = true
   try {
     const { data: val }: Snapshot = await get(restoreTarget.key)
-    debugger
     let data: BackupData['val'] = {
       setting: JSON.parse(val.setting),
       dict: JSON.parse(val.dict),
