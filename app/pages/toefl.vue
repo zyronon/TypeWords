@@ -17,7 +17,7 @@ import { getCurrentStudyWord } from '@/core/hooks/dict.ts'
 const title = 'TOEFL 托福训练'
 useSeoMeta({
   title,
-  description: 'TOEFL iBT 托福训练：核心词汇听写、拼写与自测，配套 2026 新版考试结构速览',
+  description: 'TOEFL iBT 托福训练：6316 个核心与学科场景词，听写、拼写与自测，配套 2026 新版考试结构速览',
   ogTitle: title,
   ogDescription: 'TOEFL iBT 托福训练：核心词汇听写、拼写与自测',
 })
@@ -34,9 +34,9 @@ const TOEFL_DICT_RESOURCE = {
   id: 2,
   enName: 'toefl',
   name: 'TOEFL',
-  description: '托福核心词汇库（4510 词），覆盖学术英语高频词，适合 TOEFL iBT 备考',
+  description: '托福核心词汇库（6316 词），覆盖学术英语高频词与学科场景词，适合 TOEFL iBT 备考',
   url: 'TOEFL.json',
-  length: 4510,
+  length: 6316,
   language: 'en' as const,
   translateLanguage: 'zh_CN' as const,
   category: '留学考试',
@@ -145,7 +145,7 @@ function goDictList() {
         <div class="hero-badge">TOEFL iBT · 2026 新版</div>
         <h1 class="hero-title">托福训练</h1>
         <p class="hero-desc">
-          基于 4510 个托福核心词汇，用打字练习强化「音–形–义」记忆。覆盖跟写、听写、默写、自测多种模式，
+          基于 6316 个托福核心与学科场景词汇，用打字练习强化「音–形–义」记忆。覆盖跟写、听写、默写、自测多种模式，
           适合碎片化备考。
         </p>
         <div class="hero-actions">
