@@ -2,6 +2,7 @@
 import type { Word } from '@/core/types'
 import { onMounted, watch } from 'vue'
 import SentenceHightLightWord from './SentenceHightLightWord.vue'
+import { useDictScript } from '@/composables/useDictScript'
 
 const props = withDefaults(
   defineProps<{
@@ -14,12 +15,18 @@ const props = withDefaults(
   }
 )
 
+const { formatCn, script } = useDictScript()
+
 watch(
   () => props.word.trans,
   () => {
     init()
   }
 )
+
+watch(script, () => {
+  init()
+})
 
 let posList = $ref<{ pos: string; trans: { cn: string; frequency?: number }[]; totalFreq: number }[]>([])
 let noposTrans = $ref<{ cn: string; frequency?: number }[]>([])
@@ -29,15 +36,17 @@ function init() {
   let posMap = new Map<string, { pos: string; cn: string; frequency?: number }[]>()
   let emptyPos: { cn: string; frequency?: number }[] = []
   trans.forEach(item => {
-    if (!item.pos && !item.cn.includes('【名】')) {
-      emptyPos.push(item)
+    const cn = formatCn(item.cn)
+    const normalized = { ...item, cn }
+    if (!item.pos && !cn.includes('【名】')) {
+      emptyPos.push(normalized)
       return
     }
-    if (item.cn.includes('【名】')) return
+    if (cn.includes('【名】')) return
     if (!posMap.has(item.pos)) {
       posMap.set(item.pos, [])
     }
-    posMap.get(item.pos)?.push(item)
+    posMap.get(item.pos)?.push(normalized)
   })
   let list = Array.from(posMap, ([pos, trans]) => ({ pos: pos, trans: trans, totalFreq: 0 }))
   list.forEach(pos => {

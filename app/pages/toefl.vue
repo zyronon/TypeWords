@@ -13,13 +13,18 @@ import {
 import { getPracticeWordCacheLocal } from '@/core/utils/cache.ts'
 import { flushStatToStore, usePracticeWordPersistence } from '@/core/composables/usePracticePersistence'
 import { getCurrentStudyWord } from '@/core/hooks/dict.ts'
+import { useDictScript } from '@/composables/useDictScript'
+import { convertDictText } from '@/core/utils/zh-script.ts'
 
-const title = 'TOEFL 托福训练'
+const { t: $t, locale } = useI18n()
+const { formatCn } = useDictScript()
+
+const title = $t('toefl_title')
 useSeoMeta({
   title,
-  description: 'TOEFL iBT 托福训练：6316 个核心与学科场景词，听写、拼写与自测，配套 2026 新版考试结构速览',
+  description: $t('toefl_desc'),
   ogTitle: title,
-  ogDescription: 'TOEFL iBT 托福训练：核心词汇听写、拼写与自测',
+  ogDescription: $t('toefl_desc'),
 })
 
 const store = useBaseStore()
@@ -28,15 +33,26 @@ const settingStore = useSettingStore()
 const wordPersistence = usePracticeWordPersistence()
 const { nav } = useNav()
 let loading = $ref(false)
+/** 释义脚本预览：跟随 UI，也可手动切换简/繁 */
+let scriptPreview = $ref<'follow' | 'zh-CN' | 'zh-TW'>('follow')
+
+const resolvedScript = computed(() => {
+  if (scriptPreview === 'follow') return locale.value === 'tw' ? 'zh-TW' : 'zh-CN'
+  return scriptPreview
+})
+
+function previewText(text: string) {
+  return convertDictText(text, resolvedScript.value)
+}
 
 /** TOEFL 词库目录项，与 public/list/word.json 中 enName=toefl 保持一致 */
 const TOEFL_DICT_RESOURCE = {
   id: 2,
   enName: 'toefl',
   name: 'TOEFL',
-  description: '托福核心词汇库（6316 词），覆盖学术英语高频词与学科场景词，适合 TOEFL iBT 备考',
+  description: '托福核心词汇库（6385 词），覆盖学术英语高频词与学科场景词，适合 TOEFL iBT 备考',
   url: 'TOEFL.json',
-  length: 6316,
+  length: 6385,
   language: 'en' as const,
   translateLanguage: 'zh_CN' as const,
   category: '留学考试',
@@ -143,14 +159,29 @@ function goDictList() {
     <div class="toefl-page">
       <section class="hero card-white">
         <div class="hero-badge">TOEFL iBT · 2026 新版</div>
-        <h1 class="hero-title">托福训练</h1>
+        <h1 class="hero-title">{{ $t('toefl_title') }}</h1>
         <p class="hero-desc">
-          基于 6316 个托福核心与学科场景词汇，用打字练习强化「音–形–义」记忆。覆盖跟写、听写、默写、自测多种模式，
-          适合碎片化备考。
+          {{ $t('toefl_hero_desc') }}
         </p>
+        <div class="lang-row">
+          <span class="lang-label">{{ $t('toefl_script_label') }}</span>
+          <button
+            v-for="opt in [
+              { value: 'follow', label: $t('toefl_script_follow') },
+              { value: 'zh-CN', label: $t('toefl_script_sc') },
+              { value: 'zh-TW', label: $t('toefl_script_tc') },
+            ]"
+            :key="opt.value"
+            class="lang-btn"
+            :class="{ active: scriptPreview === opt.value }"
+            @click="scriptPreview = opt.value as any"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
         <div class="hero-actions">
-          <BaseButton type="primary" :loading="loading" @click="startToeflTraining">开始 TOEFL 词汇训练</BaseButton>
-          <BaseButton @click="goDictList">浏览全部词库</BaseButton>
+          <BaseButton type="primary" :loading="loading" @click="startToeflTraining">{{ $t('toefl_start') }}</BaseButton>
+          <BaseButton @click="goDictList">{{ $t('toefl_browse') }}</BaseButton>
         </div>
       </section>
 
@@ -170,15 +201,15 @@ function goDictList() {
             <ul class="tasks">
               <li v-for="task in item.tasks" :key="task">{{ task }}</li>
             </ul>
-            <p class="tip">{{ item.tip }}</p>
+            <p class="tip">{{ previewText(item.tip) }}</p>
           </article>
         </div>
       </section>
 
       <section class="section">
-        <h2 class="section-title">备考建议</h2>
+        <h2 class="section-title">{{ $t('toefl_tips_title') }}</h2>
         <ul class="tips">
-          <li v-for="(tip, i) in studyTips" :key="i">{{ tip }}</li>
+          <li v-for="(tip, i) in studyTips" :key="i">{{ previewText(tip) }}</li>
         </ul>
       </section>
 
@@ -253,6 +284,34 @@ function goDictList() {
   flex-wrap: wrap;
   gap: 0.75rem;
   margin-top: 1.25rem;
+}
+
+.lang-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.lang-label {
+  font-size: 0.9rem;
+  color: var(--color-text-second, #666);
+}
+
+.lang-btn {
+  border: 1px solid var(--color-border, #ddd);
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  &.active {
+    background: #7c3aed;
+    border-color: #7c3aed;
+    color: #fff;
+  }
 }
 
 .section {
