@@ -29,11 +29,11 @@ function init() {
   let posMap = new Map<string, { pos: string; cn: string; frequency?: number }[]>()
   let emptyPos: { cn: string; frequency?: number }[] = []
   trans.forEach(item => {
-    if (!item.pos && !item.cn.includes('【名】')) {
+    if (!item.pos && !item.cn.includes('【名】') && !item.cn.includes('（人名）')) {
       emptyPos.push(item)
       return
     }
-    if (item.cn.includes('【名】')) return
+    if (item.cn.includes('【名】') || item.cn.includes('（人名）')) return
     if (!posMap.has(item.pos)) {
       posMap.set(item.pos, [])
     }
