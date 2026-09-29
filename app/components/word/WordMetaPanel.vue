@@ -155,6 +155,16 @@ defineExpose({ startPracticeSentence, playSentence })
       </div>
     </template>
 
+    <!-- 英文释义（双解） -->
+    <template v-if="word?.en?.length">
+      <div class="en-defs my-2" v-opacity="showTranslation">
+        <div class="label">{{ $t('english_definition') }}</div>
+        <ul>
+          <li v-for="(item, i) in word.en" :key="i">{{ item }}</li>
+        </ul>
+      </div>
+    </template>
+
     <!-- 例句列表 -->
     <template v-if="word?.sentences?.length">
       <div v-opacity="showDetails">
@@ -275,6 +285,26 @@ defineExpose({ startPracticeSentence, playSentence })
 </template>
 
 <style scoped lang="scss">
+.en-defs {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--color-text-second, #666);
+
+  .label {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--color-text-title, #333);
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.1rem;
+
+    li {
+      margin-bottom: 0.2rem;
+    }
+  }
+}
 .word-meta {
   width: 100%;
 

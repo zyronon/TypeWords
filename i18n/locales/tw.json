@@ -822,5 +822,13 @@
   "toefl_script_label": "釋義腳本",
   "toefl_script_follow": "跟隨介面",
   "toefl_script_sc": "簡體",
-  "toefl_script_tc": "繁體"
+  "toefl_script_tc": "繁體",
+  "english_definition": "英文釋義",
+  "toefl_subject_label": "學科專項（可多選）",
+  "toefl_subject_clear": "清除篩選",
+  "toefl_subject_loading": "載入學科標籤中…",
+  "toefl_features_title": "本訓練特色",
+  "toefl_feature_bilingual": "英文雙解釋義：約 94% 詞條帶英文釋義，方便對照學術語境。",
+  "toefl_feature_subject": "學科標籤篩選：可只練「地質 / 生物 / 考古」等專項詞彙。",
+  "toefl_feature_script": "簡繁轉換：釋義可切換簡體 / 繁體，或跟隨介面語言。"
 }

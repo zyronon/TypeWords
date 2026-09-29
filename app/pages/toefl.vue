@@ -15,6 +15,7 @@ import { flushStatToStore, usePracticeWordPersistence } from '@/core/composables
 import { getCurrentStudyWord } from '@/core/hooks/dict.ts'
 import { useDictScript } from '@/composables/useDictScript'
 import { convertDictText } from '@/core/utils/zh-script.ts'
+import { filterWordsBySubjects, listDictSubjects } from '@/core/utils/toefl-subject.ts'
 
 const { t: $t, locale } = useI18n()
 const { formatCn } = useDictScript()
@@ -35,6 +36,9 @@ const { nav } = useNav()
 let loading = $ref(false)
 /** 释义脚本预览：跟随 UI，也可手动切换简/繁 */
 let scriptPreview = $ref<'follow' | 'zh-CN' | 'zh-TW'>('follow')
+/** 学科筛选：空 = 全部 */
+let selectedSubjects = $ref<string[]>([])
+let subjectList = $ref<{ tag: string; count: number }[]>([])
 
 const resolvedScript = computed(() => {
   if (scriptPreview === 'follow') return locale.value === 'tw' ? 'zh-TW' : 'zh-CN'
@@ -104,20 +108,44 @@ const studyTips = [
   'ETS 不设统一及格线，目标分数以申请院校要求为准。',
 ]
 
+async function loadToeflWords() {
+  let dict = store.word.bookList.find(v => v.enName === TOEFL_DICT_RESOURCE.enName || v.id === TOEFL_DICT_RESOURCE.id)
+  if (!dict?.words?.length) {
+    dict = await _getDictDataByUrl(TOEFL_DICT_RESOURCE as any)
+  }
+  return dict
+}
+
+function toggleSubject(tag: string) {
+  const i = selectedSubjects.indexOf(tag)
+  if (i >= 0) selectedSubjects.splice(i, 1)
+  else selectedSubjects.push(tag)
+}
+
+function clearSubjects() {
+  selectedSubjects = []
+}
+
 async function startToeflTraining() {
   if (loading) return
   loading = true
   try {
-    let dict = store.word.bookList.find(v => v.enName === TOEFL_DICT_RESOURCE.enName || v.id === TOEFL_DICT_RESOURCE.id)
-    if (!dict?.words?.length) {
-      const loaded = await _getDictDataByUrl(TOEFL_DICT_RESOURCE as any)
-      dict = loaded
+    const dict = await loadToeflWords()
+    if (!subjectList.length && dict?.words?.length) {
+      subjectList = listDictSubjects(dict.words)
+    }
+
+    const allWords = dict?.words?.length ? dict.words : []
+    const words = filterWordsBySubjects(allWords, selectedSubjects)
+    if (!words.length) {
+      Toast.warning('所选学科下没有可练习的单词')
+      return
     }
 
     const draft = getDefaultDict({
       ...TOEFL_DICT_RESOURCE,
       ...(dict ?? {}),
-      words: dict?.words?.length ? dict.words : [],
+      words: allWords,
     })
     // 保留 bookList 中已有的学习进度，避免重新进入训练时被清零
     const existing = store.word.bookList.find(item => isSameDictResource(item, draft as any))
@@ -138,9 +166,19 @@ async function startToeflTraining() {
     await store.changeDict(draft)
     settingStore.wordPracticeMode = WordPracticeMode.Free
 
-    const currentStudy = getCurrentStudyWord()
-    nav('practice-words/' + store.sdict.id, {}, { taskWords: currentStudy })
-    Toast.success('已进入 TOEFL 词汇训练，加油！')
+    // 学科筛选：只练所选学科词；未筛选则走默认学习任务
+    if (selectedSubjects.length) {
+      const batch = words.slice(0, Math.min(words.length, Math.max(draft.perDayStudyNumber || 20, 20)))
+      nav('practice-words/' + draft.id, {}, { taskWords: { new: batch, review: [] }, total: batch.length })
+    } else {
+      const currentStudy = getCurrentStudyWord()
+      nav('practice-words/' + store.sdict.id, {}, { taskWords: currentStudy })
+    }
+    Toast.success(
+      selectedSubjects.length
+        ? `已进入 TOEFL 专项训练（${selectedSubjects.join(' / ')}，${words.length} 词）`
+        : '已进入 TOEFL 词汇训练，加油！'
+    )
   } catch (e) {
     console.error('[toefl] start training failed', e)
     Toast.error('TOEFL 词库加载失败，请稍后重试')
@@ -148,6 +186,20 @@ async function startToeflTraining() {
     loading = false
   }
 }
+
+async function ensureSubjects() {
+  if (subjectList.length) return
+  try {
+    const dict = await loadToeflWords()
+    if (dict?.words?.length) subjectList = listDictSubjects(dict.words)
+  } catch {
+    /* ignore */
+  }
+}
+
+onMounted(() => {
+  ensureSubjects()
+})
 
 function goDictList() {
   nav('/dict-list')
@@ -179,6 +231,28 @@ function goDictList() {
             {{ opt.label }}
           </button>
         </div>
+        <div class="subject-row">
+          <div class="subject-head">
+            <span class="lang-label">{{ $t('toefl_subject_label') }}</span>
+            <button v-if="selectedSubjects.length" class="lang-btn" @click="clearSubjects">
+              {{ $t('toefl_subject_clear') }}
+            </button>
+          </div>
+          <div class="subject-chips">
+            <button
+              v-for="item in subjectList"
+              :key="item.tag"
+              class="subject-chip"
+              :class="{ active: selectedSubjects.includes(item.tag) }"
+              @click="toggleSubject(item.tag)"
+            >
+              {{ item.tag }}
+              <em>{{ item.count }}</em>
+            </button>
+            <span v-if="!subjectList.length" class="subject-empty">{{ $t('toefl_subject_loading') }}</span>
+          </div>
+        </div>
+
         <div class="hero-actions">
           <BaseButton type="primary" :loading="loading" @click="startToeflTraining">{{ $t('toefl_start') }}</BaseButton>
           <BaseButton @click="goDictList">{{ $t('toefl_browse') }}</BaseButton>
@@ -204,6 +278,15 @@ function goDictList() {
             <p class="tip">{{ previewText(item.tip) }}</p>
           </article>
         </div>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">{{ $t('toefl_features_title') }}</h2>
+        <ul class="tips">
+          <li>{{ $t('toefl_feature_bilingual') }}</li>
+          <li>{{ $t('toefl_feature_subject') }}</li>
+          <li>{{ $t('toefl_feature_script') }}</li>
+        </ul>
       </section>
 
       <section class="section">
@@ -312,6 +395,54 @@ function goDictList() {
     border-color: #7c3aed;
     color: #fff;
   }
+}
+
+.subject-row {
+  margin-top: 1.15rem;
+}
+
+.subject-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
+.subject-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.subject-chip {
+  border: 1px solid var(--color-border, #ddd);
+  background: transparent;
+  border-radius: 8px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+
+  em {
+    font-style: normal;
+    opacity: 0.65;
+    margin-left: 0.25rem;
+    font-size: 0.75rem;
+  }
+
+  &.active {
+    background: #7c3aed;
+    border-color: #7c3aed;
+    color: #fff;
+
+    em {
+      opacity: 0.9;
+    }
+  }
+}
+
+.subject-empty {
+  font-size: 0.85rem;
+  color: var(--color-text-second, #888);
 }
 
 .section {

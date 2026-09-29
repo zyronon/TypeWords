@@ -822,5 +822,13 @@
   "toefl_script_label": "Definition script",
   "toefl_script_follow": "Follow UI",
   "toefl_script_sc": "Simplified",
-  "toefl_script_tc": "Traditional"
+  "toefl_script_tc": "Traditional",
+  "english_definition": "English definition",
+  "toefl_subject_label": "Subject filter (multi-select)",
+  "toefl_subject_clear": "Clear filter",
+  "toefl_subject_loading": "Loading subject tags…",
+  "toefl_features_title": "Training Features",
+  "toefl_feature_bilingual": "English bilingual definitions: ~94% of entries include English glosses for academic context.",
+  "toefl_feature_subject": "Subject filter: practice only Geology / Biology / Archaeology (and more) sets.",
+  "toefl_feature_script": "Script switch: Simplified / Traditional definitions, or follow the UI language."
 }

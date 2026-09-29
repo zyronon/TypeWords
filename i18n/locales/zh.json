@@ -822,5 +822,13 @@
   "toefl_script_label": "释义脚本",
   "toefl_script_follow": "跟随界面",
   "toefl_script_sc": "简体",
-  "toefl_script_tc": "繁体"
+  "toefl_script_tc": "繁体",
+  "english_definition": "英文释义",
+  "toefl_subject_label": "学科专项（可多选）",
+  "toefl_subject_clear": "清除筛选",
+  "toefl_subject_loading": "加载学科标签中…",
+  "toefl_features_title": "本训练特色",
+  "toefl_feature_bilingual": "英文双解释义：约 94% 词条带英文释义，方便对照学术语境。",
+  "toefl_feature_subject": "学科标签筛选：可只练「地质 / 生物 / 考古」等专项词汇。",
+  "toefl_feature_script": "简繁转换：释义可切换简体 / 繁体，或跟随界面语言。"
 }
