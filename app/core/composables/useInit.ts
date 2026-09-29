@@ -83,7 +83,6 @@ export function useInit() {
         if (mutation.type === 'direct' && mutation.events?.key === '_ignoreWatch') {
           return
         }
-        console.log('store.$subscribe', mutation, data, data._ignoreWatch)
         fetching = true
         try {
           await dataSync.saveDictState(data)
@@ -96,7 +95,6 @@ export function useInit() {
     unsub2 = settingStore.$subscribe(
       debounce(async (mutation: SubscriptionCallbackMutation<SettingState>, data: SettingState) => {
         if (fetching2 || !focus || runtimeStore.globalLoading || restoreFetching) return
-        console.log('settingStore.$subscribe', mutation, data, data._ignoreWatch)
         if (data._ignoreWatch) {
           data._ignoreWatch = false
           return

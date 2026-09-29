@@ -63,7 +63,6 @@ async function init() {
   }
   allWords = shuffle(dict.words)
   questions = testWords.slice(pageNo * pageSize, (pageNo + 1) * pageSize).map(w => buildQuestion(w, allWords))
-  console.log('questions', questions)
   index = 0
 
   Toast.info('可以按快捷键进行选择,例如按快捷键[' + aShortcutKey + ']选择A', { duration: 3000 })

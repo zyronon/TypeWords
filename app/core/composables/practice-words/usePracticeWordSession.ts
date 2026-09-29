@@ -166,8 +166,7 @@ export function usePracticeWordSession(options: PracticeWordSessionOptions) {
 
     data.wrongTimes++
     addWrongWordKey(data.allWrongWords, word.word)
-    const storedWrongIndex = store.wrong.words.findIndex(item => item.word === word.word)
-    if (storedWrongIndex < 0) {
+    if (!store.wrongWordSet.has(word.word.toLowerCase())) {
       store.wrong.words.push(word)
       if (source === 'identifyTyping') identifyTypingWrongIndex = store.wrong.words.length - 1
       store.wrong.length = store.wrong.words.length
@@ -285,11 +284,11 @@ export function usePracticeWordSession(options: PracticeWordSessionOptions) {
     const taskWords = cloneDeep(options.getTaskWords())
     const ignoreSet = [store.allIgnoreWordsSet, store.knownWordsSet][settingStore.ignoreSimpleWord ? 0 : 1]
     if (getPracticeMode() === WordPracticeMode.Shuffle) {
-      taskWords.review = shuffle(taskWords.review.filter(word => !ignoreSet.has(word.word)))
+      taskWords.review = shuffle(taskWords.review.filter(word => !ignoreSet.has(word.word.toLowerCase())))
     } else {
       store.sdict.lastLearnIndex -= statStore.newWordNumber
-      taskWords.new = taskWords.new.filter(word => !ignoreSet.has(word.word))
-      taskWords.review = taskWords.review.filter(word => !ignoreSet.has(word.word))
+      taskWords.new = taskWords.new.filter(word => !ignoreSet.has(word.word.toLowerCase()))
+      taskWords.review = taskWords.review.filter(word => !ignoreSet.has(word.word.toLowerCase()))
     }
     return taskWords
   }

@@ -148,13 +148,13 @@ async function fetchServerMeta(types: SyncDataType[], client?: SupabaseClient | 
   try {
     const { data, error } = await sb.from('typewords_data').select('type, updated_at, data_version').in('type', types)
     if (error) {
-      console.log('sp-error', error)
+      console.error('sp-error', error)
       Supabase.setStatus('error', error?.message ?? String(error))
       return null
     }
     return (data ?? []) as RemoteMetaRow[]
   } catch (error) {
-    console.log('sp-error', error)
+    console.error('sp-error', error)
     Supabase.setStatus('error', error?.message ?? String(error))
     return null
   }
@@ -166,20 +166,19 @@ async function fetchServerDatas(
 ): Promise<RemoteDataRow[] | null> {
   const sb = getSyncClient(client)
   if (!sb) return []
-  console.log('Fetching server data list', types)
   try {
     const { data, error } = await sb
       .from('typewords_data')
       .select('type, data, updated_at, data_version')
       .in('type', types)
     if (error) {
-      console.log('sp-error', error)
+      console.error('sp-error', error)
       Supabase.setStatus('error', error?.message ?? String(error))
       return []
     }
     return (data ?? []) as RemoteDataRow[]
   } catch (error) {
-    console.log('sp-error', error)
+    console.error('sp-error', error)
     Supabase.setStatus('error', error?.message ?? String(error))
     return []
   }
@@ -213,10 +212,6 @@ async function upsertServerDatas(rows: RemoteDataRow[], client?: SupabaseClient 
   const sb = getSyncClient(client)
   if (!sb) return false
   try {
-    console.log(
-      'Upserting server data',
-      rows.map(row => row.type)
-    )
     const { error } = await (sb as any).from('typewords_data').upsert(rows, { onConflict: 'type' })
     if (error) {
       Supabase.setStatus('error', error?.message ?? String(error))
@@ -361,7 +356,6 @@ export function useDataSyncPersistence() {
     if (!remoteMetas) return null
     const remoteMetaMap = new Map(remoteMetas.map(item => [item.type, item]))
     const compareResult = await compareResultByType(type, remoteMetaMap)
-    console.log('pullIfRemoteNewer-compareResult', CompareResult[compareResult], type)
     if (compareResult === CompareResult.RemoteNewer) {
       const remoteData = await fetchServerDatas([type], client)
       if (remoteData?.length) {
@@ -385,7 +379,6 @@ export function useDataSyncPersistence() {
       let push = []
       for (const type of Object.keys(localData)) {
         const compareResult = await compareResultByType(type as SyncDataType, remoteMetaMap)
-        console.log('syncData-compareResult', CompareResult[compareResult], type)
         if (compareResult === CompareResult.RemoteNewer) {
           pull.push(type)
         }
@@ -434,7 +427,6 @@ export function useDataSyncPersistence() {
       const remoteMetaMap = new Map(remoteMetas.map(item => [item.type, item]))
       // console.log('saveLocalAndSync-remoteMetaMap', remoteMetaMap.get(type))
       const compareResult = await compareResultByType(type, remoteMetaMap, localMeta)
-      console.log('saveLocalAndSync-compareResult', CompareResult[compareResult], type)
       //如果云端数据较新并允许拉取，则拉取云端数据，之后不再上传本地数据
       if (compareResult === CompareResult.RemoteNewer && options?.pullWhenRemoteNewer !== false) {
         const remoteData = await fetchServerDatas([type], options?.client)

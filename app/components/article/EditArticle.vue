@@ -164,7 +164,6 @@ function save(option: 'save' | 'saveAndNext') {
       })
       .flat()
 
-    console.log(editArticle)
 
     let d = cloneDeep(editArticle)
     if (!d.id) d.id = nanoid(6)
@@ -213,10 +212,8 @@ function handleChange(e: any) {
   reader.readAsText(uploadFile, 'UTF-8')
   reader.onload = function (e) {
     let lrc: string = e.target.result as string
-    console.log(lrc)
     if (lrc.trim()) {
       let lrcList = _parseLRC(lrc)
-      console.log('lrcList', lrcList)
       if (lrcList.length) {
         editArticle.lrcPosition = editArticle.sections
           .map((v, i) => {

@@ -56,7 +56,6 @@ function calcWeekList() {
 // 监听 model 弹窗打开时重新计算
 watch([model, () => props.loading], ([open, loading]) => {
   if (open && !loading) {
-    console.log('计算本周学习记录')
     calcWeekList() // 计算本周学习记录
   }
 })

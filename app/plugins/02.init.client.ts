@@ -21,11 +21,8 @@ export default defineNuxtPlugin(async nuxtApp => {
     window.addEventListener('load', () => {
       navigator.serviceWorker
         .register(withAppBaseURL('/service-worker.js'))
-        .then(registration => {
-          console.log('ServiceWorker registration successful with scope: ', registration.scope)
-        })
         .catch(error => {
-          console.log('ServiceWorker registration failed: ', error)
+          console.error('ServiceWorker registration failed: ', error)
         })
     })
   }

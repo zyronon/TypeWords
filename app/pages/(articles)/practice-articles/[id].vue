@@ -179,13 +179,11 @@ watch(
 )
 
 onActivated(() => {
-  console.log('onActivated')
 })
 onMounted(() => {
   document.removeEventListener('visibilitychange', onvisibilitychange)
   document.addEventListener('visibilitychange', onvisibilitychange)
 
-  console.log('onMounted')
   if (store.sbook?.articles?.length) {
     articleData.list = cloneDeep(store.sbook.articles)
     getCurrentPractice()
@@ -201,7 +199,6 @@ onMounted(() => {
 
 async function unmount() {
   document.removeEventListener('visibilitychange', onvisibilitychange)
-  console.log('onUnmounted')
   const cache = await getPracticeArticleCacheLocal()
   //如果有缓存，则更新花费的时间；因为用户不输入不会保存数据
   if (cache) {
@@ -313,8 +310,6 @@ function getCurrentPractice() {
 }
 
 function saveArticle(val: Article) {
-  console.log('saveArticle', val, JSON.stringify(val?.lrcPosition))
-  console.log('saveArticle', val.textTranslate)
   showEditArticle = false
   const nextBook = ensureCustomDictCopy(store.sbook)
   const rIndex = nextBook.articles.findIndex(v => v.id === val.id)
