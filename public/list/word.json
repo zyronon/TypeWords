@@ -19,6 +19,33 @@
     "cover": null,
     "hidden": false,
     "category": "中国考试",
-    "tags": ["大学英语"]
+    "tags": [
+      "大学英语"
+    ]
+  },
+  {
+    "id": 2,
+    "enName": "toefl",
+    "name": "TOEFL",
+    "description": "托福核心词汇库（6385 词），覆盖学术英语高频词与学科场景词，适合 TOEFL iBT 备考",
+    "categoryId": 2,
+    "url": "TOEFL.json",
+    "length": 6385,
+    "language": "en",
+    "translateLanguage": "zh_CN",
+    "version": 3,
+    "type": "word",
+    "isDefault": false,
+    "recommended": true,
+    "userId": "00000000-0000-0000-0000-000000000001",
+    "createdAt": "2026-09-29 00:00:00.000000",
+    "updatedAt": "2026-09-29 00:00:00.000000",
+    "cover": null,
+    "hidden": false,
+    "category": "留学考试",
+    "tags": [
+      "托福",
+      "留学"
+    ]
   }
 ]

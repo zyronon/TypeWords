@@ -36,6 +36,8 @@ export type Word = {
     t: string //title
     d: string //desc
   }[]
+  /** 英文释义（双解），如 "n. A tentative conjecture..." */
+  en?: string[]
 }
 export type TranslateLanguageType = 'en' | 'zh-CN' | 'ja' | 'de' | 'common' | ''
 export type LanguageType = 'en' | 'ja' | 'de' | 'code'
