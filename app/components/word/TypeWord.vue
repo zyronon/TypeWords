@@ -293,7 +293,7 @@ const isSimple = $computed(() => isWordSimple(props.word))
 const showNote = $computed(() => {
   if (editingNote) return true
   if (store.noteData[props.word.word]?.trim()) {
-    return settingStore.alwaysShowNote ? true : props.practiceType === WordPracticeType.FollowWrite
+    return settingStore.alwaysShowNote ? true : props.practiceType === WordPracticeType.FollowWrite || showWordResult
   }
   return false
 })
