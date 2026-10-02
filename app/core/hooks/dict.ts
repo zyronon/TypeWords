@@ -16,7 +16,7 @@ export function useWordOptions() {
   const store = useBaseStore()
 
   function isWordCollect(val: Word) {
-    return !!store.collectWord.words.find(v => v.word.toLowerCase() === val.word.toLowerCase())
+    return store.collectWordSet.has(val.word.toLowerCase())
   }
 
   function toggleWordCollect(val: Word) {
@@ -30,7 +30,7 @@ export function useWordOptions() {
   }
 
   function isWordSimple(val: Word) {
-    return !!store.knownWordsSet.has(val.word.toLowerCase())
+    return store.knownWordsSet.has(val.word.toLowerCase())
   }
 
   function toggleWordSimple(val: Word) {
@@ -44,6 +44,7 @@ export function useWordOptions() {
   }
 
   function delWrongWord(val: Word) {
+    if (!store.wrongWordSet.has(val.word.toLowerCase())) return
     let rIndex = store.wrong.words.findIndex(v => v.word.toLowerCase() === val.word.toLowerCase())
     if (rIndex > -1) {
       store.wrong.words.splice(rIndex, 1)
@@ -163,7 +164,7 @@ export function getCurrentStudyWord(): TaskWords {
       for (let i = start; i < words.length; i++) {
         let item = words[i]
         if (data.new.length >= perDay) break
-        if (!ignoreSet.has(item.word)) {
+        if (!ignoreSet.has(item.word.toLowerCase())) {
           data.new.push(item)
         }
         end++
@@ -186,7 +187,7 @@ export function getCurrentStudyWord(): TaskWords {
           //3、不在新词里面
           //4、到自然日就算到期
           // console.log(`单词：${word},到期时间：${dayjs(card.due).format('YYYY-MM-DD HH:mm:ss')}`)
-          let isMastered = ignoreSet.has(word)
+          let isMastered = ignoreSet.has(word.toLowerCase())
           if (isMastered) {
             waitRemoveFromFsrsData.push(word)
           }

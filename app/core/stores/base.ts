@@ -125,11 +125,20 @@ export const useBaseStore = defineStore('base', {
         .map((v: Word) => v.word.toLowerCase())
         .concat(this.simpleWords.map((v: string) => v.toLowerCase()))
     },
+    /** 键统一小写，查找时传 word.toLowerCase() */
     knownWordsSet(): Set<string> {
-      return new Set<string>(this.known.words.map((v: Word) => v.word))
+      return new Set<string>(this.known.words.map((v: Word) => v.word.toLowerCase()))
     },
     allIgnoreWordsSet(): Set<string> {
-      return new Set<string>(this.known.words.map((v: Word) => v.word).concat(this.simpleWords.map((v: string) => v)))
+      return new Set<string>(
+        this.known.words.map((v: Word) => v.word.toLowerCase()).concat(this.simpleWords.map((v: string) => v.toLowerCase()))
+      )
+    },
+    collectWordSet(): Set<string> {
+      return new Set<string>(this.collectWord.words.map((v: Word) => v.word.toLowerCase()))
+    },
+    wrongWordSet(): Set<string> {
+      return new Set<string>(this.wrong.words.map((v: Word) => v.word.toLowerCase()))
     },
     sdict(): Dict {
       if (this.word.studyIndex >= 0) {

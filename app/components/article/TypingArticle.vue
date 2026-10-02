@@ -18,7 +18,6 @@ import { _dateFormat, _nextTick, isMobile, msToHourMinute, total, debounce } fro
 import { emitter, EventKey, useEvents } from '@/core/utils/eventBus'
 import ContextMenu from '@imengyu/vue3-context-menu'
 import '@imengyu/vue3-context-menu/lib/vue3-context-menu.css'
-import nlp from 'compromise/three'
 import { nanoid } from 'nanoid'
 import { inject, onMounted, onUnmounted, watch } from 'vue'
 
@@ -348,7 +347,6 @@ async function nextSentence() {
     sentenceIndex = 0
     sectionIndex++
     if (!props.article.sections[sectionIndex]) {
-      console.log('打完了')
       runtimeStore.globalLoading = true
       await articlePersistence.clear()
       runtimeStore.globalLoading = false
@@ -603,7 +601,6 @@ function applyPracticeCache(cache: PracticeArticleCache) {
 
 function onContextMenu(e: MouseEvent, sentence: Sentence, i, j, w) {
   const selectedText = window.getSelection().toString()
-  console.log(selectedText)
   //prevent the browser's default menu
   e.preventDefault()
   //show your menu
@@ -613,9 +610,11 @@ function onContextMenu(e: MouseEvent, sentence: Sentence, i, j, w) {
     items: [
       {
         label: $t('collect_word'),
-        onClick: () => {
+        onClick: async () => {
           let word = props.article.sections[i][j].words[w]
           let text = word.word
+          // compromise/three 体积大，仅在需要词形还原时按需加载
+          const { default: nlp } = await import('compromise/three')
           let doc = nlp(text)
           // 优先判断是不是动词
           if (doc.verbs().found) {

@@ -17,7 +17,6 @@ const runtimeStore = useRuntimeStore()
 const router = useRouter()
 
 function selectDict(e) {
-  console.log(e.dict)
   getDictDetail(e.dict)
 }
 

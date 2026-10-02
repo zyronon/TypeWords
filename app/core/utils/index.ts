@@ -489,7 +489,13 @@ export function convertToWord(raw: any) {
 }
 
 export function cloneDeep<T>(val: T): T {
-  return JSON.parse(JSON.stringify(val))
+  if (val === null || typeof val !== 'object') return val
+  // structuredClone 比 JSON 往返快很多；Vue reactive proxy 无法被 clone，回退 JSON
+  try {
+    return structuredClone(val)
+  } catch {
+    return JSON.parse(JSON.stringify(val))
+  }
 }
 
 export function shuffle<T>(array: T[]): T[] {
@@ -545,7 +551,7 @@ export function getShufflePracticeWords<T extends { word: string }>(
 ) {
   const range = normalizeShufflePracticeRange(setting.range, words.length)
   const total = Math.max(0, Math.floor(Number(setting.total) || 0))
-  const candidates = words.slice(range.start, range.end).filter(v => !ignoreSet?.has(v.word))
+  const candidates = words.slice(range.start, range.end).filter(v => !ignoreSet?.has(v.word.toLowerCase()))
 
   return {
     range,
@@ -730,8 +736,6 @@ export function findOfficialSourceDict(list: Dict[] = [], dict?: Partial<Dict> |
 export async function isNewUser() {
   let isNew = false
   let base = useBaseStore()
-  console.log(JSON.stringify(base.$state))
-  console.log(JSON.stringify(getDefaultBaseState()))
   return JSON.stringify(base.$state) === JSON.stringify({ ...getDefaultBaseState(), ...{ load: true } })
 }
 
