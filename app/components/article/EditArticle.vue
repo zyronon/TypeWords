@@ -46,14 +46,18 @@ const emit = defineEmits<{
   saveAndNext: [val: Article]
 }>()
 
-let networkTranslateEngine = $ref('baidu')
+let networkTranslateEngine = $ref(TranslateEngine.Baidu)
 let progress = $ref(0)
 let failCount = $ref(0)
 let resultRef = $ref<HTMLDivElement>()
+
+//本地大模型翻译默认关闭，需要在部署时打开 ENABLE_LOCAL_TRANSLATE 开关
+const enableLocalTranslate = useRuntimeConfig().public.enableLocalTranslate as boolean
 const TranslateEngineOptions = [
-  // {value: 'youdao', label: '有道'},
-  { value: 'baidu', label: '百度' },
+  ...(enableLocalTranslate ? [{ value: TranslateEngine.LocalLLM, label: '本地模型（Hy-MT2）' }] : []),
+  { value: TranslateEngine.Baidu, label: '百度' },
 ]
+if (enableLocalTranslate) networkTranslateEngine = TranslateEngine.LocalLLM
 
 let editArticle = $ref<Article>(getDefaultArticle())
 
@@ -103,7 +107,7 @@ function splitTranslateText() {
   editArticle.textTranslate = splitCNArticle2(editArticle.textTranslate.trim())
 }
 
-//TODO
+//一键翻译
 async function startNetworkTranslate() {
   if (!editArticle.title.trim()) {
     return Toast.error($t('please_fill_title'))
@@ -118,7 +122,7 @@ async function startNetworkTranslate() {
   //这里需要用异步，因为watch了article.networkTranslate，改变networkTranslate了之后，会重新设置article.sections
   //导致getNetworkTranslate里面拿到的article.sections是废弃的值
   setTimeout(async () => {
-    await getNetworkTranslate(editArticle, TranslateEngine.Baidu, false, (v: number) => {
+    await getNetworkTranslate(editArticle, networkTranslateEngine as TranslateEngine, false, (v: number) => {
       progress = v
     })
     failCount = 0
@@ -450,7 +454,7 @@ function minusStartTime(val: Sentence) {
         :autosize="false"
       />
       <div class="justify-between items-center flex">
-        <div class="flex gap-space items-center w-50" v-if="false">
+        <div class="flex gap-space items-center w-50" v-if="enableLocalTranslate">
           <BaseButton @click="startNetworkTranslate" :loading="progress !== 0 && progress !== 100"
             >{{ $t('translate') }}
           </BaseButton>

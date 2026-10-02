@@ -1,5 +1,5 @@
 import type { Article, Sentence } from '../types'
-import { Baidu, Translator } from '@/libs'
+import { Baidu, Translator, translateTextsBatch } from '@/libs'
 import { TranslateEngine } from '../types'
 
 export function getSentenceAllTranslateText(article: Article) {
@@ -39,6 +39,28 @@ export async function getNetworkTranslate(
   allShow: boolean = false,
   progressCb?: (val: number) => void
 ) {
+  //本地模型走整篇批量翻译。
+  //逐句循环时每个请求都要重跑一遍完整 prompt，一篇文章几百句就是几百次 prefill，
+  //prompt 开销远大于输出本身，本地推理上这个浪费会被放大得非常明显
+  if (translateEngine === TranslateEngine.LocalLLM) {
+    const sentences: Sentence[] = article.sections.flat()
+    if (!article.titleTranslate) {
+      const [titleTranslate] = await translateTextsBatch([article.title], 'en', 'zh-CN')
+      article.titleTranslate = titleTranslate || ''
+    }
+    const results = await translateTextsBatch(
+      sentences.map(s => s.text),
+      'en',
+      'zh-CN',
+      { onProgress: progressCb }
+    )
+    results.forEach((v, i) => {
+      if (v) sentences[i].translate = v
+    })
+    article.textTranslate = getSentenceAllTranslateText(article)
+    return
+  }
+
   let translator: Translator
   if (translateEngine === TranslateEngine.Baidu) {
     translator = new Baidu({
