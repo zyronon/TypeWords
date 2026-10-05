@@ -179,6 +179,7 @@ function getShortcutKeyName(key: string): string {
     ChooseB: t('shortcut_choose_b'),
     ChooseC: t('shortcut_choose_c'),
     ChooseD: t('shortcut_choose_d'),
+    WordTestingNext: '单词测试下一个',
     SelfTestingChooseA: t('shortcut_self_testing_choose_a'),
     SelfTestingChooseB: t('shortcut_self_testing_choose_b'),
     SelfTestingChooseC: t('shortcut_self_testing_choose_c'),

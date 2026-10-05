@@ -126,7 +126,7 @@ useEvents([
   [ShortcutKey.ChooseB, () => select(1)],
   [ShortcutKey.ChooseC, () => select(2)],
   [ShortcutKey.ChooseD, () => select(3)],
-  [ShortcutKey.Next, () => next()],
+  [ShortcutKey.WordTestingNext, () => next()],
   [ShortcutKey.PlayWordPronunciation, () => playCurrentWord()],
 ])
 
@@ -137,7 +137,7 @@ let bShortcutKey = settingStore.shortcutKeyMap[ShortcutKey.ChooseB]
 let cShortcutKey = settingStore.shortcutKeyMap[ShortcutKey.ChooseC]
 let dShortcutKey = settingStore.shortcutKeyMap[ShortcutKey.ChooseD]
 
-let nextShortcutKey = settingStore.shortcutKeyMap[ShortcutKey.Next]
+let nextShortcutKey = settingStore.shortcutKeyMap[ShortcutKey.WordTestingNext]
 
 onMounted(init)
 </script>

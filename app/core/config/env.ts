@@ -126,6 +126,7 @@ export const DefaultShortcutKeyMap = {
   [ShortcutKey.ChooseB]: '2',
   [ShortcutKey.ChooseC]: '3',
   [ShortcutKey.ChooseD]: '4',
+  [ShortcutKey.WordTestingNext]: 'Space',
   [ShortcutKey.SelfTestingChooseA]: 'Alt+1',
   [ShortcutKey.SelfTestingChooseB]: 'Alt+2',
   [ShortcutKey.SelfTestingChooseC]: 'Alt+3',

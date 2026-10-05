@@ -1,4 +1,3 @@
-
 export enum CompareResult {
   RemoteNewer = 0,
   LocalNewer = 1,
@@ -52,6 +51,7 @@ export enum ShortcutKey {
   ChooseB = 'ChooseB',
   ChooseC = 'ChooseC',
   ChooseD = 'ChooseD',
+  WordTestingNext = 'WordTestingNext',
   SelfTestingChooseA = 'SelfTestingChooseA',
   SelfTestingChooseB = 'SelfTestingChooseB',
   SelfTestingChooseC = 'SelfTestingChooseC',
