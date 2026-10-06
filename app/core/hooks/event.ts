@@ -304,7 +304,7 @@ export function getShortcutKey(e: KeyboardEvent) {
         shortcutKey += '⬇'
       } else {
         //当空格为快捷键时，key为一个空字符，而代码里面写的快捷键是Space，导致匹配不上
-        shortcutKey = e.key.trim() || e.code
+        shortcutKey += e.key.trim() || e.code
       }
     }
   }
