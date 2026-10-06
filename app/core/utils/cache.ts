@@ -236,7 +236,6 @@ async function migrateFromLocalStorage<T>(config: CacheConfig): Promise<LocalCac
     await set(config.key, raw)
     // 删除 localStorage 中的老数据
     localStorage.removeItem(config.key)
-    console.log(`[cache] migrated ${config.key} from localStorage to idb`)
     return parsed
   } catch {
     return null

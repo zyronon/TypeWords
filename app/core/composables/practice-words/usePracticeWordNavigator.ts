@@ -244,7 +244,6 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     const list = originList.filter(v => !deps.checkWordIsNeedNext(v))
     if (options.resetNodeWords) nodeWorkingWords = [...list]
     const displayList = options.shuffle ? shuffle([...list]) : [...list]
-    console.log(options.log || `[Nav] → cursor ${newCursor.nodeIndex}:${newCursor.stepIndex}`)
     activeCursor.value = newCursor
     data.words = displayList
     data.index = 0
@@ -278,7 +277,6 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
       const nextStep = config.nodes[nextCursor.nodeIndex].steps[nextCursor.stepIndex]
 
       if (list.length === 0) {
-        console.log(`[Nav] cursor ${nextCursor.nodeIndex}:${nextCursor.stepIndex} 无单词，跳过`)
         activeCursor.value = nextCursor
         data.words = []
         data.index = 0
@@ -299,7 +297,6 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
     const data = deps.getPracticeData()
     // 实际 practiceType 由 resolvePhaseByCtxCursor 从 action.templateId 派生，无需在此设置
     deps.notify?.('info', '还有错词，继续巩固一下吧')
-    console.log(`[Nav] 还有错词，进入错词清空（templateId=${action.templateId}）`)
     data.words = shuffle(cloneDeep(data.wrongWords))
     data.index = 0
     data.wrongWords = []
@@ -308,10 +305,8 @@ export function createPracticeWordNavigator(deps: NavigatorDeps) {
   // ─── 即时型 action 执行 ───────────────────────────────────────────────────────
   function executeInstantAction(action: PracticeEndAction): void {
     if (action.type === 'collectWrongWords') {
-      console.log(`[Nav] 收藏错词 → ${action.target}`)
       // TODO: 实际收藏逻辑（Phase 3+）
     } else if (action.type === 'generateReport') {
-      console.log(`[Nav] 生成报告 → ${action.reportType}`)
       // TODO: 实际报告逻辑（Phase 3+）
     }
   }

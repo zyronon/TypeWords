@@ -72,18 +72,15 @@ const startExam = () => {
 }
 
 const onAnswered = res => {
-  console.log('Answered:', res)
   // 可收集中间过程（非必须）
 }
 
 const submitAll = () => {
-  console.log(questionRefs)
   questionRefs.value.forEach(q => q.submit())
   const results = questionRefs.value.map(q => q.getResult())
   const correctCount = results.filter(r => r.isCorrect).length
   const wrongCount = results.length - correctCount
 
-  console.log('最终结果：', results)
   Toast.success(`共 ${results.length} 题，答对 ${correctCount}，答错 ${wrongCount}`)
 }
 </script>

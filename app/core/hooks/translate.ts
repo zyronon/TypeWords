@@ -63,7 +63,6 @@ export async function getNetworkTranslate(
     const translate = async (sentence: Sentence) => {
       try {
         let r = await translator.translate(sentence.text, 'en', 'zh-CN')
-        console.log(r)
 
         if (r) {
           const cb = () => {

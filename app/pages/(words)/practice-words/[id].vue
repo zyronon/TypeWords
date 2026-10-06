@@ -299,9 +299,7 @@ async function initData(initVal?: TaskWords, init: boolean = false) {
       initData(d.taskWords)
       return
     }
-    console.log('initData')
   } else {
-    console.log('initData')
     //不能直接赋值，会导致 inject 的数据为默认值
     if (!session.initializeTask(initVal)) {
       Toast.warning('没有可学习的单词！')
@@ -340,7 +338,6 @@ function resetSameWordAfterViewUpdate(previousWord: Word) {
 async function complete() {
   if (!isComplete) {
     let start = Date.now()
-    console.log('全完学完了')
     statStore.wrong = data.allWrongWords.length
     isComplete = true
     settling = true
@@ -454,7 +451,6 @@ function toggleConciseMode() {
 
 async function repeat() {
   const previousWord = word
-  console.log('重学一遍')
   wordPersistence.clear()
   await initData(session.createRepeatTask())
   resetSameWordAfterViewUpdate(previousWord)
@@ -476,14 +472,12 @@ async function jumpToGroup(group: number) {
   const previousWord = word
   window?.umami?.track('jumpToGroup')
   wordPersistence.clear()
-  console.log('没学完，强行跳过', group)
   await initData(session.createTaskFromGroup(group))
   resetSameWordAfterViewUpdate(previousWord)
 }
 
 function randomWrite() {
   window?.umami?.track('randomWrite')
-  console.log('随机默写')
   session.randomWrite()
 }
 

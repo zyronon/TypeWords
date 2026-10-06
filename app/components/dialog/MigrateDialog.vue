@@ -26,7 +26,6 @@ async function migrateFromOldSite() {
       if (event.origin !== OLD_ORIGIN) return
       if (event.data?.type !== 'MIGRATION_RESULT') return
       const payload = event.data.payload
-      console.log('payload', payload)
 
       // 写入 localStorage
       LS_KEYS.forEach(key => {
@@ -68,7 +67,6 @@ async function transfer() {
   try {
     await migrateFromOldSite()
     localStorage.setItem('__migrated_from_2study_top__', '1')
-    console.log('迁移完成')
     Toast.success('迁移完成')
     model.value = false
     emit('ok')

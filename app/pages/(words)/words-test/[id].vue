@@ -63,7 +63,6 @@ async function init() {
   }
   allWords = shuffle(dict.words)
   questions = testWords.slice(pageNo * pageSize, (pageNo + 1) * pageSize).map(w => buildQuestion(w, allWords))
-  console.log('questions', questions)
   index = 0
 
   if (settingStore.wordSound) playCurrentWord(false)
