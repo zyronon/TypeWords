@@ -71,7 +71,7 @@
 
 ### Biblioteca de vocabulário
 
-Vocabulário de uso comum integrado incluindo CET-4, CET-6, GMAT, GRE, IELTS, SAT, TOEFL, inglês para pós-graduação, TEM-4, TEM-8 e mais.
+Vocabulário de uso comum integrado incluindo CET-4, CET-6, GMAT, GRE, IELTS, SAT, TOEFL, inglês para pós-graduação, TEM-4, TEM-8 e mais (official website only).
 Projetado para atender às necessidades de aprendizado de vocabulário da maioria dos usuários. Contribuições de vocabulário adicional da comunidade são bem-vindas.
 
 ## Executando o projeto

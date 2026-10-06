@@ -71,7 +71,7 @@
 
 ### Bibliothèque de vocabulaire
 
-Vocabulaire couramment utilisé intégré incluant CET-4, CET-6, GMAT, GRE, IELTS, SAT, TOEFL, anglais pour études supérieures, TEM-4, TEM-8 et plus.
+Vocabulaire couramment utilisé intégré incluant CET-4, CET-6, GMAT, GRE, IELTS, SAT, TOEFL, anglais pour études supérieures, TEM-4, TEM-8 et plus (official website only).
 Conçu pour répondre aux besoins d'apprentissage du vocabulaire de la plupart des utilisateurs. Les contributions de vocabulaire supplémentaire de la communauté sont les bienvenues.
 
 ## Exécuter le projet

@@ -71,7 +71,7 @@
 
 ### Pustaka Kosakata
 
-Kosakata yang umum digunakan bawaan termasuk CET-4, CET-6, GMAT, GRE, IELTS, SAT, TOEFL, bahasa Inggris pascasarjana, TEM-4, TEM-8, dan lainnya.
+Kosakata yang umum digunakan bawaan termasuk CET-4, CET-6, GMAT, GRE, IELTS, SAT, TOEFL, bahasa Inggris pascasarjana, TEM-4, TEM-8, dan lainnya (official website only).
 Dirancang untuk memenuhi kebutuhan pembelajaran kosakata sebagian besar pengguna. Kontribusi kosakata tambahan dari komunitas disambut.
 
 ## Menjalankan Proyek

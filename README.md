@@ -69,7 +69,7 @@
 
 ### Vocabulary Library
 
-Built-in commonly used vocabulary including CET-4, CET-6, GMAT, GRE, IELTS, SAT, TOEFL, Graduate English, TEM-4, TEM-8, and more.
+Built-in commonly used vocabulary including CET-4, CET-6, GMAT, GRE, IELTS, SAT, TOEFL, Graduate English, TEM-4, TEM-8, and more (official website only).
 Designed to meet most users' vocabulary learning needs. Community contributions of additional vocabulary are welcome.
 
 ## Running the Project

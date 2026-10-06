@@ -71,7 +71,7 @@
 
 ### Vokabelbibliothek
 
-Eingebautes häufig verwendetes Vokabular einschließlich CET-4, CET-6, GMAT, GRE, IELTS, SAT, TOEFL, Postgraduierten-Englisch, TEM-4, TEM-8 und mehr.
+Eingebautes häufig verwendetes Vokabular einschließlich CET-4, CET-6, GMAT, GRE, IELTS, SAT, TOEFL, Postgraduierten-Englisch, TEM-4, TEM-8 und mehr (official website only).
 Entwickelt, um die Vokabellernbedürfnisse der meisten Benutzer zu erfüllen. Community-Beiträge zusätzlicher Vokabeln sind willkommen.
 
 ## Das Projekt ausführen

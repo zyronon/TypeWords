@@ -71,7 +71,7 @@
 
 ### Thư viện từ vựng
 
-Từ vựng thường dùng tích hợp bao gồm CET-4, CET-6, GMAT, GRE, IELTS, SAT, TOEFL, tiếng Anh sau đại học, TEM-4, TEM-8 và nhiều hơn nữa.
+Từ vựng thường dùng tích hợp bao gồm CET-4, CET-6, GMAT, GRE, IELTS, SAT, TOEFL, tiếng Anh sau đại học, TEM-4, TEM-8 và nhiều hơn nữa (official website only).
 Được thiết kế để đáp ứng nhu cầu học từ vựng của hầu hết người dùng. Đóng góp từ vựng bổ sung từ cộng đồng được hoan nghênh.
 
 ## Chạy dự án
