@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { BaseButton, BasePage, Toast, VolumeIcon } from '@/base'
+import { onMounted, onUnmounted, toRaw } from 'vue'
+import { BaseButton, BaseIcon, BasePage, Toast, VolumeIcon } from '@/base'
 import { useRoute, useRouter } from 'vue-router'
 import { useBaseStore } from '@/core/stores/base.ts'
 import type { Dict, Question, TaskWords, Word } from '@/core/types/types.ts'
@@ -13,6 +13,8 @@ import { ShortcutKey } from '@/core/types/enum'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import { buildQuestion } from '@/core/utils/word-test'
 import TranslationList from '@/components/word/TranslationList.vue'
+import { useWordOptions } from '@/core/hooks/dict.ts'
+import { closeWordCollectPicker, openWordCollectPicker } from '@/core/hooks/useWordCollectPicker.ts'
 
 const route = useRoute()
 const router = useRouter()
@@ -21,60 +23,65 @@ const runtimeStore = useRuntimeStore()
 const playBeep = usePlayBeep()
 const playCorrect = usePlayCorrect()
 const playWordAudio = usePlayWordAudio()
+const { isWordCollect, toggleWordCollect } = useWordOptions()
 
 let loading = $ref(false)
 let dict = $ref<Dict>()
-let questions = $ref<Question[]>([])
+let question = $ref<Question | null>(null)
 let index = $ref(0)
-let pageNo = $ref(0)
-let pageSize = $ref(100)
-let allWords = []
-let testWords = []
-let total = $computed(() => {
-  return (pageNo + 1) * pageSize
-})
-let no = $computed(() => {
-  return pageNo * pageSize + index + 1
-})
+let allWords: Word[] = []
+let testWords: Word[] = []
+const currentWord = $computed(() => question?.candidates[question.correctIndex]?.word)
+
+function openCollectPicker(word: Word, event: MouseEvent) {
+  openWordCollectPicker(word, event.currentTarget as HTMLElement, {
+    excludeDictId: dict?.id,
+  })
+}
+
+function buildCurrentQuestion() {
+  const word = testWords[index]
+  question = word ? buildQuestion(word, allWords) : null
+}
 
 async function init() {
   let dictId: any = route.params.id
   let d = base.word.bookList.find(v => v.id === dictId)
   if (!d) d = base.sdict
   if (!d?.id) return router.push('/words')
-  dict = d
   if (!d.words.length && runtimeStore.editDict?.id === d.id) {
     loading = true
     let r = await _getDictDataByUrl(runtimeStore.editDict)
     d = r
     loading = false
   }
+  dict = d
   if (!dict.words.length) {
     return Toast.warning('没有单词可测试！')
   }
   if (runtimeStore.routeData.taskWords) {
     let currentStudy: TaskWords = runtimeStore.routeData.taskWords
     if (currentStudy.review.length) {
-      testWords = runtimeStore.routeData.taskWords.review
+      testWords = toRaw(currentStudy.review).slice()
     }
   }
   if (!testWords.length) {
-    testWords = shuffle(dict.words)
+    testWords = shuffle(toRaw(dict.words))
   }
-  allWords = shuffle(dict.words)
-  questions = testWords.slice(pageNo * pageSize, (pageNo + 1) * pageSize).map(w => buildQuestion(w, allWords))
-  console.log('questions', questions)
+  allWords = toRaw(dict.words).slice()
   index = 0
+  // 按需生成当前题，避免进入页面时连续遍历整本词典生成 100 道题。
+  buildCurrentQuestion()
 
   if (settingStore.wordSound) playCurrentWord(false)
 
-  Toast.info('可以按快捷键进行选择,例如按快捷键[' + aShortcutKey + ']选择A', { duration: 3000 })
+  Toast.info('按快捷键进行选择,例如按快捷键[' + aShortcutKey + ']选择A', { duration: 3000 })
 }
 
 let submitted = $ref(false)
 let selectedIndex = $ref(-1)
 function select(i: number) {
-  let q = questions[index]
+  const q = question
   if (!q || submitted) return
   selectedIndex = i
   submitted = true
@@ -93,29 +100,26 @@ function select(i: number) {
 const { nav } = useNav()
 
 function playCurrentWord(handle = true) {
-  const question = questions[index]
   if (!question) return
   const word = question.candidates[question.correctIndex]?.word.word
   if (word) playWordAudio(word, handle)
 }
 
 function next() {
+  closeWordCollectPicker()
   submitted = false
   selectedIndex = -1
-  if (no >= testWords.length) {
+  if (index + 1 >= testWords.length) {
     nav('/words')
     return
   }
-  if (no < total) index++
-  else {
-    pageNo++
-    index = 0
-    questions = testWords.slice(pageNo * pageSize, (pageNo + 1) * pageSize).map(w => buildQuestion(w, allWords))
-  }
+  index++
+  buildCurrentQuestion()
   if (settingStore.wordSound) playCurrentWord(false)
 }
 
 function end() {
+  closeWordCollectPicker()
   router.back()
 }
 
@@ -140,6 +144,7 @@ let dShortcutKey = settingStore.shortcutKeyMap[ShortcutKey.ChooseD]
 let nextShortcutKey = settingStore.shortcutKeyMap[ShortcutKey.WordTestingNext]
 
 onMounted(init)
+onUnmounted(closeWordCollectPicker)
 </script>
 
 <template>
@@ -147,27 +152,36 @@ onMounted(init)
     <div class="card flex flex-col text-xl">
       <div class="flex items-center justify-between">
         <div class="page-title">测试：{{ dict?.name }}</div>
-        <div class="text-base">{{ no }} / {{ Math.min(total, testWords.length) }}</div>
+        <div class="text-base">{{ index + 1 }} / {{ testWords.length }}</div>
       </div>
       <div class="line my-2"></div>
 
-      <div v-if="questions.length" class="flex flex-col gap-4">
-        <div class="text-4xl en-article-family flex items-center gap-2">
-          <span>{{ questions[index].candidates[questions[index].correctIndex].word.word }}</span>
+      <div v-if="question" class="flex flex-col gap-4">
+        <div v-if="currentWord" class="text-4xl en-article-family flex flex-wrap items-center gap-2">
+          <span>{{ currentWord.word }}</span>
           <VolumeIcon
-            :simple="true"
             :title="`发音(${settingStore.shortcutKeyMap[ShortcutKey.PlayWordPronunciation]})`"
             :cb="playCurrentWord"
           />
+          <BaseIcon
+            :title="isWordCollect(currentWord) ? $t('uncollect') : $t('collect')"
+            @click.stop="toggleWordCollect(currentWord)"
+          >
+            <IconFluentStar16Filled v-if="isWordCollect(currentWord)" />
+            <IconFluentStar16Regular v-else />
+          </BaseIcon>
+          <BaseIcon :title="$t('collect_to_dict')" @click.stop="openCollectPicker(currentWord, $event)">
+            <IconFluentStarAdd16Regular />
+          </BaseIcon>
         </div>
         <div class="grid gap-6">
           <div
-            v-for="(opt, i) in questions[index].candidates"
+            v-for="(opt, i) in question.candidates"
             :key="i"
             class="option border rounded cursor-pointer"
             :class="{
-              'text-green-600': submitted && i === questions[index].correctIndex,
-              'text-red-600': submitted && i === selectedIndex && i !== questions[index].correctIndex,
+              'text-green-600': submitted && i === question.correctIndex,
+              'text-red-600': submitted && i === selectedIndex && i !== question.correctIndex,
             }"
             @click="submitted ? playWordAudio(opt.word.word) : select(i)"
           >
@@ -183,7 +197,19 @@ onMounted(init)
               @click.stop="submitted && playWordAudio(opt.word.word)"
             >
               <span>{{ opt.word.word }}</span>
-              <VolumeIcon v-if="submitted" :simple="true" :title="'发音'" :cb="() => playWordAudio(opt.word.word)" />
+              <VolumeIcon v-if="submitted" :title="'发音'" :cb="() => playWordAudio(opt.word.word)" />
+              <template v-if="submitted">
+                <BaseIcon
+                  :title="isWordCollect(opt.word) ? $t('uncollect') : $t('collect')"
+                  @click.stop="toggleWordCollect(opt.word)"
+                >
+                  <IconFluentStar16Filled v-if="isWordCollect(opt.word)" />
+                  <IconFluentStar16Regular v-else />
+                </BaseIcon>
+                <BaseIcon :title="$t('collect_to_dict')" @click.stop="openCollectPicker(opt.word, $event)">
+                  <IconFluentStarAdd16Regular />
+                </BaseIcon>
+              </template>
             </div>
           </div>
         </div>
