@@ -10,6 +10,7 @@ import { useBaseStore } from '@/core/stores/base.ts'
 import { useRouter } from 'vue-router'
 import { computed, watch } from 'vue'
 import { getDefaultDict } from '@/core/types/func.ts'
+import { mergeDictLearningProgress } from '@/core/utils'
 import { useFetch } from '@vueuse/core'
 import { DICT_LIST, LIB_JS_URL, TourConfig } from '@/core/config/env.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
@@ -26,7 +27,10 @@ function selectDict(e) {
 }
 
 async function getDictDetail(val: DictResource) {
-  runtimeStore.editDict = getDefaultDict(val)
+  const dict = getDefaultDict(val)
+  // 保留 bookList 中已有的学习进度，避免重新选择词典时进度被清零
+  mergeDictLearningProgress(dict, store.word.bookList)
+  runtimeStore.editDict = dict
   nav('/dict', { from: 'list' })
 }
 

@@ -23,6 +23,7 @@ import {
   getShufflePracticeWords,
   isMobile,
   loadJsLib,
+  mergeDictLearningProgress,
   msToHourMinute,
   resourceWrap,
   type ShufflePracticeSetting,
@@ -444,7 +445,10 @@ function onSelectCalendarDate(dateKey: string) {
 
 async function goDictDetail(val: DictResource) {
   if (!val.id) return nav('dict-list')
-  runtimeStore.editDict = getDefaultDict(val)
+  const dict = getDefaultDict(val)
+  // 保留 bookList 中已有的学习进度，避免重新选择词典时进度被清零
+  mergeDictLearningProgress(dict, store.word.bookList)
+  runtimeStore.editDict = dict
   nav('/dict', {})
 }
 

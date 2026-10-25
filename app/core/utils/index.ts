@@ -689,6 +689,28 @@ export function isSameDictResource(a?: DictIdentity | null, b?: DictIdentity | n
   return aIds.some(id => bIds.has(id))
 }
 
+/**
+ * 从词典目录重新选择词典时，合并 bookList 中已有的学习进度。
+ * 否则 getDefaultDict(catalogItem) 会用默认进度 0 覆盖已有进度（见 issue #312）。
+ */
+export function mergeDictLearningProgress(
+  target: { lastLearnIndex?: number; perDayStudyNumber?: number; complete?: boolean },
+  bookList: Array<{
+    id?: unknown
+    enName?: unknown
+    en_name?: unknown
+    lastLearnIndex: number
+    perDayStudyNumber: number
+    complete: boolean
+  }>
+): void {
+  const existing = bookList.find(item => isSameDictResource(item, target as DictIdentity))
+  if (!existing) return
+  target.lastLearnIndex = existing.lastLearnIndex
+  target.perDayStudyNumber = existing.perDayStudyNumber
+  target.complete = existing.complete
+}
+
 /** @deprecated 优先使用 dict.system 字段判断，仅作兼容 fallback */
 export function isBuiltinDictId(id: unknown): boolean {
   return [DictId.wordKnown, DictId.wordWrong, DictId.wordCollect, DictId.articleCollect].includes(normalizeDictId(id) as any)
@@ -780,13 +802,10 @@ export function shouldFetchRemote(
 }
 
 export function isEmpty(obj: any): boolean {
-  if (typeof obj === 'object') {
-    return Object.keys(obj).length === 0
-  }
-  if (Array.isArray(obj)) {
-    return obj.length === 0
-  }
-  return obj === null || obj === undefined || obj === ''
+  if (obj === null || obj === undefined) return true
+  if (Array.isArray(obj)) return obj.length === 0
+  if (typeof obj === 'object') return Object.keys(obj).length === 0
+  return obj === ''
 }
 
 const charMap = {
