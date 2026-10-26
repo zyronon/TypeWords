@@ -15,6 +15,7 @@
   <a href="/docs/README.th.md">ไทย</a> |
   <a href="/docs/README.vi.md">Tiếng Việt</a> |
   <a href="/docs/README.id.md">Bahasa Indonesia</a> |
+  <a href="/docs/README.tr.md">Türkçe</a> |
   <a href="/docs/README.zh-TW.md">繁體中文</a> |
   <a href="/docs/README.zh-CN.md">简体中文</a> 
 </p>

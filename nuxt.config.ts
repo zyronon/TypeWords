@@ -106,6 +106,7 @@ export default defineNuxtConfig({
       { code: 'th', language: 'th-TH', file: 'th.json', name: 'ไทย' },
       { code: 'vi', language: 'vi-VN', file: 'vi.json', name: 'Tiếng Việt' },
       { code: 'id', language: 'id-ID', file: 'id.json', name: 'Bahasa Indonesia' },
+      { code: 'tr', language: 'tr-TR', file: 'tr.json', name: 'Türkçe' },
       { code: 'tw', language: 'zh-TW', file: 'tw.json', name: '繁體中文' },
     ],
     defaultLocale: 'zh',
