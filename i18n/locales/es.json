@@ -1,4 +1,6 @@
 {
+	"recognition_learning": "Reconocimiento de palabras",
+	"recognition": "Reconocimiento",
 	"app_desc": "Aprende inglés, una tecla a la vez, un pequeño avance cada vez: una herramienta de código abierto para practicar palabras y artículos",
 	"app_name": "Type Words",
 	"start_word_practice": "Iniciar práctica de palabras",

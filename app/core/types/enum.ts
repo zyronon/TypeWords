@@ -104,6 +104,7 @@ export enum WordPracticeMode {
   ShuffleWordsTest = 7, // 单词测试模式
   ReviewWordsTest = 8, // 单词测试模式
   Custom = 9, // 自定义流程
+  Recognition = 10, // 认词学习（无需拼写）
 }
 
 //练习类型
@@ -126,6 +127,7 @@ export enum WordPracticeType {
   Identify,
   Listen,
   Dictation,
+  Recognition,
 }
 
 //练习类型

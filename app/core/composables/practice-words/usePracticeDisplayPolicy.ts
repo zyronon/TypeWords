@@ -25,6 +25,7 @@ export function resolvePracticeViewDefaults(practiceType: WordPracticeType): {
     case WordPracticeType.Dictation:
       return { isWordMasked: true, isShowTranslate: true }
     case WordPracticeType.Identify:
+    case WordPracticeType.Recognition:
       return { isWordMasked: false, isShowTranslate: false }
     default:
       return { isWordMasked: false, isShowTranslate: true }

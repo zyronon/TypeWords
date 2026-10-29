@@ -1,4 +1,6 @@
 {
+	"recognition_learning": "认词学习",
+	"recognition": "认词",
 	"app_desc": "学习英语，一次敲击，一点进步，开源单词与文章练习工具",
 	"app_name": "Type Words",
 	"start_word_practice": "开始单词练习",

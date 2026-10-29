@@ -283,6 +283,7 @@ async function startPractice(practiceMode: WordPracticeMode, resetCache: boolean
     }
 
     settingStore.wordPracticeMode = practiceMode
+    if (practiceMode === WordPracticeMode.Recognition) settingStore.showPanel = false
 
     window.umami?.track('startStudyWord', {
       name: store.sdict.name,
@@ -746,6 +747,17 @@ onUnmounted(() => {
               </BaseButton>
             </template>
           </OptionButton>
+
+          <BaseButton
+            class="flex-1"
+            :type="settingStore.wordPracticeMode === WordPracticeMode.Recognition ? 'orange' : 'primary'"
+            size="large"
+            :loading="loading"
+            title="看英文选中文，无需拼写，计入学习进度"
+            @click="startPractice(WordPracticeMode.Recognition, settingStore.wordPracticeMode !== WordPracticeMode.Recognition)"
+          >
+            {{ settingStore.wordPracticeMode === WordPracticeMode.Recognition && isSaveData ? '继续认词学习' : '认词学习' }}
+          </BaseButton>
 
           <BaseButton
             :class="settingStore.wordPracticeMode === WordPracticeMode.Free ? 'flex-1' : ''"

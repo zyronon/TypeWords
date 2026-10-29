@@ -143,6 +143,7 @@ export const DefaultShortcutKeyMap = {
 }
 
 export const WordPracticeModeStageMap: Record<WordPracticeMode, WordPracticeStage[]> = {
+  [WordPracticeMode.Recognition]: [WordPracticeStage.IdentifyNewWord, WordPracticeStage.IdentifyReview, WordPracticeStage.Complete],
   [WordPracticeMode.Free]: [WordPracticeStage.FollowWriteNewWord, WordPracticeStage.Complete],
   [WordPracticeMode.IdentifyOnly]: [
     WordPracticeStage.IdentifyNewWord,
@@ -191,6 +192,7 @@ export const WordPracticeStageNameMap: Record<WordPracticeStage, string> = {
   [WordPracticeStage.Shuffle]: '随机复习',
 }
 export const WordPracticeModeNameMap: Record<WordPracticeMode, string> = {
+  [WordPracticeMode.Recognition]: '认词学习',
   [WordPracticeMode.System]: '学习',
   [WordPracticeMode.Free]: '自由练习',
   [WordPracticeMode.IdentifyOnly]: '自测',
@@ -203,6 +205,7 @@ export const WordPracticeModeNameMap: Record<WordPracticeMode, string> = {
   [WordPracticeMode.Custom]: '自定义',
 }
 export const WordPracticeModeUrlMap: Record<WordPracticeMode, string> = {
+  [WordPracticeMode.Recognition]: '/practice-words',
   [WordPracticeMode.System]: '/practice-words',
   [WordPracticeMode.Free]: '/practice-words',
   [WordPracticeMode.IdentifyOnly]: '/practice-words',

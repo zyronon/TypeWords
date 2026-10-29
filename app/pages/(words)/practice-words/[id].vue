@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted, provide, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, provide, ref, watch } from 'vue'
 import Statistics from '@/components/word/Statistics.vue'
 import { emitter, EventKey, useEvents } from '@/core/utils/eventBus.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
@@ -14,6 +14,7 @@ import Panel from '@/components/Panel.vue'
 import { BaseIcon, Dialog, Toast, ToastComponent } from '@/base'
 import WordList from '@/components/list/WordList.vue'
 import TypeWord from '@/components/word/TypeWord.vue'
+import RecognitionWord from '@/components/word/RecognitionWord.vue'
 import Empty from '@/components/Empty.vue'
 import { useBaseStore } from '@/core/stores/base.ts'
 import { usePracticeStore } from '@/core/stores/practice.ts'
@@ -29,7 +30,7 @@ import {
   usePracticeWordPersistence,
 } from '@/core/composables/practice-words/practice-word-session.ts'
 import { useDataSyncPersistence } from '@/core/composables/useDataSyncPersistence.ts'
-import { ShortcutKey, WordPracticeMode } from '@/core/types/enum.ts'
+import { ShortcutKey, WordPracticeMode, WordPracticeType } from '@/core/types/enum.ts'
 import WordMarkPickList, { type WordMarkPickResult } from '@/components/word/WordMarkPickList.vue'
 import {
   canAutoResumeVisibilityTimer,
@@ -92,6 +93,7 @@ const session = usePracticeWordSession({
 const { nav } = session
 const { activeFlowConfig, activeCursor, currentPhase, currentPracticeType, currentPhaseKey } = nav
 const { effective, toggleDictation, toggleTranslate } = session
+const isRecognition = computed(() => currentPracticeType.value === WordPracticeType.Recognition)
 
 const { bumpActivity, handleResumeTimer, startTimer, stopTimer } = usePracticeIdleTimer({
   isFocus,
@@ -393,7 +395,8 @@ async function savePracticeDataIns() {
     activeCursor.value.nodeIndex === 0 &&
     activeCursor.value.stepIndex === 0 &&
     !activeCursor.value.inWrongWordClear &&
-    activeCursor.value.loop === null
+    activeCursor.value.loop === null &&
+    Object.keys(data.ratingMap).length === 0
   ) {
     return
   }
@@ -482,6 +485,7 @@ async function jumpToGroup(group: number) {
 }
 
 function randomWrite() {
+  if (isRecognition.value) return
   window?.umami?.track('randomWrite')
   console.log('随机默写')
   session.randomWrite()
@@ -515,13 +519,13 @@ useEvents([
   [EventKey.onTyping, handleResumeTimer],
   [EventKey.repeatStudy, repeat],
   [EventKey.continueStudy, continueStudy],
-  [ShortcutKey.Previous, nav.prev],
-  [ShortcutKey.Next, throttle(() => nav.next(false), 300)],
-  [ShortcutKey.Ignore, throttle(session.skip, 300)],
-  [ShortcutKey.ToggleSimple, session.toggleWordSimpleForCurrent],
+  [ShortcutKey.Previous, () => !isRecognition.value && nav.prev()],
+  [ShortcutKey.Next, throttle(() => !isRecognition.value && nav.next(false), 300)],
+  [ShortcutKey.Ignore, throttle(() => !isRecognition.value && session.skip(), 300)],
+  [ShortcutKey.ToggleSimple, () => !isRecognition.value && session.toggleWordSimpleForCurrent()],
   [ShortcutKey.RepeatChapter, repeat],
-  [ShortcutKey.NextChapter, continueStudy],
-  [ShortcutKey.NextStep, nav.skipStep],
+  [ShortcutKey.NextChapter, () => (!isRecognition.value || isComplete) && continueStudy()],
+  [ShortcutKey.NextStep, () => !isRecognition.value && nav.skipStep()],
   [ShortcutKey.ToggleShowTranslate, toggleTranslate],
   [ShortcutKey.ToggleDictation, toggleDictation],
   [ShortcutKey.ToggleTheme, toggleTheme],
@@ -533,7 +537,7 @@ useEvents([
 </script>
 
 <template>
-  <PracticeLayout v-loading="loading" panelLeft="var(--word-panel-margin-left)">
+  <PracticeLayout v-loading="loading" panelLeft="var(--word-panel-margin-left)" :class="{ 'recognition-layout': isRecognition }">
     <template v-slot:practice>
       <div
         class="practice-word"
@@ -561,13 +565,22 @@ useEvents([
 
         <div class="mb-50 w-full" v-else>
           <PrevAndNextWord
+            v-if="!isRecognition"
             :data="data"
             :isWordMasked="effective.isWordMasked"
             @next="nav.next(false)"
             @prev="nav.prev"
             @openNotice="onboardingHostRef?.openConflictNotice2"
           />
+          <RecognitionWord
+            v-if="isRecognition"
+            :word="word"
+            :question="data.question"
+            @answer="session.onRecognitionAnswer"
+            @complete="nav.next(false)"
+          />
           <TypeWord
+            v-else
             :word="word"
             :question="data.question"
             :practiceType="currentPracticeType"
@@ -591,17 +604,17 @@ useEvents([
 
             <GroupList
               @click="jumpToGroup"
-              v-if="taskWords.new.length && settingStore.wordPracticeMode !== WordPracticeMode.Shuffle"
+              v-if="taskWords.new.length && !isRecognition && settingStore.wordPracticeMode !== WordPracticeMode.Shuffle"
             />
             <BaseIcon
-              v-if="taskWords.new.length"
+              v-if="taskWords.new.length && !isRecognition"
               @click="continueStudy"
               :title="`下一组(${settingStore.shortcutKeyMap[ShortcutKey.NextChapter]})`"
             >
               <IconFluentArrowRight16Regular class="arrow" width="22" />
             </BaseIcon>
 
-            <BaseIcon @click="randomWrite" :title="`随机默写(${settingStore.shortcutKeyMap[ShortcutKey.RandomWrite]})`">
+            <BaseIcon v-if="!isRecognition" @click="randomWrite" :title="`随机默写(${settingStore.shortcutKeyMap[ShortcutKey.RandomWrite]})`">
               <IconFluentArrowShuffle16Regular class="arrow" width="22" />
             </BaseIcon>
           </div>
@@ -617,7 +630,7 @@ useEvents([
             :activeIndex="data.index"
             :excludeWords="data.excludeWords"
             :exclude-dict-id="store.sdict.id ? String(store.sdict.id) : undefined"
-            @click="(val: any) => (data.index = val.index)"
+            @click="(val: any) => !isRecognition && (data.index = val.index)"
           >
           </WordList>
           <Empty v-else />
@@ -630,6 +643,7 @@ useEvents([
   </PracticeLayout>
   <Statistics v-model="isComplete" :loading="settling" />
   <PracticeOnboardingHost
+    v-if="!isRecognition"
     ref="onboardingHostRef"
     :ready="data.words.length > 0"
     :dict-id="String(route.params.id ?? '')"
@@ -651,6 +665,14 @@ useEvents([
 </template>
 
 <style scoped lang="scss">
+.recognition-layout {
+  --toolbar-width: min(42rem, calc(100vw - var(--aside-width) - 2rem));
+}
+
+@media (max-width: 768px) {
+  .recognition-layout { --toolbar-width: calc(100vw - 2rem); }
+}
+
 .practice-wrapper {
   @apply w-full h-full flex justify-center overflow-hidden;
 }

@@ -1,4 +1,6 @@
 {
+	"recognition_learning": "単語の意味を学習",
+	"recognition": "単語認識",
 	"app_desc": "英語を学ぼう、一打ずつ、少しずつ上達する、オープンソースの単語と文章練習ツール",
 	"app_name": "Type Words",
 	"start_word_practice": "単語練習を開始",

@@ -23,6 +23,7 @@ import { createPracticeWordNavigator } from './usePracticeWordNavigator.ts'
 import { usePracticeDisplayPolicy } from './usePracticeDisplayPolicy.ts'
 import type { PracticeNotifier } from './practice-flow-types.ts'
 import { createStudyTask } from './study-task.ts'
+import { recordRecognitionResult } from './recognition-result.ts'
 
 export interface PracticeWordSessionOptions {
   getPracticeData: () => PracticeData
@@ -206,6 +207,17 @@ export function usePracticeWordSession(options: PracticeWordSessionOptions) {
     resolveIdentifyCorrect()
   }
 
+  function onRecognitionAnswer(correct: boolean) {
+    const word = currentWord.value
+    if (!word.word) return
+    recordRecognitionResult(options.getPracticeData(), word, correct)
+    if (!correct && !store.wrong.words.some(item => item.word === word.word)) {
+      store.wrong.words.push(word)
+      store.wrong.length = store.wrong.words.length
+    }
+    options.scheduleSave()
+  }
+
   function toggleWordSimpleForCurrent() {
     const data = options.getPracticeData()
     const word = currentWord.value
@@ -334,6 +346,7 @@ export function usePracticeWordSession(options: PracticeWordSessionOptions) {
     initializeTask,
     onTypeWrong,
     onWordKnow,
+    onRecognitionAnswer,
     onWordMastered,
     toggleWordSimpleForCurrent,
     skip,

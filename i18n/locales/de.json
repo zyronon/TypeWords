@@ -1,4 +1,6 @@
 {
+	"recognition_learning": "Wörter erkennen",
+	"recognition": "Erkennen",
 	"app_desc": "Lerne Englisch, eine Taste nach der anderen, mit jedem Anschlag ein kleines Stück voran — ein Open-Source-Werkzeug zum Üben von Wörtern und Texten",
 	"app_name": "Type Words",
 	"start_word_practice": "Wortübung starten",

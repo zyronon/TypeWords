@@ -4,6 +4,7 @@ import { PRACTICE_WORD_GROUP_SIZE } from '@/core/utils/cache.ts'
 import type {
   PracticeEndAction,
   PracticeFlowConfig,
+  PracticeFlowNode,
   PracticeStepTemplate,
   PracticeStepTemplateId,
   PracticeWordAdvanceConfig,
@@ -20,6 +21,7 @@ export const STEP_TEMPLATE_META: Record<PracticeStepTemplateId, PracticeStepTemp
   listen: { id: 'listen', label: 'listen', practiceType: WordPracticeType.Listen },
   dictation: { id: 'dictation', label: 'dictation', practiceType: WordPracticeType.Dictation },
   identify: { id: 'identify', label: 'identify', practiceType: WordPracticeType.Identify },
+  recognition: { id: 'recognition', label: 'recognition', practiceType: WordPracticeType.Recognition },
 }
 
 export function materializeWordAdvance(config?: PracticeWordAdvanceConfig): WordAdvanceRule {
@@ -51,6 +53,22 @@ const DEFAULT_ON_END: PracticeEndAction[] = [WRONG_WORD_CLEAR_ACTION]
 
 /** 内置流程字典：key 为 flowId，存入 sessionSnapshot.flowId */
 export const BUILTIN_FLOWS: Record<string, PracticeFlowConfig> = {
+  recognition: {
+    id: 'recognition',
+    version: CURRENT_FLOW_VERSION,
+    mode: WordPracticeMode.Recognition,
+    label: 'recognition_learning',
+    nodes: ['new', 'review'].map(source => ({
+      id: source,
+      label: source === 'new' ? 'new_words' : 'review',
+      source: source === 'new' ? 'taskNew' : 'taskReview',
+      steps: [{
+        templateId: 'recognition',
+        // 错词只做认词选择题巩固，不进入拼写流程。
+        onEnd: [{ type: 'wrongWordClear', templateId: 'recognition' }],
+      }],
+    } satisfies PracticeFlowNode)),
+  },
   /**
    * System 模式：新词（跟写7词一组→听写→默写）+ 复习（自测→听写→默写）
    */

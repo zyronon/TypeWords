@@ -1,4 +1,6 @@
 {
+	"recognition_learning": "Word recognition",
+	"recognition": "Recognition",
 	"app_desc": "Learn English one keystroke at a time, a little progress each step — an open-source tool for practicing words and articles",
 	"app_name": "Type Words",
 	"start_word_practice": "Start Word Practice",

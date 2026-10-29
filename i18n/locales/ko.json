@@ -1,4 +1,6 @@
 {
+	"recognition_learning": "단어 인식 학습",
+	"recognition": "단어 인식",
 	"app_desc": "영어를 배우세요, 한 번의 타자마다, 조금씩 나아가는, 오픈소스 단어 및 문장 연습 도구",
 	"app_name": "Type Words",
 	"start_word_practice": "단어 연습 시작",

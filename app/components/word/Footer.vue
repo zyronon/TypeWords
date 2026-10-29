@@ -2,7 +2,7 @@
 import { usePracticeStore } from '@/core/stores/practice.ts'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import type { PracticeData } from '@/core/composables/practice-words/practice-word-session.ts'
-import { ShortcutKey } from '@/core/types/enum.ts'
+import { ShortcutKey, WordPracticeType } from '@/core/types/enum.ts'
 import type { PracticeFlowConfig, PracticeFlowCursor } from '@/core/composables/practice-words/practice-flow-types.ts'
 import { BaseIcon, Tooltip } from '@/base'
 import SettingDialog from '@/components/setting/SettingDialog.vue'
@@ -113,7 +113,7 @@ const showSkipStep = computed(() => flowDisplay.value.showSkipStep)
           <VolumeSettingMiniDialog />
 
           <BaseIcon
-            v-if="showSkipStep"
+            v-if="showSkipStep && effective.practiceType !== WordPracticeType.Recognition"
             @click="emit('skipStep')"
             :title="`${$t('skip_to_next_stage')}(${settingStore.shortcutKeyMap[ShortcutKey.NextStep]})`"
           >
@@ -121,6 +121,7 @@ const showSkipStep = computed(() => flowDisplay.value.showSkipStep)
           </BaseIcon>
 
           <BaseIcon
+            v-if="effective.practiceType !== WordPracticeType.Recognition"
             @click="displayActions.toggleDictation()"
             :title="`${$t('toggle_dictation_mode')}(${settingStore.shortcutKeyMap[ShortcutKey.ToggleDictation]})`"
           >
@@ -129,6 +130,7 @@ const showSkipStep = computed(() => flowDisplay.value.showSkipStep)
           </BaseIcon>
 
           <BaseIcon
+            v-if="effective.practiceType !== WordPracticeType.Recognition"
             :title="`${$t('toggle_translation')}(${settingStore.shortcutKeyMap[ShortcutKey.ToggleShowTranslate]})`"
             @click="displayActions.toggleTranslate()"
           >

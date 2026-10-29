@@ -90,6 +90,7 @@ function getPracticeFlowId(mode: WordPracticeMode): string {
     [WordPracticeMode.ListenOnly]: 'listenOnly',
     [WordPracticeMode.Shuffle]: 'shuffle',
     [WordPracticeMode.Review]: 'review',
+    [WordPracticeMode.Recognition]: 'recognition',
   }
   return ids[mode] ?? 'system'
 }

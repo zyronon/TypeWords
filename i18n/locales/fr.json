@@ -1,4 +1,6 @@
 {
+	"recognition_learning": "Reconnaissance des mots",
+	"recognition": "Reconnaissance",
 	"app_desc": "Apprenez l'anglais, une touche à la fois, un petit progrès à chaque fois — un outil open source pour s'entraîner sur des mots et des articles",
 	"app_name": "Type Words",
 	"start_word_practice": "Commencer la pratique des mots",

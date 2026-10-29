@@ -8,7 +8,7 @@ export function resolvePracticeQuestion(
   word: Word | undefined,
   allWords: Word[]
 ): Question | null {
-  return practiceType === WordPracticeType.Identify && word
+  return [WordPracticeType.Identify, WordPracticeType.Recognition].includes(practiceType) && word
     ? buildQuestion(word, allWords)
     : null
 }

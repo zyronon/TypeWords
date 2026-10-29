@@ -355,7 +355,7 @@ const { nav } = useNav()
 async function startPractice(query = {}) {
   // debugger
   //这里重置一下，因为下面切换词典后，导致学习进度为0，而切换前的模式有可能需要有进度才可以用
-  if (![WordPracticeMode.Free, WordPracticeMode.System].includes(settingStore.wordPracticeMode)) {
+  if (![WordPracticeMode.Free, WordPracticeMode.System, WordPracticeMode.Recognition].includes(settingStore.wordPracticeMode)) {
     settingStore.wordPracticeMode = WordPracticeMode.System
   }
   // 切换词典前，先将进行中的练习统计落库，避免学习记录丢失
@@ -387,7 +387,7 @@ async function addMyStudyList() {
 async function startTest() {
   loading = true
   //这里重置一下，因为下面切换词典后，导致学习进度为0，而切换前的模式有可能需要有进度才可以用
-  if (![WordPracticeMode.Free, WordPracticeMode.System].includes(settingStore.wordPracticeMode)) {
+  if (![WordPracticeMode.Free, WordPracticeMode.System, WordPracticeMode.Recognition].includes(settingStore.wordPracticeMode)) {
     settingStore.wordPracticeMode = WordPracticeMode.System
   }
   await base.changeDict(runtimeStore.editDict)

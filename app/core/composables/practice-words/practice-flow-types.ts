@@ -18,7 +18,7 @@ export interface PracticeViewState {
 // ─── 流程模型 ──────────────────────────────────────────────────────────────────
 
 /** Step Template 的 id — 只描述"怎么练"，不关心词源 */
-export type PracticeStepTemplateId = 'followWrite' | 'spell' | 'listen' | 'dictation' | 'identify'
+export type PracticeStepTemplateId = 'followWrite' | 'spell' | 'listen' | 'dictation' | 'identify' | 'recognition'
 
 /** Step Template 的名称和练习类型元数据。 */
 export interface PracticeStepTemplate {

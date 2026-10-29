@@ -8,7 +8,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "i18n:write": "gulp i18nWrite",
-    "test": ""
+    "test": "",
+    "test:recognition": "node --experimental-strip-types --test tests/recognition-result.test.ts"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.7.4",
