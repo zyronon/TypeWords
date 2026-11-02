@@ -234,7 +234,7 @@
 	"words_comma_separated": "複数の単語は英語のカンマで区切ります",
 	"sound_effect": "効果音",
 	"pronunciation_accent": "単語/文章の発音のアクセント",
-	"pronunciation_accent_desc": "単語のみに適用され、文章は固定でアメリカ英語の発音です。",
+	"pronunciation_accent_desc": "単語と例文に適用され、記事は固定でアメリカ英語の発音です。",
 	"please_select": "選択してください",
 	"us_accent": "アメリカ英語",
 	"uk_accent": "イギリス英語",

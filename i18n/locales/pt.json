@@ -234,7 +234,7 @@
 	"words_comma_separated": "Separe várias palavras com vírgulas em inglês",
 	"sound_effect": "Efeitos sonoros",
 	"pronunciation_accent": "Sotaque de pronúncia de palavras/frases",
-	"pronunciation_accent_desc": "Aplica-se apenas a palavras; os artigos usam um sotaque americano fixo.",
+	"pronunciation_accent_desc": "Aplica-se a palavras e frases de exemplo; os artigos usam um sotaque americano fixo.",
 	"please_select": "Por favor, selecione",
 	"us_accent": "Sotaque americano",
 	"uk_accent": "Sotaque britânico",

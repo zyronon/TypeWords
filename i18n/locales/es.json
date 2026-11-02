@@ -234,7 +234,7 @@
 	"words_comma_separated": "Separe varias palabras con comas en inglés",
 	"sound_effect": "Efectos de sonido",
 	"pronunciation_accent": "Acento de pronunciación de palabras/frases",
-	"pronunciation_accent_desc": "Solo se aplica a las palabras; los artículos usan un acento estadounidense fijo.",
+	"pronunciation_accent_desc": "Se aplica a las palabras y a las oraciones de ejemplo; los artículos usan un acento estadounidense fijo.",
 	"please_select": "Por favor, seleccione",
 	"us_accent": "Acento estadounidense",
 	"uk_accent": "Acento británico",

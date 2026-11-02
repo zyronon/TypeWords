@@ -429,6 +429,7 @@ export function usePlayArticleTextAudio() {
 
     if (ref?.src) ref.pause()
     ttsPlayAudio(target.text, {
+      lang: 'en-US', // 文章固定美音
       rate: settingStore.articleSoundSpeed,
       volume: settingStore.articleSoundVolume / 100,
     })

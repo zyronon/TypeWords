@@ -234,7 +234,7 @@
 	"words_comma_separated": "多个单词用英文逗号隔号",
 	"sound_effect": "音效",
 	"pronunciation_accent": "单词/句子发音口音",
-	"pronunciation_accent_desc": "仅单词生效，文章固定美音",
+	"pronunciation_accent_desc": "单词和例句生效，文章固定美音",
 	"please_select": "请选择",
 	"us_accent": "美音",
 	"uk_accent": "英音",
