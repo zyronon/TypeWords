@@ -234,7 +234,7 @@
 	"words_comma_separated": "여러 단어는 영어 쉼표로 구분합니다",
 	"sound_effect": "사운드 효과",
 	"pronunciation_accent": "단어/문장 발음 억양",
-	"pronunciation_accent_desc": "단어에만 적용되며, 문장은 고정적으로 미국식 발음입니다.",
+	"pronunciation_accent_desc": "단어와 예문에 적용되며, 글은 고정적으로 미국식 발음입니다.",
 	"please_select": "선택해 주세요",
 	"us_accent": "미국식 발음",
 	"uk_accent": "영국식 발음",

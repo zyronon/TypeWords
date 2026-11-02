@@ -234,7 +234,7 @@
 	"words_comma_separated": "Separate multiple words with English commas",
 	"sound_effect": "Sound effects",
 	"pronunciation_accent": "Word/sentence pronunciation accent",
-	"pronunciation_accent_desc": "Applies to words only; articles use a fixed American accent.",
+	"pronunciation_accent_desc": "Applies to words and example sentences; articles use a fixed American accent.",
 	"please_select": "Please select",
 	"us_accent": "American accent",
 	"uk_accent": "British accent",

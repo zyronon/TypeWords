@@ -81,7 +81,8 @@ function noticePlaySentence(index: number) {
 
 function playTtsWithGuide(text: string, onEnd?: () => void) {
   if (!ttsVoiceHintShown) {
-    const hasVoice = settingStore.ttsVoiceMap?.some(v => v.key === getBrowserKey() && v.voice)
+    // key 可能带口音后缀，任一口音选过声色就不再提示
+    const hasVoice = settingStore.ttsVoiceMap?.some(v => v.key.startsWith(getBrowserKey()) && v.voice)
     if (!hasVoice) {
       ttsVoiceHintShown = true
       const ins = Toast.warning(

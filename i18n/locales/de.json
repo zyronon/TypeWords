@@ -234,7 +234,7 @@
 	"words_comma_separated": "Trennen Sie mehrere Wörter mit englischen Kommas",
 	"sound_effect": "Soundeffekte",
 	"pronunciation_accent": "Ausspracheakzent für Wörter/Sätze",
-	"pronunciation_accent_desc": "Gilt nur für Wörter; Artikel verwenden fest einen amerikanischen Akzent.",
+	"pronunciation_accent_desc": "Gilt für Wörter und Beispielsätze; Artikel verwenden fest einen amerikanischen Akzent.",
 	"please_select": "Bitte auswählen",
 	"us_accent": "Amerikanischer Akzent",
 	"uk_accent": "Britischer Akzent",

@@ -44,7 +44,8 @@ export function useWordPracticeAudio({ word, volumeIconRef, canSeeSentences }: W
   function playTtsWithGuide(text: string, onEnd?: () => void) {
     if (!ttsVoiceHintShown) {
       const browserKey = getBrowserKey()
-      const hasVoice = settingStore.ttsVoiceMap?.some(v => v.key === browserKey && v.voice)
+      // key 可能带口音后缀，任一口音选过声色就不再提示
+      const hasVoice = settingStore.ttsVoiceMap?.some(v => v.key.startsWith(browserKey) && v.voice)
       if (!hasVoice) {
         ttsVoiceHintShown = true
         const ins = Toast.warning(

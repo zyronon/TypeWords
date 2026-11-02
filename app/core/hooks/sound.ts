@@ -42,6 +42,48 @@ export function getBrowserKey(): string {
   return `${os}+${browser}`
 }
 
+/**
+ * 获取口音设置对应的 TTS 语言
+ */
+export function getAccentLang(soundType: string): string {
+  return soundType === 'uk' ? 'en-GB' : 'en-US'
+}
+
+/**
+ * 获取 ttsVoiceMap 的索引，声色按口音分开保存
+ * 美音沿用原来的 key；英音如 "mac+chrome+uk"
+ */
+export function getTtsVoiceKey(lang: string): string {
+  const browserKey = getBrowserKey()
+  return lang === 'en-GB' ? `${browserKey}+uk` : browserKey
+}
+
+/**
+ * 判断声色是否属于该语言，Android 上部分浏览器的 lang 格式为 en_us
+ */
+export function isVoiceOfLang(voice: SpeechSynthesisVoice, lang: string): boolean {
+  return voice.lang.replace('_', '-').toLowerCase() === lang.toLowerCase()
+}
+
+/**
+ * 查找用户为该口音保存的声色
+ * 旧版只保存一个声色（即现在美音的 key）：英音未单独设置时，如果它本身是英音声色，或设备上没有英音声色，就继续沿用
+ */
+export function findSavedTtsVoice(
+  voices: SpeechSynthesisVoice[],
+  voiceMap: { key: string; voice: string }[] | undefined,
+  lang: string
+): SpeechSynthesisVoice | undefined {
+  const findByKey = (key: string) => {
+    const name = voiceMap?.find(v => v.key === key)?.voice
+    return voices.find(v => v.name === name)
+  }
+  const saved = findByKey(getTtsVoiceKey(lang))
+  if (saved || lang !== 'en-GB') return saved
+  const legacy = findByKey(getBrowserKey())
+  return legacy && (isVoiceOfLang(legacy, lang) || !voices.some(v => isVoiceOfLang(v, lang))) ? legacy : undefined
+}
+
 export function useSound(audioSrcList?: string[], audioFileLength?: number) {
   let audioList = ref<HTMLAudioElement[]>([])
   let audioLength = ref(1)
@@ -259,28 +301,26 @@ export function useTTsPlayAudio() {
     if (!text || typeof speechSynthesis === 'undefined') return
     const generation = ++ttsPlaybackGeneration
     speechSynthesis.cancel() // 防止 Chrome 队列卡死
+    const lang = options.lang ?? getAccentLang(settingStore.soundType)
     let msg = new SpeechSynthesisUtterance(text)
     msg.rate = options.rate ?? settingStore.wordSoundSpeed
     msg.volume = options.volume ?? settingStore.wordSoundVolume / 100
     msg.pitch = options.pitch ?? 1
-    msg.lang = options.lang ?? 'en-US'
+    msg.lang = lang
     msg.onend = () => options.onEnd?.()
     msg.onerror = () => options.onEnd?.()
     getVoicesAsync().then((voices: any[]) => {
       if (generation !== ttsPlaybackGeneration) return
-      // 优先使用用户在当前浏览器配置的声色
-      const browserKey = getBrowserKey()
-      const savedVoiceName = settingStore?.ttsVoiceMap?.find(v => v.key === browserKey)?.voice
-      if (savedVoiceName) {
-        const savedVoice = voices.find(v => v.name === savedVoiceName)
-        if (savedVoice) {
-          msg.voice = savedVoice
-          speechSynthesis.speak(msg)
-          return
-        }
+      // 优先使用用户在当前浏览器为该口音配置的声色
+      const savedVoice = findSavedTtsVoice(voices, settingStore?.ttsVoiceMap, lang)
+      if (savedVoice) {
+        msg.voice = savedVoice
+        speechSynthesis.speak(msg)
+        return
       }
-      // 回退：优先找 Emma / US，否则取第一个英文声色
-      let voiceList = voices.filter(v => v.lang === 'en-US')
+      // 回退：优先用当前口音的声色（其中优先找 Emma / US），设备上没有则用其他英文声色
+      let voiceList = voices.filter(v => isVoiceOfLang(v, lang))
+      if (!voiceList.length) voiceList = voices.filter(v => v.lang.startsWith('en'))
       if (voiceList && voiceList.length) {
         msg.voice = voiceList.find(v => v.name.includes('US') || v.name.includes('Emma')) ?? voiceList[0]
       }

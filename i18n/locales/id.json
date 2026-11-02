@@ -234,7 +234,7 @@
 	"words_comma_separated": "Pisahkan beberapa kata dengan koma bahasa Inggris",
 	"sound_effect": "Efek suara",
 	"pronunciation_accent": "Aksen pengucapan kata/kalimat",
-	"pronunciation_accent_desc": "Hanya berlaku untuk kata; artikel menggunakan aksen Amerika tetap.",
+	"pronunciation_accent_desc": "Berlaku untuk kata dan contoh kalimat; artikel menggunakan aksen Amerika tetap.",
 	"please_select": "Silakan pilih",
 	"us_accent": "Aksen Amerika",
 	"uk_accent": "Aksen Inggris",

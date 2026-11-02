@@ -5,7 +5,14 @@ import SettingItem from './SettingItem.vue'
 import SoundMasterControl from './SoundMasterControl.vue'
 import { useSettingStore } from '@/core/stores/setting.ts'
 import { ENV, SoundFileOptions } from '@/core/config/env.ts'
-import { getBrowserKey, getAudioFileUrl, usePlayAudio } from '@/core/hooks/sound.ts'
+import {
+  findSavedTtsVoice,
+  getAccentLang,
+  getAudioFileUrl,
+  getTtsVoiceKey,
+  isVoiceOfLang,
+  usePlayAudio,
+} from '@/core/hooks/sound.ts'
 import {
   useSoundMasterSettings,
   SOUND_VOLUME_ITEMS,
@@ -30,13 +37,20 @@ const showVolumeSubsInMaster = computed(() => volumeExpanded.value)
 const showSpeedSubsInMaster = computed(() => speedExpanded.value)
 
 // ---- TTS 声色 ----
-const ttsVoiceList = ref<SpeechSynthesisVoice[]>([])
+const allTtsVoices = ref<SpeechSynthesisVoice[]>([])
 const ttsSelectKey = ref(0)
+const accentLang = computed(() => getAccentLang(settingStore.soundType))
+// 当前口音的声色排在前面，其他声色也保留，因为不同设备上不一定都能发音
+const ttsVoiceList = computed(() =>
+  [...allTtsVoices.value].sort(
+    (a, b) => Number(isVoiceOfLang(b, accentLang.value)) - Number(isVoiceOfLang(a, accentLang.value))
+  )
+)
 
 onMounted(() => {
   if (typeof speechSynthesis === 'undefined') return
   const load = () => {
-    ttsVoiceList.value = speechSynthesis
+    allTtsVoices.value = speechSynthesis
       .getVoices()
       .filter(v => v.lang.startsWith('en'))
       .sort((a, b) => (b.localService ? 0 : 1) - (a.localService ? 0 : 1))
@@ -46,19 +60,20 @@ onMounted(() => {
   speechSynthesis.onvoiceschanged = load
 })
 
-const browserKey = getBrowserKey()
+const ttsVoiceKey = computed(() => getTtsVoiceKey(accentLang.value))
 
 const currentTtsVoice = computed({
   get() {
-    return settingStore.ttsVoiceMap?.find(v => v.key === browserKey)?.voice ?? ''
+    return findSavedTtsVoice(allTtsVoices.value, settingStore.ttsVoiceMap, accentLang.value)?.name ?? ''
   },
   set(voiceName: string) {
+    const key = ttsVoiceKey.value
     const map = settingStore.ttsVoiceMap ? [...settingStore.ttsVoiceMap] : []
-    const idx = map.findIndex(v => v.key === browserKey)
+    const idx = map.findIndex(v => v.key === key)
     if (idx >= 0) {
-      map[idx] = { key: browserKey, voice: voiceName }
+      map[idx] = { key, voice: voiceName }
     } else {
-      map.push({ key: browserKey, voice: voiceName })
+      map.push({ key, voice: voiceName })
     }
     settingStore.ttsVoiceMap = map
   },
@@ -70,7 +85,7 @@ function previewTtsVoice(voiceName: string) {
   if (typeof speechSynthesis === 'undefined') return
   speechSynthesis.cancel()
   const msg = new SpeechSynthesisUtterance(exampleText)
-  msg.lang = 'en-US'
+  msg.lang = accentLang.value
   msg.volume = settingStore.sentenceSoundVolume / 100
   msg.rate = settingStore.sentenceSoundSpeed
   const voice = ttsVoiceList.value.find(v => v.name === voiceName)
@@ -136,7 +151,7 @@ function previewTtsVoice(voiceName: string) {
     </SettingItem>
     <SettingItem :title="$t('tts_voice_setting_title')" :desc="$t('tts_voice_setting_desc')">
       <Select
-        :key="ttsSelectKey"
+        :key="`${ttsSelectKey}-${settingStore.soundType}`"
         v-model="currentTtsVoice"
         :placeholder="ttsVoiceList.length ? $t('tts_select_placeholder') : $t('tts_no_voice_available')"
         class="w-80!"
@@ -144,7 +159,7 @@ function previewTtsVoice(voiceName: string) {
         <Option v-for="voice in ttsVoiceList" :key="voice.name" :label="voice.name" :value="voice.name">
           <div class="flex justify-between items-center w-full">
             <span class="truncate">{{
-              voice.name + `（${voice.localService ? $t('tts_local_voice') : $t('tts_network_voice')}）`
+              `${voice.name} ${voice.lang}（${voice.localService ? $t('tts_local_voice') : $t('tts_network_voice')}）`
             }}</span>
             <VolumeIcon :time="100" @click="previewTtsVoice(voice.name)" />
           </div>

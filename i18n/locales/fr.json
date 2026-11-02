@@ -234,7 +234,7 @@
 	"words_comma_separated": "Séparez plusieurs mots par des virgules anglaises",
 	"sound_effect": "Effets sonores",
 	"pronunciation_accent": "Accent de prononciation des mots/phrases",
-	"pronunciation_accent_desc": "S'applique uniquement aux mots ; les articles utilisent un accent américain fixe.",
+	"pronunciation_accent_desc": "S'applique aux mots et aux phrases d'exemple ; les articles utilisent un accent américain fixe.",
 	"please_select": "Veuillez sélectionner",
 	"us_accent": "Accent américain",
 	"uk_accent": "Accent britannique",
